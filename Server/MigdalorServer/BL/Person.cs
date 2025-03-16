@@ -1,4 +1,5 @@
-﻿namespace MigdalorServer.BL
+﻿using Microsoft.Data.SqlClient;
+namespace MigdalorServer.BL
 {
     public class Person
     {
@@ -13,6 +14,7 @@
         private int profilePicID;
         private int age;
 
+        public Person() { }
         public Person(int id, string hebFirstName, string hebLastName, string engFirstName, string engLastName, string gender, string email, string birthDate, int profilePicID, int age)
         {
             Id = id;

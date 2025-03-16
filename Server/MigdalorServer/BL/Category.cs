@@ -1,10 +1,12 @@
-﻿namespace MigdalorServer.BL
+﻿using Microsoft.Data.SqlClient;
+namespace MigdalorServer.BL
 {
-    public class Categories
+    public class Category
     {
         private string categoryName;
 
-        public Categories(string categoryName)
+        public Category() { }
+        public Category(string categoryName)
         {
             CategoryName = categoryName;
         }

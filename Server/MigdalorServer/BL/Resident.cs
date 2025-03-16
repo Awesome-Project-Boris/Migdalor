@@ -1,4 +1,5 @@
-﻿namespace MigdalorServer.BL
+﻿using Microsoft.Data.SqlClient;
+namespace MigdalorServer.BL
 {
     public class Resident : Person
     {
@@ -16,6 +17,7 @@
         private int pic1id;
         private int pic2id;
 
+        public Resident() { }
         public Resident(int id, string hebFirstName, string hebLastName, string engFirstName, string engLastName, string gender, string email, DateOnly birthDate, int profilePicID, int age, bool hasLoggedIn, bool isActive, bool isBokerTov, bool canInitActivity, int spouseID, DateTime arrivalDate, string branchName, string homePlace, string phoneNumber, string profession, string description, int pic1id, int pic2id) : base(id,hebFirstName,hebLastName,engFirstName,engLastName,gender,email, birthDate, profilePicID, age)
         {
             this.HasLoggedIn = hasLoggedIn;
