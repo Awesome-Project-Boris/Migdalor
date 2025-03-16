@@ -1,4 +1,5 @@
-﻿namespace MigdalorServer.BL
+﻿using Microsoft.Data.SqlClient;
+namespace MigdalorServer.BL
 {
     public class Notice
     {
@@ -10,6 +11,7 @@
         private string noticeCategory;
         private int noticeSubCategory;
 
+        public Notice() { }
         public Notice(int id, int senderId, DateTime date, string noticeTitle, string noticeMessage, string noticeCategory, int noticeSubCategory)
         {
             Id = id;

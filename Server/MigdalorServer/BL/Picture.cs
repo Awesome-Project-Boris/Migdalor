@@ -1,4 +1,5 @@
-﻿namespace MigdalorServer.BL
+﻿using Microsoft.Data.SqlClient;
+namespace MigdalorServer.BL
 {
     public class Picture
     {
@@ -7,6 +8,7 @@
         private string picPath;
         private string picAlt;
 
+        public Picture() { }
         public Picture(int picId, string picName, string picPath, string picAlt)
         {
             PicId = picId;

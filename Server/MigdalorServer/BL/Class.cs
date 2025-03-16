@@ -1,15 +1,19 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Hosting;
 
 namespace MigdalorServer.BL
 {
-    public class Classes : Activities
+    public class Class : Activity
     {
         private bool isRecurring;
         private int recurrenceLevel;
         private string recurrenceDetails;
         private int sessionAmount;
 
-        public Classes(int activityID, string activityName, DateTime startDate, int capacity, int hostID, string location, int picID, bool isRecurring, int recurrenceLevel, string recurrenceDetails, int sessionAmount) : base ( activityID, activityName, startDate,capacity,  hostID, location, picID)
+
+        public Class() { }
+
+        public Class(int activityID, string activityName, DateTime startDate, int capacity, int hostID, string location, int picID, bool isRecurring, int recurrenceLevel, string recurrenceDetails, int sessionAmount) : base ( activityID, activityName, startDate,capacity,  hostID, location, picID)
         {
 
 
