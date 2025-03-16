@@ -1,13 +1,13 @@
 ﻿namespace BookStore.BL
 {
-    public class Author
+    public class EXAMPLE_Author
     {
         string name;
         string summary;
         string image;
         string link;
 
-        public Author(string name, string summary, string image, string link)
+        public EXAMPLE_Author(string name, string summary, string image, string link)
         {
             this.Name = name;
             this.Summary = summary;
@@ -15,7 +15,7 @@
             this.Link = link;
         }
 
-        public Author() { }
+        public EXAMPLE_Author() { }
 
         static public Object GetAuthorAndBooksByAuthorAdHoc(int authorId)
         {
