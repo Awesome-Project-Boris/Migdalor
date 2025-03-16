@@ -4,6 +4,7 @@ CREATE TABLE OH_People (
     hebLastName NVARCHAR(100) NOT NULL,
     engFirstName NVARCHAR(100),
     engLastName NVARCHAR(100),
+    gender CHAR(1) NOT NULL,
     profilePicID INT,
     email VARCHAR(2048),
     dateOfBirth DATE,

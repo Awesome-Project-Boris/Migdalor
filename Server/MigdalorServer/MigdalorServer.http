@@ -1,0 +1,6 @@
+@MigdalorServer_HostAddress = http://localhost:5293
+
+GET {{MigdalorServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
