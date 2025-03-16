@@ -13,7 +13,7 @@
         private int profilePicID;
         private int age;
 
-        public Person(int id, string hebFirstName, string hebLastName, string engFirstName, string engLastName, string gender, string email, string birthDate, int profilePicID, int age)
+        public Person(int id, string hebFirstName, string hebLastName, string engFirstName, string engLastName, string gender, string email, DateOnly birthDate, int profilePicID, int age)
         {
             Id = id;
             HebFirstName = hebFirstName;
@@ -34,7 +34,7 @@
         public string EngLastName { get => engLastName; set => engLastName = value; }
         public string Gender { get => gender; set => gender = value; }
         public string Email { get => email; set => email = value; }
-        public string BirthDate { get => birthDate; set => birthDate = value; }
+        public DateOnly BirthDate { get => birthDate; set => birthDate = value; }
         public int ProfilePicID { get => profilePicID; set => profilePicID = value; }
         public int Age { get => age; set => age = value; }
     }

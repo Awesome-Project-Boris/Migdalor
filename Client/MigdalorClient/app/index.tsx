@@ -1,4 +1,5 @@
 import { Text, View } from "react-native";
+import LoginScreen from "./LoginScreen";
 
 export default function Index() {
   return (
@@ -9,8 +10,7 @@ export default function Index() {
         alignItems: "center",
       }}
     >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
-      <Text>I'm Editing</Text>
+      <LoginScreen />
     </View>
   );
 }
