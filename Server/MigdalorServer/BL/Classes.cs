@@ -11,8 +11,6 @@ namespace MigdalorServer.BL
 
         public Classes(int activityID, string activityName, DateTime startDate, int capacity, int hostID, string location, int picID, bool isRecurring, int recurrenceLevel, string recurrenceDetails, int sessionAmount) : base ( activityID, activityName, startDate,capacity,  hostID, location, picID)
         {
-
-
             IsRecurring = isRecurring;
             RecurrenceLevel = recurrenceLevel;
             RecurrenceDetails = recurrenceDetails;
