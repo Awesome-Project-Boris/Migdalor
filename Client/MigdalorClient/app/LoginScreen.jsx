@@ -10,7 +10,7 @@ import {
   I18nManager,
 } from "react-native";
 // For checkbox, install @react-native-community/checkbox or use any other component library
-import CheckBox from "@react-native-community/checkbox";
+import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox"
 
 // Force RTL if your app is in Hebrew (optional)
 I18nManager.allowRTL(true);
@@ -97,13 +97,7 @@ const LoginScreen = () => {
         />
 
         <View style={styles.rememberMeContainer}>
-          {/* <CheckBox
-            value={rememberMe}
-            onValueChange={setRememberMe}
-            boxType="square" // iOS only, for Android it’s always a box
-            tintColors={{ true: "#000", false: "#000" }}
-          /> */}
-          <Text style={styles.rememberMeText}>זכור אותי</Text>
+          <CheckboxWithLabel/>
         </View>
 
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
@@ -151,6 +145,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 10,
     padding: 20,
+    gap: 15
     // Add shadow if desired:
     // shadowColor: '#000',
     // shadowOffset: { width: 0, height: 2 },
@@ -165,11 +160,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     textAlign: "right", // Align text to the right for Hebrew
+    fontSize: 20,
+    borderColor: "#bfbdbd",
+    borderWidth: 1,
   },
   rememberMeContainer: {
     flexDirection: "row-reverse", // RTL
     alignItems: "center",
     marginBottom: 15,
+    direction: "rtl"
   },
   rememberMeText: {
     marginRight: 8,
@@ -178,11 +177,11 @@ const styles = StyleSheet.create({
   loginButton: {
     backgroundColor: "#f2ca2f",
     borderRadius: 8,
-    paddingVertical: 15,
+    paddingVertical: 18,
     alignItems: "center",
   },
   loginButtonText: {
-    fontSize: 18,
+    fontSize: 26,
     color: "#000",
     fontWeight: "bold",
   },
