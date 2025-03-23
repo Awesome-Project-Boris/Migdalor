@@ -2,15 +2,22 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import MainMenuButtons from '@/components/MainMenuButtons';
 import { MainMenuEditProvider, useMainMenuEdit } from '../context/MainMenuEditProvider';
+import FlipButton from "../../MigdalorClient/components/FlipButton";
 
 function EditToggleButton() {
   const { editing, setEditing } = useMainMenuEdit();
   return (
-    <TouchableOpacity onPress={() => setEditing(prev => !prev)} style={styles.toggleButton}>
+    <FlipButton
+    text="כניסה"
+    bgColor="#FF7F50"
+    textColor="#013220"
+    onPress={() => setEditing(prev => !prev)} style={styles.toggleButton}>
       <Text style={styles.toggleButtonText}>{editing ? 'Done' : 'Edit'}</Text>
-    </TouchableOpacity>
+    </FlipButton>
   );
-}
+} 
+
+
 
 export default function Index() {
   return (

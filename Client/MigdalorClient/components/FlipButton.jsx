@@ -1,7 +1,7 @@
 import React from "react";
 import { Pressable, Text, StyleSheet } from "react-native";
 
-const FlipButton = ({ text, onPress, bgColor, textColor, style }) => {
+const FlipButton = ({ text, children, onPress, bgColor, textColor, style }) => {
   return (
     <Pressable
       onPress={onPress}
@@ -13,13 +13,16 @@ const FlipButton = ({ text, onPress, bgColor, textColor, style }) => {
         },
       ]}
     >
-      {({ pressed }) => (
-        <Text
-          style={[styles.textBase, { color: pressed ? bgColor : textColor }]}
-        >
-          {text}
-        </Text>
-      )}
+      {({ pressed }) =>
+        // If children are provided, render them; otherwise, fallback to the text prop.
+        children ? (
+          children
+        ) : (
+          <Text style={[styles.textBase, { color: pressed ? bgColor : textColor }]}>
+            {text}
+          </Text>
+        )
+      }
     </Pressable>
   );
 };
