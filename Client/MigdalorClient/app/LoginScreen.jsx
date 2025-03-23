@@ -2,23 +2,23 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  // TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Platform,
   Keyboard,
   Pressable,
   Image,
-  ImageBackground,
   StyleSheet,
   I18nManager,
-  TouchableHighlight,
 } from "react-native";
 import { TextInput, Checkbox } from "react-native-paper";
+import { Spinner, YStack } from "tamagui";
 // For checkbox, install @react-native-community/checkbox or use any other component library
 import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox";
 import FlipButton from "../../MigdalorClient/components/FlipButton";
+import OutlinedTextInput from "../../MigdalorClient/components/OutlinedTextInput";
+import LabeledTextInput from "../../MigdalorClient/components/LabeledTextInput";
+
 // Force RTL if your app is in Hebrew (optional)
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -53,24 +53,31 @@ const LoginScreen = () => {
           // style={styles.container}
         >
           <View style={styles.formContainer}>
-            <TextInput
-              // style={styles.input}
+            <OutlinedTextInput
               onChangeText={setUsername}
               value={username}
               label="שם משתמש"
-              placeholderTextColor="#888"
               autoCapitalize="none"
               mode="outlined"
             />
-            <TextInput
+            <LabeledTextInput
               // style={styles.input}
               onChangeText={setPassword}
               value={password}
-              placeholder="סיסמה"
-              placeholderTextColor="#888"
+              label="סיסמה"
               secureTextEntry
               autoCapitalize="none"
+            />
+            <TextInput
+              placeholder="RTL Text"
               mode="outlined"
+              style={{ textAlign: "right" }}
+            />
+            <OutlinedTextInput
+              onChangeText={setPassword}
+              value={password}
+              label="סיסמה"
+              secureTextEntry
             />
 
             <View style={styles.rememberMeContainer}>
