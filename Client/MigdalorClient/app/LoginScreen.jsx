@@ -10,7 +10,7 @@ import {
   I18nManager,
 } from "react-native";
 // For checkbox, install @react-native-community/checkbox or use any other component library
-import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox"
+import CheckboxWithLabel from "../components/CheckBox"
 
 // Force RTL if your app is in Hebrew (optional)
 I18nManager.allowRTL(true);

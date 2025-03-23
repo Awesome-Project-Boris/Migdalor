@@ -20,25 +20,9 @@ export default function Layout() {
           }}
           />
           <Drawer.Screen
-            name="user/[id]" // This is the name of the page and must match the url from root
-            options={{
-            drawerLabel: 'User',
-            title: 'overview',
-          }}
-          />
-          <Drawer.Screen
             name="LoginScreen"
             options={{
               drawerLabel: 'Profile',
-              drawerIcon: ({ focused, size }) => (
-                <Ionicons name="person" size={64} color={focused ? '#7cc' : '#ccc'} />
-              ),
-            }}
-          />
-           <Drawer.Screen
-            name="MainMenu"
-            options={{
-              drawerLabel: 'Main Menu',
               drawerIcon: ({ focused, size }) => (
                 <Ionicons name="person" size={64} color={focused ? '#7cc' : '#ccc'} />
               ),
