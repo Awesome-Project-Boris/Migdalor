@@ -2,16 +2,23 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
+  // TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Platform,
+  Keyboard,
+  Pressable,
   Image,
   ImageBackground,
   StyleSheet,
   I18nManager,
+  TouchableHighlight,
 } from "react-native";
+import { TextInput, Checkbox } from "react-native-paper";
 // For checkbox, install @react-native-community/checkbox or use any other component library
-import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox"
-
+import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox";
+import FlipButton from "../../MigdalorClient/components/FlipButton";
 // Force RTL if your app is in Hebrew (optional)
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -26,86 +33,65 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Background Image */}
-      {/* <ImageBackground
-        source={require("./assets/background.png")} // Replace with your image path
-        style={styles.backgroundImage}
-        resizeMode="cover"
-      > */}
-      {/* Top Bar Icons */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          onPress={() => {
-            /* Info icon action */
-          }}
-        >
-          {/* <Image
-            source={require("./assets/info_icon.png")} // Replace with your image path
-            style={styles.icon}
-          /> */}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => {
-            /* Accessibility icon action */
-          }}
-        >
-          {/* <Image
-            source={require("./assets/wheelchair_icon.png")} // Replace with your image path
-            style={styles.icon}
-          /> */}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => {
-            /* Language switch action */
-          }}
-        >
-          {/* <Image
-            source={require("./assets/english_flag.png")} // Replace with your image path
-            style={styles.icon}
-          /> */}
-        </TouchableOpacity>
-      </View>
-
-      {/* Logo */}
-      <View style={styles.logoContainer}>
-        {/* <Image
-          source={require("./assets/logo.png")} // Replace with your logo path
-          style={styles.logo}
-          resizeMode="contain"
-        /> */}
-      </View>
-
-      {/* Login Form */}
-      <View style={styles.formContainer}>
-        <TextInput
-          style={styles.input}
-          onChangeText={setUsername}
-          value={username}
-          placeholder="שם משתמש"
-          placeholderTextColor="#888"
-        />
-        <TextInput
-          style={styles.input}
-          onChangeText={setPassword}
-          value={password}
-          placeholder="סיסמה"
-          placeholderTextColor="#888"
-          secureTextEntry
-        />
-
-        <View style={styles.rememberMeContainer}>
-          <CheckboxWithLabel/>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require("../assets/images/TEMPLOGO.png")}
+            // style={{ width: 200, height: 150 }} // Adjust dimensions as needed
+            resizeMode="contain"
+            alignSelf="center"
+            // marginTop={50}
+          />
         </View>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>כניסה</Text>
-        </TouchableOpacity>
+        {/* Login Form */}
+
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          // style={styles.container}
+        >
+          <View style={styles.formContainer}>
+            <TextInput
+              // style={styles.input}
+              onChangeText={setUsername}
+              value={username}
+              label="שם משתמש"
+              placeholderTextColor="#888"
+              autoCapitalize="none"
+              mode="outlined"
+            />
+            <TextInput
+              // style={styles.input}
+              onChangeText={setPassword}
+              value={password}
+              placeholder="סיסמה"
+              placeholderTextColor="#888"
+              secureTextEntry
+              autoCapitalize="none"
+              mode="outlined"
+            />
+
+            <View style={styles.rememberMeContainer}>
+              <CheckboxWithLabel
+                checked={rememberMe}
+                onCheckedChange={() => {
+                  setRememberMe(!rememberMe);
+                }}
+                label="זכור אותי"
+              />
+            </View>
+            <FlipButton
+              text="כניסה"
+              onPress={handleLogin}
+              bgColor="#FF7F50"
+              textColor="#013220"
+            />
+          </View>
+        </KeyboardAvoidingView>
       </View>
-      {/* </ImageBackground> */}
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -114,6 +100,7 @@ export default LoginScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fbe6d0", // Set background color to white
   },
   backgroundImage: {
     flex: 1,
@@ -145,7 +132,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 10,
     padding: 20,
-    gap: 15
+    gap: 15,
     // Add shadow if desired:
     // shadowColor: '#000',
     // shadowOffset: { width: 0, height: 2 },
@@ -168,21 +155,21 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse", // RTL
     alignItems: "center",
     marginBottom: 15,
-    direction: "rtl"
+    direction: "rtl",
   },
   rememberMeText: {
     marginRight: 8,
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: "#f2ca2f",
+    backgroundColor: "#FF7F50",
     borderRadius: 8,
     paddingVertical: 18,
     alignItems: "center",
   },
   loginButtonText: {
     fontSize: 26,
-    color: "#000",
+    color: "#013220",
     fontWeight: "bold",
   },
 });
