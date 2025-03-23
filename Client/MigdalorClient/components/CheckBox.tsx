@@ -1,6 +1,6 @@
-import { Check as CheckIcon } from '@tamagui/lucide-icons'
-import type { CheckboxProps } from 'tamagui'
-import { Checkbox, Label, XStack, YStack } from 'tamagui'
+import { Check as CheckIcon } from "@tamagui/lucide-icons";
+import type { CheckboxProps } from "tamagui";
+import { Checkbox, Label, XStack, YStack } from "tamagui";
 
 export function CheckboxDemo() {
   return (
@@ -9,20 +9,18 @@ export function CheckboxDemo() {
       <CheckboxWithLabel size="$4" defaultChecked />
       <CheckboxWithLabel size="$5" disabled label="Accept terms (disabled)" />
     </YStack>
-  )
+  );
 }
 
 export function CheckboxWithLabel({
-  size = "$5",
-  label = 'סקיבידי טואלט',
+  size = "$7",
+  label = "סקיבידי טואלט",
   ...checkboxProps
 }: CheckboxProps & { label?: string }) {
-  const id = `checkbox-${(size || '').toString().slice(1)}`
+  const id = `checkbox-${(size || "").toString().slice(1)}`;
   return (
     <XStack width={300} alignItems="center" gap="$4">
-
-
-      <Checkbox id={id} size={size} {...checkboxProps}>
+      <Checkbox id={id} size={size} scaleIcon={1.5} {...checkboxProps}>
         <Checkbox.Indicator>
           <CheckIcon />
         </Checkbox.Indicator>
@@ -32,7 +30,7 @@ export function CheckboxWithLabel({
         {label}
       </Label>
     </XStack>
-  )
+  );
 }
 
 // export default CheckboxWithLabel;
