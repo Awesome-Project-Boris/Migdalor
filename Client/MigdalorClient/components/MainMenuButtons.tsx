@@ -8,81 +8,61 @@ import {
   Animated,
 } from 'react-native';
 import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
+
+import * as Animatable from 'react-native-animatable';
 import { useMainMenuEdit } from '../context/MainMenuEditProvider';
 
 interface MenuItem {
   key: string;
   name: string;
-  destination: string; // e.g. "MarketScreen"
+  destination: string;
 }
 
 const initialData: MenuItem[] = [
-  { key: 'menu1', name: 'פרופיל', destination: "" },
-  { key: 'menu2', name: 'חוגים ופעילויות', destination: "" },
-  { key: 'menu3', name: 'שוק', destination: "" },
-  { key: 'menu4', name: 'וועד', destination: "" },
-  { key: 'menu5', name: 'Menu 5', destination: "" },
-  { key: 'menu6', name: 'Menu 6', destination: "" },
-  { key: 'menu7', name: 'Menu 7', destination: "" },
-  { key: 'menu8', name: 'Menu 8', destination: "" },
-  { key: 'menu9', name: 'Menu 9', destination: "" },
+  { key: 'menu1', name: 'פרופיל', destination: '' },
+  { key: 'menu2', name: 'חוגים ופעילויות', destination: '' },
+  { key: 'menu3', name: 'שוק', destination: '' },
+  { key: 'menu4', name: 'וועד', destination: '' },
+  { key: 'menu5', name: 'Menu 5', destination: '' },
+  { key: 'menu6', name: 'Menu 6', destination: '' },
+  { key: 'menu7', name: 'Menu 7', destination: '' },
+  { key: 'menu8', name: 'Menu 8', destination: '' },
+  { key: 'menu9', name: 'Menu 9', destination: '' },
 ];
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+// Choose your two colors:
+const flashColor1 = "#fafafa"; // normal button color
+const flashColor2 = "#FF7F50"; // alternate flash color for the flash effect
+
+// Define custom keyframes for a smooth flash (backgroundColor change)
+const flashAnimation = {
+  0: { backgroundColor: flashColor1 },
+  0.5: { backgroundColor: flashColor2 },
+  1: { backgroundColor: flashColor1 },
+};
+
 export default function MainMenuButtons() {
   const [data, setData] = useState<MenuItem[]>(initialData);
-  // Get editing state from context
   const { editing } = useMainMenuEdit();
-  const jiggleAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (editing) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(jiggleAnim, {
-            toValue: 1,
-            duration: 80,
-            useNativeDriver: true,
-          }),
-          Animated.timing(jiggleAnim, {
-            toValue: -1,
-            duration: 160,
-            useNativeDriver: true,
-          }),
-          Animated.timing(jiggleAnim, {
-            toValue: 0,
-            duration: 80,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    } else {
-      jiggleAnim.stopAnimation();
-      jiggleAnim.setValue(0);
-    }
-  }, [editing, jiggleAnim]);
-
-  const rotation = jiggleAnim.interpolate({
-    inputRange: [-1, 1],
-    outputRange: ['-2deg', '2deg'],
-  });
 
   const renderItem = ({ item, drag, isActive }: RenderItemParams<MenuItem>) => {
     const handleLongPress = editing ? drag : undefined;
     const handlePress = () => {
       if (!editing) {
         console.log('Navigating to:', item.destination);
+        // Insert your navigation logic here.
       }
     };
 
     return (
-      <Animated.View
-        style={[
-          styles.item,
-          { transform: [{ rotate: editing ? rotation : '0deg' }] },
-          isActive && styles.activeItem,
-        ]}
+      <Animatable.View
+        // When editing, apply the flash animation continuously.
+        animation={editing ? flashAnimation : undefined}
+        iterationCount={editing ? 'infinite' : 1}
+        duration={4000} // duration of one cycle in ms
+        style={[styles.item, isActive && styles.activeItem]}
       >
         <TouchableOpacity
           onLongPress={handleLongPress}
@@ -93,7 +73,7 @@ export default function MainMenuButtons() {
         >
           <Text style={styles.itemText}>{item.name}</Text>
         </TouchableOpacity>
-      </Animated.View>
+      </Animatable.View>
     );
   };
 
@@ -105,6 +85,7 @@ export default function MainMenuButtons() {
         keyExtractor={(item) => item.key}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -119,12 +100,13 @@ const styles = StyleSheet.create({
   },
   item: {
     width: SCREEN_WIDTH * 0.9,
-    height: 120,
-    backgroundColor: '#4CAF50',
+    height: 100,
+    backgroundColor: flashColor1, // default color
     borderRadius: 8,
     marginVertical: 8,
     alignSelf: 'center',
     justifyContent: 'center',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
   },
   touchable: {
     flex: 1,
@@ -133,11 +115,10 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 24,
-    color: '#fff',
+    color: '#000000',
   },
   activeItem: {
     opacity: 0.7,
     backgroundColor: '#388E3C',
   },
 });
-

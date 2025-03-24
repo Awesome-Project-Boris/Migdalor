@@ -32,6 +32,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 18,
     alignItems: "center",
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
   },
   textBase: {
     fontSize: 26,
