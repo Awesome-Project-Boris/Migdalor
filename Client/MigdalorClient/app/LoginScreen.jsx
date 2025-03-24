@@ -2,23 +2,29 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  // TextInput,
-  TouchableOpacity,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
+  Dimensions,
   Platform,
   Keyboard,
   Pressable,
+  ActivityIndicator,
+  ScrollView,
   Image,
-  ImageBackground,
   StyleSheet,
   I18nManager,
-  TouchableHighlight,
 } from "react-native";
 import { TextInput, Checkbox } from "react-native-paper";
-// For checkbox, install @react-native-community/checkbox or use any other component library
+import { Spinner, YStack, XStack } from "tamagui";
+
 import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox";
 import FlipButton from "../../MigdalorClient/components/FlipButton";
+import OutlinedTextInput from "../../MigdalorClient/components/OutlinedTextInput";
+import LabeledTextInput from "../../MigdalorClient/components/LabeledTextInput";
+import { Ionicons } from "@expo/vector-icons";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
+
 // Force RTL if your app is in Hebrew (optional)
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -33,65 +39,86 @@ const LoginScreen = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.container}>
-        {/* Logo */}
-        <View style={styles.logoContainer}>
-          <Image
-            source={require("../assets/images/TEMPLOGO.png")}
-            // style={{ width: 200, height: 150 }} // Adjust dimensions as needed
-            resizeMode="contain"
-            alignSelf="center"
-            // marginTop={50}
-          />
-        </View>
-
-        {/* Login Form */}
-
+    <ScrollView>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           // style={styles.container}
         >
-          <View style={styles.formContainer}>
-            <TextInput
-              // style={styles.input}
-              onChangeText={setUsername}
-              value={username}
-              label="שם משתמש"
-              placeholderTextColor="#888"
-              autoCapitalize="none"
-              mode="outlined"
-            />
-            <TextInput
-              // style={styles.input}
-              onChangeText={setPassword}
-              value={password}
-              placeholder="סיסמה"
-              placeholderTextColor="#888"
-              secureTextEntry
-              autoCapitalize="none"
-              mode="outlined"
-            />
-
-            <View style={styles.rememberMeContainer}>
-              <CheckboxWithLabel
-                checked={rememberMe}
-                onCheckedChange={() => {
-                  setRememberMe(!rememberMe);
-                }}
-                label="זכור אותי"
+          <View style={styles.container}>
+            {/* Logo */}
+            <View style={styles.logoContainer}>
+              <Image
+                source={require("../assets/images/TEMPLOGO.png")}
+                // style={{ width: 200, height: 150 }} // Adjust dimensions as needed
+                resizeMode="contain"
+                alignSelf="center"
+                // marginTop={50}
               />
             </View>
-            <FlipButton
-              text="כניסה"
-              onPress={handleLogin}
-              bgColor="#FF7F50"
-              textColor="#013220"
-            />
+
+            {/* Login Form */}
+
+            <View style={styles.formContainer}>
+              <LabeledTextInput
+                label="שם משתמש"
+                value={username}
+                onChangeText={setUsername}
+                textContentType="username"
+                keyboardType="default"
+                style={styles.input}
+              />
+              <LabeledTextInput
+                label="סיסמה"
+                value={password}
+                onChangeText={setPassword}
+                textContentType="password"
+                keyboardType="default"
+                secureTextEntry
+                style={styles.input}
+              />
+
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  setRememberMe(!rememberMe);
+                }}
+              >
+                <View style={styles.rememberMeContainer}>
+                  <CheckboxWithLabel
+                    checked={rememberMe}
+                    onCheckedChange={() => {
+                      setRememberMe(!rememberMe);
+                    }}
+                    label="זכור אותי"
+                    style={{ marginStart: 10 }}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+              <FlipButton
+                text="כניסה"
+                onPress={handleLogin}
+                // bgColor="#FFFFFF"
+                // textColor="#000000"
+                bgColor="#FF7F50"
+                textColor="#013220"
+                bordered={true}
+                flipborderwidth={3}
+              >
+                <XStack gap={5} style={{ paddingStart: 15 }}>
+                  <Text style={styles.loginButtonText}>כניסה</Text>
+                  <Ionicons name="log-in-outline" size={40} color="#013220" />
+                  <ActivityIndicator
+                    size="large"
+                    animating={true}
+                    color={"#013220"}
+                  />
+                </XStack>
+              </FlipButton>
+            </View>
           </View>
         </KeyboardAvoidingView>
-      </View>
-    </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback>
+    </ScrollView>
   );
 };
 
@@ -101,6 +128,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fbe6d0", // Set background color to white
+    paddingBottom: 50,
   },
   backgroundImage: {
     flex: 1,
@@ -162,14 +190,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: "#FF7F50",
+    // backgroundColor: "#FF7F50",
     borderRadius: 8,
     paddingVertical: 18,
     alignItems: "center",
   },
   loginButtonText: {
     fontSize: 26,
-    color: "#013220",
+    // color: "#013220",
     fontWeight: "bold",
   },
 });
