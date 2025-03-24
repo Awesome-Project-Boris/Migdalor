@@ -20,7 +20,7 @@ const LabeledTextInput = ({
     {
       height: textInputHeight,
       fontSize: textInputFontSize,
-      textAlign: I18nManager.isRTL ? "right" : "left",
+      textAlign: "right",
     },
     inputStyle,
   ];

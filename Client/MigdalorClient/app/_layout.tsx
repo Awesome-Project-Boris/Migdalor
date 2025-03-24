@@ -1,13 +1,12 @@
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
+import { router } from "expo-router";
 import { createTamagui, TamaguiProvider } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
 import { PaperProvider } from "react-native-paper";
-
 import { defaultConfig } from "@tamagui/config/v4";
 
 const config = createTamagui(defaultConfig);
-
 export default function Layout() {
   return (
     <PaperProvider>
@@ -18,7 +17,7 @@ export default function Layout() {
               name="index" // This is the name of the page and must match the url from root
               options={{
                 drawerLabel: "Home",
-                headerShown: false,
+                // headerShown: false,
                 title: "overview",
               }}
             />
