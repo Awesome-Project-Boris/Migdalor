@@ -24,20 +24,20 @@ function EditToggleButton() {
 
 export default function Index() {
   return (
+    
     <MainMenuEditProvider>
       <View style={styles.container}>
-        <BottomSheetComponent />
         <Greeting />
         <EditToggleButton />
         <MainMenuButtons />
       </View>
+      <BottomSheetComponent />
     </MainMenuEditProvider>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: 'center',
     paddingTop: 50,
     backgroundColor: "#fbe6d0"

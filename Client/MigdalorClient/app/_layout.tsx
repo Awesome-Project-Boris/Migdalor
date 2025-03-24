@@ -8,6 +8,7 @@ import { defaultConfig } from "@tamagui/config/v4";
 const config = createTamagui(defaultConfig);
 export default function Layout() {
   return (
+    
     <PaperProvider>
       <TamaguiProvider config={config}>
         <GestureHandlerRootView style={{ flex: 1 }}>

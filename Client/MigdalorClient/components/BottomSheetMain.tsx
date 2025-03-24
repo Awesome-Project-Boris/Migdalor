@@ -1,14 +1,19 @@
+// App.tsx
 import React, { useRef, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Dimensions } from 'react-native';
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-export default function BottomSheetComponent() {
+export default function App() {
+  // Create a ref to control the BottomSheet
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // Define snap points for the BottomSheet (here 25% and 50% of screen height)
   const snapPoints = useMemo(() => ['25%', '50%'], []);
 
+  // Function to open the BottomSheet
   const openSheet = () => {
     console.log('Opening sheet...');
     bottomSheetRef.current?.expand();
@@ -16,18 +21,19 @@ export default function BottomSheetComponent() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <View style={styles.innerContainer}>
-        {/* Button to open the bottom sheet */}
-        <TouchableOpacity style={styles.openButton} onPress={openSheet}>
-          <Text style={styles.openButtonText}>Open Bottom Sheet</Text>
+      {/* Main page content */}
+      <View style={styles.content}>
+        <TouchableOpacity style={styles.button} onPress={openSheet}>
+          <Text style={styles.buttonText}>Open Bottom Sheet</Text>
         </TouchableOpacity>
-        {/* Bottom Sheet */}
-        <BottomSheet ref={bottomSheetRef} index={-1} snapPoints={snapPoints}>
-          <View style={styles.sheetContent}>
-            <Text style={styles.sheetText}>Hello from the Bottom Sheet!</Text>
-          </View>
-        </BottomSheet>
       </View>
+
+      {/* The BottomSheet component */}
+      <BottomSheet ref={bottomSheetRef} index={-1} snapPoints={snapPoints}>
+        <BottomSheetView style={styles.sheetContent}>
+          <Text style={styles.sheetText}>Hello from the Bottom Sheet!</Text>
+        </BottomSheetView>
+      </BottomSheet>
     </GestureHandlerRootView>
   );
 }
@@ -35,29 +41,28 @@ export default function BottomSheetComponent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f2f2f2',
   },
-  innerContainer: {
+  content: {
     flex: 1,
-    padding: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  openButton: {
+  button: {
     backgroundColor: '#007aff',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 8,
-    marginBottom: 20,
   },
-  openButtonText: {
-    fontSize: 18,
+  buttonText: {
     color: '#fff',
+    fontSize: 18,
   },
   sheetContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
   },
   sheetText: {
     fontSize: 16,
