@@ -14,7 +14,7 @@ import {
   StyleSheet,
   I18nManager,
 } from "react-native";
-import { TextInput, Checkbox } from "react-native-paper";
+// import { TextInput, Checkbox } from "react-native-paper";
 import { Spinner, YStack, XStack } from "tamagui";
 
 import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox";
@@ -22,6 +22,7 @@ import FlipButton from "../../MigdalorClient/components/FlipButton";
 import OutlinedTextInput from "../../MigdalorClient/components/OutlinedTextInput";
 import LabeledTextInput from "../../MigdalorClient/components/LabeledTextInput";
 import { Ionicons } from "@expo/vector-icons";
+import FloatingLabelInput from "@/components/FloatingLabelInput";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -60,22 +61,22 @@ const LoginScreen = () => {
             {/* Login Form */}
 
             <View style={styles.formContainer}>
-              <LabeledTextInput
+              <FloatingLabelInput
                 label="שם משתמש"
                 value={username}
                 onChangeText={setUsername}
                 textContentType="username"
                 keyboardType="default"
-                style={styles.input}
+                // style={styles.input}
               />
-              <LabeledTextInput
+              <FloatingLabelInput
                 label="סיסמה"
                 value={password}
                 onChangeText={setPassword}
                 textContentType="password"
                 keyboardType="default"
                 secureTextEntry
-                style={styles.input}
+                // style={styles.input}
               />
 
               <TouchableWithoutFeedback
@@ -97,21 +98,18 @@ const LoginScreen = () => {
               <FlipButton
                 text="כניסה"
                 onPress={handleLogin}
-                // bgColor="#FFFFFF"
-                // textColor="#000000"
                 bgColor="#FF7F50"
                 textColor="#013220"
-                bordered={true}
                 flipborderwidth={3}
               >
                 <XStack gap={5} style={{ paddingStart: 15 }}>
                   <Text style={styles.loginButtonText}>כניסה</Text>
-                  <Ionicons name="log-in-outline" size={40} color="#013220" />
-                  <ActivityIndicator
+                  <Ionicons name="log-in-outline" size={38} color="#013220" />
+                  {/* <ActivityIndicator
                     size="large"
                     animating={true}
                     color={"#013220"}
-                  />
+                  /> */}
                 </XStack>
               </FlipButton>
             </View>
