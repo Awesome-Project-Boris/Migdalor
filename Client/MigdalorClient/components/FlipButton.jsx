@@ -2,11 +2,11 @@ import React from "react";
 import { Pressable, Text, StyleSheet } from "react-native";
 
 const FlipButton = ({
-  text,
+  text = "Button",
   children,
   onPress,
-  bgColor,
-  textColor,
+  bgColor = "#FFFFFF",
+  textColor = "#000000",
   style,
   bordered = false,
   flipborderwidth = 2,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 18,
     alignItems: "center",
-    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
   },
   textBase: {
     fontSize: 26,
