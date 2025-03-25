@@ -16,6 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FlipButton from "./FlipButton";
 
+import { useRouter } from "expo-router";
+
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const BottomSheetComponent = forwardRef((props, ref) => {
@@ -23,6 +25,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
 
   // Snap point: 40% of screen height (adjust as needed)
   const snapPoints = useMemo(() => ["40%"], []);
+  const router = useRouter();
 
   // Expose open/close methods
   useImperativeHandle(ref, () => ({
@@ -78,7 +81,10 @@ const BottomSheetComponent = forwardRef((props, ref) => {
         <View style={styles.row}>
           <FlipButton
             style={styles.button}
-            onPress={() => console.log("Menu 3 pressed")}
+            onPress={() => {
+              console.log("Menu 3 pressed");
+              router.replace("../LoginScreen");
+            }}
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
@@ -97,11 +103,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
-            <MaterialCommunityIcons
-              name="menu-swap-outline"
-              size={32}
-              color="black"
-            />
+            <MaterialCommunityIcons name="menu-swap-outline" size={32} />
             <Text style={styles.buttonText}>שנה סדר תפריט</Text>
           </FlipButton>
         </View>
