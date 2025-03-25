@@ -23,17 +23,29 @@ function EditToggleButton() {
 
 
 export default function Index() {
+
+  const bottomSheetRef = useRef<any>(null);
+
+  const openSheet = () => {
+    console.log('Opening sheet...');
+    bottomSheetRef.current?.openSheet();
+  };
+
   return (
     <MainMenuEditProvider>
       <View style={styles.container}>
-        <BottomSheetComponent />
+        <TouchableOpacity style={styles.openButton} onPress={openSheet}>
+          <Text style={styles.openButtonText}>Open Bottom Sheet</Text>
+        </TouchableOpacity>
         <Greeting />
         <EditToggleButton />
         <MainMenuButtons />
+        <BottomSheetComponent ref={bottomSheetRef} />
       </View>
     </MainMenuEditProvider>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
