@@ -15,7 +15,7 @@ export default function Layout() {
             <Stack.Screen
               name="index"
               options={{
-                title: "Index Page",
+                title: "Index Page", headerShown: false 
               }}
             />
             <Stack.Screen
