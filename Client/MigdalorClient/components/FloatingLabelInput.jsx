@@ -4,7 +4,7 @@ import {
   TextInput,
   View,
   StyleSheet,
-  I18nManager,
+  TouchableWithoutFeedback,
 } from "react-native";
 
 const FloatingLabelInput = ({
@@ -13,13 +13,13 @@ const FloatingLabelInput = ({
   onChangeText,
   style,
   alignRight = true,
-  size = 20, // optional prop with default value
+  size = 20, // optional size prop
   ...props
 }) => {
-  // scale factor based on size (default: 20 => scale = 1)
   const scale = size / 20;
   const [isFocused, setIsFocused] = useState(false);
   const animatedIsFocused = useRef(new Animated.Value(value ? 1 : 0)).current;
+  const inputRef = useRef(null); // reference to the TextInput
 
   useEffect(() => {
     Animated.timing(animatedIsFocused, {
@@ -48,29 +48,32 @@ const FloatingLabelInput = ({
   };
 
   return (
-    <View style={[styles.container, { marginVertical: 12 * scale }, style]}>
-      <TextInput
-        {...props}
-        style={[
-          styles.textInput,
-          {
-            height: 40 * scale,
-            fontSize: 16 * scale,
-            paddingHorizontal: 10 * scale,
-            borderRadius: 4 * scale,
-            textAlign: alignRight ? "right" : "left",
-          },
-          props.inputStyle,
-        ]}
-        value={value}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        onChangeText={onChangeText}
-      />
-      <Animated.Text style={labelStyle} pointerEvents="none">
-        {label}
-      </Animated.Text>
-    </View>
+    <TouchableWithoutFeedback onPress={() => inputRef.current?.focus()}>
+      <View style={[styles.container, { marginVertical: 12 * scale }, style]}>
+        <TextInput
+          ref={inputRef}
+          {...props}
+          style={[
+            styles.textInput,
+            {
+              height: 40 * scale,
+              fontSize: 16 * scale,
+              paddingHorizontal: 10 * scale,
+              borderRadius: 4 * scale,
+              textAlign: alignRight ? "right" : "left",
+            },
+            props.inputStyle,
+          ]}
+          value={value}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onChangeText={onChangeText}
+        />
+        <Animated.Text style={labelStyle} pointerEvents="none">
+          {label}
+        </Animated.Text>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 

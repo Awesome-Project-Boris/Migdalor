@@ -67,6 +67,7 @@ const LoginScreen = () => {
                 onChangeText={setUsername}
                 textContentType="username"
                 keyboardType="default"
+                size={30}
                 // style={styles.input}
               />
               <FloatingLabelInput
