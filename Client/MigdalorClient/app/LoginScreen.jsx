@@ -76,6 +76,7 @@ const LoginScreen = () => {
                 textContentType="password"
                 keyboardType="default"
                 secureTextEntry
+                size={30}
                 // style={styles.input}
               />
 
