@@ -8,7 +8,7 @@ const FlipButton = ({
   bgColor = "#FFFFFF",
   textColor = "#000000",
   style,
-  bordered = false,
+  bordered = true,
   flipborderwidth = 2,
 }) => {
   return (
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
   },
   textBase: {
-    fontSize: 26,
+    // fontSize: 26,
     fontWeight: "bold",
   },
 });
