@@ -6,11 +6,14 @@ import {
   TouchableOpacity,
   Text,
 } from "react-native";
+
 import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
+
 import { Ionicons } from "@expo/vector-icons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FlipButton from "./FlipButton";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -53,7 +56,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             // activeOpacity={0.6}
           >
             <Ionicons name="home" size={32} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>Home/בית</Text>
+            <Text style={styles.buttonText}>בית</Text>
           </FlipButton>
 
           <FlipButton
@@ -68,7 +71,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
               color="#fff"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Options/הגדרות</Text>
+            <Text style={styles.buttonText}>הגדרות</Text>
           </FlipButton>
         </View>
 
@@ -85,7 +88,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
               color="#fff"
               style={styles.icon}
             />
-            <Text style={styles.buttonText}>Profile/פרופיל</Text>
+            <Text style={styles.buttonText}>פרופיל</Text>
           </FlipButton>
 
           <FlipButton
@@ -94,13 +97,12 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
-            <Ionicons
-              name="information-circle"
+            <MaterialCommunityIcons
+              name="menu-swap-outline"
               size={32}
-              color="#fff"
-              style={styles.icon}
+              color="black"
             />
-            <Text style={styles.buttonText}>Rearrange/סדר כפתורים מחדש</Text>
+            <Text style={styles.buttonText}>שנה סדר תפריט</Text>
           </FlipButton>
         </View>
       </BottomSheetView>
@@ -132,7 +134,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 18,
-    color: "#fff",
+    textAlign: "center",
   },
 });
 
