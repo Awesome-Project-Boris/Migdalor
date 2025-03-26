@@ -51,17 +51,14 @@ const LoginScreen = () => {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            // style={styles.container}
           >
             <View style={styles.container}>
               {/* Logo */}
               <View style={styles.logoContainer}>
                 <Image
                   source={require("../assets/images/TEMPLOGO.png")}
-                  // style={{ width: 200, height: 150 }} // Adjust dimensions as needed
                   resizeMode="contain"
                   alignSelf="center"
-                  // marginTop={50}
                 />
               </View>
 
@@ -107,11 +104,6 @@ const LoginScreen = () => {
                   <XStack gap={5} style={{ paddingStart: 15 }}>
                     <Text style={styles.loginButtonText}>כניסה</Text>
                     <Ionicons name="log-in-outline" size={38} color="#013220" />
-                    {/* <ActivityIndicator
-                      size="large"
-                      animating={true}
-                      color={"#013220"}
-                    /> */}
                   </XStack>
                 </FlipButton>
               </View>
@@ -168,12 +160,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     gap: 15,
-    // Add shadow if desired:
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.2,
-    // shadowRadius: 4,
-    // elevation: 3,
   },
   input: {
     backgroundColor: "#fff",
