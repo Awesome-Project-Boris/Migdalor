@@ -1,23 +1,14 @@
 import React, { forwardRef, useMemo, useRef, useImperativeHandle } from "react";
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Text,
-} from "react-native";
+import { View, StyleSheet, Dimensions, Text } from "react-native";
 import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FlipButton from "./FlipButton"; 
+import FlipButton from "./FlipButton";
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
-import { usePathname } from "expo-router";
-
-
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -25,12 +16,10 @@ const BottomSheetComponent = forwardRef((props, ref) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
-
-  // Define one snap point for full open (40% of screen height)
-  const snapPoints = useMemo(() => ["40%"], []);
   const router = useRouter();
 
-  // Expose methods via the ref:
+  const snapPoints = useMemo(() => ["40%"], []);
+
   useImperativeHandle(ref, () => ({
     openSheet: () => bottomSheetRef.current?.snapToIndex(0),
     closeSheet: () => bottomSheetRef.current?.close(),
@@ -39,21 +28,20 @@ const BottomSheetComponent = forwardRef((props, ref) => {
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={-1} // hidden initially
+      index={-1}
       snapPoints={snapPoints}
       enablePanDownToClose
-      // Use the default backdrop; set appearsOnIndex so it shows as soon as sheet opens (index 0)
       backdropComponent={(backdropProps) => (
         <BottomSheetBackdrop
           {...backdropProps}
-          appearsOnIndex={0}    // Show backdrop as soon as sheet is open
-          disappearsOnIndex={-1} // Hide when sheet is closed
+          appearsOnIndex={0}
+          disappearsOnIndex={-1}
           pressBehavior="close"
         />
       )}
     >
       <BottomSheetView style={styles.sheetContent}>
-        {/* 2x2 grid of buttons */}
+        {/* Row 1 */}
         <View style={styles.row}>
           <FlipButton
             style={styles.button}
@@ -81,6 +69,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
           </FlipButton>
         </View>
 
+        {/* Row 2 */}
         <View style={styles.row}>
           <FlipButton
             style={styles.button}
@@ -99,19 +88,26 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             />
             <Text style={styles.buttonText}>פרופיל</Text>
           </FlipButton>
+
           {pathname === "/index" && (
-          <FlipButton
-            style={styles.button}
-            onPress={() => {
-            setEditing(true);
-            bottomSheetRef.current?.close();
-           }}
-          bgColor="#4CAF50"
-          textColor="#ffffff"
-          >
-            <MaterialCommunityIcons name="menu-swap-outline" size={32} />
-            <Text style={styles.buttonText}>שנה סדר תפריט</Text>
-          </FlipButton>
+            <FlipButton
+              style={styles.button}
+              onPress={() => {
+                setEditing(true);
+                bottomSheetRef.current?.close();
+              }}
+              bgColor="#4CAF50"
+              textColor="#ffffff"
+            >
+              <MaterialCommunityIcons
+                name="menu-swap-outline"
+                size={32}
+                color="#fff"
+                style={styles.icon}
+              />
+              <Text style={styles.buttonText}>שנה סדר תפריט</Text>
+            </FlipButton>
+          )}
         </View>
       </BottomSheetView>
     </BottomSheet>
