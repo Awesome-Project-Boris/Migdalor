@@ -62,13 +62,8 @@ const BottomSheetComponent = forwardRef((props, ref) => {
 
           <FlipButton
             style={styles.button}
-            onPress={() => 
-              {
-                console.log("Menu 2 pressed")
-                bottomSheetRef.current?.close();
-              }
-              
-            }
+            // onPress={() => router.navigate("./GeneralSettings")}
+            onPress={() => router.navigate("./GeneralSettings")}
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
