@@ -1,35 +1,57 @@
 import React from "react";
+import { StyleSheet } from "react-native";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 
-// Define your own checkbox component with an "alignRight" prop
-const AlignedBouncyCheckbox = ({
-  alignRight = false,
-  containerStyle,
-  textStyle,
+const Checkbox = ({
+  alignRight = true,
+  text = "Remember Me",
+  onPress,
+  size = 35,
+  fillColor = "black",
+  unFillColor = "transparent",
   ...rest
 }) => {
-  // If alignRight is true, apply row-reverse styling and right-aligned text
-  const customContainerStyle = alignRight
-    ? [
-        {
-          flexDirection: "row-reverse",
-          justifyContent: "flex-end",
-          alignItems: "center",
-        },
-        containerStyle,
-      ]
-    : containerStyle;
-  const customTextStyle = alignRight
-    ? [{ textAlign: "right" }, textStyle]
-    : textStyle;
-
   return (
     <BouncyCheckbox
-      containerStyle={customContainerStyle}
-      textStyle={customTextStyle}
+      size={size}
+      fillColor={fillColor}
+      unFillColor={unFillColor}
+      text={text}
+      iconStyle={styles.icon}
+      innerIconStyle={styles.innerIcon}
+      textStyle={{
+        ...styles.text,
+        textAlign: alignRight ? "right" : "left",
+      }}
+      style={{
+        flexDirection: alignRight ? "row-reverse" : "row",
+        justifyContent: alignRight ? "flex-end" : "flex-start",
+        alignItems: "center",
+        paddingBottom: 5,
+      }}
+      onPress={onPress}
       {...rest}
     />
   );
 };
 
-export default AlignedBouncyCheckbox;
+const styles = StyleSheet.create({
+  container: {
+    // You can add any container styles if needed.
+  },
+  icon: {
+    borderRadius: 7,
+    borderWidth: 2,
+  },
+  innerIcon: {
+    borderRadius: 7,
+  },
+  text: {
+    textDecorationLine: "none",
+    paddingHorizontal: 20,
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+});
+
+export default Checkbox;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -17,13 +17,14 @@ import {
 // import { TextInput, Checkbox } from "react-native-paper";
 import { Spinner, YStack, XStack } from "tamagui";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
+import { Ionicons } from "@expo/vector-icons";
 
 import AlignedBouncyCheckbox from "../../MigdalorClient/components/CheckBox";
 import FlipButton from "../../MigdalorClient/components/FlipButton";
 import OutlinedTextInput from "../../MigdalorClient/components/OutlinedTextInput";
 import LabeledTextInput from "../../MigdalorClient/components/LabeledTextInput";
-import { Ionicons } from "@expo/vector-icons";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
+import Checkbox from "../../MigdalorClient/components/CheckBox";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -35,6 +36,10 @@ const LoginScreen = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    console.log("Remember Me:", rememberMe);
+  }, [rememberMe]);
 
   const handleLogin = () => {
     // Handle login logic here
@@ -86,18 +91,17 @@ const LoginScreen = () => {
                     setRememberMe(!rememberMe);
                   }}
                 >
-                  <AlignedBouncyCheckbox
+                  <Checkbox
                     alignRight={true}
-                    text="Accept Terms and Conditions"
-                    isChecked={false}
-                    onPress={(isChecked) => console.log(isChecked)}
+                    text="זכור אותי"
+                    onPress={() => setRememberMe(!rememberMe)}
                   />
                 </TouchableWithoutFeedback>
                 <FlipButton
                   text="כניסה"
                   onPress={handleLogin}
-                  bgColor="#FF7F50"
-                  textColor="#013220"
+                  bgColor="lightgrey"
+                  textColor="black"
                   flipborderwidth={3}
                 >
                   <XStack gap={5} style={{ paddingStart: 15 }}>
@@ -124,7 +128,7 @@ export default LoginScreen;
 const styles = StyleSheet.create({
   page: {
     flex: 1,
-    backgroundColor: "#fbe6d0", // Set background color to white
+    backgroundColor: "#c5d8d1",
   },
   container: {
     flex: 1,
