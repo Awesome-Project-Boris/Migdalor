@@ -57,8 +57,9 @@ const BottomSheetComponent = forwardRef((props, ref) => {
 
           <FlipButton
             style={styles.button}
-            onPress={() => router.navigate("./GeneralSettings")}
-            //onPress={() => router.navigate("./(settings)/GeneralSettings")}
+            //onPress={() => router.navigate("./GeneralSettings")}
+            onPress={() => router.navigate("./SettingsTabs")}
+            //onPress={() => router.navigate("/(settings)/_layout" as any)}
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
