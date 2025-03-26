@@ -16,15 +16,12 @@ const CustomSliderTrack = styled(Slider.Track, {
 
 export default function GeneralSettingsPage() {
   const [fontSize, setFontSize] = useState(Globals.userSelectedFontSize);
+
   const [scrollEnabled, setScrollEnabled] = useState(false);
 
   useEffect(() => {
     Globals.userSelectedFontSize = fontSize;
   }, [fontSize]);
-
-  useEffect(() => {
-    console.log("scrollEnabled is ", scrollEnabled);
-  }, [scrollEnabled]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -34,7 +31,9 @@ export default function GeneralSettingsPage() {
             fontSize={40}
             fontWeight={800}
             alignSelf="center"
-            direction={Globals.userSelectedDirection as "rtl" | "ltr"}
+            // direction={Globals.userSelectedDirection as "rtl" | "ltr"}
+            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+
           >
             גודל טקסט:
           </Text>
@@ -58,29 +57,26 @@ export default function GeneralSettingsPage() {
             }}
           />
 
-          <Pressable
-            onPressIn={() => {
-              setScrollEnabled(false);
-            }}
-            onPressOut={() => {
-              setScrollEnabled(true);
-            }}
-          >
             <Slider
               alignSelf="center"
               size="$6"
               width={SCREEN_WIDTH * 0.6}
-              defaultValue={[fontSize]}
+              defaultValue={[3- Globals.userSelectedFontSize]}
               max={3}
               step={1}
-              onValueChange={(value) => setFontSize(3 - value[0])}
+              onValueChange={(value) => setFontSize(3- value[0])}
+              onSlideStart={() => {
+                setScrollEnabled(false)
+              }}
+              onSlideEnd={() => {
+                setScrollEnabled(true);
+              }}
             >
               <CustomSliderTrack>
                 <Slider.TrackActive />
               </CustomSliderTrack>
               <Slider.Thumb circular index={0} />
             </Slider>
-          </Pressable>
 
           <Image
             source={{
@@ -96,14 +92,18 @@ export default function GeneralSettingsPage() {
             fontSize={40}
             fontWeight={800}
             alignSelf="center"
-            direction={Globals.userSelectedDirection as "rtl" | "ltr"}
+            // direction={Globals.userSelectedDirection as "rtl" | "ltr"}
+            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+
           >
             טקסט דוגמה:
           </Text>
           <Text
             style={[styles.textBoxStyle, { fontSize: fontSize * 10 + 20 }]}
             alignSelf="center"
-            direction={Globals.userSelectedDirection as "rtl" | "ltr"}
+            //direction={Globals.userSelectedDirection as "rtl" | "ltr"}
+            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+
           >
             הקוסם מארץ עוץ: דורותי והכלב הקטן שלה טוטו גרו בכפר קטן באמריקה,
             דורותי אהבה מאוד את טוטו, והם היו משחקים אחד עם השניה כל הזמן. יום

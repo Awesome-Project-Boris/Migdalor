@@ -29,7 +29,7 @@ export default function Layout() {
               }}
             />
             <Stack.Screen
-              name="MainMenu" // VACANT
+              name="MainMenwu" // VACANT
               options={{
                 title: "Main Menu",
                 headerRight: () => (

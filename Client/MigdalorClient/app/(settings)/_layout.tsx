@@ -2,9 +2,9 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 
 export default function SettingsLayout() {
+  console.log("hi"); 
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: 'lightgreen' }}>
-      
+    <Tabs screenOptions={{ tabBarActiveTintColor: 'lightgreen' }} initialRouteName="GeneralSettings">
       <Tabs.Screen
         name="GeneralSettings"
         options={{

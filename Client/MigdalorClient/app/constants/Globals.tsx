@@ -5,5 +5,5 @@ export let Globals= {
   THEME: 'light', // Default theme
   LANGUAGE: 'en', // Default language
   userSelectedDirection: "rtl",
-  userSelectedFontSize: 2,
+  userSelectedFontSize: 1,
 };
