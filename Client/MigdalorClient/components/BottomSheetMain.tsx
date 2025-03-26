@@ -25,6 +25,8 @@ const BottomSheetComponent = forwardRef((props, ref) => {
     closeSheet: () => bottomSheetRef.current?.close(),
   }));
 
+  console.log("Current pathname:", pathname);
+
   return (
     <BottomSheet
       ref={bottomSheetRef}
@@ -60,6 +62,31 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
+            <Ionicons name="settings" size={32} color="#fff" style={styles.icon} />
+            <Text style={styles.buttonText}>Options/הגדרות</Text>
+          </FlipButton>
+        </View>
+
+        <View style={styles.row}>
+          <FlipButton
+            style={styles.button}
+            onPress={() => console.log("Menu 3 pressed")}
+            bgColor="#4CAF50"
+            textColor="#ffffff"
+          >
+            <Ionicons name="person" size={32} color="#fff" style={styles.icon} />
+            <Text style={styles.buttonText}>Profile/פרופיל</Text>
+          </FlipButton>
+          { pathname === "/" && (
+          <FlipButton
+            style={styles.button}
+            onPress={() => {
+            setEditing(true);
+            bottomSheetRef.current?.close();
+           }}
+          bgColor="#4CAF50"
+          textColor="#ffffff"
+          >
             <Ionicons
               name="settings"
               size={32}
@@ -68,6 +95,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             />
             <Text style={styles.buttonText}>הגדרות</Text>
           </FlipButton>
+          )}
         </View>
 
         {/* Row 2 */}
