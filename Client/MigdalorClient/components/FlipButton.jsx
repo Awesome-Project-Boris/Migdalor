@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
   textBase: {
     // fontSize: 26,
     fontWeight: "bold",
+    pointerEvents: "none",
   },
 });
 

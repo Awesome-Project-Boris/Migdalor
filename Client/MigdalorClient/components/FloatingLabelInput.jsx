@@ -13,7 +13,7 @@ const FloatingLabelInput = ({
   onChangeText,
   style,
   alignRight = true,
-  size = 20, // optional size prop
+  size = 30, // optional size prop
   ...props
 }) => {
   const scale = size / 20;

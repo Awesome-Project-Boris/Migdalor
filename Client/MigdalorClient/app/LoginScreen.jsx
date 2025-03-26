@@ -40,95 +40,103 @@ const LoginScreen = () => {
   };
 
   return (
-    <ScrollView>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          // style={styles.container}
-        >
-          <View style={styles.container}>
-            {/* Logo */}
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("../assets/images/TEMPLOGO.png")}
-                // style={{ width: 200, height: 150 }} // Adjust dimensions as needed
-                resizeMode="contain"
-                alignSelf="center"
-                // marginTop={50}
-              />
+    <View style={styles.page}>
+      <ScrollView>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            // style={styles.container}
+          >
+            <View style={styles.container}>
+              {/* Logo */}
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require("../assets/images/TEMPLOGO.png")}
+                  // style={{ width: 200, height: 150 }} // Adjust dimensions as needed
+                  resizeMode="contain"
+                  alignSelf="center"
+                  // marginTop={50}
+                />
+              </View>
+
+              {/* Login Form */}
+
+              <View style={styles.formContainer}>
+                <FloatingLabelInput
+                  label="שם משתמש"
+                  value={username}
+                  onChangeText={setUsername}
+                  textContentType="username"
+                  keyboardType="default"
+                  size={30}
+                  // style={styles.input}
+                />
+                <FloatingLabelInput
+                  label="סיסמה"
+                  value={password}
+                  onChangeText={setPassword}
+                  textContentType="password"
+                  keyboardType="default"
+                  secureTextEntry
+                  size={30}
+                  // style={styles.input}
+                />
+
+                <TouchableWithoutFeedback
+                  onPress={() => {
+                    setRememberMe(!rememberMe);
+                  }}
+                >
+                  <View style={styles.rememberMeContainer}>
+                    <CheckboxWithLabel
+                      checked={rememberMe}
+                      onCheckedChange={() => {
+                        setRememberMe(!rememberMe);
+                      }}
+                      label="זכור אותי"
+                      style={{ marginStart: 10 }}
+                    />
+                  </View>
+                </TouchableWithoutFeedback>
+                <FlipButton
+                  text="כניסה"
+                  onPress={handleLogin}
+                  bgColor="#FF7F50"
+                  textColor="#013220"
+                  flipborderwidth={3}
+                >
+                  <XStack gap={5} style={{ paddingStart: 15 }}>
+                    <Text style={styles.loginButtonText}>כניסה</Text>
+                    <Ionicons name="log-in-outline" size={38} color="#013220" />
+                    <ActivityIndicator
+                      size="large"
+                      animating={true}
+                      color={"#013220"}
+                    />
+                  </XStack>
+                </FlipButton>
+              </View>
             </View>
-
-            {/* Login Form */}
-
-            <View style={styles.formContainer}>
-              <FloatingLabelInput
-                label="שם משתמש"
-                value={username}
-                onChangeText={setUsername}
-                textContentType="username"
-                keyboardType="default"
-                size={30}
-                // style={styles.input}
-              />
-              <FloatingLabelInput
-                label="סיסמה"
-                value={password}
-                onChangeText={setPassword}
-                textContentType="password"
-                keyboardType="default"
-                secureTextEntry
-                size={30}
-                // style={styles.input}
-              />
-
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  setRememberMe(!rememberMe);
-                }}
-              >
-                <View style={styles.rememberMeContainer}>
-                  <CheckboxWithLabel
-                    checked={rememberMe}
-                    onCheckedChange={() => {
-                      setRememberMe(!rememberMe);
-                    }}
-                    label="זכור אותי"
-                    style={{ marginStart: 10 }}
-                  />
-                </View>
-              </TouchableWithoutFeedback>
-              <FlipButton
-                text="כניסה"
-                onPress={handleLogin}
-                bgColor="#FF7F50"
-                textColor="#013220"
-                flipborderwidth={3}
-              >
-                <XStack gap={5} style={{ paddingStart: 15 }}>
-                  <Text style={styles.loginButtonText}>כניסה</Text>
-                  <Ionicons name="log-in-outline" size={38} color="#013220" />
-                  {/* <ActivityIndicator
-                    size="large"
-                    animating={true}
-                    color={"#013220"}
-                  /> */}
-                </XStack>
-              </FlipButton>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
-    </ScrollView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </ScrollView>
+    </View>
   );
 };
 
 export default LoginScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  page: {
     flex: 1,
     backgroundColor: "#fbe6d0", // Set background color to white
-    paddingBottom: 50,
+  },
+  container: {
+    flex: 1,
+    // paddingBottom: 50,
+    ...(Platform.OS === "web" && {
+      alignItems: "center",
+    }),
   },
   backgroundImage: {
     flex: 1,
@@ -180,9 +188,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rememberMeContainer: {
-    flexDirection: "row-reverse", // RTL
-    alignItems: "center",
-    marginBottom: 15,
     direction: "rtl",
   },
   rememberMeText: {
@@ -199,5 +204,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     // color: "#013220",
     fontWeight: "bold",
+    pointerEvents: "none",
   },
 });
