@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { StyleSheet, Dimensions, ScrollView } from "react-native";
 import { Bold, Scroll } from "@tamagui/lucide-icons";
 import { Globals } from "../constants/Globals";
-import { TouchableWithoutFeedback } from "react-native-gesture-handler";
+import { Pressable, TouchableWithoutFeedback } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -21,6 +21,10 @@ export default function GeneralSettingsPage() {
   useEffect(() => {
     Globals.userSelectedFontSize = fontSize;
   }, [fontSize]);
+
+  useEffect(() => {
+    console.log("scrollEnabled is ", scrollEnabled);
+  }, [scrollEnabled]);
 
   return (
     <View style={{ flex: 1 }}>
@@ -54,7 +58,7 @@ export default function GeneralSettingsPage() {
             }}
           />
 
-          <TouchableWithoutFeedback
+          <Pressable
             onPressIn={() => {
               setScrollEnabled(false);
             }}
@@ -64,7 +68,7 @@ export default function GeneralSettingsPage() {
           >
             <Slider
               alignSelf="center"
-              size="$4"
+              size="$6"
               width={SCREEN_WIDTH * 0.6}
               defaultValue={[fontSize]}
               max={3}
@@ -76,8 +80,7 @@ export default function GeneralSettingsPage() {
               </CustomSliderTrack>
               <Slider.Thumb circular index={0} />
             </Slider>
-            {/* <SliderExample /> */}
-          </TouchableWithoutFeedback>
+          </Pressable>
 
           <Image
             source={{
