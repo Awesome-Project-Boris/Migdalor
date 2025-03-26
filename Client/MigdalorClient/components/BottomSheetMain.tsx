@@ -25,6 +25,8 @@ const BottomSheetComponent = forwardRef((props, ref) => {
     closeSheet: () => bottomSheetRef.current?.close(),
   }));
 
+  console.log("Current pathname:", pathname);
+
   return (
     <BottomSheet
       ref={bottomSheetRef}
@@ -75,7 +77,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             <Ionicons name="person" size={32} color="#fff" style={styles.icon} />
             <Text style={styles.buttonText}>Profile/פרופיל</Text>
           </FlipButton>
-          {pathname === "/index" && (
+          { pathname === "/" && (
           <FlipButton
             style={styles.button}
             onPress={() => {
