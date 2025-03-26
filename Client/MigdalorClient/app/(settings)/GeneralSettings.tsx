@@ -17,7 +17,7 @@ const CustomSliderTrack = styled(Slider.Track, {
 export default function GeneralSettingsPage() {
   const [fontSize, setFontSize] = useState(Globals.userSelectedFontSize);
 
-  const [scrollEnabled, setScrollEnabled] = useState(false);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   useEffect(() => {
     Globals.userSelectedFontSize = fontSize;
