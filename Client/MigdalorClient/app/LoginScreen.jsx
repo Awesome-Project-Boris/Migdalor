@@ -20,7 +20,6 @@ import FlipButton from "../../MigdalorClient/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Checkbox from "../../MigdalorClient/components/CheckBox";
 
-// Force RTL if your app is in Hebrew (optional)
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
@@ -33,9 +32,7 @@ const LoginScreen = () => {
     console.log("Remember Me:", rememberMe);
   }, [rememberMe]);
 
-  const handleLogin = () => {
-    // Handle login logic here
-  };
+  const handleLogin = () => {};
 
   return (
     <View style={styles.page}>
@@ -116,7 +113,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    // paddingBottom: 50,
+
     ...(Platform.OS === "web" && {
       alignItems: "center",
     }),
@@ -126,7 +123,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   topBar: {
-    flexDirection: "row-reverse", // For RTL: row-reverse places icons on the right
+    flexDirection: "row-reverse",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 40,
@@ -159,7 +156,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     paddingHorizontal: 15,
     paddingVertical: 12,
-    textAlign: "right", // Align text to the right for Hebrew
+    textAlign: "right",
     fontSize: 20,
     borderColor: "#bfbdbd",
     borderWidth: 1,
@@ -172,14 +169,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   loginButton: {
-    // backgroundColor: "#FF7F50",
     borderRadius: 8,
     paddingVertical: 18,
     alignItems: "center",
   },
   loginButtonText: {
     fontSize: 26,
-    // color: "#013220",
+
     fontWeight: "bold",
     pointerEvents: "none",
   },
