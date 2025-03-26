@@ -16,8 +16,9 @@ import {
 } from "react-native";
 // import { TextInput, Checkbox } from "react-native-paper";
 import { Spinner, YStack, XStack } from "tamagui";
+import BouncyCheckbox from "react-native-bouncy-checkbox";
 
-import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox";
+import AlignedBouncyCheckbox from "../../MigdalorClient/components/CheckBox";
 import FlipButton from "../../MigdalorClient/components/FlipButton";
 import OutlinedTextInput from "../../MigdalorClient/components/OutlinedTextInput";
 import LabeledTextInput from "../../MigdalorClient/components/LabeledTextInput";
@@ -69,7 +70,6 @@ const LoginScreen = () => {
                   textContentType="username"
                   keyboardType="default"
                   size={30}
-                  // style={styles.input}
                 />
                 <FloatingLabelInput
                   label="סיסמה"
@@ -79,7 +79,6 @@ const LoginScreen = () => {
                   keyboardType="default"
                   secureTextEntry
                   size={30}
-                  // style={styles.input}
                 />
 
                 <TouchableWithoutFeedback
@@ -87,16 +86,12 @@ const LoginScreen = () => {
                     setRememberMe(!rememberMe);
                   }}
                 >
-                  <View style={styles.rememberMeContainer}>
-                    <CheckboxWithLabel
-                      checked={rememberMe}
-                      onCheckedChange={() => {
-                        setRememberMe(!rememberMe);
-                      }}
-                      label="זכור אותי"
-                      style={{ marginStart: 10 }}
-                    />
-                  </View>
+                  <AlignedBouncyCheckbox
+                    alignRight={true}
+                    text="Accept Terms and Conditions"
+                    isChecked={false}
+                    onPress={(isChecked) => console.log(isChecked)}
+                  />
                 </TouchableWithoutFeedback>
                 <FlipButton
                   text="כניסה"
@@ -108,11 +103,11 @@ const LoginScreen = () => {
                   <XStack gap={5} style={{ paddingStart: 15 }}>
                     <Text style={styles.loginButtonText}>כניסה</Text>
                     <Ionicons name="log-in-outline" size={38} color="#013220" />
-                    <ActivityIndicator
+                    {/* <ActivityIndicator
                       size="large"
                       animating={true}
                       color={"#013220"}
-                    />
+                    /> */}
                   </XStack>
                 </FlipButton>
               </View>
