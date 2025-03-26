@@ -4,29 +4,21 @@ import {
   Text,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
-  Dimensions,
   Platform,
   Keyboard,
-  Pressable,
   ActivityIndicator,
   ScrollView,
   Image,
   StyleSheet,
   I18nManager,
 } from "react-native";
-// import { TextInput, Checkbox } from "react-native-paper";
-import { Spinner, YStack, XStack } from "tamagui";
-import BouncyCheckbox from "react-native-bouncy-checkbox";
+
+import { XStack } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
 
-import AlignedBouncyCheckbox from "../../MigdalorClient/components/CheckBox";
 import FlipButton from "../../MigdalorClient/components/FlipButton";
-import OutlinedTextInput from "../../MigdalorClient/components/OutlinedTextInput";
-import LabeledTextInput from "../../MigdalorClient/components/LabeledTextInput";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Checkbox from "../../MigdalorClient/components/CheckBox";
-
-const SCREEN_WIDTH = Dimensions.get("window").width;
 
 // Force RTL if your app is in Hebrew (optional)
 I18nManager.allowRTL(true);
