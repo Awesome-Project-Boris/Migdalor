@@ -21,6 +21,7 @@ const Checkbox = ({
       innerIconStyle={styles.innerIcon}
       textStyle={{
         ...styles.text,
+        color: fillColor,
         textAlign: alignRight ? "right" : "left",
       }}
       style={{

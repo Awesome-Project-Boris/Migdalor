@@ -80,6 +80,7 @@ const LoginScreen = () => {
                   <Checkbox
                     alignRight={true}
                     text="זכור אותי"
+                    fillColor="black"
                     onPress={() => setRememberMe(!rememberMe)}
                   />
                 </TouchableWithoutFeedback>
