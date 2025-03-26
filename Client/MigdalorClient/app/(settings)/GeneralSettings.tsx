@@ -7,7 +7,7 @@ import { Bold, Scroll } from "@tamagui/lucide-icons";
 import { Globals } from "../constants/Globals";
 import { TouchableWithoutFeedback } from "react-native-gesture-handler";
 import { useSharedValue } from 'react-native-reanimated';
-import { Slider as AwesomeSlider } from 'react-native-awesome-slider';
+//import { Slider as AwesomeSlider } from 'react-native-awesome-slider';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
