@@ -6,15 +6,16 @@ import {
   TouchableOpacity,
   Text,
 } from "react-native";
-
 import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
-
 import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FlipButton from "./FlipButton";
+import FlipButton from "./FlipButton"; 
+import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
+import { usePathname } from "expo-router";
+
 
 import { useRouter } from "expo-router";
 
@@ -22,12 +23,14 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const BottomSheetComponent = forwardRef((props, ref) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const { editing, setEditing } = useMainMenuEdit();
+  const pathname = usePathname();
 
-  // Snap point: 40% of screen height (adjust as needed)
+  // Define one snap point for full open (40% of screen height)
   const snapPoints = useMemo(() => ["40%"], []);
   const router = useRouter();
 
-  // Expose open/close methods
+  // Expose methods via the ref:
   useImperativeHandle(ref, () => ({
     openSheet: () => bottomSheetRef.current?.snapToIndex(0),
     closeSheet: () => bottomSheetRef.current?.close(),
@@ -36,15 +39,16 @@ const BottomSheetComponent = forwardRef((props, ref) => {
   return (
     <BottomSheet
       ref={bottomSheetRef}
-      index={-1} // start hidden
+      index={-1} // hidden initially
       snapPoints={snapPoints}
       enablePanDownToClose
+      // Use the default backdrop; set appearsOnIndex so it shows as soon as sheet opens (index 0)
       backdropComponent={(backdropProps) => (
         <BottomSheetBackdrop
           {...backdropProps}
-          appearsOnIndex={0}
-          disappearsOnIndex={-1}
-          pressBehavior="close" // close when tapping outside
+          appearsOnIndex={0}    // Show backdrop as soon as sheet is open
+          disappearsOnIndex={-1} // Hide when sheet is closed
+          pressBehavior="close"
         />
       )}
     >
@@ -56,7 +60,6 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             onPress={() => console.log("Menu 1 pressed")}
             bgColor="#4CAF50"
             textColor="#ffffff"
-            // activeOpacity={0.6}
           >
             <Ionicons name="home" size={32} color="#fff" style={styles.icon} />
             <Text style={styles.buttonText}>בית</Text>
@@ -96,12 +99,15 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             />
             <Text style={styles.buttonText}>פרופיל</Text>
           </FlipButton>
-
+          {pathname === "/index" && (
           <FlipButton
             style={styles.button}
-            onPress={() => console.log("Menu 4 pressed")}
-            bgColor="#4CAF50"
-            textColor="#ffffff"
+            onPress={() => {
+            setEditing(true);
+            bottomSheetRef.current?.close();
+           }}
+          bgColor="#4CAF50"
+          textColor="#ffffff"
           >
             <MaterialCommunityIcons name="menu-swap-outline" size={32} />
             <Text style={styles.buttonText}>שנה סדר תפריט</Text>
@@ -116,7 +122,6 @@ const styles = StyleSheet.create({
   sheetContent: {
     flex: 1,
     padding: 16,
-    // We don't center here so the rows can space themselves
   },
   row: {
     flexDirection: "row",
@@ -124,7 +129,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   button: {
-    width: SCREEN_WIDTH * 0.35, // Adjust as needed
+    width: SCREEN_WIDTH * 0.35,
     height: 100,
     backgroundColor: "#4CAF50",
     borderRadius: 8,
