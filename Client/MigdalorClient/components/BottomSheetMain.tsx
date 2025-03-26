@@ -47,7 +47,12 @@ const BottomSheetComponent = forwardRef((props, ref) => {
         <View style={styles.row}>
           <FlipButton
             style={styles.button}
-            onPress={() => console.log("Menu 1 pressed")}
+            onPress={() => 
+              {
+                bottomSheetRef.current?.close();
+                console.log("Menu 1 pressed")
+              }
+            }
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
@@ -57,7 +62,13 @@ const BottomSheetComponent = forwardRef((props, ref) => {
 
           <FlipButton
             style={styles.button}
-            onPress={() => console.log("Menu 2 pressed")}
+            onPress={() => 
+              {
+                console.log("Menu 2 pressed")
+                bottomSheetRef.current?.close();
+              }
+              
+            }
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
@@ -77,7 +88,8 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             style={styles.button}
             onPress={() => {
               console.log("Menu 3 pressed");
-              router.replace("../LoginScreen");
+              router.navigate("LoginScreen" as any);
+              bottomSheetRef.current?.close();
             }}
             bgColor="#4CAF50"
             textColor="#ffffff"
@@ -91,7 +103,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             <Text style={styles.buttonText}>פרופיל</Text>
           </FlipButton>
 
-          {pathname === "/index" && (
+          {pathname === "/" && (
             <FlipButton
               style={styles.button}
               onPress={() => {
