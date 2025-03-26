@@ -14,14 +14,16 @@ import {
   StyleSheet,
   I18nManager,
 } from "react-native";
-import { TextInput, Checkbox } from "react-native-paper";
+// import { TextInput, Checkbox } from "react-native-paper";
 import { Spinner, YStack, XStack } from "tamagui";
+import BouncyCheckbox from "react-native-bouncy-checkbox";
 
-import CheckboxWithLabel from "../../MigdalorClient/components/CheckBox";
+import AlignedBouncyCheckbox from "../../MigdalorClient/components/CheckBox";
 import FlipButton from "../../MigdalorClient/components/FlipButton";
 import OutlinedTextInput from "../../MigdalorClient/components/OutlinedTextInput";
 import LabeledTextInput from "../../MigdalorClient/components/LabeledTextInput";
 import { Ionicons } from "@expo/vector-icons";
+import FloatingLabelInput from "@/components/FloatingLabelInput";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -39,96 +41,97 @@ const LoginScreen = () => {
   };
 
   return (
-    <ScrollView>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          // style={styles.container}
-        >
-          <View style={styles.container}>
-            {/* Logo */}
-            <View style={styles.logoContainer}>
-              <Image
-                source={require("../assets/images/TEMPLOGO.png")}
-                // style={{ width: 200, height: 150 }} // Adjust dimensions as needed
-                resizeMode="contain"
-                alignSelf="center"
-                // marginTop={50}
-              />
-            </View>
+    <View style={styles.page}>
+      <ScrollView>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            // style={styles.container}
+          >
+            <View style={styles.container}>
+              {/* Logo */}
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require("../assets/images/TEMPLOGO.png")}
+                  // style={{ width: 200, height: 150 }} // Adjust dimensions as needed
+                  resizeMode="contain"
+                  alignSelf="center"
+                  // marginTop={50}
+                />
+              </View>
 
-            {/* Login Form */}
+              {/* Login Form */}
 
-            <View style={styles.formContainer}>
-              <LabeledTextInput
-                label="שם משתמש"
-                value={username}
-                onChangeText={setUsername}
-                textContentType="username"
-                keyboardType="default"
-                style={styles.input}
-              />
-              <LabeledTextInput
-                label="סיסמה"
-                value={password}
-                onChangeText={setPassword}
-                textContentType="password"
-                keyboardType="default"
-                secureTextEntry
-                style={styles.input}
-              />
+              <View style={styles.formContainer}>
+                <FloatingLabelInput
+                  label="שם משתמש"
+                  value={username}
+                  onChangeText={setUsername}
+                  textContentType="username"
+                  keyboardType="default"
+                  size={30}
+                />
+                <FloatingLabelInput
+                  label="סיסמה"
+                  value={password}
+                  onChangeText={setPassword}
+                  textContentType="password"
+                  keyboardType="default"
+                  secureTextEntry
+                  size={30}
+                />
 
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  setRememberMe(!rememberMe);
-                }}
-              >
-                <View style={styles.rememberMeContainer}>
-                  <CheckboxWithLabel
-                    checked={rememberMe}
-                    onCheckedChange={() => {
-                      setRememberMe(!rememberMe);
-                    }}
-                    label="זכור אותי"
-                    style={{ marginStart: 10 }}
+                <TouchableWithoutFeedback
+                  onPress={() => {
+                    setRememberMe(!rememberMe);
+                  }}
+                >
+                  <AlignedBouncyCheckbox
+                    alignRight={true}
+                    text="Accept Terms and Conditions"
+                    isChecked={false}
+                    onPress={(isChecked) => console.log(isChecked)}
                   />
-                </View>
-              </TouchableWithoutFeedback>
-              <FlipButton
-                text="כניסה"
-                onPress={handleLogin}
-                // bgColor="#FFFFFF"
-                // textColor="#000000"
-                bgColor="#FF7F50"
-                textColor="#013220"
-                bordered={true}
-                flipborderwidth={3}
-              >
-                <XStack gap={5} style={{ paddingStart: 15 }}>
-                  <Text style={styles.loginButtonText}>כניסה</Text>
-                  <Ionicons name="log-in-outline" size={40} color="#013220" />
-                  <ActivityIndicator
-                    size="large"
-                    animating={true}
-                    color={"#013220"}
-                  />
-                </XStack>
-              </FlipButton>
+                </TouchableWithoutFeedback>
+                <FlipButton
+                  text="כניסה"
+                  onPress={handleLogin}
+                  bgColor="#FF7F50"
+                  textColor="#013220"
+                  flipborderwidth={3}
+                >
+                  <XStack gap={5} style={{ paddingStart: 15 }}>
+                    <Text style={styles.loginButtonText}>כניסה</Text>
+                    <Ionicons name="log-in-outline" size={38} color="#013220" />
+                    {/* <ActivityIndicator
+                      size="large"
+                      animating={true}
+                      color={"#013220"}
+                    /> */}
+                  </XStack>
+                </FlipButton>
+              </View>
             </View>
-          </View>
-        </KeyboardAvoidingView>
-      </TouchableWithoutFeedback>
-    </ScrollView>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </ScrollView>
+    </View>
   );
 };
 
 export default LoginScreen;
 
 const styles = StyleSheet.create({
-  container: {
+  page: {
     flex: 1,
     backgroundColor: "#fbe6d0", // Set background color to white
-    paddingBottom: 50,
+  },
+  container: {
+    flex: 1,
+    // paddingBottom: 50,
+    ...(Platform.OS === "web" && {
+      alignItems: "center",
+    }),
   },
   backgroundImage: {
     flex: 1,
@@ -180,9 +183,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rememberMeContainer: {
-    flexDirection: "row-reverse", // RTL
-    alignItems: "center",
-    marginBottom: 15,
     direction: "rtl",
   },
   rememberMeText: {
@@ -199,5 +199,6 @@ const styles = StyleSheet.create({
     fontSize: 26,
     // color: "#013220",
     fontWeight: "bold",
+    pointerEvents: "none",
   },
 });

@@ -22,6 +22,7 @@ export default function Layout() {
               name="LoginScreen"
               options={{
                 title: "Login Screen",
+                headerShown: false,
                 headerRight: () => (
                   <Ionicons name="person" size={24} color="#ccc" />
                 ),
