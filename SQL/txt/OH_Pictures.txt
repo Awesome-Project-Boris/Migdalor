@@ -1,0 +1,6 @@
+CREATE TABLE OH_Pictures (
+    picID INT IDENTITY(1,1) PRIMARY KEY,
+    picName VARCHAR(255) NOT NULL,
+    picPath VARCHAR(MAX) NOT NULL,
+    picAlt VARCHAR(255) NOT NULL,
+);
