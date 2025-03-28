@@ -6,6 +6,7 @@ import { Bold, Scroll } from "@tamagui/lucide-icons";
 import { Globals } from "../constants/Globals";
 import { Pressable, TouchableWithoutFeedback } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
+import  Header  from "../../components/Header";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -25,6 +26,7 @@ export default function GeneralSettingsPage() {
 
   return (
     <View style={{ flex: 1 }}>
+      <Header/>
       <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1 }}>
         <YStack height={70} alignItems="baseline" gap="$5" alignSelf="center">
           <Text
