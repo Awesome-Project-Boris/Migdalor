@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 import * as Animatable from 'react-native-animatable';
 import { useRouter } from 'expo-router';
 import { useMainMenuEdit } from '../context/MainMenuEditProvider';
-import FlipButton from './FlipButton';
 
 const initialData = [
   { key: 'menu1', name: 'פרופיל', destination: 'aaa' },
@@ -20,7 +19,7 @@ const initialData = [
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-// Colors used for the flash animation:
+// Choose your two colors:
 const flashColor1 = "#fafafa"; // normal button color
 const flashColor2 = "#006aab"; // alternate flash color for the flash effect
 
@@ -37,12 +36,11 @@ export default function MainMenuButtons() {
   const { editing } = useMainMenuEdit();
 
   const renderItem = ({ item, drag, isActive }) => {
-    // When in editing mode, allow long-press to drag; otherwise, no long-press.
     const handleLongPress = editing ? drag : undefined;
     const handlePress = () => {
       if (!editing) {
         console.log('Navigating to:', item.destination);
-        router.navigate(item.destination);
+        router.navigate(item.destination)
       }
     };
 
@@ -53,17 +51,15 @@ export default function MainMenuButtons() {
         duration={4000} // duration of one cycle in ms
         style={[styles.item, isActive && styles.activeItem]}
       >
-        <FlipButton
-          onPress={handlePress}
+        <TouchableOpacity
           onLongPress={handleLongPress}
           delayLongPress={300}
           disabled={isActive}
+          onPress={handlePress}
           style={styles.touchable}
-          bgColor={flashColor1}
-          textColor="#000000"
         >
           <Text style={styles.itemText}>{item.name}</Text>
-        </FlipButton>
+        </TouchableOpacity>
       </Animatable.View>
     );
   };
@@ -98,7 +94,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     justifyContent: 'center',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-    // For iOS shadow:
+    // For iOS shadow, use:
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 4,
