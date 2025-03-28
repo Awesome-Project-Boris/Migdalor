@@ -1,71 +1,144 @@
-// App.tsx
-import React, { useRef, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Dimensions } from 'react-native';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import React, { forwardRef, useMemo, useRef, useImperativeHandle } from "react";
+import { View, StyleSheet, Dimensions, Text } from "react-native";
+import BottomSheet, {
+  BottomSheetView,
+  BottomSheetBackdrop,
+} from "@gorhom/bottom-sheet";
+import { Ionicons } from "@expo/vector-icons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import FlipButton from "./FlipButton";
+import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
+import { usePathname, useRouter } from "expo-router";
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
-export default function App() {
-  // Create a ref to control the BottomSheet
+const BottomSheetComponent = forwardRef((props, ref) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
+  const { editing, setEditing } = useMainMenuEdit();
+  const pathname = usePathname();
+  const router = useRouter();
 
-  // Define snap points for the BottomSheet (here 25% and 50% of screen height)
-  const snapPoints = useMemo(() => ['25%', '50%'], []);
+  const snapPoints = useMemo(() => ["40%"], []);
 
-  // Function to open the BottomSheet
-  const openSheet = () => {
-    console.log('Opening sheet...');
-    bottomSheetRef.current?.expand();
-  };
+  useImperativeHandle(ref, () => ({
+    openSheet: () => bottomSheetRef.current?.snapToIndex(0),
+    closeSheet: () => bottomSheetRef.current?.close(),
+  }));
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      {/* Main page content */}
-      <View style={styles.content}>
-        <TouchableOpacity style={styles.button} onPress={openSheet}>
-          <Text style={styles.buttonText}>Open Bottom Sheet</Text>
-        </TouchableOpacity>
-      </View>
+    <BottomSheet
+      ref={bottomSheetRef}
+      index={-1}
+      snapPoints={snapPoints}
+      enablePanDownToClose
+      backdropComponent={(backdropProps) => (
+        <BottomSheetBackdrop
+          {...backdropProps}
+          appearsOnIndex={0}
+          disappearsOnIndex={-1}
+          pressBehavior="close"
+        />
+      )}
+    >
+      <BottomSheetView style={styles.sheetContent}>
+        {/* Row 1 */}
+        <View style={styles.row}>
+          <FlipButton
+            style={styles.button}
+            onPress={() => console.log("Menu 1 pressed")}
+            bgColor="#4CAF50"
+            textColor="#ffffff"
+          >
+            <Ionicons name="home" size={32} color="#fff" style={styles.icon} />
+            <Text style={styles.buttonText}>בית</Text>
+          </FlipButton>
 
-      {/* The BottomSheet component */}
-      <BottomSheet ref={bottomSheetRef} index={-1} snapPoints={snapPoints}>
-        <BottomSheetView style={styles.sheetContent}>
-          <Text style={styles.sheetText}>Hello from the Bottom Sheet!</Text>
-        </BottomSheetView>
-      </BottomSheet>
-    </GestureHandlerRootView>
+          <FlipButton
+            style={styles.button}
+            onPress={() => console.log("Menu 2 pressed")}
+            bgColor="#4CAF50"
+            textColor="#ffffff"
+          >
+            <Ionicons
+              name="settings"
+              size={32}
+              color="#fff"
+              style={styles.icon}
+            />
+            <Text style={styles.buttonText}>הגדרות</Text>
+          </FlipButton>
+        </View>
+
+        {/* Row 2 */}
+        <View style={styles.row}>
+          <FlipButton
+            style={styles.button}
+            onPress={() => {
+              console.log("Menu 3 pressed");
+              router.replace("../LoginScreen");
+            }}
+            bgColor="#4CAF50"
+            textColor="#ffffff"
+          >
+            <Ionicons
+              name="person"
+              size={32}
+              color="#fff"
+              style={styles.icon}
+            />
+            <Text style={styles.buttonText}>פרופיל</Text>
+          </FlipButton>
+
+          {pathname === "/index" && (
+            <FlipButton
+              style={styles.button}
+              onPress={() => {
+                setEditing(true);
+                bottomSheetRef.current?.close();
+              }}
+              bgColor="#4CAF50"
+              textColor="#ffffff"
+            >
+              <MaterialCommunityIcons
+                name="menu-swap-outline"
+                size={32}
+                color="#fff"
+                style={styles.icon}
+              />
+              <Text style={styles.buttonText}>שנה סדר תפריט</Text>
+            </FlipButton>
+          )}
+        </View>
+      </BottomSheetView>
+    </BottomSheet>
   );
-}
+});
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f2f2f2',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  button: {
-    backgroundColor: '#007aff',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-  },
   sheetContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
-  sheetText: {
-    fontSize: 16,
-    color: '#333',
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    marginBottom: 16,
+  },
+  button: {
+    width: SCREEN_WIDTH * 0.35,
+    height: 100,
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  icon: {
+    marginBottom: 8,
+  },
+  buttonText: {
+    fontSize: 18,
+    textAlign: "center",
   },
 });
+
+export default BottomSheetComponent;

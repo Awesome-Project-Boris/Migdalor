@@ -16,13 +16,14 @@ export default function Layout() {
             <Stack.Screen
               name="index"
               options={{
-                title: "Index Page",
+                title: "Index Page", headerShown: false 
               }}
             />
             <Stack.Screen
               name="LoginScreen"
               options={{
                 title: "Login Screen",
+                headerShown: false,
                 headerRight: () => (
                   <Ionicons name="person" size={24} color="#ccc" />
                 ),
