@@ -32,7 +32,8 @@ export default function Layout() {
             <Stack.Screen
               name="index"
               options={{
-                title: "Index Page", headerShown: false 
+                title: "Index Page",
+                headerShown: false 
               }}
             />
             <Stack.Screen
@@ -47,6 +48,7 @@ export default function Layout() {
               name="MainMenwu" // VACANT
               options={{
                 title: "Main Menu",
+                headerShown: false,
                 headerRight: () => (
                   <Ionicons name="person" size={24} color="#ccc" />
                 ),

@@ -6,4 +6,6 @@ export let Globals= {
   LANGUAGE: 'en', // Default language
   userSelectedDirection: "rtl",
   userSelectedFontSize: 1,
+  // userVolumeSetting: 5,
+  userNotificationsSetting: "both", // "vibration", "sound", "both", "none"
 };

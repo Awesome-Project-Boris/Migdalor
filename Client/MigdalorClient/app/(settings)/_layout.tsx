@@ -2,7 +2,6 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
 
 export default function SettingsLayout() {
-  console.log("From SettingsLayout"); 
   return (
     <Tabs screenOptions={{ tabBarActiveTintColor: 'lightgreen' }}>
       <Tabs.Screen
