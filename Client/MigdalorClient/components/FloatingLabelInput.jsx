@@ -40,7 +40,7 @@ const FloatingLabelInput = ({
     textAlign: alignRight ? "right" : "left",
     color: animatedIsFocused.interpolate({
       inputRange: [0, 1],
-      outputRange: ["#aaa", "#000"],
+      outputRange: ["grey", "black"],
     }),
     backgroundColor: "transparent",
     paddingHorizontal: 4 * scale,

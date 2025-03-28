@@ -5,16 +5,11 @@ import { createTamagui, TamaguiProvider } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
 import { PaperProvider } from "react-native-paper";
 import { defaultConfig } from "@tamagui/config/v4";
-import Header from "../components/Header";
+import { BottomSheetProvider } from "../components/BottomSheetMain";
+import { MainMenuEditProvider } from '@/context/MainMenuEditProvider';
 
 const config = createTamagui(defaultConfig);
 export default function Layout() {
-
-  const bottomSheetRef = useRef<any>(null);
-
-  const openSheet = () => {
-    bottomSheetRef.current?.openSheet();
-  };
 
  /*/ 
      To summon our header - add this within Stack.screen
@@ -24,11 +19,13 @@ export default function Layout() {
  /*/
 
   return (
+    
     <PaperProvider>
       <TamaguiProvider config={config}>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          {/* <Stack  screenOptions={{ headerShown: false }}> */}
-          <Stack>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <MainMenuEditProvider>
+          <BottomSheetProvider>
+            <Stack>
             <Stack.Screen
               name="index"
               options={{
@@ -45,7 +42,7 @@ export default function Layout() {
               }}
             />
             <Stack.Screen
-              name="MainMenwu" // VACANT
+              name="MainMenu" // VACANT
               options={{
                 title: "Main Menu",
                 headerShown: false,
@@ -55,27 +52,20 @@ export default function Layout() {
               }}
             />
             <Stack.Screen
-              name="MainMenu" // VACANT
+              name="(settings)"
               options={{
-                title: "Main Menu",
+                title: "Settings",
                 headerShown: false,
                 headerRight: () => (
                   <Ionicons name="settings" size={24} color="#ccc" />
                 ),
               }}
             />
-            <Stack.Screen
-              name="(settings)"
-              options={{
-                title: "Settings",
-                headerShown: true,
-                headerRight: () => (
-                  <Ionicons name="settings" size={24} color="#ccc" />
-                ),
-              }}
-            />
-          </Stack>
-        </GestureHandlerRootView>
+            </Stack>
+          </BottomSheetProvider>
+        </MainMenuEditProvider>
+      </GestureHandlerRootView>
+        
       </TamaguiProvider>
     </PaperProvider>
   );
