@@ -27,6 +27,7 @@ export default function Layout() {
     <PaperProvider>
       <TamaguiProvider config={config}>
         <GestureHandlerRootView style={{ flex: 1 }}>
+          {/* <Stack  screenOptions={{ headerShown: false }}> */}
           <Stack>
             <Stack.Screen
               name="index"
@@ -43,11 +44,21 @@ export default function Layout() {
               }}
             />
             <Stack.Screen
-              name="MainMenwu" // VACANT
+              name="MainMenu" // VACANT
               options={{
                 title: "Main Menu",
                 headerRight: () => (
                   <Ionicons name="person" size={24} color="#ccc" />
+                ),
+              }}
+            />
+            <Stack.Screen
+              name="(settings)"
+              options={{
+                title: "Settings",
+                headerShown: false,
+                headerRight: () => (
+                  <Ionicons name="settings" size={24} color="#ccc" />
                 ),
               }}
             />

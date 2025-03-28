@@ -1,11 +1,12 @@
 import { View } from "tamagui";
 import { Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
+import { Bold, Scroll } from "@tamagui/lucide-icons";
 import { useState, useEffect } from "react";
 import { StyleSheet, Dimensions, ScrollView } from "react-native";
-import { Bold, Scroll } from "@tamagui/lucide-icons";
 import { Globals } from "../constants/Globals";
 import { Pressable, TouchableWithoutFeedback } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
+import Header from "@/components/Header";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -25,7 +26,8 @@ export default function GeneralSettingsPage() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1 }}>
+      {/* <Header/> */}
+      <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}> 
         <YStack height={70} alignItems="baseline" gap="$5" alignSelf="center">
           <Text
             fontSize={40}

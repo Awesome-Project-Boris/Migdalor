@@ -10,6 +10,9 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onOpenSheet }) => {
   const router = useRouter();
   const pathname = usePathname();
+  // onOpenSheet = () => {
+  //   console.log('Opening sheet');
+  // };
 
   // We'll display both a Home and a Back button on the left.
   // The Home button always navigates to "/", and the Back button navigates back only once.
