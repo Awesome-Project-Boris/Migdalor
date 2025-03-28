@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FlipButton from "./FlipButton";
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
-import { usePathname, useRouter } from "expo-router";
+import { Link, usePathname, useRouter } from "expo-router";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -24,6 +24,8 @@ const BottomSheetComponent = forwardRef((props, ref) => {
     openSheet: () => bottomSheetRef.current?.snapToIndex(0),
     closeSheet: () => bottomSheetRef.current?.close(),
   }));
+
+  console.log("Current pathname:", pathname);
 
   return (
     <BottomSheet
@@ -45,7 +47,12 @@ const BottomSheetComponent = forwardRef((props, ref) => {
         <View style={styles.row}>
           <FlipButton
             style={styles.button}
-            onPress={() => console.log("Menu 1 pressed")}
+            onPress={() => 
+              {
+                bottomSheetRef.current?.close();
+                console.log("Menu 1 pressed")
+              }
+            }
             bgColor="#4CAF50"
             textColor="#ffffff"
           >
@@ -55,9 +62,36 @@ const BottomSheetComponent = forwardRef((props, ref) => {
 
           <FlipButton
             style={styles.button}
-            onPress={() => console.log("Menu 2 pressed")}
+            //onPress={() => router.navigate("./GeneralSettings")}
+            onPress={() => router.navigate("./SettingsTabs")}
+            //onPress={() => router.navigate("/(settings)/_layout" as any)}
             bgColor="#4CAF50"
             textColor="#ffffff"
+          >
+            <Ionicons name="settings" size={32} color="#fff" style={styles.icon} />
+            <Text style={styles.buttonText}>Options/הגדרות</Text>
+          </FlipButton>
+        </View>
+
+        <View style={styles.row}>
+          <FlipButton
+            style={styles.button}
+            onPress={() => console.log("Menu 3 pressed")}
+            bgColor="#4CAF50"
+            textColor="#ffffff"
+          >
+            <Ionicons name="person" size={32} color="#fff" style={styles.icon} />
+            <Text style={styles.buttonText}>Profile/פרופיל</Text>
+          </FlipButton>
+
+          <FlipButton
+            style={styles.button}
+            onPress={() => {
+            setEditing(true);
+            bottomSheetRef.current?.close();
+           }}
+          bgColor="#4CAF50"
+          textColor="#ffffff"
           >
             <Ionicons
               name="settings"
@@ -75,7 +109,8 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             style={styles.button}
             onPress={() => {
               console.log("Menu 3 pressed");
-              router.replace("../LoginScreen");
+              router.navigate("LoginScreen" as any);
+              bottomSheetRef.current?.close();
             }}
             bgColor="#4CAF50"
             textColor="#ffffff"
@@ -89,7 +124,7 @@ const BottomSheetComponent = forwardRef((props, ref) => {
             <Text style={styles.buttonText}>פרופיל</Text>
           </FlipButton>
 
-          {pathname === "/index" && (
+          {pathname === "/" && (
             <FlipButton
               style={styles.button}
               onPress={() => {

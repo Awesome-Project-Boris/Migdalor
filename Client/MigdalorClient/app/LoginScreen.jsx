@@ -163,7 +163,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rememberMeContainer: {
-    direction: "rtl",
+    //direction: "rtl",
+    writingDirection: "rtl",
   },
   rememberMeText: {
     marginRight: 8,
