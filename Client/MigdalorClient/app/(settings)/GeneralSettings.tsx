@@ -26,7 +26,7 @@ export default function GeneralSettingsPage() {
 
   return (
     <View style={{ flex: 1 }}>
-      {/* <Header/> */}
+     <Header/> 
       <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}> 
         <YStack height={70} alignItems="baseline" gap="$5" alignSelf="center">
           <Text

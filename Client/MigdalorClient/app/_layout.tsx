@@ -41,15 +41,6 @@ export default function Layout() {
               }}
             />
             <Stack.Screen
-              name="MainMenu" // VACANT
-              options={{
-                title: "Main Menu",
-                headerRight: () => (
-                  <Ionicons name="person" size={24} color="#ccc" />
-                ),
-              }}
-            />
-            <Stack.Screen
               name="(settings)"
               options={{
                 title: "Settings",
