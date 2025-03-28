@@ -1,30 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  Animated,
-} from 'react-native';
-import DraggableFlatList, { RenderItemParams } from 'react-native-draggable-flatlist';
-
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import DraggableFlatList from 'react-native-draggable-flatlist';
 import * as Animatable from 'react-native-animatable';
+import { useRouter } from 'expo-router';
 import { useMainMenuEdit } from '../context/MainMenuEditProvider';
 
-interface MenuItem {
-  key: string;
-  name: string;
-  destination: string;
-}
-
-const initialData: MenuItem[] = [
-  { key: 'menu1', name: 'פרופיל', destination: '' },
+const initialData = [
+  { key: 'menu1', name: 'פרופיל', destination: 'aaa' },
   { key: 'menu2', name: 'חוגים ופעילויות', destination: '' },
   { key: 'menu3', name: 'שוק', destination: '' },
   { key: 'menu4', name: 'וועד', destination: '' },
-  { key: 'menu5', name: 'Menu 5', destination: '' },
-  { key: 'menu6', name: 'Menu 6', destination: '' },
+  { key: 'menu5', name: 'שעות פעילות', destination: '' },
+  { key: 'menu6', name: 'מפה', destination: '' },
   { key: 'menu7', name: 'Menu 7', destination: '' },
   { key: 'menu8', name: 'Menu 8', destination: '' },
   { key: 'menu9', name: 'Menu 9', destination: '' },
@@ -34,7 +21,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // Choose your two colors:
 const flashColor1 = "#fafafa"; // normal button color
-const flashColor2 = "#FF7F50"; // alternate flash color for the flash effect
+const flashColor2 = "#006aab"; // alternate flash color for the flash effect
 
 // Define custom keyframes for a smooth flash (backgroundColor change)
 const flashAnimation = {
@@ -44,21 +31,21 @@ const flashAnimation = {
 };
 
 export default function MainMenuButtons() {
-  const [data, setData] = useState<MenuItem[]>(initialData);
+  const router = useRouter();
+  const [data, setData] = useState(initialData);
   const { editing } = useMainMenuEdit();
 
-  const renderItem = ({ item, drag, isActive }: RenderItemParams<MenuItem>) => {
+  const renderItem = ({ item, drag, isActive }) => {
     const handleLongPress = editing ? drag : undefined;
     const handlePress = () => {
       if (!editing) {
         console.log('Navigating to:', item.destination);
-        // Insert your navigation logic here.
+        router.navigate(item.destination)
       }
     };
 
     return (
       <Animatable.View
-        // When editing, apply the flash animation continuously.
         animation={editing ? flashAnimation : undefined}
         iterationCount={editing ? 'infinite' : 1}
         duration={4000} // duration of one cycle in ms
@@ -101,12 +88,17 @@ const styles = StyleSheet.create({
   item: {
     width: SCREEN_WIDTH * 0.9,
     height: 100,
-    backgroundColor: flashColor1, // default color
+    backgroundColor: flashColor1,
     borderRadius: 8,
     marginVertical: 8,
     alignSelf: 'center',
     justifyContent: 'center',
     boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    // For iOS shadow, use:
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   touchable: {
     flex: 1,
@@ -115,7 +107,7 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 24,
-    color: '#000000',
+    color: '#000',
   },
   activeItem: {
     opacity: 0.7,

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
 
 interface HeaderProps {
   onOpenSheet: () => void;
@@ -9,11 +9,27 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onOpenSheet }) => {
   const router = useRouter();
+  const pathname = usePathname();
+
+  // We'll display both a Home and a Back button on the left.
+  // The Home button always navigates to "/", and the Back button navigates back only once.
+  const showBackButton = pathname !== "/";
+
   return (
     <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.push("/")}>
-        <Ionicons name="home" size={32} color="#000" />
-      </TouchableOpacity>
+      <View style={styles.leftContainer}>
+        {/* Home Button */}
+        <TouchableOpacity onPress={() => router.push("/")}>
+          <Ionicons name="home" size={32} color="#000" />
+        </TouchableOpacity>
+        {/* Back Button: Only visible if the current pathname isn't "/" */}
+        {showBackButton && (
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={32} color="#000" />
+          </TouchableOpacity>
+        )}
+      </View>
+      {/* Burger (menu) Button */}
       <TouchableOpacity onPress={onOpenSheet}>
         <Ionicons name="menu" size={32} color="#000" />
       </TouchableOpacity>
@@ -33,12 +49,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    elevation: 4, // For Android shadow
-    shadowColor: '#000', // For iOS shadow
+    elevation: 4, // Android shadow
+    shadowColor: '#000', // iOS shadow
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
     zIndex: 1000,
+  },
+  leftContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    marginLeft: 8,
   },
 });
 

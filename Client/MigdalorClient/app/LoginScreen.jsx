@@ -25,6 +25,8 @@ import LabeledTextInput from "../../MigdalorClient/components/LabeledTextInput";
 import { Ionicons } from "@expo/vector-icons";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 
+import Header from "@/components/Header"; // TEMPORARY - JUST TO GET BACK HOME
+
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 // Force RTL if your app is in Hebrew (optional)

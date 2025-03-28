@@ -60,6 +60,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 18,
     alignItems: "center",
+    justifyContent: "center",
+    
     boxShadow: "0 3px 4px rgba(0, 0, 0, 0.25)",
   },
   textBase: {
