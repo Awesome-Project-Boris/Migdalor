@@ -1,9 +1,9 @@
-import React, { forwardRef, useMemo, useRef, useImperativeHandle } from "react";
-import { View, StyleSheet, Dimensions, Text } from "react-native";
+import React, { createContext, useContext, useRef, useMemo } from "react";
 import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
+import { View, StyleSheet, Dimensions, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FlipButton from "./FlipButton";
@@ -12,7 +12,22 @@ import { Link, usePathname, useRouter } from "expo-router";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-const BottomSheetComponent = forwardRef((props, ref) => {
+interface BottomSheetContextType {
+  openSheet: () => void;
+  closeSheet: () => void;
+}
+
+const BottomSheetContext = createContext<BottomSheetContextType | undefined>(undefined);
+
+export const useBottomSheet = () => {
+  const context = useContext(BottomSheetContext);
+  if (!context) {
+    throw new Error("useBottomSheet must be used within a BottomSheetProvider");
+  }
+  return context;
+};
+
+export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
@@ -20,134 +35,105 @@ const BottomSheetComponent = forwardRef((props, ref) => {
 
   const snapPoints = useMemo(() => ["40%"], []);
 
-  useImperativeHandle(ref, () => ({
-    openSheet: () => bottomSheetRef.current?.snapToIndex(0),
-    closeSheet: () => bottomSheetRef.current?.close(),
-  }));
+  const openSheet = () => {
+    bottomSheetRef.current?.snapToIndex(0);
+  };
 
-  console.log("Current pathname:", pathname);
+  const closeSheet = () => {
+    bottomSheetRef.current?.close();
+  };
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={-1}
-      snapPoints={snapPoints}
-      enablePanDownToClose
-      backdropComponent={(backdropProps) => (
-        <BottomSheetBackdrop
-          {...backdropProps}
-          appearsOnIndex={0}
-          disappearsOnIndex={-1}
-          pressBehavior="close"
-        />
-      )}
-    >
-      <BottomSheetView style={styles.sheetContent}>
-        {/* Row 1 */}
-        <View style={styles.row}>
-          <FlipButton
-            style={styles.button}
-            onPress={() => 
-              {
-                bottomSheetRef.current?.close();
-                console.log("Menu 1 pressed")
-              }
-            }
-            bgColor="#4CAF50"
-            textColor="#ffffff"
-          >
-            <Ionicons name="home" size={32} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>בית</Text>
-          </FlipButton>
-
-          <FlipButton
-            style={styles.button}
-            //onPress={() => router.navigate("./GeneralSettings")}
-            onPress={() => router.navigate("./SettingsTabs")}
-            //onPress={() => router.navigate("/(settings)/_layout" as any)}
-            bgColor="#4CAF50"
-            textColor="#ffffff"
-          >
-            <Ionicons name="settings" size={32} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>Options/הגדרות</Text>
-          </FlipButton>
-        </View>
-
-        <View style={styles.row}>
-          <FlipButton
-            style={styles.button}
-            onPress={() => console.log("Menu 3 pressed")}
-            bgColor="#4CAF50"
-            textColor="#ffffff"
-          >
-            <Ionicons name="person" size={32} color="#fff" style={styles.icon} />
-            <Text style={styles.buttonText}>Profile/פרופיל</Text>
-          </FlipButton>
-
-          <FlipButton
-            style={styles.button}
-            onPress={() => {
-            setEditing(true);
-            bottomSheetRef.current?.close();
-           }}
-          bgColor="#4CAF50"
-          textColor="#ffffff"
-          >
-            <Ionicons
-              name="settings"
-              size={32}
-              color="#fff"
-              style={styles.icon}
-            />
-            <Text style={styles.buttonText}>הגדרות</Text>
-          </FlipButton>
-        </View>
-
-        {/* Row 2 */}
-        <View style={styles.row}>
-          <FlipButton
-            style={styles.button}
-            onPress={() => {
-              console.log("Menu 3 pressed");
-              router.navigate("LoginScreen" as any);
-              bottomSheetRef.current?.close();
-            }}
-            bgColor="#4CAF50"
-            textColor="#ffffff"
-          >
-            <Ionicons
-              name="person"
-              size={32}
-              color="#fff"
-              style={styles.icon}
-            />
-            <Text style={styles.buttonText}>פרופיל</Text>
-          </FlipButton>
-
-          {pathname === "/" && (
+    <BottomSheetContext.Provider value={{ openSheet, closeSheet }}>
+      {children}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        backdropComponent={(backdropProps) => (
+          <BottomSheetBackdrop
+            {...backdropProps}
+            appearsOnIndex={0}
+            disappearsOnIndex={-1}
+            pressBehavior="close"
+          />
+        )}
+      >
+        <BottomSheetView style={styles.sheetContent}>
+          {/* Row 1 */}
+          <View style={styles.row}>
             <FlipButton
               style={styles.button}
               onPress={() => {
-                setEditing(true);
+                router.navigate("/");
+                bottomSheetRef.current?.close();
+                console.log("Menu 1 pressed");
+              }}
+              bgColor="#4CAF50"
+              textColor="#ffffff"
+            >
+              <Ionicons name="home" size={32} color="#fff" style={styles.icon} />
+              <Text style={styles.buttonText}>בית</Text>
+            </FlipButton>
+
+            <FlipButton
+              style={styles.button}
+              onPress={() => 
+              {
+                router.navigate("./GeneralSettings");
                 bottomSheetRef.current?.close();
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
             >
-              <MaterialCommunityIcons
-                name="menu-swap-outline"
-                size={32}
-                color="#fff"
-                style={styles.icon}
-              />
-              <Text style={styles.buttonText}>שנה סדר תפריט</Text>
+              <Ionicons name="settings" size={32} color="#fff" style={styles.icon} />
+              <Text style={styles.buttonText}>הגדרות</Text>
             </FlipButton>
-          )}
-        </View>
-      </BottomSheetView>
-    </BottomSheet>
+          </View>
+
+          {/* Row 2 */}
+          <View style={styles.row}>
+            <FlipButton
+              style={styles.button}
+              onPress={() => {
+                console.log("Menu 3 pressed");
+                router.navigate("LoginScreen" as any);
+                bottomSheetRef.current?.close();
+              }}
+              bgColor="#4CAF50"
+              textColor="#ffffff"
+            >
+              <Ionicons name="person" size={32} color="#fff" style={styles.icon} />
+              <Text style={styles.buttonText}>פרופיל</Text>
+            </FlipButton>
+
+            {pathname === "/" && (
+              <FlipButton
+                style={styles.button}
+                onPress={() => {
+                  setEditing(true);
+                  bottomSheetRef.current?.close();
+                }}
+                bgColor="#4CAF50"
+                textColor="#ffffff"
+              >
+                <MaterialCommunityIcons
+                  name="menu-swap-outline"
+                  size={32}
+                  color="#fff"
+                  style={styles.icon}
+                />
+                <Text style={styles.buttonText}>שנה סדר תפריט</Text>
+              </FlipButton>
+            )}
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
+    </BottomSheetContext.Provider>
+
   );
-});
+};
 
 const styles = StyleSheet.create({
   sheetContent: {
@@ -176,4 +162,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default BottomSheetComponent;
+export default BottomSheetProvider;

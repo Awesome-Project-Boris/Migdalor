@@ -3,9 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 
 import MainMenuButtons from '@/components/MainMenuButtons';
-import { MainMenuEditProvider, useMainMenuEdit } from '../context/MainMenuEditProvider';
+import { useMainMenuEdit } from '../context/MainMenuEditProvider';
 import FlipButton from "../../MigdalorClient/components/FlipButton";
-import BottomSheetComponent from '../components/BottomSheetMain';
 import Greeting from "../components/MainMenuHelloNameplate";
 import Header from "../components/Header";
 
@@ -35,22 +34,16 @@ export default function Index() {
   const bottomSheetRef = useRef<any>(null);
 
   const openSheet = () => {
-    console.log('Opening sheet...');
     bottomSheetRef.current?.openSheet();
   };
 
   return (
-    
-    <MainMenuEditProvider>
       <View style={styles.container}>
-        <Header onOpenSheet={openSheet} />
+        <Header/>
         <Greeting />
         <EditToggleButton />
         <MainMenuButtons />
-        <BottomSheetComponent ref={bottomSheetRef} />
       </View>
-      <BottomSheetComponent />
-    </MainMenuEditProvider>
   );
 }
 
