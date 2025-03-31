@@ -21,7 +21,7 @@ namespace MigdalorServer.Controllers
 
         // GET: api/<PeopleController>
         [HttpGet]
-        public List<OhPerson>? Get()
+        public List<OhPerson> Get()
         {
             
         //using MigdalorDBContext migdalorDBContext = new MigdalorDBContext();
