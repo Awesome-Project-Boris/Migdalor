@@ -1,7 +1,9 @@
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth.OAuth2;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using MigdalorServer.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+builder.Services.AddDbContext<Igroup187ProdContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("myProjDB")));
+
 
 app.UseHttpsRedirection();
 
