@@ -7,6 +7,7 @@ import { PaperProvider } from "react-native-paper";
 import { defaultConfig } from "@tamagui/config/v4";
 import { BottomSheetProvider } from "../components/BottomSheetMain";
 import { MainMenuEditProvider } from '@/context/MainMenuEditProvider';
+import { MarketplaceProvider } from '@/context/MarketplaceProvider';
 
 const config = createTamagui(defaultConfig);
 export default function Layout() {
@@ -25,6 +26,7 @@ export default function Layout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <MainMenuEditProvider>
           <BottomSheetProvider>
+          <MarketplaceProvider>
             <Stack>
             <Stack.Screen
               name="index"
@@ -50,7 +52,18 @@ export default function Layout() {
                 ),
               }}
             />
+             <Stack.Screen
+              name="Marketplace"
+              options={{
+                title: "Marketplace",
+                headerShown: false,
+                headerRight: () => (
+                  <Ionicons name="bag" size={24} color="#ccc" />
+                ),
+              }}
+            />
             </Stack>
+            </MarketplaceProvider>
           </BottomSheetProvider>
         </MainMenuEditProvider>
       </GestureHandlerRootView>
