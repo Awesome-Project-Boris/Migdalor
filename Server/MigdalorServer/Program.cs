@@ -13,6 +13,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<MigdalorDBContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("myProjDB")));
 
 var app = builder.Build();
 
@@ -23,8 +25,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-builder.Services.AddDbContext<Igroup187ProdContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("myProjDB")));
+
 
 
 app.UseHttpsRedirection();

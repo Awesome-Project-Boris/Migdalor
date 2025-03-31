@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MigdalorServer.Database;
+using MigdalorServer.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+
 
 namespace MigdalorServer.Controllers
 {
@@ -8,11 +11,22 @@ namespace MigdalorServer.Controllers
     [ApiController]
     public class PeopleController : ControllerBase
     {
+        private readonly MigdalorDBContext db;
+
+        public PeopleController(MigdalorDBContext context)
+        {
+            db = context;
+        }
+
+
         // GET: api/<PeopleController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public List<OhPerson>? Get()
         {
-            return 
+            
+        //using MigdalorDBContext migdalorDBContext = new MigdalorDBContext();
+            return db.OhPeople.ToList();
+            //return migdalorDBContext.OhPeople.ToList();
         }
 
         // GET api/<PeopleController>/5
