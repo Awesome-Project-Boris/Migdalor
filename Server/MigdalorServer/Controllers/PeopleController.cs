@@ -23,10 +23,7 @@ namespace MigdalorServer.Controllers
         [HttpGet]
         public List<OhPerson> Get()
         {
-            
-        //using MigdalorDBContext migdalorDBContext = new MigdalorDBContext();
             return db.OhPeople.ToList();
-            //return migdalorDBContext.OhPeople.ToList();
         }
 
         // GET api/<PeopleController>/5

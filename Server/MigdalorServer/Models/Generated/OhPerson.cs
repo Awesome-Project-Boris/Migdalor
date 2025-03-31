@@ -45,6 +45,9 @@ public partial class OhPerson
     [Unicode(false)]
     public string Gender { get; set; } = null!;
 
+    [StringLength(512)]
+    public string? PasswordHash { get; set; }
+
     [InverseProperty("Host")]
     public virtual ICollection<OhActivity> OhActivities { get; set; } = new List<OhActivity>();
 

@@ -1,6 +1,6 @@
 ﻿namespace MigdalorServer.BL
 {
-    public partial class OhPerson
+    public partial class OhPicture
     {
     }
 }
