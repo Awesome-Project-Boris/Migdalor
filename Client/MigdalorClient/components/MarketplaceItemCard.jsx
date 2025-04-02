@@ -32,6 +32,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     marginVertical: 8,
+    borderColor: '#ccc',
+    borderWidth: 1,
   },
   image: {
     width: 120,

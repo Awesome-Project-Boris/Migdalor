@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
 import { MarketplaceContext } from '../context/MarketplaceProvider';
 import MarketplaceItemCard from '../components/MarketplaceItemCard';
@@ -10,23 +10,74 @@ import AddNewItemModal from '../components/MarketplaceNewItemModal';  // New mod
 import NoSearchMatchCard from '../components/NoSearchMatchCard';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const ITEMS_PER_PAGE = 10;
 
 export default function MarketplaceScreen() {
   const {
     filteredItems,
     currentPage,
-    totalPages,
     isLoading,
-    fetchItems,
+    goToPage,
     selectedItem,
     setSelectedItem,
     searchQuery,
     setSearchQuery,
-    pagesToShow,
   } = useContext(MarketplaceContext);
 
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
   const [isAddNewItemModalVisible, setIsAddNewItemModalVisible] = useState(false);
+
+  const totalItems = filteredItems.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  const itemsForCurrentPage = useMemo(() => {
+    const startIndex = ( currentPage - 1 ) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredItems.slice(startIndex, endIndex);
+  }, [filteredItems, currentPage])
+
+  const pagesToShow = useMemo(() => {
+    const calculatedTotalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+    const safeTotalPages = Math.max(1, calculatedTotalPages); // Ensure at least 1 page
+
+    const maxPagesToShow = 3;
+    const pages = [];
+
+    if (safeTotalPages <= maxPagesToShow) {
+      // If total pages is 3 or less, show all pages
+      for (let i = 1; i <= safeTotalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // If total pages is more than 3, calculate sliding window
+      let startPage = currentPage - 1;
+      let endPage = currentPage + 1;
+
+      // Adjust window if it goes out of bounds
+      if (startPage < 1) { // If window starts before page 1
+        startPage = 1;
+        endPage = 3;
+      } else if (endPage > safeTotalPages) { // If window ends after last page
+        endPage = safeTotalPages;
+        startPage = safeTotalPages - 2;
+      }
+      // Ensure start is at least 1 (safety check)
+      startPage = Math.max(1, startPage);
+
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+    }
+
+    console.log(
+        `Pagination Debug: currentPage=${currentPage}, totalItems=${filteredItems.length}, safeTotalPages=${safeTotalPages}, pagesToShow=`,
+         pages
+    );
+
+    return pages;
+
+  }, [currentPage, totalPages, filteredItems.length]); // Keep dependencies
+
 
   const renderItem = ({ item }) => (
     <MarketplaceItemCard
@@ -35,7 +86,7 @@ export default function MarketplaceScreen() {
     />
   );
 
-  // Modify handleListYourItem to open the "Add New Item" modal.
+
   const handleListYourItem = () => {
     console.log("List Your Own Item button pressed");
     setIsAddNewItemModalVisible(true);
@@ -46,6 +97,7 @@ export default function MarketplaceScreen() {
   };
 
   const handleSearchSubmit = (query) => {
+    goToPage(1);
     setSearchQuery(query);
     setIsSearchModalVisible(false);
   };
@@ -58,7 +110,11 @@ export default function MarketplaceScreen() {
     return () => {
       setSearchQuery("");
     };
-  }, [setSearchQuery]);
+  }, []);
+
+  useEffect(() => {
+    goToPage(1);
+  }, [searchQuery])
 
   return (
     <View style={styles.container}>
@@ -83,52 +139,76 @@ export default function MarketplaceScreen() {
           <FlipButton text="לביטול החיפוש" onPress={() => setSearchQuery("")} />
         </View>
       )}
-      {filteredItems.length === 0 && !isLoading && (
-        <NoSearchMatchCard/>
-      )}
+      
+      {filteredItems.length === 0 && !isLoading && !searchQuery && ( // Show only if no items AND not searching
+             <Text>No items available currently. An error might have occured.</Text> // SWITCH with empty/error card !!!
+         )}
+         {filteredItems.length === 0 && !isLoading && searchQuery && ( // Show specific message for no search results
+             <NoSearchMatchCard />
+         )}
+
       <FlatList
-        data={filteredItems.slice(0, 10)}
+        data={itemsForCurrentPage}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         ListFooterComponent={isLoading ? <Text style={styles.loadingText}>Loading...</Text> : null}
         contentContainerStyle={styles.listContainer}
       />
-      <View style={styles.paginationContainer}>
-        <TouchableOpacity
-          style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}
-          onPress={() => currentPage > 1 && fetchItems(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          <Text style={styles.paginationButtonText}>Prev</Text>
-        </TouchableOpacity>
-        {pagesToShow.map((p) => (
+
+      {totalPages > 1 && (
+        <View style={styles.paginationContainer}>
           <TouchableOpacity
-            key={p}
-            style={[
-              styles.paginationButton,
-              p === currentPage && styles.activePaginationButton,
-            ]}
-            onPress={() => fetchItems(p)}
-            disabled={p === currentPage}
+            style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}
+            onPress={() => {
+              const prevPage = currentPage - 1;
+              if (prevPage >= 1) { // Check lower bound
+                  goToPage(prevPage);
+              }
+          }}
+            disabled={currentPage === 1}
           >
-            <Text
-              style={[
-                styles.paginationButtonText,
-                p === currentPage && styles.activePaginationButtonText,
-              ]}
-            >
-              {p}
-            </Text>
+            <Text style={styles.paginationButtonText}>Prev</Text>
           </TouchableOpacity>
-        ))}
-        <TouchableOpacity
-          style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
-          onPress={() => currentPage < totalPages && fetchItems(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          <Text style={styles.paginationButtonText}>Next</Text>
-        </TouchableOpacity>
-      </View>
+
+          {console.log('Rendering pagination buttons, totalPages:', totalPages, 'pagesToShow:', pagesToShow)}
+
+          {pagesToShow.map((p) => (
+            <TouchableOpacity
+              key={p}
+              style={[
+                styles.paginationButton,
+                p === currentPage && styles.activePaginationButton,
+              ]}
+              onPress={() => goToPage(p)} // <-- Use goToPage
+              disabled={p === currentPage}
+            >
+              <Text
+                style={[
+                  styles.paginationButtonText,
+                  p === currentPage && styles.activePaginationButtonText,
+                ]}
+              >
+                {p}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity
+            style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
+            onPress={() => {
+              const nextPage = currentPage + 1;
+              if (nextPage <= totalPages) { // Check upper bound using calculated totalPages
+                  goToPage(nextPage);
+              }
+          }}
+            disabled={currentPage === totalPages}
+          >
+            <Text style={styles.paginationButtonText}>Next</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+
       <MarketplaceSearchModal
         visible={isSearchModalVisible}
         onSearch={handleSearchSubmit}
@@ -145,7 +225,7 @@ export default function MarketplaceScreen() {
         onSubmit={(newItemData) => {
           console.log('Submitting new item:', newItemData);
           setIsAddNewItemModalVisible(false);
-          // TODO: Launch submission sequence to DB.
+          // TODO: Launch submission sequence to DB, websockets to auto update/refresh?
         }}
       />
     </View>
@@ -182,6 +262,7 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+    alignSelf: 'center',
     width: SCREEN_WIDTH * 0.95
   },
   loadingText: {
@@ -192,47 +273,53 @@ const styles = StyleSheet.create({
   paginationContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 10,
     width: SCREEN_WIDTH,
     marginVertical: 20,
   },
   paginationButton: {
     backgroundColor: '#ddd',
-    paddingVertical: 16,
-    paddingHorizontal: 18,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     marginHorizontal: 5,
     borderRadius: 8,
+    minwidth: 44,
+    alignItems: 'center'
   },
   paginationButtonText: {
-    fontSize: 24,
+    fontSize: 20,
     color: '#333',
   },
   activePaginationButton: {
-    backgroundColor: '#347af0',
+    backgroundColor: '#002ec5',
   },
   activePaginationButtonText: {
     color: '#fff',
   },
   disabledButton: {
     opacity: 0.5,
+    backgroundColor: '#eee'
   },
   inSearch: {
-    width: SCREEN_WIDTH,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    justifyContent: 'center',
+    width: '90%', 
+    maxWidth: 500,
+    padding: 15,
+    paddingBottom: 15,
+    alignItems: 'center',
     backgroundColor: '#fff',
     borderRadius: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    height: 150,
+    zIndex: 5
   },
   searchFocus: {
-    fontSize: 20,
+    fontSize: 18,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
   },
 });
 
