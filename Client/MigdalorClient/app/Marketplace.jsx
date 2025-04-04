@@ -6,8 +6,10 @@ import MarketplaceItemModal from '../components/MarketplaceItemModal';
 import MarketplaceSearchModal from '../components/MarketplaceSearchModal';
 import FlipButton from '../components/FlipButton';
 import Header from '@/components/Header';
-import AddNewItemModal from '../components/MarketplaceNewItemModal';  // New modal for adding items
 import NoSearchMatchCard from '../components/NoSearchMatchCard';
+import { useRouter } from "expo-router";
+
+
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const ITEMS_PER_PAGE = 10;
@@ -25,10 +27,11 @@ export default function MarketplaceScreen() {
   } = useContext(MarketplaceContext);
 
   const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
-  const [isAddNewItemModalVisible, setIsAddNewItemModalVisible] = useState(false);
 
   const totalItems = filteredItems.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  const router = useRouter();
 
   const itemsForCurrentPage = useMemo(() => {
     const startIndex = ( currentPage - 1 ) * ITEMS_PER_PAGE;
@@ -89,7 +92,7 @@ export default function MarketplaceScreen() {
 
   const handleListYourItem = () => {
     console.log("List Your Own Item button pressed");
-    setIsAddNewItemModalVisible(true);
+    router.push('/MarketplaceNewItem');
   };
 
   const openSearchModal = () => {
@@ -218,15 +221,6 @@ export default function MarketplaceScreen() {
         visible={!!selectedItem}
         item={selectedItem}
         onClose={() => setSelectedItem(undefined)}
-      />
-      <AddNewItemModal
-        visible={isAddNewItemModalVisible}
-        onClose={() => setIsAddNewItemModalVisible(false)}
-        onSubmit={(newItemData) => {
-          console.log('Submitting new item:', newItemData);
-          setIsAddNewItemModalVisible(false);
-          // TODO: Launch submission sequence to DB, websockets to auto update/refresh?
-        }}
       />
     </View>
   );

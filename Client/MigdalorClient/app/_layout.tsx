@@ -1,37 +1,35 @@
 import { useRef } from 'react'
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router/stack";
-import { createTamagui, TamaguiProvider } from "tamagui";
+import { TamaguiProvider, createTamagui, YStack } from 'tamagui';
 import { Ionicons } from "@expo/vector-icons";
 import { PaperProvider } from "react-native-paper";
 import { defaultConfig } from "@tamagui/config/v4";
+import  ToastManager  from 'toastify-react-native'
 import { BottomSheetProvider } from "../components/BottomSheetMain";
 import { MainMenuEditProvider } from '@/context/MainMenuEditProvider';
 import { MarketplaceProvider } from '@/context/MarketplaceProvider';
+import { CustomSuccessToast, CustomErrorToast, toastConfig } from '@/components/CustomToasts';
 
 const config = createTamagui(defaultConfig);
+
+
+
 export default function Layout() {
-
- /*/ 
-     To summon our header - add this within Stack.screen
-
-       header: () => <Header onOpenSheet={openSheet} /> 
-       
- /*/
 
   return (
     
     <PaperProvider>
       <TamaguiProvider config={config}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <MainMenuEditProvider>
-          <BottomSheetProvider>
-          <MarketplaceProvider>
-            <Stack>
-            <Stack.Screen
-              name="index"
-              options={{
-                title: "Index Page", headerShown: false 
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <MainMenuEditProvider>
+            <BottomSheetProvider>
+              <MarketplaceProvider>
+                <Stack>
+                  <Stack.Screen
+                    name="index"
+                    options={{
+                    title: "Index Page", headerShown: false 
               }}
             />
             <Stack.Screen
@@ -62,12 +60,19 @@ export default function Layout() {
                 ),
               }}
             />
+            <Stack.Screen
+              name="MarketplaceNewItem"
+              options={{
+                title: "Marketplace new item",
+                headerShown: false
+              }}
+            />
             </Stack>
             </MarketplaceProvider>
           </BottomSheetProvider>
         </MainMenuEditProvider>
+        <ToastManager config={toastConfig}/>
       </GestureHandlerRootView>
-        
       </TamaguiProvider>
     </PaperProvider>
   );
