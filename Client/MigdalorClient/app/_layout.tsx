@@ -84,6 +84,13 @@ export default function Layout() {
                 presentation: 'modal'
               }}
             />
+            <Stack.Screen
+              name="Map"
+              options={{
+                title: "Site map",
+                headerShown: false,
+              }}
+            />
             </Stack>
             </MarketplaceProvider>
           </BottomSheetProvider>
