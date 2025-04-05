@@ -22,9 +22,9 @@ export default function SettingsLayout() {
         }}
       />
       <Tabs.Screen
-        name="SoundSettings"
+        name="LanguageSettings"
         options={{
-          title: 'Sound Settings',
+          title: 'Language Settings',
           headerShown: false,
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
         }}

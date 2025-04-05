@@ -8,4 +8,5 @@ export let Globals= {
   userSelectedFontSize: 1,
   // userVolumeSetting: 5,
   userNotificationsSetting: "both", // "vibration", "sound", "both", "none"
+  userSelectedLanguage: "english", // "english", "herbrew"
 };
