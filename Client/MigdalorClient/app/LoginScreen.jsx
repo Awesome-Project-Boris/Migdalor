@@ -12,7 +12,6 @@ import {
   StyleSheet,
   I18nManager,
 } from "react-native";
-
 import { XStack } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
 

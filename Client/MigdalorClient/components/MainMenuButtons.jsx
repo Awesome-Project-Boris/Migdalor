@@ -8,7 +8,7 @@ import { useMainMenuEdit } from '../context/MainMenuEditProvider';
 const initialData = [
   { key: 'menu1', name: 'פרופיל', destination: 'Profile' },
   { key: 'menu2', name: 'חוגים ופעילויות', destination: '' },
-  { key: 'menu3', name: 'שוק', destination: '' },
+  { key: 'menu3', name: 'שוק', destination: 'Marketplace' },
   { key: 'menu4', name: 'וועד', destination: '' },
   { key: 'menu5', name: 'שעות פעילות', destination: '' },
   { key: 'menu6', name: 'מפה', destination: '' },

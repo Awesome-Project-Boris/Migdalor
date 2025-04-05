@@ -82,6 +82,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ c
               onPress={() => 
               {
                 router.navigate("./FontSettings");
+                setEditing(false);
                 bottomSheetRef.current?.close();
               }}
               bgColor="#4CAF50"
@@ -98,6 +99,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ c
               style={styles.button}
               onPress={() => {
                 console.log("Menu 3 pressed");
+                setEditing(false);
                 router.navigate("LoginScreen" as any);
                 bottomSheetRef.current?.close();
               }}

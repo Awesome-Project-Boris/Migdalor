@@ -1,3 +1,7 @@
+
+import { Dimensions } from "react-native";
+
+
 export let Globals= {
   //API_BASE_URL: 'https://api.myserver.com',
   //APP_NAME: 'MyCoolApp',
@@ -8,4 +12,5 @@ export let Globals= {
   // userVolumeSetting: 5,
   userNotificationsSetting: "both", // "vibration", "sound", "both", "none"
   userSelectedLanguage: "en", // "en", "he"
+  SCREEN_WIDTH : Dimensions.get("window").width
 };

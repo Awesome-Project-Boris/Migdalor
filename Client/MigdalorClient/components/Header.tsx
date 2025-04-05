@@ -15,16 +15,16 @@ const Header: React.FC = () => {
   return (
     <View style={styles.header}>
       <View style={styles.leftContainer}>
-        <TouchableOpacity onPress={() => router.push("/")}>
-          <Ionicons name="home" size={32} color="#000" />
-        </TouchableOpacity>
-        {showBackButton && (
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+      {showBackButton && (
+          <TouchableOpacity onPress={() => router.back()} style={[styles.backButton, styles.border]}>
             <Ionicons name="arrow-back" size={32} color="#000" />
           </TouchableOpacity>
         )}
+        <TouchableOpacity onPress={() => router.push("/")} style= {styles.border}>
+          <Ionicons name="home" size={32} color="#000" />
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={openSheet}>
+      <TouchableOpacity onPress={openSheet} style= {styles.border}>
         <Ionicons name="menu" size={32} color="#000" />
       </TouchableOpacity>
     </View>
@@ -55,8 +55,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
-    marginLeft: 8,
+    marginLeft: 5,
+    marginRight: 20,
   },
+  border:
+  {
+    borderColor: '#000',
+    borderWidth: 1,
+    borderRadius: 5,
+    padding: 5
+  
+  }
 });
 
 export default Header;

@@ -1,46 +1,37 @@
-import React, { useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 import MainMenuButtons from "@/components/MainMenuButtons";
 import { useMainMenuEdit } from "../context/MainMenuEditProvider";
 import FlipButton from "../../MigdalorClient/components/FlipButton";
 import Greeting from "../components/MainMenuHelloNameplate";
 import Header from "../components/Header";
+import { EditToggleButton } from "../components/MainMenuFinishEditButton";
 
-function EditToggleButton() {
-  const { editing, setEditing } = useMainMenuEdit();
-
-  if (!editing) {
-    return null;
-  }
-
-  return (
-    <FlipButton
-      text="כניסה"
-      bgColor="#f0f0f0"
-      textColor="#000000"
-      onPress={() => setEditing((prev) => !prev)}
-      style={styles.toggleButton}
-    >
-      <Text style={styles.toggleButtonText}> סיימתי להזיז את הכפתורים</Text>
-    </FlipButton>
-  );
-}
 
 export default function Index() {
+
+  const { setEditing } = useMainMenuEdit();
+
+  useEffect(() => {
+    return () => {
+      setEditing(false);
+    };
+  }, [setEditing]);
+
   return (
-    <View style={styles.container}>
-      <Header />
-      <Greeting />
-      <EditToggleButton />
-      <MainMenuButtons />
-    </View>
+      <View style={styles.container}>
+        <Header/>
+        <Greeting />
+        <EditToggleButton/>
+        <MainMenuButtons />
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex:1 ,
+    flex: 1,
     alignItems: 'center',
     paddingTop: 50,
     backgroundColor: "#fbe6d0",
