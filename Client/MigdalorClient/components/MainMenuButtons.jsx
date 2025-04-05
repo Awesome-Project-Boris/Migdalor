@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import { useMainMenuEdit } from '../context/MainMenuEditProvider';
 
 const initialData = [
-  { key: 'menu1', name: 'פרופיל', destination: 'aaa' },
+  { key: 'menu1', name: 'פרופיל', destination: 'Profile' },
   { key: 'menu2', name: 'חוגים ופעילויות', destination: '' },
   { key: 'menu3', name: 'שוק', destination: '' },
   { key: 'menu4', name: 'וועד', destination: '' },

@@ -1,9 +1,8 @@
-import { View } from "tamagui";
 //import CheckboxDemo from "../../components/CheckBox";
 import { StyleSheet, Dimensions, ScrollView } from "react-native";
 import { Globals } from "@/app/constants/Globals";
 import { useState, useEffect } from "react";
-import { Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
+import { View, Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
 import FlipButton from "../../components/FlipButton";
 import { useTranslation } from "react-i18next";
 
