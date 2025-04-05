@@ -19,10 +19,13 @@ interface MarketplaceContextType {
   currentPage: number;
   isLoading: boolean;
   goToPage: (page: number) => void;
-  selectedItem?: ItemData;
-  setSelectedItem: (item?: ItemData) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  getItemById: (id: string) => ItemData | undefined;
+  mainImage: string | null;
+  setMainImage: React.Dispatch<React.SetStateAction<string | null>>;
+  extraImage: string | null;
+  setExtraImage: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 export const MarketplaceContext = createContext<MarketplaceContextType>(null!);
@@ -31,8 +34,9 @@ export function MarketplaceProvider({ children }: { children: React.ReactNode })
   const [items, setItems] = useState<ItemData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<ItemData | undefined>();
   const [searchQuery, setSearchQuery] = useState('');
+  const [mainImage, setMainImage] = useState<string | null>(null);
+  const [extraImage, setExtraImage] = useState<string | null>(null);
 
   // Example: fetch 50 items at a time
   const fetchItems = useCallback(async (page = 1) => {
@@ -47,8 +51,8 @@ export function MarketplaceProvider({ children }: { children: React.ReactNode })
         itemDescription: `Description ${i + 1}`,
         sellerName: `Seller ${i % 5 + 1}`,
         sellerId: `seller-${i % 5 + 1}`,
-        sellerEmail: `byeah@gmail.com`,
-        sellerPhoneNumber: `059-8765432`,
+        sellerEmail: `roishm83@gmail.com`,
+        sellerPhoneNumber: `054-5701606`,
         publishDate: new Date().toISOString(),
       }));
       setItems(mockData);
@@ -69,7 +73,6 @@ export function MarketplaceProvider({ children }: { children: React.ReactNode })
   }, [fetchItems]);
 
 
-
   const filteredItems = useMemo(() => {
     if (!searchQuery.trim()) return items;
     const lowerQuery = searchQuery.toLowerCase();
@@ -77,6 +80,12 @@ export function MarketplaceProvider({ children }: { children: React.ReactNode })
       item.itemName.toLowerCase().includes(lowerQuery)
     );
   }, [items, searchQuery]);
+
+  const getItemById = useCallback(( id: string): ItemData | undefined => {
+    console.log("Getting item by ID from provider: " + id );
+    const foundItem = items.find(item => item.id === id);
+    return foundItem
+  }, [items]);
 
 
   return (
@@ -87,10 +96,13 @@ export function MarketplaceProvider({ children }: { children: React.ReactNode })
         currentPage,
         goToPage,
         isLoading,
-        selectedItem,
-        setSelectedItem,
         searchQuery,
         setSearchQuery,
+        getItemById,
+        mainImage,
+        setMainImage,
+        extraImage,
+        setExtraImage
       }}
     >
       {children}

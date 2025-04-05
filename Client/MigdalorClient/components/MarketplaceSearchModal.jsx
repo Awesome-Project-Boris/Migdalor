@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, forwardRef  } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import FloatingLabelInput from './FloatingLabelInput';
 
@@ -7,8 +7,11 @@ export default function MarketplaceSearchModal({ visible, onSearch, onCancel }) 
 
   // Clear local state when modal is closed
   useEffect(() => {
-    if (!visible) {
-      setLocalQuery('');
+    if (visible) {
+      const timer = setTimeout(() => {
+        inputRef.current?.focus(); 
+      }, 100); 
+      return () => clearTimeout(timer);
     }
   }, [visible]);
 
@@ -28,6 +31,8 @@ export default function MarketplaceSearchModal({ visible, onSearch, onCancel }) 
             value={localQuery}
             onChangeText={setLocalQuery}
             style= {styles.input}
+            autoFocus={true}
+            onSubmitEditing={handleSearch}
           />
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.modalButton} onPress={handleSearch}>

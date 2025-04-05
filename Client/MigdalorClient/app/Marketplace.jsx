@@ -2,7 +2,6 @@ import React, { useContext, useState, useEffect, useMemo } from 'react';
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
 import { MarketplaceContext } from '../context/MarketplaceProvider';
 import MarketplaceItemCard from '../components/MarketplaceItemCard';
-import MarketplaceItemModal from '../components/MarketplaceItemModal';
 import MarketplaceSearchModal from '../components/MarketplaceSearchModal';
 import FlipButton from '../components/FlipButton';
 import Header from '@/components/Header';
@@ -20,8 +19,6 @@ export default function MarketplaceScreen() {
     currentPage,
     isLoading,
     goToPage,
-    selectedItem,
-    setSelectedItem,
     searchQuery,
     setSearchQuery,
   } = useContext(MarketplaceContext);
@@ -85,7 +82,11 @@ export default function MarketplaceScreen() {
   const renderItem = ({ item }) => (
     <MarketplaceItemCard
       data={item}
-      onPress={() => setSelectedItem(item)}
+      onPress={() => 
+      {
+        console.log("Item pressed", item.id);
+        router.push({ pathname: '/MarketplaceItem', params: { itemId: item.id}});
+      }}
     />
   );
 
@@ -216,11 +217,6 @@ export default function MarketplaceScreen() {
         visible={isSearchModalVisible}
         onSearch={handleSearchSubmit}
         onCancel={handleSearchCancel}
-      />
-      <MarketplaceItemModal
-        visible={!!selectedItem}
-        item={selectedItem}
-        onClose={() => setSelectedItem(undefined)}
       />
     </View>
   );

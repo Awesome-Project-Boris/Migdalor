@@ -67,6 +67,21 @@ export default function Layout() {
                 headerShown: false
               }}
             />
+            <Stack.Screen
+              name="MarketplaceItem"
+              options={{
+                title: "Marketplace item",
+                headerShown: false
+              }}
+            />
+            <Stack.Screen
+              name="ImageViewScreen"
+              options={{
+                title: "Image view screen",
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
             </Stack>
             </MarketplaceProvider>
           </BottomSheetProvider>

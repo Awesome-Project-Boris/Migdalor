@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Modal, View, Text, StyleSheet, ScrollView, Dimensions, Alert } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { Image as ExpoImage } from 'expo-image';
 import FlipButton from '../components/FlipButton';
 import LabeledTextInput from '../components/LabeledTextInput';
 import ImageViewModal from '../components/ImageViewModal';
 import FloatingLabelInput from '../components/FloatingLabelInput';
 import { Card, H2, Paragraph, XStack, YStack, Image, Spinner } from 'tamagui';
-import { useToastController } from '@tamagui/toast';
+import { MarketplaceContext } from '../context/MarketplaceProvider';
+
+import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
+
 import Header from '../components/Header';
 import {  useRouter } from "expo-router";
 import { Toast } from 'toastify-react-native';
@@ -18,14 +22,10 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 export default function AddNewItem() {
   const [itemName, setItemName] = useState('');
   const [itemDescription, setItemDescription] = useState('');
-  const [mainImage, setMainImage] = useState(null);
-  const [extraImage, setExtraImage] = useState(null);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showImageViewModal, setShowImageViewModal] = useState(false);
-  const [imageToViewUri, setImageToViewUri] = useState(null);
-  const [imageTypeToClear, setImageTypeToClear] = useState(null); 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const { mainImage, setMainImage, extraImage, setExtraImage } = useContext(MarketplaceContext);
 
   const ITEM_NAME_LIMIT = 50;
   const DESCRIPTION_LIMIT = 200;
@@ -51,12 +51,14 @@ export default function AddNewItem() {
   const confirmCancel = () => {
     setShowConfirm(false);
     resetState();
-    rounter.back();
+    router.back();
   };
 
-  const resetState = () => {
+  const resetState = async () => {
     setItemName('');
     setItemDescription('');
+    await safeDeleteFile(mainImage);
+    await safeDeleteFile(extraImage);
     setMainImage(null);
     setExtraImage(null);
   };
@@ -109,71 +111,96 @@ export default function AddNewItem() {
     }
   };
 
+  // In AddNewItemScreen.jsx
+
   const pickImage = async (setImage) => {
-        const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-        const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-        console.log('Media Library Permission Status:', libraryPermission.status);
-        if (libraryPermission.status !== 'granted') {
-            Alert.alert('Permission needed', 'Permission to access media library is required!');
-            return;
-        }
 
-        if (cameraPermission.status !== 'granted' || libraryPermission.status !== 'granted') {
-          Alert.alert('Permissions needed', 'Camera and Media Library permissions are required!');
-          return;
-        }
+  Alert.alert(
+    "Select Image Source",
+    "Choose an option",
+    [
+      {
+        text: "Take Photo",
+        onPress: async () => {
+          let result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            quality: 0.75,
+          });
+          if (!result.canceled && result.assets) {
+            const sourceUri = result.assets[0].uri;
+            // --- Copy file and set NEW URI ---
+            try {
+                const newUri = await copyImageToAppDir(sourceUri, 'camera');
+                setImage(newUri); // Set state with the PERSISTENT URI
+            } catch (copyError) {
+                console.error("Error copying camera image:", copyError);
+                Alert.alert("Error", "Could not save image.");
+                setImage(null); // Clear image on error
+            }
+          }
+        },
+      },
+      {
+        text: "Choose From Library",
+        onPress: async () => {
+          console.log("Attempting to launch image library...");
+          try {
+            let result = await ImagePicker.launchImageLibraryAsync({
+               allowsEditing: true,
+               quality: 0.75,
+            });
+            if (!result.canceled && result.assets) {
+              const sourceUri = result.assets[0].uri;
+              // --- Copy file and set NEW URI ---
+             try {
+                 const newUri = await copyImageToAppDir(sourceUri, 'library');
+                 setImage(newUri); // Set state with the PERSISTENT URI
+             } catch (copyError) {
+                 console.error("Error copying library image:", copyError);
+                 Alert.alert("Error", "Could not save image.");
+                 setImage(null); // Clear image on error
+             }
+            }
+          } catch (error) { /* ... error handling ... */ }
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]
+  );
+};
 
-        Alert.alert(
-          "Select Image Source",
-          "Choose an option",
-          [
-            {
-              text: "Take Photo",
-              onPress: async () => {
-                let result = await ImagePicker.launchCameraAsync({
-                  allowsEditing: true,
-                  quality: 0.75,
-                  base64: true
-                });
-                if (!result.canceled && result.assets) {
-                  let base64Uri = `data:image/jpeg;base64,${result.assets[0].base64}`;
-                  setImage(base64Uri);
-                }
-              },
-            },
-            {
-              text: "Choose From Library",
-              onPress: async () => {
-                console.log("Attempting to launch image library...");
-                try {
-                  let result = await ImagePicker.launchImageLibraryAsync({
-                     allowsEditing: true,
-                     quality: 0.75,
-                     base64: true,
-                  });
-                  if (!result.canceled && result.assets) {
-                     let mimeType = result.assets[0].mimeType || 'image/jpeg';
-                     let base64Uri = `data:${mimeType};base64,${result.assets[0].base64}`;
-                     console.log("Image selected (base64):", base64Uri.substring(0, 50) + "...");
-                     setImage(base64Uri);
-                  }
-                } catch (error) {
-                  console.error("Error launching image library:", error);
-                  Alert.alert("Error", "Could not open image library.");
-                }
-              },
-            },
-            {
-              text: "Cancel",
-              style: "cancel",
-            },
-          ]
-        );
-  };
+const copyImageToAppDir = async (sourceUri, prefix) => {
+  try {
+      const filename = `<span class="math-inline">\{prefix\}\-</span>{Date.now()}-${sourceUri.split('/').pop()}`; // Create a unique filename
+      const destinationUri = FileSystem.documentDirectory + filename;
+
+      console.log(`Copying from ${sourceUri} to ${destinationUri}`);
+      await FileSystem.copyAsync({
+          from: sourceUri,
+          to: destinationUri,
+      });
+      console.log(`Copy successful: ${destinationUri}`);
+      return destinationUri; 
+  } catch (e) {
+      console.error("FileSystem.copyAsync Error:", e);
+      throw e; 
+  }
+};
+
+const safeDeleteFile = async ( uri ) => {
+  if (!uri || !uri.startsWith('file://')) return; // Only delete valid local file URIs
+
+  try {
+      console.log(`Attempting to delete file: ${uri}`);
+      await FileSystem.deleteAsync(uri, { idempotent: true }); // idempotent: true prevents errors if file doesn't exist
+      console.log(`Successfully deleted or file did not exist: ${uri}`);
+  } catch (error) {
+      console.error(`Error deleting file ${uri}:`, error);
+  }
+};
 
   return (
     <>
-    <Header/>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.contentContainer}>
 
@@ -200,11 +227,11 @@ export default function AddNewItem() {
               elevate width={150} height={150} borderRadius="$4" overflow="hidden" margin={10}
               onPress={() => {
                 if (mainImage) {
-                  console.log("clicking main.. setting type 'main'");
-                  setImageToViewUri(mainImage);
-
-                  setImageTypeToClear('main');
-                  setShowImageViewModal(true);
+                  console.log("Navigating to view image: main");
+                  router.push({
+                    pathname: '/ImageViewScreen', // Use correct screen name
+                    params: { imageUri: mainImage, imageType: 'main' }
+                  });
                 } else {
                   pickImage(setMainImage);
                 }
@@ -214,7 +241,11 @@ export default function AddNewItem() {
               {mainImage ? ( 
                  <>
                   <Card.Background>
-                    <Image source={{ uri: mainImage }} position="absolute" top={0} left={0} right={0} bottom={0} contentFit="cover"/>
+                  <ExpoImage
+                   source={{ uri: mainImage }} 
+                   style={StyleSheet.absoluteFill} 
+                   contentFit="cover" 
+                  />
                   </Card.Background>
                   <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)">
                     <Paragraph theme="alt2">Main image chosen</Paragraph>
@@ -232,10 +263,11 @@ export default function AddNewItem() {
               elevate width={150} height={150} borderRadius="$4" overflow="hidden"
               onPress={() => {
                 if (extraImage) {
-                  console.log("clicking extra.. setting type 'extra'");
-                  setImageToViewUri(extraImage);
-                  setImageTypeToClear('extra');
-                  setShowImageViewModal(true);
+                  console.log("Navigating to view image: extra");
+                  router.push({
+                    pathname: '/ImageViewScreen',
+                    params: { imageUri: extraImage, imageType: 'extra' }
+                  });
                 } else {
                   pickImage(setExtraImage);
                 }
@@ -244,7 +276,11 @@ export default function AddNewItem() {
               {extraImage ? ( 
                  <>
                   <Card.Background>
-                    <Image source={{ uri: extraImage }} position="absolute" top={0} left={0} right={0} bottom={0} contentFit="cover"/>
+                  <ExpoImage
+                   source={{ uri: extraImage }} 
+                   style={StyleSheet.absoluteFill} 
+                   contentFit="cover" 
+                  />
                   </Card.Background>
                   <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)">
                     <Paragraph theme="alt2" color="$color">Extra image chosen</Paragraph>
@@ -300,28 +336,6 @@ export default function AddNewItem() {
         </Modal>
       )}
 
-      <ImageViewModal
-        visible={showImageViewModal}
-        imageUri={imageToViewUri}
-        onClose={() => {
-          setShowImageViewModal(false);
-          setImageToViewUri(null);
-          setImageTypeToClear(null); 
-        }}
-        onRemove={() => {
-          console.log('onRemove - imageTypeToClear is:', imageTypeToClear); 
-          if (imageTypeToClear === 'main') {
-            setMainImage(null);
-          } else if (imageTypeToClear === 'extra') {
-            setExtraImage(null);
-          } else {
-             console.error("onRemove: imageTypeToClear was not 'main' or 'extra'");
-          }
-          setShowImageViewModal(false);
-          setImageToViewUri(null);
-          setImageTypeToClear(null); 
-        }}
-      />
     </>
     )}
 

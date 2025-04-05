@@ -2,14 +2,16 @@ import React from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native';
 import { SCREEN_WIDTH } from "../app/constants/Globals";
 
+
 function MarketplaceItemCard({ data, onPress }) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <Image
         style={styles.image}
-        source={require('../assets/images/tempItem.jpg')} 
+        source={require('../assets/images/tempItem.jpg')}  
       />
-
+    
+    {console.log(data.itemImage1)}
       <View style={styles.infoContainer}>
         <Text style={styles.itemName}>{data.itemName}</Text>
         <Text style={styles.sellerName}>{data.sellerName}</Text>
