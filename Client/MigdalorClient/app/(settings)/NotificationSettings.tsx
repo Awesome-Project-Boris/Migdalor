@@ -5,6 +5,7 @@ import { Globals } from "@/app/constants/Globals";
 import FlipButton from "../../components/FlipButton";
 import { useState, useEffect } from "react";
 import { Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
+import { useTranslation } from "react-i18next";
 
 
 
@@ -12,7 +13,7 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 export default function NotificationSettingsPage() {
-
+  const {t} = useTranslation();
   const [notificationsSetting, setNotificationsSetting] = useState(Globals.userNotificationsSetting);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function NotificationSettingsPage() {
   return (
     <View style={{ flex: 1 }} >
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}> 
-        <YStack style={{ flex: 1 }} height={70} alignItems="baseline" gap="$7" alignSelf="center">
+        <YStack style={{ flex: 1 }} height={120} alignItems="baseline" gap="$7" alignSelf="center">
           <Text
             fontSize={40}
             fontWeight={800}
@@ -33,7 +34,7 @@ export default function NotificationSettingsPage() {
             writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
 
           >
-            הגדרות התראות:
+            {t("NotificationSettingsPage_header")}
           </Text>
 
           <FlipButton 
@@ -48,7 +49,7 @@ export default function NotificationSettingsPage() {
             }}
           >
             {/* <Ionicons name="settings" size={32} color="#fff" style={styles.icon} /> */}
-            <Text style={styles.buttonText}>קול ורטט</Text>
+            <Text style={styles.buttonText}>{t("NotificationSettingsPage_both")}</Text>
           </FlipButton>
 
           <FlipButton
@@ -63,7 +64,7 @@ export default function NotificationSettingsPage() {
             }}
           >
             {/* <Ionicons name="settings" size={32} color="#fff" style={styles.icon} /> */}
-            <Text style={styles.buttonText}>קול</Text>
+            <Text style={styles.buttonText}>{t("NotificationSettingsPage_sound")}</Text>
           </FlipButton>
 
           <FlipButton
@@ -78,7 +79,7 @@ export default function NotificationSettingsPage() {
             }}
           >
             {/* <Ionicons name="settings" size={32} color="#fff" style={styles.icon} /> */}
-            <Text style={styles.buttonText}>רטט</Text>
+            <Text style={styles.buttonText}>{t("NotificationSettingsPage_vibrate")}</Text>
           </FlipButton>
 
           <FlipButton
@@ -93,7 +94,7 @@ export default function NotificationSettingsPage() {
             }}
           >
             {/* <Ionicons name="settings" size={32} color="#fff" style={styles.icon} /> */}
-            <Text style={styles.buttonText}>מושתק</Text>
+            <Text style={styles.buttonText}>{t("NotificationSettingsPage_silent")}</Text>
           </FlipButton>
         </YStack>
       

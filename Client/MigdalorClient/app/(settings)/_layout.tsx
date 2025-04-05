@@ -11,7 +11,7 @@ export default function SettingsLayout() {
         options={{
           title: t("SettingsLayoutTabs_FontSettings"),
           headerShown: false,
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="gear" color={color} />,
+          tabBarIcon: ({ color }) => <FontAwesome size={28} name="font" color={color} />,
         }}
       />
       

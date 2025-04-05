@@ -18,6 +18,8 @@ export default function LanguageSettingsPage() {
 
   useEffect(() => {
     Globals.userSelectedLanguage = languageSetting;
+    Globals.userSelectedDirection = (languageSetting == "he" ? "rtl" : "ltr");
+    //console.log("Direction: " + Globals.userSelectedDirection);
     //console.log("Language setting: " + languageSetting);
     i18n.changeLanguage(languageSetting);
   }, [languageSetting]);
@@ -26,7 +28,7 @@ export default function LanguageSettingsPage() {
   return (
     <View style={{ flex: 1 }} >
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}> 
-        <YStack height={70} alignItems="baseline" gap="$5" alignSelf="center">
+        <YStack height={150} alignItems="baseline" gap="$5" alignSelf="center">
 
         <Text
             fontSize={40}
@@ -76,15 +78,7 @@ export default function LanguageSettingsPage() {
 
 
 const styles = StyleSheet.create({
-  sheetContent: {
-    flex: 1,
-    padding: 16,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
-    marginBottom: 16,
-  },
+
   button: {
     width: SCREEN_WIDTH * 0.7,
     height: 100,

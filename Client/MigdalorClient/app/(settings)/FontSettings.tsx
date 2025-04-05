@@ -7,6 +7,7 @@ import { Globals } from "../constants/Globals";
 import { Pressable, TouchableWithoutFeedback } from "react-native-gesture-handler";
 import { useSharedValue } from "react-native-reanimated";
 import Header from "@/components/Header";
+import { useTranslation } from "react-i18next";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
@@ -16,6 +17,8 @@ const CustomSliderTrack = styled(Slider.Track, {
 });
 
 export default function GeneralSettingsPage() {
+  const {t} = useTranslation();
+
   const [fontSize, setFontSize] = useState(Globals.userSelectedFontSize);
 
   const [scrollEnabled, setScrollEnabled] = useState(true);
@@ -37,7 +40,8 @@ export default function GeneralSettingsPage() {
             writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
 
           >
-            גודל טקסט:
+            {t("FontSettingsPage_header")}
+
           </Text>
         </YStack>
 
@@ -45,15 +49,21 @@ export default function GeneralSettingsPage() {
           height={80}
           width={SCREEN_WIDTH * 1}
           alignItems="baseline"
-          gap="$3"
+          gap="$4"
           alignSelf="center"
           justifyContent="center"
           direction="rtl"
         >
           <Image
             alignSelf="center"
+            //alignSelf="baseline"
+            
+            // style={{ paddingLeft: 20 }}
+            // style={{ alignItems: "flex-end" }}
+
             source={{
-              uri: "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67e2e97a&is=67e197fa&hm=399800590e41b3c525eb29668dbc383634a34755fdaa97a20b329d40f0d48741&",
+              //uri: "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67e2e97a&is=67e197fa&hm=399800590e41b3c525eb29668dbc383634a34755fdaa97a20b329d40f0d48741&",
+              uri: Globals.userSelectedLanguage == "he" ? "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67f212ba&is=67f0c13a&hm=1b5416976411c76d5fa6911cb26ccd04e4c4bb69d5c813759e5264d4a7c27131&" : "https://pngimg.com/d/letter_a_PNG24.png",
               width: 20,
               height: 20,
             }}
@@ -82,7 +92,8 @@ export default function GeneralSettingsPage() {
 
           <Image
             source={{
-              uri: "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67e2e97a&is=67e197fa&hm=399800590e41b3c525eb29668dbc383634a34755fdaa97a20b329d40f0d48741&",
+              //uri: "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67e2e97a&is=67e197fa&hm=399800590e41b3c525eb29668dbc383634a34755fdaa97a20b329d40f0d48741&",
+              uri: Globals.userSelectedLanguage == "he" ? "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67f212ba&is=67f0c13a&hm=1b5416976411c76d5fa6911cb26ccd04e4c4bb69d5c813759e5264d4a7c27131&" : "https://pngimg.com/d/letter_a_PNG24.png",
               width: 50,
               height: 50,
             }}
@@ -98,7 +109,7 @@ export default function GeneralSettingsPage() {
             writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
 
           >
-            טקסט דוגמה:
+            {t("FontSettingsPage_exampleHeader")}
           </Text>
           <Text
             style={[styles.textBoxStyle, { fontSize: fontSize * 10 + 20 }]}
@@ -107,11 +118,7 @@ export default function GeneralSettingsPage() {
             writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
 
           >
-            הקוסם מארץ עוץ: דורותי והכלב הקטן שלה טוטו גרו בכפר קטן באמריקה,
-            דורותי אהבה מאוד את טוטו, והם היו משחקים אחד עם השניה כל הזמן. יום
-            אחד היה סופת טורנדו נוראית. "אנחנו חייבים להגיע למרתף, טוטו!" קראה
-            דורותי. אבל זה היה מאוחר מדי. הרוח החזקה והסוערת הרימה את בית החווה
-            לאוויר ולקחה את דורותי וטוטו לארץ עוץ הנידחת.
+            {t("FontSettingsPage_example")}
           </Text>
         </YStack>
       </ScrollView>
