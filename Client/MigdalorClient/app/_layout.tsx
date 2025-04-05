@@ -7,6 +7,7 @@ import { PaperProvider } from "react-native-paper";
 import { defaultConfig } from "@tamagui/config/v4";
 import { BottomSheetProvider } from "../components/BottomSheetMain";
 import { MainMenuEditProvider } from '@/context/MainMenuEditProvider';
+import 'i18next';
 
 const config = createTamagui(defaultConfig);
 export default function Layout() {
@@ -19,6 +20,7 @@ export default function Layout() {
  /*/
 
   return (
+    
     
     <PaperProvider>
       <TamaguiProvider config={config}>

@@ -5,27 +5,21 @@ import { Globals } from "@/app/constants/Globals";
 import { useState, useEffect } from "react";
 import { Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
 import FlipButton from "../../components/FlipButton";
-
-
-
+import { useTranslation } from "react-i18next";
 
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 export default function LanguageSettingsPage() {
-    // const [volumeSetting, setVolumeSetting] = useState(Globals.userVolumeSetting);
-  
-    // useEffect(() => {
-    //   Globals.userVolumeSetting = volumeSetting;
-    // }, [volumeSetting]);
+  const {t, i18n} = useTranslation();
 
-    const [languageSetting, setLanguageSetting] = useState(Globals.userSelectedLanguage);
+  const [languageSetting, setLanguageSetting] = useState(Globals.userSelectedLanguage);
 
   useEffect(() => {
     Globals.userSelectedLanguage = languageSetting;
-    console.log("Language setting: " + languageSetting);
-
+    //console.log("Language setting: " + languageSetting);
+    i18n.changeLanguage(languageSetting);
   }, [languageSetting]);
 
 
@@ -33,46 +27,46 @@ export default function LanguageSettingsPage() {
     <View style={{ flex: 1 }} >
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}> 
         <YStack height={70} alignItems="baseline" gap="$5" alignSelf="center">
+
         <Text
             fontSize={40}
             fontWeight={800}
             alignSelf="center"
             // direction={Globals.userSelectedDirection as "rtl" | "ltr"}
             writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
-
           >
-            שינוי שפה:
+            {t("LanguageSettingsPage_header")}
           </Text>
 
 
           <FlipButton 
             style={styles.button}
-            bgColor={languageSetting == "herbrew" ? "#0b0908" : "#ffffff"}
-            textColor={languageSetting == "herbrew" ? "#ffffff" : "#0b0908"}
+            bgColor={languageSetting == "he" ? "#0b0908" : "#ffffff"}
+            textColor={languageSetting == "he" ? "#ffffff" : "#0b0908"}
             onPress={() => 
             {
-              setLanguageSetting("herbrew");
+              setLanguageSetting("he");
               // router.navigate("./GeneralSettings");
               // bottomSheetRef.current?.close();
             }}
           >
             {/* <Ionicons name="settings" size={32} color="#fff" style={styles.icon} /> */}
-            <Text style={styles.buttonText}>עברית</Text>
+            <Text style={styles.buttonText}>{t("LanguageSettingsPage_he")}</Text>
           </FlipButton>
 
           <FlipButton
             style={styles.button}
-            bgColor={languageSetting == "english" ? "#0b0908" : "#ffffff"}
-            textColor={languageSetting == "english" ? "#ffffff" : "#0b0908"}
+            bgColor={languageSetting == "en" ? "#0b0908" : "#ffffff"}
+            textColor={languageSetting == "en" ? "#ffffff" : "#0b0908"}
             onPress={() => 
             {
-              setLanguageSetting("english");
+              setLanguageSetting("en");
               // router.navigate("./GeneralSettings");
               // bottomSheetRef.current?.close();
             }}
           >
             {/* <Ionicons name="settings" size={32} color="#fff" style={styles.icon} /> */}
-            <Text style={styles.buttonText}>אנגלית</Text>
+            <Text style={styles.buttonText}>{t("LanguageSettingsPage_en")}</Text>
           </FlipButton>
         </YStack>
       </ScrollView>

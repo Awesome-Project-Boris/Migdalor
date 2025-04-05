@@ -81,7 +81,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ c
               style={styles.button}
               onPress={() => 
               {
-                router.navigate("./GeneralSettings");
+                router.navigate("./FontSettings");
                 bottomSheetRef.current?.close();
               }}
               bgColor="#4CAF50"

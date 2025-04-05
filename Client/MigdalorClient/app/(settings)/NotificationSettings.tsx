@@ -17,7 +17,7 @@ export default function NotificationSettingsPage() {
 
   useEffect(() => {
     Globals.userNotificationsSetting = notificationsSetting;
-    console.log("Notifications setting: " + notificationsSetting);
+    //console.log("Notifications setting: " + notificationsSetting);
 
   }, [notificationsSetting]);
 
