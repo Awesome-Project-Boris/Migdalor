@@ -13,18 +13,20 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": false, // Changed back to false as per your original file
-      "bundleIdentifier": "com.anonymous.MigdalorClient", // Added explicitly - **CHANGE THIS**
-      "buildNumber": "1", // Added build number
+      "supportsTablet": false,
+      "bundleIdentifier": "com.anonymous.MigdalorClient",
+      "buildNumber": "1",
       "config": {
-        "googleMapsApiKey": "AIzaSyA5rojT27ZC1ttmkiOWB1Nsc4vIGbi1rQc" // Use your actual key
+        "googleMapsApiKey": "AIzaSyA5rojT27ZC1ttmkiOWB1Nsc4vIGbi1rQc"
       },
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library...", // Keep existing
-        "NSCameraUsageDescription": "This app needs access to your camera...", // Keep existing
-        "NSMicrophoneUsageDescription": "This app needs access to your microphone...", // Keep existing
-        // *** ADDED: Location Permission Description ***
-        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show your position on the map and check boundaries." // <-- Add your reason here
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library...",
+        "NSCameraUsageDescription": "This app needs access to your camera...",
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone...",
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show your position on the map and check boundaries."
+      },
+      "runtimeVersion": {
+        "policy": "appVersion"
       }
     },
     "android": {
@@ -37,15 +39,15 @@
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.RECORD_AUDIO",
-        // *** ADDED: Location Permission ***
-        "android.permission.ACCESS_FINE_LOCATION" // <-- Required for location
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "package": "com.anonymous.MigdalorClient", // **CHANGE THIS** before release
+      "package": "com.anonymous.MigdalorClient",
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyA5rojT27ZC1ttmkiOWB1Nsc4vIGbi1rQc" // Use your actual key
-         }
-      }
+          "apiKey": "AIzaSyA5rojT27ZC1ttmkiOWB1Nsc4vIGbi1rQc"
+        }
+      },
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "bundler": "metro",
@@ -69,11 +71,6 @@
           "cameraPermission": "Allow Migdalor to access your camera."
         }
       ]
-       // It's good practice to explicitly add the location plugin if using expo-location,
-       // but react-native-geolocation-service manages permissions differently.
-       // Ensure react-native-geolocation-service is properly installed and linked/autolinked.
-       // You might need the expo-location plugin if other parts of your app use it.
-       // ["expo-location"]
     ],
     "experiments": {
       "typedRoutes": true
@@ -81,7 +78,13 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "35bd5390-b03e-489b-99d2-b3a79b0a5169"
       }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0441deeb-cab9-43eb-9bf0-a73518e05ed3"
     }
   }
 }

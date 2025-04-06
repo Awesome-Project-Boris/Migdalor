@@ -1,19 +1,26 @@
+
 {
   "cli": {
-    "version": ">= 16.2.0",
-    "appVersionSource": "remote"
+    "version": ">= 7.6.0" // Specifies compatible EAS CLI version
   },
   "build": {
     "development": {
-      "developmentClient": true,
+      "developmentClient": true, // IMPORTANT: Tells EAS to make a Development Client build
+      "distribution": "internal", // Allows installing via QR code/link easily
+      "channel": "development", // Optional channel name
+      "android": { // Settings specific to Android development builds
+        "credentialsSource": "remote" // Recommended: Let EAS manage build credentials
+        //"buildType": "apk" // You might add this if you prefer direct APK install over AAB
+      },
+      "ios": { // Settings specific to iOS development builds
+        "credentialsSource": "remote",
+        "simulator": false // Set true only if building for iOS Simulator
+      }
+    },
+    "preview": { // Another profile, often similar to development
       "distribution": "internal"
     },
-    "preview": {
-      "distribution": "internal"
-    },
-    "production": {
-      "autoIncrement": true
-    }
+    "production": {} // Profile for App Store / Play Store builds
   },
   "submit": {
     "production": {}

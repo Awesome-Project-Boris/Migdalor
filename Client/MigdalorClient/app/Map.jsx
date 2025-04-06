@@ -17,27 +17,16 @@ import {
 import MapView, { PROVIDER_GOOGLE, Polygon, Marker } from 'react-native-maps';
 import Geolocation from 'react-native-geolocation-service';
 import pointInPolygon from 'point-in-polygon'; 
-import config from '../config.json';
 
 const { width, height } = Dimensions.get('window');
-
-const APIkey = config.googleMapsApiKeyAndroid;
 const ASPECT_RATIO = width / height;
-const LATITUDE_DELTA = 0.005; 
-const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO; // horizonal zoom
 
-// Coordinates for Nordiya
-const INITIAL_POSITION = {
-  latitude: 32.310652,
-  longitude: 34.895735,
-  latitudeDelta: LATITUDE_DELTA,
-  longitudeDelta: LONGITUDE_DELTA,
-};
+const INITIAL_LATITUDE_DELTA = 0.0055; 
+const INITIAL_LONGITUDE_DELTA = INITIAL_LATITUDE_DELTA * ASPECT_RATIO; // horizonal zoom
 
-const MAP_CENTER = {
-    latitude: 32.310632,
-    longitude: 34.895801,
-}
+const MAP_CENTER_LATITUDE = 32.310441;
+const MAP_CENTER_LONGITUDE = 34.895219;
+
 
 const MapBoundsCoordinations = [{
     latitude: 32.312541, // top left
@@ -54,7 +43,6 @@ const MapBoundsCoordinations = [{
 }, ]
 
 const boundaryPolygonForCheck = MapBoundsCoordinations.map(p => [p.longitude, p.latitude]);
-
 
 // We should probably deport this big ass JSON to an external file
 const buildingsCoordinations = [
@@ -75,6 +63,13 @@ const buildingsCoordinations = [
 
 const Map = () => {
 
+    const [mapRegion, setMapRegion] = useState({
+        latitude: MAP_CENTER_LATITUDE,
+        longitude: MAP_CENTER_LONGITUDE,
+        latitudeDelta: INITIAL_LATITUDE_DELTA,
+        longitudeDelta: INITIAL_LONGITUDE_DELTA,
+    });
+
     const [currentUserLocation, setCurrentUserLocation] = useState(null);
     const [isInsideBoundary, setIsInsideBoundary] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -85,6 +80,7 @@ const Map = () => {
     const watchId = useRef(null); // To store the location watch ID
 
     const requestLocationPermission = async () => {
+        console.log("[Permissions] Requesting location permission...");
         if (Platform.OS === 'ios') {
             // On iOS, permissions are requested when Geolocation methods are called
             // Ensure Info.plist has NSLocationWhenInUseUsageDescription or NSLocationAlwaysUsageDescription
@@ -112,8 +108,9 @@ const Map = () => {
                         buttonNegative: 'Cancel',
                     },
                 );
+                console.log("[Permissions] Android Permission Status:", granted);
                 if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-                    console.log('Location permission granted');
+                    console.log('[Permissions] Android Location permission granted');
                     setLocationPermissionGranted(true);
                     return true;
                 } else {
@@ -130,66 +127,96 @@ const Map = () => {
         }
     };
 
+    
     useEffect(() => {
+        // <<< LOG: Component Mount >>>
+        console.log("[Effect] Map component mounted. Requesting permission...");
+
         const startLocationTracking = () => {
+            // <<< LOG: Start Watcher >>>
+            console.log("[Effect] Starting location watcher (watchPosition)...");
+            // Clear any previous watcher just in case
+            if (watchId.current !== null) {
+                 Geolocation.clearWatch(watchId.current);
+            }
             watchId.current = Geolocation.watchPosition(
                 (position) => {
+                    // <<< LOG: Watcher Success >>>
+                    console.log("[Effect] watchPosition SUCCESS:", JSON.stringify(position, null, 2)); // Log entire position object
                     const { latitude, longitude } = position.coords;
                     const currentPos = { latitude, longitude };
-                    setCurrentUserLocation(currentPos);
+                    setCurrentUserLocation(currentPos); // <-- State updated here
 
-                    // Check if inside boundary
-                    const userCoordsForCheck = [longitude, latitude]; // Needs [lon, lat]
+                    const userCoordsForCheck = [longitude, latitude];
                     const isInside = pointInPolygon(userCoordsForCheck, boundaryPolygonForCheck);
                     setIsInsideBoundary(isInside);
-
-                    // console.log('Location Updated:', currentPos, 'Inside Boundary:', isInside);
                 },
                 (error) => {
-                    console.log('Geolocation Error:', error.code, error.message);
-                    setCurrentUserLocation(null); // Clear location on error
-                    // Consider more robust error handling (e.g., location services disabled)
-                     if (error.code === 2 || error.code === 3) { // POSITION_UNAVAILABLE or TIMEOUT
-                        Alert.alert("Location Error", "Could not get current location. Please ensure location services are enabled and try again.");
-                    }
+                    // <<< LOG: Watcher Error >>>
+                    console.error('[Effect] watchPosition ERROR:', { code: error.code, message: error.message });
+                    setCurrentUserLocation(null);
+                    // Keep error alerts
+                    if (error.code === 1) { Alert.alert("Permission Denied", "Location permission was denied.");}
+                    else if (error.code === 2) { Alert.alert("Location Unavailable", "Could not get current location. Ensure GPS is enabled.");}
+                    else if (error.code === 3) { Alert.alert("Timeout", "Location request timed out."); }
+                    else { Alert.alert("Location Error", `An unknown error occurred (${error.code}): ${error.message}`);}
                 },
-                {
-                    enableHighAccuracy: true, // Use GPS for best accuracy
-                    distanceFilter: 10, // Update only when moved 10 meters
-                    interval: 5000, // Check roughly every 5 seconds
-                    fastestInterval: 2000, // Max update rate 2 seconds
+                { // Options
+                    enableHighAccuracy: true,
+                    distanceFilter: 10, // Meters
+                    interval: 5000, // Milliseconds
+                    fastestInterval: 2000, // Milliseconds
+                    // showLocationDialog: true // Optional: On Android, show a dialog if location is disabled (can be intrusive)
                 }
             );
+             // <<< LOG: Watcher ID >>>
+             console.log("[Effect] watchPosition started with watchId:", watchId.current);
         };
 
         requestLocationPermission().then(granted => {
+             // <<< LOG: Permission Result in Effect >>>
+             console.log("[Effect] Permission request finished. Granted:", granted);
             if (granted) {
-                // Get initial position once
+                // <<< LOG: Attempting Initial Position >>>
+                console.log("[Effect] Permission granted. Getting initial position (getCurrentPosition)...");
                 Geolocation.getCurrentPosition(
                     (position) => {
-                         const { latitude, longitude } = position.coords;
-                         const initialPos = { latitude, longitude };
-                         setCurrentUserLocation(initialPos);
-                         const userCoordsForCheck = [longitude, latitude];
-                         const isInside = pointInPolygon(userCoordsForCheck, boundaryPolygonForCheck);
-                         setIsInsideBoundary(isInside);
-                         // Optionally move map to user's initial location
-                         // mapRef.current?.animateToRegion({ ...initialPos, latitudeDelta: LATITUDE_DELTA, longitudeDelta: LONGITUDE_DELTA });
+                        // <<< LOG: Initial Position Success >>>
+                        console.log("[Effect] getCurrentPosition SUCCESS:", JSON.stringify(position, null, 2)); // Log entire position object
+                        const { latitude, longitude } = position.coords;
+                        const initialPos = { latitude, longitude };
+                        setCurrentUserLocation(initialPos); // <-- State updated here
+
+                        const userCoordsForCheck = [longitude, latitude];
+                        const isInside = pointInPolygon(userCoordsForCheck, boundaryPolygonForCheck);
+                        setIsInsideBoundary(isInside);
                     },
-                    (error) => console.log('Initial Geolocation Error:', error.code, error.message),
+                    (error) => {
+                        // <<< LOG: Initial Position Error >>>
+                        console.error('[Effect] getCurrentPosition ERROR:', { code: error.code, message: error.message });
+                        // Keep alerts, maybe log instead/additionally if alerts are annoying
+                        if (error.code === 1) { console.error("Initial Pos Error: Permission Denied"); Alert.alert(/*...*/)}
+                        else if (error.code === 2) { console.error("Initial Pos Error: Unavailable"); Alert.alert(/*...*/)}
+                        else if (error.code === 3) { console.error("Initial Pos Error: Timeout"); Alert.alert(/*...*/)}
+                        else { console.error("Initial Pos Error: Unknown"); Alert.alert(/*...*/)}
+                    },
                     { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
                 );
                 // Start watching for continuous updates
                 startLocationTracking();
+            } else {
+                 // <<< LOG: Permission Denied Flow >>>
+                 console.log("[Effect] Permission denied by user. Location tracking not started.");
             }
         });
 
-
-        // Cleanup function: Stop watching location when component unmounts
+        // Cleanup function
         return () => {
             if (watchId.current !== null) {
+                 // <<< LOG: Cleanup >>>
+                 console.log("[Effect] Map component unmounting. Clearing watchId:", watchId.current);
                 Geolocation.clearWatch(watchId.current);
-                // console.log('Stopped location watch');
+                watchId.current = null; // Clear ref
             }
         };
     }, []); // Empty dependency array ensures this runs only once on mount
@@ -199,52 +226,47 @@ const Map = () => {
         setIsModalVisible(true);
     };
 
+    const onRegionChangeComplete = (newRegion) => {
+        // console.log("Region Change Complete:", newRegion); // Optional: Log region changes
+        setMapRegion(newRegion);
+    };
+
     return (
         <View style={styles.container}>
             <MapView
-                ref={mapRef}
-                provider={PROVIDER_GOOGLE} // Use Google Maps
-                style={styles.map}
-                mapType="satellite" // Use satellite view
-                initialRegion={{ // Center map initially
-                    ...MAP_CENTER,
-                    latitudeDelta: LATITUDE_DELTA,
-                    longitudeDelta: LONGITUDE_DELTA,
-                }}
-                showsUserLocation={locationPermissionGranted} // Show blue dot only if permission granted
-                showsMyLocationButton={locationPermissionGranted} // Show button only if permission granted
-                followsUserLocation={false} // Set to true if you want the map to follow the user
+                 ref={mapRef}
+                 provider={PROVIDER_GOOGLE}
+                 style={styles.map}
+                 mapType="satellite"
+                 // *** Use controlled `region` prop ***
+                 region={mapRegion}
+                 // *** Use `onRegionChangeComplete` ***
+                 onRegionChangeComplete={onRegionChangeComplete}
+                 // *** Add `onMapReady` log ***
+                 onMapReady={() => console.log("Map is ready!")}
+                 showsUserLocation={locationPermissionGranted}
+                 showsMyLocationButton={locationPermissionGranted}
+                 followsUserLocation={false}
+                 onError={(error) => console.error("MapView Error:", error)}
             >
-                {/* 1. Draw the main boundary */}
+                {/* Keep original Polygons (colors from your old code) */}
                 <Polygon
                     coordinates={MapBoundsCoordinations}
-                    strokeColor="rgba(255, 0, 0, 0.8)" // Red border
+                    strokeColor="rgba(255, 0, 0, 0.8)"
                     strokeWidth={3}
-                    fillColor={isInsideBoundary ? "rgba(0, 255, 0, 0.2)" : "rgba(255, 0, 0, 0.2)"} // Green fill if inside, red if outside
+                    fillColor={isInsideBoundary ? "rgba(0, 255, 0, 0.2)" : "rgba(255, 0, 0, 0.2)"}
                 />
-
-                {/* 2. Draw clickable buildings */}
                 {buildingsCoordinations.map(building => (
                     <Polygon
                         key={building.id}
                         coordinates={building.coordinates}
-                        fillColor="rgba(0, 0, 255, 0.5)" // #0000ff fill for buildings
+                        fillColor="rgba(0, 0, 255, 0.5)"
                         strokeColor="rgba(0, 0, 255, 0.8)"
                         strokeWidth={2}
-                        tappable={true} // IMPORTANT: Make it clickable
+                        tappable={true}
                         onPress={() => handleBuildingPress(building)}
                     />
                 ))}
-
-                 {/* 3. Show user's current location marker (optional, showsUserLocation does this too) */}
-                 {/* {currentUserLocation && (
-                    <Marker
-                        coordinate={currentUserLocation}
-                        title="Your Location"
-                        pinColor={isInsideBoundary ? 'green' : 'red'} // Marker color based on boundary status
-                    />
-                 )} */}
-
             </MapView>
 
             {/* Status Text Overlay (Example) */}
