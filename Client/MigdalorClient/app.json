@@ -17,7 +17,7 @@
       "bundleIdentifier": "com.anonymous.MigdalorClient",
       "buildNumber": "1",
       "config": {
-        "googleMapsApiKey": "AIzaSyA5rojT27ZC1ttmkiOWB1Nsc4vIGbi1rQc"
+        "googleMapsApiKey": "${MAPS_API_KEY}"
       },
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library...",
@@ -44,7 +44,7 @@
       "package": "com.anonymous.MigdalorClient",
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyA5rojT27ZC1ttmkiOWB1Nsc4vIGbi1rQc"
+          "apiKey": "${MAPS_API_KEY}"
         }
       },
       "runtimeVersion": "1.0.0"

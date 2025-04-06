@@ -7,9 +7,6 @@
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
-      // --- Correct Placement for workingDirectory ---
-      "workingDirectory": "Client/MigdalorClient",
-      // ---------------------------------------------
       "android": {
         "credentialsSource": "remote"
        // "buildType": "apk"
@@ -21,12 +18,8 @@
     },
     "preview": {
       "distribution": "internal",
-      // --- Add here too if you use the 'preview' profile ---
-      "workingDirectory": "Client/MigdalorClient"
     },
     "production": {
-       // --- Add here too if you use the 'production' profile ---
-       "workingDirectory": "Client/MigdalorClient"
     }
   },
   "submit": {
