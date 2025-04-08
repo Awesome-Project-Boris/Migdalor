@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
+using MigdalorServer.Models.DTOs;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,44 +13,52 @@ namespace MigdalorServer.Controllers
     [ApiController]
     public class PeopleController : ControllerBase
     {
-        private readonly MigdalorDBContext db;
-
-        public PeopleController(MigdalorDBContext context)
-        {
-            db = context;
-        }
-
-
         // GET: api/<PeopleController>
         [HttpGet]
-        public List<OhPerson> Get()
-        {
-            return db.OhPeople.ToList();
-        }
+        public void GetAllPeople() { }
 
         // GET api/<PeopleController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
+        public void GetPersonByID(Guid id) { }
 
         // POST api/<PeopleController>
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost("register")]
+        public IActionResult Register([FromBody] UserRegister user)
         {
+            try
+            {
+                return Ok(OhPerson.AddUser(user));
+            }
+            catch (Exception e)
+            {
+                return StatusCode(
+                    500,
+                    $"Error Registering User: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
         }
 
-        // PUT api/<PeopleController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPost("login")]
+        public IActionResult Login([FromBody] UserLogin user)
         {
+            try
+            {
+                return Ok(OhPerson.AuthenticateUser(user));
+            }
+            catch (Exception e)
+            {
+                return StatusCode(
+                    500,
+                    $"Error Logging In: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
         }
+
+        [HttpPut("{id}")]
+        public void Put(int id, [FromBody] string value) { }
 
         // DELETE api/<PeopleController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        public void Delete(int id) { }
     }
 }

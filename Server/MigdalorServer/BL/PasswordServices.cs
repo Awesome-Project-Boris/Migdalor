@@ -1,4 +1,6 @@
 ﻿using Konscious.Security.Cryptography;
+using MigdalorServer.Database;
+using MigdalorServer.Models.DTOs;
 using System;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,7 +14,7 @@ namespace MigdalorServer.BL
         private const int MemorySize = 1024;       // in KB
         private const int DegreeOfParallelism = 2;
         private const int SaltSize = 16;           // in bytes
-        private const int HashLength = 16;         // in bytes
+        private const int HashLength = 64;         // in bytes
 
         /// <summary>
         /// Generates a cryptographically secure random salt.

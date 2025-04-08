@@ -7,10 +7,6 @@ namespace MigdalorServer.Database;
 
 public partial class MigdalorDBContext : DbContext
 {
-    public MigdalorDBContext()
-    {
-    }
-
     public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
         : base(options)
     {
@@ -36,11 +32,12 @@ public partial class MigdalorDBContext : DbContext
 
     public virtual DbSet<OhRoom> OhRooms { get; set; }
 
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OhActivity>(entity =>
         {
-            entity.HasKey(e => e.ActivityId).HasName("PK__OH_Activ__0FC9CBCCA19CF83A");
+            entity.HasKey(e => e.ActivityId).HasName("PK__OH_Activ__0FC9CBCCD5C341C4");
 
             entity.HasOne(d => d.Host).WithMany(p => p.OhActivities).HasConstraintName("FK_Activities_Host");
 
@@ -54,7 +51,7 @@ public partial class MigdalorDBContext : DbContext
 
         modelBuilder.Entity<OhClass>(entity =>
         {
-            entity.HasKey(e => e.ClassId).HasName("PK__OH_Class__7577345E11E38252");
+            entity.HasKey(e => e.ClassId).HasName("PK__OH_Class__7577345EE5751577");
 
             entity.Property(e => e.ClassId).ValueGeneratedNever();
             entity.Property(e => e.IsRecurring).HasDefaultValue(false);
@@ -66,7 +63,7 @@ public partial class MigdalorDBContext : DbContext
 
         modelBuilder.Entity<OhNotice>(entity =>
         {
-            entity.HasKey(e => e.NoticeId).HasName("PK__OH_Notic__4ED12E4ED40ADBB5");
+            entity.HasKey(e => e.NoticeId).HasName("PK__OH_Notic__4ED12E4E7A8618DF");
 
             entity.Property(e => e.CreationDate).HasDefaultValueSql("(getdate())");
 
@@ -77,7 +74,7 @@ public partial class MigdalorDBContext : DbContext
 
         modelBuilder.Entity<OhParticipation>(entity =>
         {
-            entity.HasKey(e => new { e.ActivityId, e.ParticipantId, e.ParticipationDate }).HasName("PK__OH_Parti__172E5FA018314B66");
+            entity.HasKey(e => new { e.ActivityId, e.ParticipantId, e.ParticipationDate }).HasName("PK__OH_Parti__172E5FA03E34F7FF");
 
             entity.HasOne(d => d.Activity).WithMany(p => p.OhParticipations)
                 .OnDelete(DeleteBehavior.ClientSetNull)
@@ -95,11 +92,10 @@ public partial class MigdalorDBContext : DbContext
 
         modelBuilder.Entity<OhPerson>(entity =>
         {
-            entity.HasKey(e => e.PersonId).HasName("PK__OH_Peopl__EC7D7D6DF8F28E22");
+            entity.HasKey(e => e.PersonId).HasName("PK__OH_Peopl__EC7D7D6DB71CF9F4");
 
-            entity.Property(e => e.Gender)
-                .HasDefaultValue("U")
-                .IsFixedLength();
+            entity.Property(e => e.PersonId).HasDefaultValueSql("(newid())");
+            entity.Property(e => e.Gender).IsFixedLength();
 
             entity.HasOne(d => d.ProfilePic).WithMany(p => p.OhPeople).HasConstraintName("FK_People_ProfilePic");
 
@@ -116,9 +112,9 @@ public partial class MigdalorDBContext : DbContext
                         .HasConstraintName("FK_PersonPermissions_Person"),
                     j =>
                     {
-                        j.HasKey("PersonId", "PermissionName").HasName("PK__OH_Perso__2B7B1C82105D4EA9");
+                        j.HasKey("PersonId", "PermissionName").HasName("PK__OH_Perso__2B7B1C825C7E3668");
                         j.ToTable("OH_PersonBlockedPermissions");
-                        j.IndexerProperty<int>("PersonId").HasColumnName("personID");
+                        j.IndexerProperty<Guid>("PersonId").HasColumnName("personID");
                         j.IndexerProperty<string>("PermissionName")
                             .HasMaxLength(100)
                             .HasColumnName("permissionName");
@@ -132,12 +128,12 @@ public partial class MigdalorDBContext : DbContext
 
         modelBuilder.Entity<OhResident>(entity =>
         {
-            entity.HasKey(e => e.ResidentId).HasName("PK__OH_Resid__9AD71856DD7E720C");
+            entity.HasKey(e => e.ResidentId).HasName("PK__OH_Resid__9AD7185694C025C4");
 
             entity.Property(e => e.ResidentId).ValueGeneratedNever();
+            entity.Property(e => e.DateOfArrival).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.IsBokerTov).HasDefaultValue(true);
-            entity.Property(e => e.PhoneNumber).IsFixedLength();
 
             entity.HasOne(d => d.AdditionalPic1).WithMany(p => p.OhResidentAdditionalPic1s).HasConstraintName("FK_Residents_AdditionalPic1");
 

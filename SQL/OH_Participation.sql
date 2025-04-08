@@ -1,6 +1,6 @@
 CREATE TABLE OH_Participation (
     activityID INT NOT NULL,
-    participantID INT NOT NULL,
+    participantID UNIQUEIDENTIFIER NOT NULL,
     participationDate DATE NOT NULL,
     PRIMARY KEY (activityID, participantID, participationDate),
     CONSTRAINT FK_Participation_Activity FOREIGN KEY (activityID)

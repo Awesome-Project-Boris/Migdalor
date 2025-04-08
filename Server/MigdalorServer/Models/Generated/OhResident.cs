@@ -11,7 +11,7 @@ public partial class OhResident
 {
     [Key]
     [Column("residentID")]
-    public int ResidentId { get; set; }
+    public Guid ResidentId { get; set; }
 
     [Column("hasLoggedIn")]
     public bool HasLoggedIn { get; set; }
@@ -30,7 +30,7 @@ public partial class OhResident
     public bool CanInitActivity { get; set; }
 
     [Column("spouseID")]
-    public int SpouseId { get; set; }
+    public Guid SpouseId { get; set; }
 
     [Column("dateOfArrival")]
     public DateOnly DateOfArrival { get; set; }
@@ -38,11 +38,6 @@ public partial class OhResident
     [Column("homePlace")]
     [StringLength(100)]
     public string? HomePlace { get; set; }
-
-    [Column("phoneNumber")]
-    [StringLength(10)]
-    [Unicode(false)]
-    public string? PhoneNumber { get; set; }
 
     [Column("profession")]
     [StringLength(100)]
@@ -67,9 +62,6 @@ public partial class OhResident
 
     [InverseProperty("Spouse")]
     public virtual ICollection<OhResident> InverseSpouse { get; set; } = new List<OhResident>();
-
-    [InverseProperty("Sender")]
-    public virtual ICollection<OhNotice> OhNotices { get; set; } = new List<OhNotice>();
 
     [ForeignKey("ResidentId")]
     [InverseProperty("OhResident")]

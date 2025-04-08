@@ -1,5 +1,5 @@
 CREATE TABLE OH_PersonBlockedPermissions (
-    personID INT NOT NULL,
+    personID UNIQUEIDENTIFIER NOT NULL,
     permissionName NVARCHAR(100) NOT NULL,
     PRIMARY KEY (personID, permissionName),
     CONSTRAINT FK_PersonPermissions_Person FOREIGN KEY (personID)
