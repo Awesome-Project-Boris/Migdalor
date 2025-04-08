@@ -36,12 +36,13 @@ const resources = {
       ProfileScreen_mobilePhone: "Mobile Phone",
       ProfileScreen_email: "Email",
       ProfileScreen_arrivalYear: "Year of Arrival to Nordia",
-      ProfileScreen_origin: "I Am Originally From",
+      ProfileScreen_origin: "Originally From",
       ProfileScreen_profession: "Profession",
       ProfileScreen_interests: "Interests",
       ProfileScreen_aboutMe: "About Me",
       ProfileScreen_extraImages: "Extra Images",
 
+      EditProfileScreen_saveButton: "Save Changes",
 
     },
   },
@@ -80,6 +81,7 @@ const resources = {
       ProfileScreen_aboutMe: "קצת על עצמי",
       ProfileScreen_extraImages: "תמונות נוספות",
 
+      EditProfileScreen_saveButton: "שמור שינויים",
 
     },
   }
