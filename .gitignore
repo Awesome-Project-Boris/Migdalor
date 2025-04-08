@@ -590,3 +590,4 @@ fix_*.patch
 
 ################React Native##############
 
+*.json
