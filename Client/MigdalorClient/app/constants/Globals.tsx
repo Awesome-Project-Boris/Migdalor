@@ -7,7 +7,7 @@ export let Globals= {
   //APP_NAME: 'MyCoolApp',
   //DEFAULT_TIMEOUT: 5000,
   //THEME: 'light', // Default theme
-  userSelectedDirection: "rtl",
+  userSelectedDirection: "ltr",
   userSelectedFontSize: 1,
   // userVolumeSetting: 5,
   userNotificationsSetting: "both", // "vibration", "sound", "both", "none"

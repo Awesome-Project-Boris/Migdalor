@@ -4,6 +4,8 @@ import { Globals } from "@/app/constants/Globals";
 import { useState, useEffect } from "react";
 import { View, Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
 import FlipButton from "../../components/FlipButton";
+import Header from "@/components/Header";
+
 import { useTranslation } from "react-i18next";
 
 
@@ -18,7 +20,7 @@ export default function LanguageSettingsPage() {
   useEffect(() => {
     Globals.userSelectedLanguage = languageSetting;
     Globals.userSelectedDirection = (languageSetting == "he" ? "rtl" : "ltr");
-    //console.log("Direction: " + Globals.userSelectedDirection);
+    console.log("Direction: " + Globals.userSelectedDirection);
     //console.log("Language setting: " + languageSetting);
     i18n.changeLanguage(languageSetting);
   }, [languageSetting]);
@@ -26,7 +28,8 @@ export default function LanguageSettingsPage() {
 
   return (
     <View style={{ flex: 1 }} >
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}> 
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60, paddingTop: 60  }}> 
+        <Header />
         <YStack height={150} alignItems="baseline" gap="$5" alignSelf="center">
 
         <Text

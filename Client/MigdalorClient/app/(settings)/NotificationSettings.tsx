@@ -6,6 +6,8 @@ import FlipButton from "../../components/FlipButton";
 import { useState, useEffect } from "react";
 import { Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
 import { useTranslation } from "react-i18next";
+import Header from "@/components/Header";
+
 
 
 
@@ -24,8 +26,9 @@ export default function NotificationSettingsPage() {
 
   return (
     <View style={{ flex: 1 }} >
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60 }}> 
-        <YStack style={{ flex: 1 }} height={120} alignItems="baseline" gap="$7" alignSelf="center">
+      <Header />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60, paddingTop: 60 }}> 
+        <YStack style={{ flex: 1 }} height={110} alignItems="baseline" gap="$5" alignSelf="center">
           <Text
             fontSize={40}
             fontWeight={800}

@@ -2,6 +2,7 @@ import { transform } from '@babel/core';
 import i18next from 'i18next';
 import { initReactI18next } from "react-i18next";
 import {Globals} from '../constants/Globals';
+import Profile from '../Profile';
 
 const resources = {
   en: { // English translations
@@ -13,7 +14,7 @@ const resources = {
       SettingsLayoutTabs_languageSettings: 'Language Settings',
 
       FontSettingsPage_header: 'Font Settings:',
-      FontSettingsPage_exampleHeader: 'Example Text:',
+      FontSettingsPage_exampleHeader: 'Sample Text:',
       FontSettingsPage_example: "The Wizard of Oz: Dorothy and her little dog Toto lived in a small village in America.\nDorothy loved Toto very much, and they played with each other all the time. One day there was a terrible tornado. \"We have to get to the basement, Toto!\" Dorothy shouted. But it was too late. The strong and fierce wind lifted the farmhouse into the air and took Dorothy and Toto to the distant Land of Oz.",
 
 
@@ -28,6 +29,21 @@ const resources = {
       LanguageSettingsPage_header: 'Language Settings:',
       LanguageSettingsPage_he: "Hebrew",
       LanguageSettingsPage_en: "English",
+
+      ProfileScreen_header: 'Profile',
+      ProfileScreen_partner: "Partner",
+      ProfileScreen_apartmentNumber: "Apartment Number",
+      ProfileScreen_mobilePhone: "Mobile Phone",
+      ProfileScreen_email: "Email",
+      ProfileScreen_arrivalYear: "Year of Arrival to Nordia",
+      ProfileScreen_origin: "Originally From",
+      ProfileScreen_profession: "Profession",
+      ProfileScreen_interests: "Interests",
+      ProfileScreen_aboutMe: "About Me",
+      ProfileScreen_extraImages: "Extra Images",
+
+      EditProfileScreen_saveButton: "Save Changes",
+
     },
   },
   he: { // Hebrew translations
@@ -52,6 +68,20 @@ const resources = {
       LanguageSettingsPage_header: 'הגדרות שפה:',
       LanguageSettingsPage_he: "עברית",
       LanguageSettingsPage_en: "אנגלית",
+
+      ProfileScreen_header: 'פרופיל',
+      ProfileScreen_partner: "בן/בת זוג",
+      ProfileScreen_apartmentNumber: "מספר דירה",
+      ProfileScreen_mobilePhone: "טלפון נייד",
+      ProfileScreen_email: "דואר אלקטרוני",
+      ProfileScreen_arrivalYear: "שנת הגעה לנורדיה",
+      ProfileScreen_origin: "מקום מוצא",
+      ProfileScreen_profession: "מקצוע",
+      ProfileScreen_interests: "תחומי עניין",
+      ProfileScreen_aboutMe: "קצת על עצמי",
+      ProfileScreen_extraImages: "תמונות נוספות",
+
+      EditProfileScreen_saveButton: "שמור שינויים",
 
     },
   }
