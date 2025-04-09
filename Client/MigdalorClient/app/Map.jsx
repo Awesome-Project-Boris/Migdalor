@@ -238,7 +238,7 @@ const Map = () => {
                 ))}
             </MapView>
 
-            {/* Status Overlay */}
+            {/*/ For dev purposes mainly/*/}
             <View style={styles.statusOverlay}>
                 <Text style={styles.statusText}>
                     Location Permission: {locationPermissionGranted ? 'Granted' : 'Not Granted'}
