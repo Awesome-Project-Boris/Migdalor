@@ -3,7 +3,7 @@ CREATE TABLE OH_Activities (
     activityName NVARCHAR(100) UNIQUE NOT NULL,
     startDate DATETIME NOT NULL,
     capacity INT NOT NULL,
-    hostID INT,
+    hostID UNIQUEIDENTIFIER,
     [location] NVARCHAR(MAX),
     PicID INT,
     CONSTRAINT FK_Activities_Host FOREIGN KEY (hostID)

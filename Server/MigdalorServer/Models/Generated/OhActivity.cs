@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MigdalorServer.Models;
 
 [Table("OH_Activities")]
-[Index("ActivityName", Name = "UQ__OH_Activ__BD8CC0A9662B06D5", IsUnique = true)]
+[Index("ActivityName", Name = "UQ__OH_Activ__BD8CC0A98C74AE38", IsUnique = true)]
 public partial class OhActivity
 {
     [Key]
@@ -25,7 +25,7 @@ public partial class OhActivity
     public int Capacity { get; set; }
 
     [Column("hostID")]
-    public int? HostId { get; set; }
+    public Guid? HostId { get; set; }
 
     [Column("location")]
     public string? Location { get; set; }

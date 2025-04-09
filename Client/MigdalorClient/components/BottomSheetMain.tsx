@@ -17,7 +17,9 @@ interface BottomSheetContextType {
   closeSheet: () => void;
 }
 
-const BottomSheetContext = createContext<BottomSheetContextType | undefined>(undefined);
+const BottomSheetContext = createContext<BottomSheetContextType | undefined>(
+  undefined
+);
 
 export const useBottomSheet = () => {
   const context = useContext(BottomSheetContext);
@@ -27,7 +29,9 @@ export const useBottomSheet = () => {
   return context;
 };
 
-export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
@@ -73,7 +77,12 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ c
               bgColor="#4CAF50"
               textColor="#ffffff"
             >
-              <Ionicons name="home" size={32} color="#fff" style={styles.icon} />
+              <Ionicons
+                name="home"
+                size={32}
+                color="#fff"
+                style={styles.icon}
+              />
               <Text style={styles.buttonText}>בית</Text>
             </FlipButton>
 
@@ -88,7 +97,12 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ c
               bgColor="#4CAF50"
               textColor="#ffffff"
             >
-              <Ionicons name="settings" size={32} color="#fff" style={styles.icon} />
+              <Ionicons
+                name="settings"
+                size={32}
+                color="#fff"
+                style={styles.icon}
+              />
               <Text style={styles.buttonText}>הגדרות</Text>
             </FlipButton>
           </View>
@@ -106,7 +120,12 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ c
               bgColor="#4CAF50"
               textColor="#ffffff"
             >
-              <Ionicons name="person" size={32} color="#fff" style={styles.icon} />
+              <Ionicons
+                name="person"
+                size={32}
+                color="#fff"
+                style={styles.icon}
+              />
               <Text style={styles.buttonText}>פרופיל</Text>
             </FlipButton>
 
@@ -129,11 +148,29 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({ c
                 <Text style={styles.buttonText}>שנה סדר תפריט</Text>
               </FlipButton>
             )}
+            {true /*replace with checking if admin*/ && (
+              <FlipButton
+                style={styles.button}
+                onPress={() => {
+                  setEditing(true);
+                  bottomSheetRef.current?.close();
+                }}
+                bgColor="#000000"
+                textColor="#ffffff"
+              >
+                <MaterialCommunityIcons
+                  name="account-tie"
+                  size={32}
+                  color="#fff"
+                  style={styles.icon}
+                />
+                <Text style={styles.buttonText}>תפריט ניהול</Text>
+              </FlipButton>
+            )}
           </View>
         </BottomSheetView>
       </BottomSheet>
     </BottomSheetContext.Provider>
-
   );
 };
 

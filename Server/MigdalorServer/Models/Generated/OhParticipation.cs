@@ -16,7 +16,7 @@ public partial class OhParticipation
 
     [Key]
     [Column("participantID")]
-    public int ParticipantId { get; set; }
+    public Guid ParticipantId { get; set; }
 
     [Key]
     [Column("participationDate")]

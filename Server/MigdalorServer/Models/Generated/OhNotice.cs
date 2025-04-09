@@ -14,7 +14,7 @@ public partial class OhNotice
     public int NoticeId { get; set; }
 
     [Column("senderID")]
-    public int? SenderId { get; set; }
+    public Guid? SenderId { get; set; }
 
     [Column("creationDate")]
     public DateOnly? CreationDate { get; set; }
@@ -32,7 +32,9 @@ public partial class OhNotice
     public string? NoticeCategory { get; set; }
 
     [Column("noticeSubCategory")]
-    public int? NoticeSubCategory { get; set; }
+    [StringLength(100)]
+    [Unicode(false)]
+    public string? NoticeSubCategory { get; set; }
 
     [ForeignKey("NoticeCategory")]
     [InverseProperty("OhNotices")]
@@ -40,5 +42,5 @@ public partial class OhNotice
 
     [ForeignKey("SenderId")]
     [InverseProperty("OhNotices")]
-    public virtual OhResident? Sender { get; set; }
+    public virtual OhPerson? Sender { get; set; }
 }

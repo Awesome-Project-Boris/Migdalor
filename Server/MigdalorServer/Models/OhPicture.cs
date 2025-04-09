@@ -1,4 +1,4 @@
-﻿namespace MigdalorServer.BL
+﻿namespace MigdalorServer.Models
 {
     public partial class OhPicture
     {
