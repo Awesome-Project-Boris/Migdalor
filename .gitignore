@@ -591,3 +591,4 @@ fix_*.patch
 ################React Native##############
 
 appsettings.json
+keys.json
