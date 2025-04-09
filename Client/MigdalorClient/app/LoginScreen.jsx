@@ -24,7 +24,7 @@ I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 const LoginScreen = () => {
-  const [username, setUsername] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -32,8 +32,32 @@ const LoginScreen = () => {
     console.log("Remember Me:", rememberMe);
   }, [rememberMe]);
 
-  const handleLogin = () => {};
-
+  const handleLogin = () => {
+    console.log("Login button pressed");
+    fetch("https://192.168.0.160:44344/api/People/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phoneNumber: phoneNumber,
+        password: password,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  };
+  const handlePhoneNumberChange = (text) => {
+    const cleanedText = text.replace(/\D/g, "");
+    // if (cleanedText.length <= 10) {
+    // }
+      setPhoneNumber(cleanedText);
+  };
   return (
     <View style={styles.page}>
       <ScrollView>
@@ -55,12 +79,13 @@ const LoginScreen = () => {
 
               <View style={styles.formContainer}>
                 <FloatingLabelInput
-                  label="שם משתמש"
-                  value={username}
-                  onChangeText={setUsername}
-                  textContentType="username"
-                  keyboardType="default"
-                  size={30}
+                  label="מספר טלפון"
+                  value={phoneNumber}
+                  onChangeText={handlePhoneNumberChange}
+                  textContentType="telephoneNumber"
+                  keyboardType="numeric"
+                  maxLength={10}
+                  size={35}
                 />
                 <FloatingLabelInput
                   label="סיסמה"
@@ -69,7 +94,7 @@ const LoginScreen = () => {
                   textContentType="password"
                   keyboardType="default"
                   secureTextEntry
-                  size={30}
+                  size={35}
                 />
 
                 <TouchableWithoutFeedback
@@ -84,18 +109,33 @@ const LoginScreen = () => {
                     onPress={() => setRememberMe(!rememberMe)}
                   />
                 </TouchableWithoutFeedback>
+                
+
                 <FlipButton
                   text="כניסה"
                   onPress={handleLogin}
-                  bgColor="lightgrey"
+                  bgColor="#60a5fa"
                   textColor="black"
-                  flipborderwidth={3}
-                >
+                  flipborderwidth={5}
+                  >
                   <XStack gap={5} style={{ paddingStart: 15 }}>
                     <Text style={styles.loginButtonText}>כניסה</Text>
                     <Ionicons name="log-in-outline" size={38} color="#013220" />
                   </XStack>
                 </FlipButton>
+                <FlipButton
+                  text="כניסה עם גוגל"
+                  onPress={handleLogin}
+                  bgColor="#dc2626"
+                  textColor="white"
+                  flipborderwidth={5}
+                  >
+                  <XStack gap={8} style={{ paddingStart: 15 }}>
+                    <Text style={styles.loginButtonText}>כניסה עם גוגל</Text>
+                    <Ionicons name="logo-google" size={34} color="#013220" />
+                  </XStack>
+                </FlipButton>
+                  
               </View>
             </View>
           </KeyboardAvoidingView>
@@ -163,7 +203,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   rememberMeContainer: {
-    //direction: "rtl",
     writingDirection: "rtl",
   },
   rememberMeText: {
