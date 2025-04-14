@@ -65,21 +65,21 @@ export default function Layout() {
             <Stack.Screen
               name="MarketplaceNewItem"
               options={{
-                title: "Marketplace new item",
+                title: "Marketplace New Item",
                 headerShown: false
               }}
             />
             <Stack.Screen
               name="MarketplaceItem"
               options={{
-                title: "Marketplace item",
+                title: "Marketplace Item",
                 headerShown: false
               }}
             />
             <Stack.Screen
               name="ImageViewScreen"
               options={{
-                title: "Image view screen",
+                title: "Image View Screen",
                 headerShown: false,
                 presentation: 'modal'
               }}
@@ -87,7 +87,35 @@ export default function Layout() {
             <Stack.Screen
               name="Map"
               options={{
-                title: "Site map",
+                title: "Site Map",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="Notices"
+              options={{
+                title: "Notice Board",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="NoticeFocus"
+              options={{
+                title: "Single Notice",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="ResidentList"
+              options={{
+                title: "List Of Residents",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="CommittieePage"
+              options={{
+                title: "Committiee Members",
                 headerShown: false,
               }}
             />
@@ -101,3 +129,4 @@ export default function Layout() {
     </PaperProvider>
   );
 }
+// ResidentList

@@ -17,11 +17,11 @@ const initialData = [
   { key: 'menu1', name: 'פרופיל', destination: 'Profile' },
   { key: 'menu2', name: 'חוגים ופעילויות', destination: '' },
   { key: 'menu3', name: 'שוק', destination: 'Marketplace' },
-  { key: 'menu4', name: 'וועד', destination: '' },
+  { key: 'menu4', name: 'וועד', destination: 'CommittieePage' },
   { key: 'menu5', name: 'שעות פעילות', destination: '' },
   { key: 'menu6', name: 'מפה', destination: 'Map' },
-  { key: 'menu7', name: 'Menu 7', destination: '' },
-  { key: 'menu8', name: 'Menu 8', destination: '' },
+  { key: 'menu7', name: 'לוח מודעות', destination: 'Notices' },
+  { key: 'menu8', name: 'רשימת הדיירים', destination: 'ResidentList' },
   { key: 'menu9', name: 'Menu 9', destination: '' },
 ];
 
