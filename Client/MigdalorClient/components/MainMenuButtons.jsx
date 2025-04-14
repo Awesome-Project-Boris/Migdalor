@@ -65,6 +65,7 @@ export default function MainMenuButtons() {
           disabled={isActive}
           onPress={handlePress}
           style={styles.touchable}
+          flipborderwidth={5}
         >
           <Text style={styles.itemText}>{item.name}</Text>
         </FlipButton>

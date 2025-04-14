@@ -148,7 +148,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 <Text style={styles.buttonText}>שנה סדר תפריט</Text>
               </FlipButton>
             )}
-            {true /*replace with checking if admin*/ && (
+            {/* {true && (
               <FlipButton
                 style={styles.button}
                 onPress={() => {
@@ -166,7 +166,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 />
                 <Text style={styles.buttonText}>תפריט ניהול</Text>
               </FlipButton>
-            )}
+            )} */}
           </View>
         </BottomSheetView>
       </BottomSheet>

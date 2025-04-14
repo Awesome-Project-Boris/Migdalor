@@ -14,10 +14,11 @@ import {
 } from "react-native";
 import { XStack } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import FlipButton from "../../MigdalorClient/components/FlipButton";
+import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
-import Checkbox from "../../MigdalorClient/components/CheckBox";
+import Checkbox from "@/components/CheckBox";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -26,36 +27,94 @@ const LoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [loginLoading, setloginLoading] = useState(false);
+  const [loginGoogleLoading, setloginGoogleLoading] = useState(false);
 
-  useEffect(() => {
-    console.log("Remember Me:", rememberMe);
-  }, [rememberMe]);
+  // useEffect(() => {
+  //   console.log("Remember Me:", rememberMe);
+  // }, [rememberMe]);
 
-  const handleLogin = () => {
-    console.log("Login button pressed");
-    fetch("https://192.168.0.160:44344/api/People/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        phoneNumber: phoneNumber,
-        password: password,
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+  const handleLogin = async () => {
+    try {
+      setloginLoading(true);
+      console.log("Login button pressed");
+
+      const phone = phoneNumber;
+      const pass = password;
+
+      const response = await fetch(
+        "http://192.168.0.160:5293/api/People/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            phoneNumber: phone,
+            password: pass,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      // console.log("Login successful:", data);
+
+      // AsyncStorage.setItem("userToken", data.token); // Store the token in AsyncStorage
+      AsyncStorage.setItem("userID", data.personId); // Store the user ID in AsyncStorage
+    } catch (error) {
+      console.error("Login failed:", error);
+    } finally {
+      setloginLoading(false);
+    }
   };
+
+  const handleGoogleLogin = () => {
+    try {
+      setloginGoogleLoading(true);
+      console.log("Login Google button pressed");
+
+      const phone = phoneNumber;
+      const pass = password;
+
+      fetch("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phoneNumber: phone,
+          password: pass,
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Login successful:", data);
+          // handle successful login here (e.g., save token, redirect)
+        })
+        .catch((error) => {
+          console.error("Login failed:", error);
+        });
+    } catch (error) {
+      console.error("Unexpected error:", error);
+    } finally {
+      setloginGoogleLoading(false);
+    }
+  };
+
   const handlePhoneNumberChange = (text) => {
     const cleanedText = text.replace(/\D/g, "");
     // if (cleanedText.length <= 10) {
     // }
-      setPhoneNumber(cleanedText);
+    setPhoneNumber(cleanedText);
   };
   return (
     <View style={styles.page}>
@@ -108,7 +167,6 @@ const LoginScreen = () => {
                     onPress={() => setRememberMe(!rememberMe)}
                   />
                 </TouchableWithoutFeedback>
-                
 
                 <FlipButton
                   text="כניסה"
@@ -116,25 +174,33 @@ const LoginScreen = () => {
                   bgColor="#60a5fa"
                   textColor="black"
                   flipborderwidth={5}
-                  >
+                  disabled={loginLoading}
+                >
                   <XStack gap={5} style={{ paddingStart: 15 }}>
                     <Text style={styles.loginButtonText}>כניסה</Text>
-                    <Ionicons name="log-in-outline" size={38} color="#013220" />
+                    {loginLoading ? (
+                      <ActivityIndicator size="large" />
+                    ) : (
+                      <Ionicons name="log-in-outline" size={38} />
+                    )}
                   </XStack>
                 </FlipButton>
                 <FlipButton
                   text="כניסה עם גוגל"
-                  onPress={handleLogin}
+                  onPress={handleGoogleLogin}
                   bgColor="#dc2626"
                   textColor="white"
                   flipborderwidth={5}
-                  >
+                >
                   <XStack gap={8} style={{ paddingStart: 15 }}>
                     <Text style={styles.loginButtonText}>כניסה עם גוגל</Text>
-                    <Ionicons name="logo-google" size={34} color="#013220" />
+                    {loginGoogleLoading ? (
+                      <ActivityIndicator size="large" />
+                    ) : (
+                      <Ionicons name="logo-google" size={34} />
+                    )}
                   </XStack>
                 </FlipButton>
-                  
               </View>
             </View>
           </KeyboardAvoidingView>

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
@@ -39,18 +40,34 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPost("login")]
-        public IActionResult Login([FromBody] UserLogin user)
+        // public IActionResult Login([FromBody] UserLogin user)
+        public IActionResult Login([FromBody] UserLogin userLogin)
         {
             try
             {
-                return Ok(OhPerson.AuthenticateUser(user));
+                OhPerson user = OhPerson.AuthenticateUser(userLogin);
+                return Ok(new
+                {
+                    user.PersonId,
+                    user.HebFirstName,
+                    user.HebLastName,
+                });
+                
             }
             catch (Exception e)
             {
-                return StatusCode(
-                    500,
-                    $"Error Logging In: {e.InnerException?.Message ?? e.Message}"
-                );
+                switch (e.Message)
+                {
+                    case "User not found":
+                        return StatusCode(StatusCodes.Status404NotFound, "User Not Found");
+                    case "Wrong password":
+                        return StatusCode(StatusCodes.Status401Unauthorized, "Wrong Password");
+                    default:
+                        return StatusCode(
+                            StatusCodes.Status500InternalServerError,
+                            $"Error Logging In: {e.InnerException?.Message ?? e.Message}"
+                        );
+                }
             }
         }
 
