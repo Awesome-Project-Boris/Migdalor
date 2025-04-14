@@ -15,6 +15,7 @@ import {
 import { XStack } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import auth from "@react-native-firebase/auth";
 
 import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
