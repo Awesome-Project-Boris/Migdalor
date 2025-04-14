@@ -43,6 +43,20 @@ const resources = {
       ProfileScreen_extraImages: "Extra Images",
 
       EditProfileScreen_saveButton: "Save Changes",
+      EditProfileScreen_cancelButton: "Cancel",
+      //EditProfileScreen_errorMessagePartner: "Please fill in the 'Partner' section",
+      EditProfileScreen_errorMessageApartmentNumber: "Apartment number must be numeric",
+      EditProfileScreen_errorMessageMobilePhone: "Enter a valid Israeli mobile number",
+      EditProfileScreen_errorMessageEmail: "Enter a valid email address",
+      EditProfileScreen_errorMessageArrivalYear: "Arrival year must have 4 digits",
+      //EditProfileScreen_errorMessageOrigin: "Please fill in the 'Originally From' section",
+      //EditProfileScreen_errorMessageProfession: "Please fill in the 'Profession' section",
+      EditProfileScreen_errorMessageInterests: "Interests section must be under 200 characters",
+      EditProfileScreen_errorMessageAboutMe: "About Me section must be under 300 characters",
+      //EditProfileScreen_errorMessageExtraImages: "Please fill in the 'Extra Images' section",
+      //EditProfileScreen_errorMessageImage: "Please fill in the 'Image' section",
+
+
 
     },
   },
@@ -82,6 +96,20 @@ const resources = {
       ProfileScreen_extraImages: "תמונות נוספות",
 
       EditProfileScreen_saveButton: "שמור שינויים",
+      EditProfileScreen_cancelButton: "ביטול",
+      //EditProfileScreen_errorMessagePartner: "אנא מלא את שדה 'בן/בת זוג'",
+      EditProfileScreen_errorMessageApartmentNumber: "מספר הדירה חייב להיות מספרי",
+      EditProfileScreen_errorMessageMobilePhone: "הכנס מספר טלפון נייד ישראלי תקין",
+      EditProfileScreen_errorMessageEmail: "הכנס כתובת דואר אלקטרוני תקינה",
+      EditProfileScreen_errorMessageArrivalYear: "שנת הגעה חייבת להיות בת 4 ספרות",
+      //EditProfileScreen_errorMessageOrigin: "אנא מלא את שדה 'מקום מוצא'",
+      //EditProfileScreen_errorMessageProfession: "אנא מלא את שדה 'מקצוע'",
+      EditProfileScreen_errorMessageInterests: "שדה תחומי עניין חייב להיות מתחת ל 200 תווים",
+      EditProfileScreen_errorMessageAboutMe: "שדה 'קצת על עצמי' חייב להיות מתחת ל 300 תווים",
+      //EditProfileScreen_errorMessageExtraImages: "אנא מלא את שדה 'תמונות נוספות'",
+      //EditProfileScreen_errorMessageImage: "אנא מלא את שדה 'תמונה'",
+
+
 
     },
   }

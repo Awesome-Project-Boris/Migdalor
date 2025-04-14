@@ -14,33 +14,34 @@ export default function Profile() {
   const { t } = useTranslation();
   
   // !! Switch these with the values from the database
-  const [partner, setPartner] = useState("");
-  const [apartmentNumber, setApartmentNumber] = useState("");
-  const [mobilePhone, setMobilePhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [arrivalYear, setArrivalYear] = useState("");
-  const [origin, setOrigin] = useState("");
-  const [profession, setProfession] = useState("");
-  const [interests, setInterests] = useState("");
-  const [aboutMe, setAboutMe] = useState("");
-  //console.log("Direction is:", Globals.userSelectedDirection);
-  //console.log(typeof(Globals.userSelectedDirection));
+
+  // const [partner, setPartner] = useState("");
+  // const [apartmentNumber, setApartmentNumber] = useState("");
+  // const [mobilePhone, setMobilePhone] = useState("");
+  // const [email, setEmail] = useState("");
+  // const [arrivalYear, setArrivalYear] = useState("");
+  // const [origin, setOrigin] = useState("");
+  // const [profession, setProfession] = useState("");
+  // const [interests, setInterests] = useState("");
+  // const [aboutMe, setAboutMe] = useState("");
+
+  const [form, setForm] = useState({
+    partner: "",
+    apartmentNumber: "",
+    mobilePhone: "",
+    email: "",
+    arrivalYear: "",
+    origin: "",
+    profession: "",
+    interests: "",
+    aboutMe: "",
+  });
+  
 
   return (
-    <View style={styles.wrapper}>
-    {/* <View style={{ flex: 1}}> */}
-    {/* <View style={styles.container}> */}
-    
-
-      {/* <ScrollView style={{ flex: 1 }}>  */}
+    <View style={styles.wrapper}>    
       <ScrollView contentContainerStyle={styles.scroll}>
-        
-    
-        {/* <Text style={styles.title}>{t("ProfileScreen_Title")}</Text> */}
-        {/* <Text>{t("ProfileScreen_header")}</Text> */}
 
-
-          {/* Profile Image & Name */}
           <View style={styles.profileImageContainer}>
             <Image
               source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg" }} 
@@ -51,36 +52,35 @@ export default function Profile() {
           <View style={styles.profileNameContainer}>
               {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
               <Text style={styles.profileName}>Israel Israeli</Text> 
-
           </View>
 
           <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_partner")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ] }>{partner || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ] }>{form.partner || "Sample data"}</Text>
 
           <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_apartmentNumber")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{apartmentNumber || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.apartmentNumber || "Sample data"}</Text>
 
           <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_mobilePhone")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{mobilePhone || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.mobilePhone || "Sample data"}</Text>
 
           <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_email")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{email || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.email || "Sample data"}</Text>
 
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_arrivalYear")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{arrivalYear || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.arrivalYear || "Sample data"}</Text>
           
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_origin")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{origin || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.origin || "Sample data"}</Text>
 
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_profession")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{profession || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.profession || "Sample data"}</Text>
 
             
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_interests")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{interests || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.interests || "Sample data"}</Text>
 
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_aboutMe")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{aboutMe || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{form.aboutMe || "Sample data"}</Text>
 
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_extraImages")}</Text>
           <View style={styles.profileExtraImageContainer}>
@@ -93,7 +93,6 @@ export default function Profile() {
               style={styles.extraImage}
             />
           </View>
-
 
       </ScrollView>
     </View>
