@@ -41,8 +41,26 @@ const resources = {
       ProfileScreen_interests: "Interests",
       ProfileScreen_aboutMe: "About Me",
       ProfileScreen_extraImages: "Extra Images",
+      ProfileScreen_editButton: "Edit Profile",
+      ProfileScreen_emptyDataField: "No information",
 
       EditProfileScreen_saveButton: "Save Changes",
+      EditProfileScreen_cancelButton: "Cancel",
+      EditProfileScreen_errorMessagePartner: "Partner name must contain only Hebrew and English letters",
+      EditProfileScreen_errorMessageApartmentNumber: "Apartment number must be numeric",
+      EditProfileScreen_errorMessageMobilePhone: "Enter a valid Israeli mobile number",
+      EditProfileScreen_errorMessageEmail: "Enter a valid email address",
+      EditProfileScreen_errorMessageArrivalYear: "Arrival year must have 4 digits",
+      EditProfileScreen_errorMessageOrigin: "Origin field must contain only Hebrew and English letters or numbers",
+      EditProfileScreen_errorMessageProfession: "Profession field must contain only Hebrew and English letters or numbers",
+      EditProfileScreen_errorMessageInterests: "Interests field must contain only Hebrew and English letters or numbers",
+      EditProfileScreen_errorMessageAboutMe: "About Me field must contain only Hebrew and English letters or numbers",
+      EditProfileScreen_ProfileUpdated: "Profile Updated Successfully!",
+      EditProfileScreen_ProfileUpdateCancelled: "Profile Update Cancelled",
+      //EditProfileScreen_errorMessageExtraImages: "Please fill in the 'Extra Images' field",
+      //EditProfileScreen_errorMessageImage: "Please fill in the 'Image' field",
+
+
 
     },
   },
@@ -80,8 +98,26 @@ const resources = {
       ProfileScreen_interests: "תחומי עניין",
       ProfileScreen_aboutMe: "קצת על עצמי",
       ProfileScreen_extraImages: "תמונות נוספות",
+      ProfileScreen_editButton: "עריכת פרופיל",
+      ProfileScreen_emptyDataField: "אין מידע",
 
       EditProfileScreen_saveButton: "שמור שינויים",
+      EditProfileScreen_cancelButton: "ביטול",
+      EditProfileScreen_errorMessagePartner: "שדה 'בן/בת זוג' חייב להכיל רק אותיות בעברית ובאנגלית",
+      EditProfileScreen_errorMessageApartmentNumber: "מספר הדירה חייב להיות מספרי",
+      EditProfileScreen_errorMessageMobilePhone: "הכנס מספר טלפון נייד ישראלי תקין",
+      EditProfileScreen_errorMessageEmail: "הכנס כתובת דואר אלקטרוני תקינה",
+      EditProfileScreen_errorMessageArrivalYear: "שנת הגעה חייבת להיות בת 4 ספרות",
+      EditProfileScreen_errorMessageOrigin: "שדה 'מקום מוצא' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+      EditProfileScreen_errorMessageProfession: "שדה 'מקצוע' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+      EditProfileScreen_errorMessageInterests: "שדה 'תחומי עניין' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+      EditProfileScreen_errorMessageAboutMe: "שדה 'קצת על עצמי' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+      EditProfileScreen_ProfileUpdated: "פרופיל עודכן בהצלחה!",
+      EditProfileScreen_ProfileUpdateCancelled: "עדכון פרופיל בוטל",
+      //EditProfileScreen_errorMessageExtraImages: "אנא מלא את שדה 'תמונות נוספות'",
+      //EditProfileScreen_errorMessageImage: "אנא מלא את שדה 'תמונה'",
+
+
 
     },
   }
