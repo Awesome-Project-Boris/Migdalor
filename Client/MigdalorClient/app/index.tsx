@@ -7,12 +7,14 @@ import FlipButton from "../../MigdalorClient/components/FlipButton";
 import Greeting from "../components/MainMenuHelloNameplate";
 import Header from "../components/Header";
 import { EditToggleButton } from "../components/MainMenuFinishEditButton";
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 
 export default function Index() {
 
   const { setEditing } = useMainMenuEdit();
 
+  
   useEffect(() => {
     return () => {
       setEditing(false);

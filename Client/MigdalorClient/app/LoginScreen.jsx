@@ -11,10 +11,13 @@ import {
   Image,
   StyleSheet,
   I18nManager,
+  Alert,
 } from "react-native";
 import { XStack } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import auth from "@react-native-firebase/auth";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
@@ -23,12 +26,24 @@ import Checkbox from "@/components/CheckBox";
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
+GoogleSignin.configure({
+  webClientId:
+    "190847974757-0tma92g00au1nv1m1jp4elefpg6ut0d9.apps.googleusercontent.com",
+});
+
 const LoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [loginLoading, setloginLoading] = useState(false);
   const [loginGoogleLoading, setloginGoogleLoading] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged((user) => {
+      if (user) setUserInfo(user);
+    });
+    return unsubscribe;
+  }, []);
 
   // useEffect(() => {
   //   console.log("Remember Me:", rememberMe);
@@ -57,6 +72,12 @@ const LoginScreen = () => {
       );
 
       if (!response.ok) {
+        Alert.alert(
+          "שגיאה",
+          "המשתמש לא קיים במערכת או שהסיסמה שגויה",
+          [{ text: "אוקי", style: "cancel" }],
+          { cancelable: false }
+        );
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -65,6 +86,14 @@ const LoginScreen = () => {
 
       // AsyncStorage.setItem("userToken", data.token); // Store the token in AsyncStorage
       AsyncStorage.setItem("userID", data.personId); // Store the user ID in AsyncStorage
+      Alert.alert(
+        "התחברות",
+        "התחברת בהצלחה",
+        [{ text: "אוקי", style: "cancel" }],
+        {
+          cancelable: false,
+        }
+      );
     } catch (error) {
       console.error("Login failed:", error);
     } finally {
@@ -72,39 +101,17 @@ const LoginScreen = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleSignIn = async () => {
     try {
       setloginGoogleLoading(true);
-      console.log("Login Google button pressed");
-
-      const phone = phoneNumber;
-      const pass = password;
-
-      fetch("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phoneNumber: phone,
-          password: pass,
-        }),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
-        })
-        .then((data) => {
-          console.log("Login successful:", data);
-          // handle successful login here (e.g., save token, redirect)
-        })
-        .catch((error) => {
-          console.error("Login failed:", error);
-        });
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+      const { idToken } = await GoogleSignin.signIn();
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+      await auth().signInWithCredential(googleCredential);
     } catch (error) {
-      console.error("Unexpected error:", error);
+      console.error("Google Sign-In error", error);
     } finally {
       setloginGoogleLoading(false);
     }
@@ -187,7 +194,7 @@ const LoginScreen = () => {
                 </FlipButton>
                 <FlipButton
                   text="כניסה עם גוגל"
-                  onPress={handleGoogleLogin}
+                  onPress={handleGoogleSignIn}
                   bgColor="#dc2626"
                   textColor="white"
                   flipborderwidth={5}

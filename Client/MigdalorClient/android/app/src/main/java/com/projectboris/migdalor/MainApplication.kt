@@ -1,4 +1,4 @@
-package com.anonymous.MigdalorClient
+package com.projectboris.migdalor
 
 import android.app.Application
 import android.content.res.Configuration
