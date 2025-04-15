@@ -16,20 +16,17 @@ import {
 import { XStack } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import auth from "@react-native-firebase/auth";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+// import auth from "@react-native-firebase/auth";
+// import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Checkbox from "@/components/CheckBox";
 
+import { API_BASE_URL } from "./constants/Globals";
+
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
-
-GoogleSignin.configure({
-  webClientId:
-    "190847974757-0tma92g00au1nv1m1jp4elefpg6ut0d9.apps.googleusercontent.com",
-});
 
 const LoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -38,16 +35,23 @@ const LoginScreen = () => {
   const [loginLoading, setloginLoading] = useState(false);
   const [loginGoogleLoading, setloginGoogleLoading] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged((user) => {
-      if (user) setUserInfo(user);
-    });
-    return unsubscribe;
-  }, []);
+  ///////////////////////////////// Google SignIn /////////////////////////////////
 
   // useEffect(() => {
-  //   console.log("Remember Me:", rememberMe);
-  // }, [rememberMe]);
+  //   GoogleSignin.configure({
+  //     webClientId:
+  //       "190847974757-0tma92g00au1nv1m1jp4elefpg6ut0d9.apps.googleusercontent.com",
+  //   });
+  // }, []);
+
+  // useEffect(() => {
+  //   const unsubscribe = auth().onAuthStateChanged((user) => {
+  //     if (user) setUserInfo(user);
+  //   });
+  //   return unsubscribe;
+  // }, []);
+
+  ///////////////////////////////// Google SignIn /////////////////////////////////
 
   const handleLogin = async () => {
     try {
@@ -57,19 +61,16 @@ const LoginScreen = () => {
       const phone = phoneNumber;
       const pass = password;
 
-      const response = await fetch(
-        "http://192.168.0.160:5293/api/People/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            phoneNumber: phone,
-            password: pass,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/api/People/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          phoneNumber: phone,
+          password: pass,
+        }),
+      });
 
       if (!response.ok) {
         Alert.alert(
