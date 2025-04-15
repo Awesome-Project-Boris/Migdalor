@@ -181,11 +181,8 @@ export default function EditProfile() {
     console.log("Updated Data:", cleanedForm);
     alert(t("EditProfileScreen_ProfileUpdated"));
 
-    // if (onSave) {
-    //   onSave(form); // Call back to Profile
-    // }
+    // !! Add API call to save the data here
 
-    //navigation.goBack(); // Go back to Profile
     router.push({
       pathname: "./Profile",
       params: {
@@ -196,15 +193,31 @@ export default function EditProfile() {
 
   const handleCancel = () => {
     console.log("Cancelled Edit Profile");
+    
+    try {
+      const parsedInitialData = JSON.parse(initialData); 
+      setForm(parsedInitialData); 
 
-    // !! Go back to profile screen
+      alert(t("EditProfileScreen_ProfileUpdateCancelled"));
+  
+      router.push({
+        pathname: "./Profile",
+        params: {
+          updatedData: JSON.stringify(parsedInitialData), 
+        },
+      });
+    } catch (err) {
+      console.warn("Failed to parse initialData during cancel:", err);
+      // You can fallback to just navigating without data
+      router.push("./Profile");
+    }
   };
 
-  useEffect(() => {
-    if (typeof initialData === "string") {
+  useEffect(() => { // Update the form with initialData
+    if (initialData) {
       try {
-        const parsed = JSON.parse(initialData);
-        setForm(parsed);
+        const parsedData = JSON.parse(initialData);
+        setForm(parsedData);
       } catch (err) {
         console.warn("Failed to parse initialData:", err);
       }
@@ -216,6 +229,7 @@ export default function EditProfile() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Header />
 
+        {/* !! Add changing profile picture */}
         <View style={styles.profileImageContainer}>
           <Image
             source={{
@@ -226,7 +240,7 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.profileNameContainer}>
-          {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
+          {/* !! Change this to full name  */}
           <Text style={styles.profileName}>Israel Israeli</Text>
         </View>
 
@@ -238,7 +252,6 @@ export default function EditProfile() {
             label={t("ProfileScreen_partner")}
             name="partner"
             value={form.partner}
-            //onChangeText={(text: string) => handleFormChange("partner", text)}
             onChangeText={(text) => handleFormChange("partner", text)}
             ref={inputRefs.partner}
           />
@@ -252,7 +265,6 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
             value={form.apartmentNumber}
-            //onChangeText={(text: string) => handleFormChange("apartmentNumber", text)}
             onChangeText={(text) => handleFormChange("apartmentNumber", text)}
             keyboardType="numeric"
             ref={inputRefs.apartmentNumber}
@@ -267,7 +279,6 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_mobilePhone")}
             value={form.mobilePhone}
-            // onChangeText={(text: string) => handleFormChange("mobilePhone", text)}
             onChangeText={(text) => handleFormChange("mobilePhone", text)}
             keyboardType="phone-pad"
             ref={inputRefs.mobilePhone}
@@ -282,7 +293,6 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_email")}
             value={form.email}
-            // onChangeText={(text: string) => handleFormChange("email", text)}
             onChangeText={(text) => handleFormChange("email", text)}
             keyboardType="email-address"
             ref={inputRefs.email}
@@ -297,7 +307,6 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_arrivalYear")}
             value={form.arrivalYear}
-            // onChangeText={(text: string) => handleFormChange("arrivalYear", text)}
             onChangeText={(text) => handleFormChange("arrivalYear", text)}
             keyboardType="numeric"
             ref={inputRefs.arrivalYear}
@@ -312,7 +321,6 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_origin")}
             value={form.origin}
-            // onChangeText={(text: string) => handleFormChange("origin", text)}
             onChangeText={(text) => handleFormChange("origin", text)}
             ref={inputRefs.origin}
           />
@@ -326,7 +334,6 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_profession")}
             value={form.profession}
-            // onChangeText={(text: string) => handleFormChange("profession", text)}
             onChangeText={(text) => handleFormChange("profession", text)}
             ref={inputRefs.profession}
           />
@@ -340,7 +347,6 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_interests")}
             value={form.interests}
-            //onChangeText={(text: string) => handleFormChange("interests", text)}
             onChangeText={(text) => handleFormChange("interests", text)}
             ref={inputRefs.interests}
             multiline
@@ -356,7 +362,6 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_aboutMe")}
             value={form.aboutMe}
-            //onChangeText={(text: string) => handleFormChange("aboutMe", text)}
             onChangeText={(text) => handleFormChange("aboutMe", text)}
             ref={inputRefs.aboutMe}
             multiline
@@ -378,6 +383,9 @@ export default function EditProfile() {
           >
             {t("ProfileScreen_extraImages")}
           </Text>
+
+          {/* !! Add extra images here */}
+
 
           {/* <XStack space="$3" justifyContent="center" alignItems="center" marginVertical="$4">
               <Card

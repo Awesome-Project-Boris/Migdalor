@@ -41,7 +41,8 @@ const resources = {
       ProfileScreen_interests: "Interests",
       ProfileScreen_aboutMe: "About Me",
       ProfileScreen_extraImages: "Extra Images",
-      ProfileScreen_EditButton: "Edit Profile",
+      ProfileScreen_editButton: "Edit Profile",
+      ProfileScreen_emptyDataField: "No information",
 
       EditProfileScreen_saveButton: "Save Changes",
       EditProfileScreen_cancelButton: "Cancel",
@@ -55,6 +56,7 @@ const resources = {
       EditProfileScreen_errorMessageInterests: "Interests field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_errorMessageAboutMe: "About Me field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_ProfileUpdated: "Profile Updated Successfully!",
+      EditProfileScreen_ProfileUpdateCancelled: "Profile Update Cancelled",
       //EditProfileScreen_errorMessageExtraImages: "Please fill in the 'Extra Images' field",
       //EditProfileScreen_errorMessageImage: "Please fill in the 'Image' field",
 
@@ -96,7 +98,8 @@ const resources = {
       ProfileScreen_interests: "תחומי עניין",
       ProfileScreen_aboutMe: "קצת על עצמי",
       ProfileScreen_extraImages: "תמונות נוספות",
-      ProfileScreen_EditButton: "עריכת פרופיל",
+      ProfileScreen_editButton: "עריכת פרופיל",
+      ProfileScreen_emptyDataField: "אין מידע",
 
       EditProfileScreen_saveButton: "שמור שינויים",
       EditProfileScreen_cancelButton: "ביטול",
@@ -110,6 +113,7 @@ const resources = {
       EditProfileScreen_errorMessageInterests: "שדה 'תחומי עניין' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
       EditProfileScreen_errorMessageAboutMe: "שדה 'קצת על עצמי' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
       EditProfileScreen_ProfileUpdated: "פרופיל עודכן בהצלחה!",
+      EditProfileScreen_ProfileUpdateCancelled: "עדכון פרופיל בוטל",
       //EditProfileScreen_errorMessageExtraImages: "אנא מלא את שדה 'תמונות נוספות'",
       //EditProfileScreen_errorMessageImage: "אנא מלא את שדה 'תמונה'",
 

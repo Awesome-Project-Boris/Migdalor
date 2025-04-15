@@ -44,19 +44,19 @@ export default function Profile() {
     aboutMe: "",
   });
 
-  const handleProfileUpdate = (updatedData: {
-    partner: string;
-    apartmentNumber: string;
-    mobilePhone: string;
-    email: string;
-    arrivalYear: string;
-    origin: string;
-    profession: string;
-    interests: string;
-    aboutMe: string;
-  }) => {
-    setForm(updatedData);
-  };
+  // const handleProfileUpdate = (updatedData: {
+  //   partner: string;
+  //   apartmentNumber: string;
+  //   mobilePhone: string;
+  //   email: string;
+  //   arrivalYear: string;
+  //   origin: string;
+  //   profession: string;
+  //   interests: string;
+  //   aboutMe: string;
+  // }) => {
+  //   setForm(updatedData);
+  // };
 
   const params = useLocalSearchParams();
   useEffect(() => {
@@ -78,28 +78,13 @@ export default function Profile() {
     <View style={styles.wrapper}>    
       <ScrollView contentContainerStyle={styles.scroll} >
         <Header />
-
-
-          {/* <TouchableOpacity
-            style={styles.editProfileButton}
-            onPress={() =>
-              router.push({
-                pathname: "./EditProfile",
-                params: {
-                  initialData: JSON.stringify(form), // must be stringified
-                },
-              })
-            }
-          >
-            <Text style={styles.saveText}>{t("ProfileScreen_EditButton")}</Text>
-          </TouchableOpacity> */}
-
+           {/* !! Add check if profileID == userID */}
           <FlipButton
             onPress={() =>
               router.push({
                 pathname: "./EditProfile",
                 params: {
-                  initialData: JSON.stringify(form), // must be stringified
+                  initialData: JSON.stringify(form), 
                 },
               })
             }
@@ -108,11 +93,12 @@ export default function Profile() {
             style={styles.editProfileButton}
           >
             <Text style={styles.editProfileButtonText}>
-              {t("ProfileScreen_EditButton")}
+              {t("ProfileScreen_editButton")}
             </Text>
           </FlipButton>
 
           <View style={styles.profileImageContainer}>
+            {/* !! Change this to users profile picture */}
             <Image
               source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg" }} 
               style={styles.profileImage}
@@ -121,36 +107,38 @@ export default function Profile() {
 
           <View style={styles.profileNameContainer}>
               {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
+
+              {/* !! Change this to full name  */}
               <Text style={styles.profileName}>Israel Israeli</Text> 
           </View>
 
           <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_partner")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ] }>{form.partner || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ] }>{form.partner || t("ProfileScreen_emptyDataField")}</Text>
 
           <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_apartmentNumber")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.apartmentNumber || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.apartmentNumber || t("ProfileScreen_emptyDataField")}</Text>
 
           <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_mobilePhone")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.mobilePhone || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.mobilePhone || t("ProfileScreen_emptyDataField")}</Text>
 
           <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_email")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.email || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.email || t("ProfileScreen_emptyDataField")}</Text>
 
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_arrivalYear")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.arrivalYear || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.arrivalYear || t("ProfileScreen_emptyDataField")}</Text>
           
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_origin")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.origin || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.origin || t("ProfileScreen_emptyDataField")}</Text>
 
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_profession")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.profession || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.profession || t("ProfileScreen_emptyDataField")}</Text>
 
             
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_interests")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.interests || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.interests || t("ProfileScreen_emptyDataField")}</Text>
 
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_aboutMe")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{form.aboutMe || "Sample data"}</Text>
+          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{form.aboutMe || t("ProfileScreen_emptyDataField")}</Text>
 
           <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_extraImages")}</Text>
           <View style={styles.profileExtraImageContainer}>
@@ -331,8 +319,11 @@ const styles = StyleSheet.create({
   editProfileButton: {
     paddingVertical: 20,
     borderRadius: 20,
-    width: "80%",
+    width: "85%",
     alignItems: "center",
+    marginTop: 10,
+    marginBottom: 10,
+
   },
   editProfileButtonText: {
     fontSize: 26,
