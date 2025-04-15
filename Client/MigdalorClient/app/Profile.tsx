@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Dimensions, Text, ScrollView, Image, TextInput, TouchableOpacity} from "react-native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import Header from "@/components/Header";
+
+
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Ionicons } from "@expo/vector-icons";
 
@@ -12,6 +17,8 @@ import { Globals } from "@/app/constants/Globals";
 
 export default function Profile() {
   const { t } = useTranslation();
+  const navigation = useNavigation();
+  const router = useRouter();
   
   // !! Switch these with the values from the database
 
@@ -36,11 +43,74 @@ export default function Profile() {
     interests: "",
     aboutMe: "",
   });
+
+  const handleProfileUpdate = (updatedData: {
+    partner: string;
+    apartmentNumber: string;
+    mobilePhone: string;
+    email: string;
+    arrivalYear: string;
+    origin: string;
+    profession: string;
+    interests: string;
+    aboutMe: string;
+  }) => {
+    setForm(updatedData);
+  };
+
+  const params = useLocalSearchParams();
+  useEffect(() => {
+    const updated = params.updatedData;
+  
+    if (typeof updated === "string") {
+      try {
+        const parsed = JSON.parse(updated);
+        setForm(parsed);
+      } catch (err) {
+        console.warn("Failed to parse updatedData:", err);
+      }
+    }
+  }, [params.updatedData]);
+  
   
 
   return (
     <View style={styles.wrapper}>    
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={styles.scroll} >
+        <Header />
+
+
+          {/* <TouchableOpacity
+            style={styles.editProfileButton}
+            onPress={() =>
+              router.push({
+                pathname: "./EditProfile",
+                params: {
+                  initialData: JSON.stringify(form), // must be stringified
+                },
+              })
+            }
+          >
+            <Text style={styles.saveText}>{t("ProfileScreen_EditButton")}</Text>
+          </TouchableOpacity> */}
+
+          <FlipButton
+            onPress={() =>
+              router.push({
+                pathname: "./EditProfile",
+                params: {
+                  initialData: JSON.stringify(form), // must be stringified
+                },
+              })
+            }
+            bgColor="white"
+            textColor="black"
+            style={styles.editProfileButton}
+          >
+            <Text style={styles.editProfileButtonText}>
+              {t("ProfileScreen_EditButton")}
+            </Text>
+          </FlipButton>
 
           <View style={styles.profileImageContainer}>
             <Image
@@ -112,7 +182,8 @@ const styles = StyleSheet.create({
   },
   scroll: {
     alignItems: "center",
-    paddingBottom: 40,
+    paddingBottom: 60,
+    paddingTop: 80
   },
   title: {
     fontSize: 24,
@@ -257,4 +328,15 @@ const styles = StyleSheet.create({
   //   elevation: 3, // for Android shadow
   //   marginBottom: 30,
   // },
+  editProfileButton: {
+    paddingVertical: 20,
+    borderRadius: 20,
+    width: "80%",
+    alignItems: "center",
+  },
+  editProfileButtonText: {
+    fontSize: 26,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 });
