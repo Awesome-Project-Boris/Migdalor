@@ -32,7 +32,6 @@ public partial class MigdalorDBContext : DbContext
 
     public virtual DbSet<OhRoom> OhRooms { get; set; }
 
-    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OhActivity>(entity =>
@@ -47,6 +46,8 @@ public partial class MigdalorDBContext : DbContext
         modelBuilder.Entity<OhCategory>(entity =>
         {
             entity.HasKey(e => e.CategoryName).HasName("PK__OH_Categ__8517B2E13E0D2B85");
+
+            entity.Property(e => e.CategoryColor).HasDefaultValue("#FFFFFF");
         });
 
         modelBuilder.Entity<OhClass>(entity =>
@@ -124,6 +125,11 @@ public partial class MigdalorDBContext : DbContext
         modelBuilder.Entity<OhPicture>(entity =>
         {
             entity.HasKey(e => e.PicId).HasName("PK__OH_Pictu__06707FCD5CA26DEA");
+
+            entity.Property(e => e.DateTime).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.PicRole).HasDefaultValue("unassigned");
+
+            entity.HasOne(d => d.Uploader).WithMany(p => p.OhPictures).HasConstraintName("FK_Pictures_Uploader");
         });
 
         modelBuilder.Entity<OhResident>(entity =>

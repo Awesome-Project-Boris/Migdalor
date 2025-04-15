@@ -14,7 +14,6 @@ public partial class OhPicture
     public int PicId { get; set; }
 
     [Column("picName")]
-    [StringLength(255)]
     [Unicode(false)]
     public string PicName { get; set; } = null!;
 
@@ -27,6 +26,20 @@ public partial class OhPicture
     [Unicode(false)]
     public string PicAlt { get; set; } = null!;
 
+    [Column("uploaderID")]
+    public Guid? UploaderId { get; set; }
+
+    [Column("picRole")]
+    [StringLength(50)]
+    [Unicode(false)]
+    public string? PicRole { get; set; }
+
+    [Column("auctionID")]
+    public int? AuctionId { get; set; }
+
+    [Column("dateTime", TypeName = "datetime")]
+    public DateTime DateTime { get; set; }
+
     [InverseProperty("Pic")]
     public virtual ICollection<OhActivity> OhActivities { get; set; } = new List<OhActivity>();
 
@@ -38,4 +51,8 @@ public partial class OhPicture
 
     [InverseProperty("AdditionalPic2")]
     public virtual ICollection<OhResident> OhResidentAdditionalPic2s { get; set; } = new List<OhResident>();
+
+    [ForeignKey("UploaderId")]
+    [InverseProperty("OhPictures")]
+    public virtual OhPerson? Uploader { get; set; }
 }
