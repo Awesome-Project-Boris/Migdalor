@@ -34,8 +34,8 @@ public partial class OhPicture
     [Unicode(false)]
     public string? PicRole { get; set; }
 
-    [Column("auctionID")]
-    public int? AuctionId { get; set; }
+    [Column("ListingID")]
+    public int? ListingId { get; set; }
 
     [Column("dateTime", TypeName = "datetime")]
     public DateTime DateTime { get; set; }
