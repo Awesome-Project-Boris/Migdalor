@@ -1,8 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Hosting.Internal;
-using System.Net;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using Microsoft.Extensions.Hosting;
+using MigdalorServer.Database;
+using MigdalorServer.Models; 
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore; 
 
 namespace MigdalorServer.Controllers
 {
@@ -10,61 +15,170 @@ namespace MigdalorServer.Controllers
     [ApiController]
     public class PictureController : ControllerBase
     {
-        // GET: api/<UploadController>
-        [HttpGet]
-        public IEnumerable<string> Get()
+        private readonly IWebHostEnvironment _environment;
+        private readonly MigdalorDBContext _context; // Context is still needed to pass to the model method
+
+        public PictureController(IWebHostEnvironment environment, MigdalorDBContext context)
         {
-            return new string[] { "value1", "value2" };
+            _environment = environment;
+            _context = context;
         }
 
-        // GET api/<UploadController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        // Response structure for the client
+        public class FileUploadResult
         {
-            return "value";
+            public bool Success { get; set; }
+            public string? OriginalFileName { get; set; }
+            public string? ServerPath { get; set; }
+            public int? PicId { get; set; }
+            public string? ErrorMessage { get; set; }
         }
 
-        // POST api/<UploadController>
+        // POST api/Picture
         [HttpPost]
-        public async Task<IActionResult> Post([FromForm] List<IFormFile> files)
+        public async Task<IActionResult> Post(
+            [FromForm] List<IFormFile> files,
+            [FromForm] List<string> picRoles,
+            [FromForm] List<string> picAlts,
+            [FromForm] Guid uploaderId) // TODO: Get from HttpContext.User
         {
+            // --- Validation ---
+            if (files == null || !files.Any()) return BadRequest(new { message = "No files provided." });
+            if (picRoles == null || picAlts == null || files.Count != picRoles.Count || files.Count != picAlts.Count)
+                return BadRequest(new { message = "Mismatch between number of files, roles, and alt texts." });
+            // TODO: Validate uploaderId
 
-
-            List<string> imageLinks = new List<string>();
-
-            string path = System.IO.Directory.GetCurrentDirectory();
-
-            long size = files.Sum(f => f.Length);
-
-            foreach (var formFile in files)
-            {
-                if (formFile.Length > 0)
-                {
-                    var filePath = Path.Combine(path, "uploadedFiles/"+formFile.FileName);
-
-                    using (var stream = System.IO.File.Create(filePath))
-                    {
-                        await formFile.CopyToAsync(stream);
-                    }
-                    imageLinks.Add(formFile.FileName);
-                }
+            var results = new List<FileUploadResult>();
+            string uploadsFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles");
+            if (!Directory.Exists(uploadsFolderPath))
+            { /* ... create directory ... */
+                try { Directory.CreateDirectory(uploadsFolderPath); }
+                catch (Exception ex) { return StatusCode(500, new { message = "Cannot create upload directory.", error = ex.Message }); }
             }
 
-            // Return status code  
-            return Ok(imageLinks);
+            for (int i = 0; i < files.Count; i++)
+            {
+                var formFile = files[i];
+                var picRole = picRoles[i];
+                var picAlt = picAlts[i];
+                var result = new FileUploadResult { OriginalFileName = formFile.FileName };
 
+                // --- Input Validation per file ---
+                if (string.IsNullOrWhiteSpace(picRole))
+                { /* ... handle missing role ... */
+                    result.Success = false; result.ErrorMessage = $"Role is missing for file {formFile.FileName ?? $"#{i + 1}"}."; results.Add(result); continue;
+                }
+                if (string.IsNullOrWhiteSpace(picAlt))
+                { /* ... handle missing alt ... */
+                    result.Success = false; result.ErrorMessage = $"Alt text is missing for file {formFile.FileName ?? $"#{i + 1}"}."; results.Add(result); continue;
+                }
+
+                if (formFile.Length > 0)
+                {
+                    string uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(formFile.FileName)}";
+                    string filePath = Path.Combine(uploadsFolderPath, uniqueFileName);
+                    string relativeWebPath = $"/Images/{uniqueFileName}";
+                    bool fileSavedSuccessfully = false;
+
+                    try
+                    {
+                        // 1. Save File to Filesystem
+                        using (var stream = System.IO.File.Create(filePath))
+                        {
+                            await formFile.CopyToAsync(stream);
+                        }
+                        fileSavedSuccessfully = true; // Mark as saved
+                        Console.WriteLine($"CONTROLLER: Saved file {uniqueFileName}");
+
+                        // 2. Call Static Method in OhPicture to Create DB Record
+                        // Pass the DbContext instance (_context)
+                        OhPicture savedPicture = await OhPicture.CreatePictureRecordAsync(
+                            _context, uniqueFileName, relativeWebPath, picRole, picAlt, uploaderId
+                        );
+
+                        // If CreatePictureRecordAsync succeeds, it returns the saved picture
+                        result.Success = true;
+                        result.ServerPath = relativeWebPath;
+                        result.PicId = savedPicture.PicId; // Get ID from the result
+                        Console.WriteLine($"CONTROLLER: DB record created for {uniqueFileName}, ID: {savedPicture.PicId}");
+
+                    }
+                    catch (DbUpdateException dbEx) // Catch specific DB errors from the static method
+                    {
+                        Console.WriteLine($"CONTROLLER: DB Error for {formFile.FileName}. {dbEx.InnerException?.Message ?? dbEx.Message}");
+                        result.Success = false;
+                        result.ErrorMessage = $"Database error saving metadata: {dbEx.InnerException?.Message ?? dbEx.Message}";
+                        // Attempt cleanup because DB failed AFTER file was potentially saved
+                        if (fileSavedSuccessfully) await TryDeletePhysicalFile(filePath, formFile.FileName);
+                    }
+                    catch (ArgumentNullException argEx) // Catch validation errors from the static method
+                    {
+                        Console.WriteLine($"CONTROLLER: Invalid arguments for {formFile.FileName}. {argEx.Message}");
+                        result.Success = false;
+                        result.ErrorMessage = $"Invalid data provided: {argEx.ParamName}";
+                        // No file cleanup needed if validation failed before saving
+                    }
+                    catch (IOException ioEx) // Catch file saving errors specifically
+                    {
+                        Console.WriteLine($"CONTROLLER: IO Error saving {formFile.FileName}. {ioEx.Message}");
+                        result.Success = false;
+                        result.ErrorMessage = $"Failed to save file: {ioEx.Message}";
+                        // No DB cleanup needed, file wasn't saved
+                    }
+                    catch (Exception ex) // Catch any other errors (file saving or DB)
+                    {
+                        Console.WriteLine($"CONTROLLER: General Error for {formFile.FileName}. {ex.Message}");
+                        result.Success = false;
+                        result.ErrorMessage = $"An unexpected error occurred: {ex.Message}";
+                        // Attempt cleanup if file might have been saved
+                        if (fileSavedSuccessfully) await TryDeletePhysicalFile(filePath, formFile.FileName);
+                    }
+                }
+                else
+                {
+                    result.Success = false;
+                    result.ErrorMessage = "File is empty.";
+                }
+                results.Add(result);
+            } // End for loop
+
+            // --- Return Response ---
+            if (results.All(r => r.Success)) { return Ok(results); }
+            else if (results.Any(r => r.Success)) { return StatusCode(207, results); } // Partial success
+            else
+            {
+                var errors = results.Select(r => $"{r.OriginalFileName}: {r.ErrorMessage}").ToList();
+                return BadRequest(new { message = "All file uploads failed.", errors = errors, results = results });
+            }
         }
 
-        // PUT api/<UploadController>/5
+        // Helper for cleanup on error
+        private async Task TryDeletePhysicalFile(string physicalPath, string? originalFileName)
+        {
+            try
+            {
+                if (System.IO.File.Exists(physicalPath))
+                {
+                    Console.WriteLine($"CONTROLLER: Attempting cleanup - deleting {physicalPath}");
+                    await Task.Run(() => System.IO.File.Delete(physicalPath));
+                    Console.WriteLine($"CONTROLLER: Cleanup successful for {physicalPath}");
+                }
+            }
+            catch (Exception cleanupEx)
+            {
+                Console.WriteLine($"CONTROLLER: Cleanup Error - Failed to delete {physicalPath} (Original: {originalFileName}). {cleanupEx.Message}");
+                // Log this error but don't fail the overall request because of it
+            }
+        }
+
+        // Other methods...
+        [HttpGet]
+        public IEnumerable<string> Get() { return new string[] { "value1", "value2" }; }
+        [HttpGet("{id}")]
+        public string Get(int id) { return "value"; }
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<UploadController>/5
+        public void Put(int id, [FromBody] string value) { }
         [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        public void Delete(int id) { }
     }
 }
