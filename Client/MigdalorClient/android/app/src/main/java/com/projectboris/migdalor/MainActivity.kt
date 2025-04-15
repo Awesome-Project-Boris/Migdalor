@@ -1,4 +1,4 @@
-package com.anonymous.MigdalorClient
+package com.projectboris.migdalor
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

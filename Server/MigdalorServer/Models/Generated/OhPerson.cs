@@ -70,6 +70,9 @@ public partial class OhPerson
     [InverseProperty("Participant")]
     public virtual ICollection<OhParticipation> OhParticipations { get; set; } = new List<OhParticipation>();
 
+    [InverseProperty("Uploader")]
+    public virtual ICollection<OhPicture> OhPictures { get; set; } = new List<OhPicture>();
+
     [InverseProperty("Resident")]
     public virtual OhResident? OhResident { get; set; }
 

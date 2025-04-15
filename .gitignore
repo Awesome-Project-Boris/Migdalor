@@ -592,3 +592,4 @@ fix_*.patch
 
 appsettings.json
 keys.json
+credentials.json

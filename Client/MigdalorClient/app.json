@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.anonymous.MigdalorClient",
+      "bundleIdentifier": "com.projectboris.migdalor",
       "buildNumber": "1",
       "config": {
         "googleMapsApiKey": "${MAPS_API_KEY}"
@@ -30,6 +30,7 @@
       }
     },
     "android": {
+      "googleServicesFile": "./android/app/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -41,7 +42,7 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "package": "com.anonymous.MigdalorClient",
+      "package": "com.projectboris.migdalor",
       "config": {
         "googleMaps": {
           "apiKey": "${MAPS_API_KEY}"
@@ -56,6 +57,9 @@
     },
     "plugins": [
       "expo-router",
+      "@react-native-google-signin/google-signin",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
       [
         "expo-splash-screen",
         {
