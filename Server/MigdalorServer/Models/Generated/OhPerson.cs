@@ -64,6 +64,9 @@ public partial class OhPerson
     [InverseProperty("Host")]
     public virtual ICollection<OhActivity> OhActivities { get; set; } = new List<OhActivity>();
 
+    [InverseProperty("Seller")]
+    public virtual ICollection<OhListing> OhListings { get; set; } = new List<OhListing>();
+
     [InverseProperty("Sender")]
     public virtual ICollection<OhNotice> OhNotices { get; set; } = new List<OhNotice>();
 
