@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router/stack";
 import { usePathname, useRouter } from 'expo-router';
@@ -20,8 +20,10 @@ const config = createTamagui(defaultConfig);
 export default function Layout() {
   const pathname = usePathname();
   const router = useRouter();
+  const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
+    SplashScreen.preventAutoHideAsync();
     const checkLoginStatus = async () => {
       try {
         const userID = await AsyncStorage.getItem('userID');
@@ -31,11 +33,22 @@ export default function Layout() {
       } catch (error) {
         console.error('Error checking login status:', error);
         router.replace('/LoginScreen');
+      } finally {
+        setAppIsReady(true);
       }
     };
-
     checkLoginStatus();
   }, [router]);
+
+  useEffect(() => {
+    if (appIsReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    return null;
+  }
 
   return (
     <PaperProvider>
