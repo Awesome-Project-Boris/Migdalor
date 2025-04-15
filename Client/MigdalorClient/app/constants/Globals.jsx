@@ -1,4 +1,3 @@
-
 import { Dimensions } from "react-native";
 
 
@@ -13,5 +12,5 @@ export let Globals= {
   userVolumeSetting: 5,
   userNotificationsSetting: "both", // "vibration", "sound", "both", "none"
   userSelectedLanguage: "en", // "en", "he"
-  SCREEN_WIDTH : Dimensions.get("window").width,
+  SCREEN_WIDTH: Dimensions.get("window").width,
 };

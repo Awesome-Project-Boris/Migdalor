@@ -29,9 +29,20 @@ export const CustomErrorToast: React.FC<CustomToastProps> = ({ text1, text2 }) =
   </View>
 );
 
+export const CustomInfoToast: React.FC<CustomToastProps> = ({ text1, text2 }) => (
+  <View style={[styles.toastBase, styles.infoToast]}>
+    <Ionicons name="information-circle" size={24} color="white" style={styles.toastIcon} />
+    <View style={styles.toastTextContainer}>
+      {text1 && <Text style={[styles.toastText, styles.toastTitle]}>{text1}</Text>}
+      {text2 && <Text style={[styles.toastText, styles.toastMessage]}>{text2}</Text>}
+    </View>
+  </View>
+);
+
 export const toastConfig = {
   success: (props: CustomToastProps) => <CustomSuccessToast {...props} />,
   error: (props: CustomToastProps) => <CustomErrorToast {...props} />,
+  info: (props: CustomToastProps) => <CustomInfoToast {...props} />,
   // Add info, warning etc. if needed, ensuring 'props' is typed for each
 };
   
@@ -53,6 +64,9 @@ export const toastConfig = {
     },
     errorToast: {
       backgroundColor: '#D32F2F', // Red for error
+    },
+    infoToast: {
+      backgroundColor: '#2196F3', // Light blue for info
     },
     toastIcon: {
         marginRight: 15,
