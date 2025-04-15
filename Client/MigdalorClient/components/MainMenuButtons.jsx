@@ -13,15 +13,15 @@ import { useMainMenuEdit } from "../context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
 
 const initialData = [
-  { key: 'menu1', name: 'פרופיל', destination: 'Profile' },
-  { key: 'menu2', name: 'חוגים ופעילויות', destination: '' },
-  { key: 'menu3', name: 'שוק', destination: 'Marketplace' },
-  { key: 'menu4', name: 'וועד', destination: '' },
-  { key: 'menu5', name: 'שעות פעילות', destination: '' },
-  { key: 'menu6', name: 'מפה', destination: 'Map' },
-  { key: 'menu7', name: 'Menu 7', destination: '' },
-  { key: 'menu8', name: 'Menu 8', destination: '' },
-  { key: 'menu9', name: 'Menu 9', destination: '' },
+  { key: "menu1", name: "פרופיל", destination: "Profile" },
+  { key: "menu2", name: "חוגים ופעילויות", destination: "" },
+  { key: "menu3", name: "שוק", destination: "Marketplace" },
+  { key: "menu4", name: "וועד", destination: "" },
+  { key: "menu5", name: "שעות פעילות", destination: "" },
+  { key: "menu6", name: "מפה", destination: "Map" },
+  { key: "menu7", name: "Menu 7", destination: "" },
+  { key: "menu8", name: "Menu 8", destination: "" },
+  { key: "menu9", name: "Menu 9", destination: "" },
 ];
 
 const SCREEN_WIDTH = Dimensions.get("window").width;

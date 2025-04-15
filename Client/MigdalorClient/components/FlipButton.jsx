@@ -5,15 +5,23 @@ const FlipButton = ({
   text = "Button",
   children,
   onPress,
+  onLongPress,
+  delayLongPress,
+  disabled = false,
   bgColor = "#FFFFFF",
   textColor = "#000000",
   style,
   bordered = true,
   flipborderwidth = 2,
+  testID,
 }) => {
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={delayLongPress}
+      disabled={disabled}
+      testID={testID}
       style={({ pressed }) => [
         styles.buttonBase,
         style,
@@ -23,13 +31,13 @@ const FlipButton = ({
             borderWidth: flipborderwidth,
             borderColor: pressed ? bgColor : textColor,
           }),
+          opacity: disabled ? 0.5 : 1,
         },
       ]}
     >
       {({ pressed }) => {
         const dynamicTextStyle = { color: pressed ? bgColor : textColor };
 
-        // Recursive helper to apply dynamic text style to all nested children.
         const renderChildWithStyle = (child) => {
           if (React.isValidElement(child)) {
             return React.cloneElement(child, {
@@ -39,7 +47,7 @@ const FlipButton = ({
                 : child.props.children,
             });
           }
-          // Wrap non-element children (like strings) in a Text component.
+
           return (
             <Text style={[styles.textBase, dynamicTextStyle]}>{child}</Text>
           );

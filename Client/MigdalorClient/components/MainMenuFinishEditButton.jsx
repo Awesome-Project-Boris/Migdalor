@@ -11,12 +11,11 @@ export function EditToggleButton() {
 
   return (
     <FlipButton
-      text="כניסה"
       bgColor="#f0f0f0"
       textColor="#000000"
       onPress={() => setEditing((prev) => !prev)}
       style={styles.toggleButton}
-      flipborderwidth={1}
+      flipborderwidth={3}
     >
       <Text style={styles.toggleButtonText}>סיימתי</Text>
     </FlipButton>
