@@ -63,6 +63,8 @@ const LoginScreen = () => {
 
       const phone = phoneNumber;
       const pass = password;
+      const apiurl = `${Globals.API_BASE_URL}/api/People/login`;
+      console.log("API URL:", apiurl);
 
       const response = await fetch(`${Globals.API_BASE_URL}/api/People/login`, {
         method: "POST",
@@ -74,7 +76,6 @@ const LoginScreen = () => {
           password: pass,
         }),
       });
-
       if (!response.ok) {
         Alert.alert(
           "שגיאה",
@@ -89,7 +90,7 @@ const LoginScreen = () => {
       // console.log("Login successful:", data);
 
       // AsyncStorage.setItem("userToken", data.token); // Store the token in AsyncStorage
-      AsyncStorage.setItem("userID", data.personId); // Store the user ID in AsyncStorage
+      if (rememberMe) AsyncStorage.setItem("userID", data.personId); // Store the user ID in AsyncStorage
       Alert.alert(
         "התחברות",
         "התחברת בהצלחה",
@@ -121,12 +122,6 @@ const LoginScreen = () => {
     }
   };
 
-  const handlePhoneNumberChange = (text) => {
-    const cleanedText = text.replace(/\D/g, "");
-    // if (cleanedText.length <= 10) {
-    // }
-    setPhoneNumber(cleanedText);
-  };
   return (
     <View style={styles.page}>
       <ScrollView>
@@ -150,7 +145,7 @@ const LoginScreen = () => {
                 <FloatingLabelInput
                   label="מספר טלפון"
                   value={phoneNumber}
-                  onChangeText={handlePhoneNumberChange}
+                  onChangeText={setPhoneNumber}
                   textContentType="telephoneNumber"
                   keyboardType="numeric"
                   maxLength={10}
