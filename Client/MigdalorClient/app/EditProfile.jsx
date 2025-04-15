@@ -183,7 +183,7 @@ export default function EditProfile() {
 
     // !! Add API call to save the data here
 
-    router.push({
+    router.replace({
       pathname: "./Profile",
       params: {
         updatedData: JSON.stringify(form),
@@ -200,7 +200,7 @@ export default function EditProfile() {
 
       alert(t("EditProfileScreen_ProfileUpdateCancelled"));
   
-      router.push({
+      router.replace({
         pathname: "./Profile",
         params: {
           updatedData: JSON.stringify(parsedInitialData), 
@@ -209,7 +209,7 @@ export default function EditProfile() {
     } catch (err) {
       console.warn("Failed to parse initialData during cancel:", err);
       // You can fallback to just navigating without data
-      router.push("./Profile");
+      router.replace("./Profile");
     }
   };
 
