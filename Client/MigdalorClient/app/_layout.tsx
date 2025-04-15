@@ -108,6 +108,20 @@ export default function Layout() {
                 headerShown: false,
               }}
             />
+            <Stack.Screen
+              name="Profile"
+              options={{
+                title: "Profile",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="EditProfile"
+              options={{
+                title: "Edit Profile",
+                headerShown: false,
+              }}
+            />
             </Stack>
             </MarketplaceProvider>
           </BottomSheetProvider>

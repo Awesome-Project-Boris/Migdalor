@@ -35,6 +35,9 @@ const LoginScreen = () => {
   const [loginLoading, setloginLoading] = useState(false);
   const [loginGoogleLoading, setloginGoogleLoading] = useState(false);
 
+  console.log("url is " + Globals.API_BASE_URL);
+  
+
   ///////////////////////////////// Google SignIn /////////////////////////////////
 
   // useEffect(() => {
