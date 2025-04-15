@@ -23,7 +23,7 @@ import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Checkbox from "@/components/CheckBox";
 
-import { API_BASE_URL } from "./constants/Globals";
+import { Globals } from "./constants/Globals";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -34,6 +34,9 @@ const LoginScreen = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loginLoading, setloginLoading] = useState(false);
   const [loginGoogleLoading, setloginGoogleLoading] = useState(false);
+
+  console.log("url is " + Globals.API_BASE_URL);
+  
 
   ///////////////////////////////// Google SignIn /////////////////////////////////
 
@@ -61,7 +64,7 @@ const LoginScreen = () => {
       const phone = phoneNumber;
       const pass = password;
 
-      const response = await fetch(`${API_BASE_URL}/api/People/login`, {
+      const response = await fetch(`${Globals.API_BASE_URL}/api/People/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
