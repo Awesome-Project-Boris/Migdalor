@@ -1,11 +1,13 @@
-import { useRef } from 'react'
+import { useRef, useEffect } from 'react'
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router/stack";
+import { usePathname, useRouter } from 'expo-router';
 import { TamaguiProvider, createTamagui, YStack } from 'tamagui';
 import { Ionicons } from "@expo/vector-icons";
 import { PaperProvider } from "react-native-paper";
 import { defaultConfig } from "@tamagui/config/v4";
-import  ToastManager  from 'toastify-react-native'
+import ToastManager from 'toastify-react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BottomSheetProvider } from "../components/BottomSheetMain";
 import { MainMenuEditProvider } from '@/context/MainMenuEditProvider';
 import 'i18next';
@@ -14,13 +16,27 @@ import { CustomSuccessToast, CustomErrorToast, toastConfig } from '@/components/
 
 const config = createTamagui(defaultConfig);
 
-
-
 export default function Layout() {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const userID = await AsyncStorage.getItem('userID');
+        if (!userID && pathname !== '/LoginScreen') {
+          router.replace('/LoginScreen');
+        }
+      } catch (error) {
+        console.error('Error checking login status:', error);
+        router.replace('/LoginScreen');
+      }
+    };
+
+    checkLoginStatus();
+  }, [router]);
 
   return (
-    
-    
     <PaperProvider>
       <TamaguiProvider config={config}>
         <GestureHandlerRootView style={{ flex: 1 }}>
