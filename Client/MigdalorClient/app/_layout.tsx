@@ -12,7 +12,7 @@ import { BottomSheetProvider } from "../components/BottomSheetMain";
 import { MainMenuEditProvider } from '@/context/MainMenuEditProvider';
 import 'i18next';
 import { MarketplaceProvider } from '@/context/MarketplaceProvider';
-import { CustomSuccessToast, CustomErrorToast, toastConfig } from '@/components/CustomToasts';
+import { toastConfig } from '@/components/CustomToasts';
 import * as SplashScreen from 'expo-splash-screen';
 
 const config = createTamagui(defaultConfig);

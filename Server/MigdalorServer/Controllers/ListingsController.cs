@@ -3,31 +3,14 @@ using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using System.ComponentModel.DataAnnotations;
+using MigdalorServer.Models.DTOs;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace MigdalorServer.Controllers
 {
 
-    public class ListingCreationDto
-    {
-        [Required(ErrorMessage = "Listing title is required.")]
-        [StringLength(100, ErrorMessage = "Title cannot exceed 100 characters.")]
-        public string Title { get; set; } = null!;
-
-        [StringLength(300, ErrorMessage = "Description cannot exceed 300 characters.")]
-        public string? Description { get; set; }
-
-        [Required(ErrorMessage = "Seller ID is required.")]
-        public Guid SellerId { get; set; } // Should match authenticated user
-
-        [Required(ErrorMessage = "Main picture ID is required.")]
-        [Range(1, int.MaxValue, ErrorMessage = "Invalid Main Picture ID.")]
-        public int MainPicId { get; set; } // ID returned from PictureController
-
-        [Range(1, int.MaxValue, ErrorMessage = "Invalid Extra Picture ID.")]
-        public int? ExtraPicId { get; set; } // Optional ID from PictureController
-    }
+    
 
     [Route("api/[controller]")]
     [ApiController]
@@ -35,13 +18,10 @@ namespace MigdalorServer.Controllers
     {
 
         private readonly MigdalorDBContext _context;
-        private readonly ILogger<ListingsController> _logger;
 
-        // Inject DbContext and Logger via constructor
-        public ListingsController(MigdalorDBContext context, ILogger<ListingsController> logger)
+        public ListingsController(MigdalorDBContext context)
         {
             _context = context;
-            _logger = logger;
         }
 
 
@@ -66,64 +46,36 @@ namespace MigdalorServer.Controllers
         }
 
 
+
         [HttpPost("Create")]
-        // [Authorize] // TODO: Add authorization - IMPORTANT!
-        public async Task<IActionResult> CreateListing([FromBody] ListingCreationDto listingDto)
+        // [Authorize] // TODO: Add authorization
+        public async Task<IActionResult> CreateListing([FromBody] ListingCreation listingDto)
         {
-            // --- Step 1: Controller-level Validation ---
-            if (!ModelState.IsValid)
-            {
-                // Return validation errors if DTO annotations fail
-                return BadRequest(ModelState);
-            }
+            // Minimal validation in controller
+            // TODO: Security Check
 
-            // --- Step 2: Security Check (Placeholder) ---
-            // Guid authenticatedUserId = GetUserIdFromClaims(); // Implement function to get ID from HttpContext.User
-            // if (listingDto.SellerId != authenticatedUserId)
-            // {
-            //     _logger.LogWarning("Attempt to create listing for another user. Requester: {AuthenticatedUserId}, DTO SellerId: {DtoSellerId}", authenticatedUserId, listingDto.SellerId);
-            //     return Forbid(); // Or Unauthorized()
-            // }
-
-            // --- Step 3: Call the Static Method in the Model ---
             try
             {
-                // Delegate the core logic (DB interactions) to the static method
+                // Call the Static Method in the CORRECT Model class
+                // *** Ensure OhListings (plural) is used here ***
                 OhListing savedListing = await OhListing.CreateAndLinkPicturesAsync(
                     listingDto,
-                    _context, // Pass the DbContext
-                    _logger   // Pass the Logger
+                    _context
                 );
 
-                // --- Step 4: Handle Success ---
-                _logger.LogInformation("CONTROLLER: Listing {ListingId} created and pictures linked successfully via model method.", savedListing.ListingID);
-                // Return 200 OK with the ID of the newly created listing
-                return Ok(new { message = "Listing created successfully.", listingId = savedListing.ListingID });
+                // Return Success
+                // *** Access ListingID from the correctly typed savedListing object ***
+                return Ok(new { message = "Listing created successfully.", listingId = savedListing.ListingId });
             }
-            // --- Step 5: Handle Exceptions Thrown by the Static Method ---
-            catch (InvalidOperationException invOpEx) // E.g., Main picture not found or already linked
+            catch (Exception ex) // Catch all exceptions
             {
-                _logger.LogError(invOpEx, "CONTROLLER: Invalid operation reported by model during listing creation for Seller {SellerId}.", listingDto.SellerId);
-                // Return 400 Bad Request because the input data (PicId) was likely invalid
-                return BadRequest(new { message = "Failed to create listing: " + invOpEx.Message });
-            }
-            catch (DbUpdateException dbEx) // Catch specific DB errors
-            {
-                _logger.LogError(dbEx, "CONTROLLER: Database error reported by model during listing creation/linking for Seller {SellerId}.", listingDto.SellerId);
-                // Return 500 Internal Server Error for database issues
-                return StatusCode(500, new { message = "Failed due to database error.", error = dbEx.InnerException?.Message ?? dbEx.Message });
-            }
-            catch (Exception ex) // Catch any other unexpected errors
-            {
-                _logger.LogError(ex, "CONTROLLER: Unexpected error reported by model during listing creation for Seller {SellerId}.", listingDto.SellerId);
-                // Check if the inner exception indicates linking failed after creation (as thrown by the static method)
-                if (ex.InnerException is DbUpdateException || ex.Message.Contains("failed to link pictures"))
+                Console.WriteLine($"ERROR in CreateListing: {ex.Message} | Inner: {ex.InnerException?.Message}");
+                // Return a generic 500 error
+                return StatusCode(500, new
                 {
-                    // Return 207 Multi-Status to indicate partial success (listing created, linking failed)
-                    return StatusCode(207, new { message = ex.Message });
-                }
-                // Return 500 for other general errors
-                return StatusCode(500, new { message = "An unexpected error occurred." });
+                    message = "An error occurred while creating the listing.",
+                    error = ex.Message
+                });
             }
         }
 
