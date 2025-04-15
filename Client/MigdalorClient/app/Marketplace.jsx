@@ -7,6 +7,7 @@ import FlipButton from '../components/FlipButton';
 import Header from '@/components/Header';
 import NoSearchMatchCard from '../components/NoSearchMatchCard';
 import { useRouter } from "expo-router";
+import { useTranslation } from 'react-i18next';
 
 
 
@@ -14,6 +15,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const ITEMS_PER_PAGE = 10;
 
 export default function MarketplaceScreen() {
+  const { t } = useTranslation();
   const {
     filteredItems,
     currentPage,
@@ -125,12 +127,12 @@ export default function MarketplaceScreen() {
       <Header />
       <View style={styles.topButtonContainer}>
         <FlipButton
-          text="מוצר חדש"
+          text={t('MarketplaceScreen_NewItemButton')}
           onPress={handleListYourItem}
           style={styles.newItemButton}
         />
         <FlipButton
-          text="חיפוש"
+          text={t('MarketplaceScreen_SearchButton')}
           onPress={openSearchModal}
           style={styles.searchButton}
         />
@@ -171,7 +173,7 @@ export default function MarketplaceScreen() {
           }}
             disabled={currentPage === 1}
           >
-            <Text style={styles.paginationButtonText}>Prev</Text>
+            <Text style={styles.paginationButtonText}>{t("MarketplaceScreen_PreviousButton")}</Text>
           </TouchableOpacity>
 
           {console.log('Rendering pagination buttons, totalPages:', totalPages, 'pagesToShow:', pagesToShow)}
@@ -207,7 +209,7 @@ export default function MarketplaceScreen() {
           }}
             disabled={currentPage === totalPages}
           >
-            <Text style={styles.paginationButtonText}>Next</Text>
+            <Text style={styles.paginationButtonText}>{t("MarketplaceScreen_NextButton")}</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -129,17 +129,17 @@ export function AddNewItemModal({ visible, onClose, onSubmit }) {
         <View style={styles.modalContainer}>
 
           <View style={styles.headerRow}>
-            <Text style={styles.modalTitle}>New item listing</Text>
+            <Text style={styles.modalTitle}>{t("MarketplaceNewItemScreen_Header")}</Text>
           </View>
 
           <FloatingLabelInput
-            label={'שם המוצר'}
+            label={t("MarketplaceNewItemScreen_ItemName")}
             value={itemName}
             onChangeText={(text) => text.length <= ITEM_NAME_LIMIT && setItemName(text)}
           />
           <Text style={styles.charCount}>{itemName.length}/{ITEM_NAME_LIMIT}</Text>
           <FloatingLabelInput
-            label={`תיאור המוצר`}
+            label={t("MarketplaceNewItemScreen_ItemDescription")}
             value={itemDescription}
             onChangeText={(text) => text.length <= DESCRIPTION_LIMIT && setItemDescription(text)}
             multiline={true}

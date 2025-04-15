@@ -11,18 +11,10 @@ import * as Animatable from "react-native-animatable";
 import { useRouter } from "expo-router";
 import { useMainMenuEdit } from "../context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
+import { useTranslation } from "react-i18next";
 
-const initialData = [
-  { key: 'menu1', name: 'פרופיל', destination: 'Profile' },
-  { key: 'menu2', name: 'חוגים ופעילויות', destination: '' },
-  { key: 'menu3', name: 'שוק', destination: 'Marketplace' },
-  { key: 'menu4', name: 'וועד', destination: '' },
-  { key: 'menu5', name: 'שעות פעילות', destination: '' },
-  { key: 'menu6', name: 'מפה', destination: 'Map' },
-  { key: 'menu7', name: 'Menu 7', destination: '' },
-  { key: 'menu8', name: 'Menu 8', destination: '' },
-  { key: 'menu9', name: 'Menu 9', destination: '' },
-];
+
+
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -38,6 +30,19 @@ const flashAnimation = {
 };
 
 export default function MainMenuButtons() {
+  const { t } = useTranslation();
+  const initialData = [
+    { key: 'menu1', name: t('MainMenuScreen_ProfileButton'), destination: 'Profile' },
+    { key: 'menu2', name: t('MainMenuScreen_ActivitiesAndClassesButton'), destination: '' },
+    { key: 'menu3', name: t('MainMenuScreen_MarketplaceButton'), destination: 'Marketplace' },
+    { key: 'menu4', name: t('MainMenuScreen_ResidentsCommitteeButton'), destination: '' },
+    { key: 'menu5', name: t('MainMenuScreen_ActivityHoursButton'), destination: '' },
+    { key: 'menu6', name: t('MainMenuScreen_MapButton'), destination: 'Map' },
+    { key: 'menu7', name: 'Menu 7', destination: '' },
+    { key: 'menu8', name: 'Menu 8', destination: '' },
+    { key: 'menu9', name: 'Menu 9', destination: '' },
+  ];
+  
   const router = useRouter();
   const [data, setData] = useState(initialData);
   const { editing } = useMainMenuEdit();

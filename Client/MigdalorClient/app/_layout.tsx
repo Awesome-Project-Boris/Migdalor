@@ -21,21 +21,21 @@ export default function Layout() {
   const pathname = usePathname();
   const router = useRouter();
 
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const userID = await AsyncStorage.getItem('userID');
-        if (!userID && pathname !== '/LoginScreen') {
-          router.replace('/LoginScreen');
-        }
-      } catch (error) {
-        console.error('Error checking login status:', error);
-        router.replace('/LoginScreen');
-      }
-    };
+  // useEffect(() => {
+  //   const checkLoginStatus = async () => {
+  //     try {
+  //       const userID = await AsyncStorage.getItem('userID');
+  //       if (!userID && pathname !== '/LoginScreen') {
+  //         router.replace('/LoginScreen');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error checking login status:', error);
+  //       router.replace('/LoginScreen');
+  //     }
+  //   };
 
-    checkLoginStatus();
-  }, [router]);
+  //   checkLoginStatus();
+  // }, [router]);
 
   return (
     <PaperProvider>

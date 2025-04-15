@@ -1,9 +1,10 @@
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native';
 import { SCREEN_WIDTH } from "../app/constants/Globals";
 
-
 function MarketplaceItemCard({ data, onPress }) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <Image
@@ -18,7 +19,7 @@ function MarketplaceItemCard({ data, onPress }) {
       </View>
 
       <View style={styles.moreInfoContainer}>
-        <Text style={styles.moreInfoText}>לחצו לפרטים נוספים</Text>
+        <Text style={styles.moreInfoText}>{t("MarketplaceScreen_MoreDetailsButton")}</Text>
       </View>
     </TouchableOpacity>
   );

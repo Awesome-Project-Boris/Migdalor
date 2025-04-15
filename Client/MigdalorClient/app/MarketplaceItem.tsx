@@ -8,7 +8,7 @@ import { MarketplaceContext } from '../context/MarketplaceProvider';
 import FlipButton from '../components/FlipButton'; 
 import Header from '../components/Header'; 
 import { Ionicons } from '@expo/vector-icons';
-
+import { useTranslation } from 'react-i18next';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
@@ -28,6 +28,7 @@ interface ItemData {
 
 
 export default function MarketplaceItemScreen() {
+  const { t } = useTranslation(); // Initialize translation hook
   const router = useRouter();
   const { itemId } = useLocalSearchParams<{ itemId: string }>(); // Get ID from route: /marketplace/[itemId]
   const { getItemById } = useContext(MarketplaceContext);
@@ -71,19 +72,19 @@ export default function MarketplaceItemScreen() {
         <View style={styles.contentContainer}>
 
           <Text style={styles.title}>{item.itemName}</Text>
-          <Text style={styles.h2}>Seller: {item.sellerName}</Text>
+          <Text style={styles.h2}>{t("MarketplaceItemScreen_Seller")} {item.sellerName}</Text>
 
           {item.itemImage1 && (
              <Image style={styles.image} source={require('../assets/images/tempItem.jpg')} objectFit="contain" />
 
           )}
-          <Text style={styles.h2}>{item.itemDescription} :תיאור מוצר</Text>
+          <Text style={styles.h2}>{t("MarketplaceItemScreen_Description")} {item.itemDescription}</Text>
           {item.itemImage2 && (
              <Image style={styles.image} source={require('../assets/images/tempItem.jpg')} objectFit="contain" />
           )}
 
 <YStack width="90%" space="$3" marginTop="$4" alignItems="center">
-            <Text style={styles.h2}>פרטי יצירת קשר</Text>
+            <Text style={styles.h2}>{t("MarketplaceItemScreen_ContactDetails")}</Text>
 
             {/* Phone Call Button */}
             <FlipButton
@@ -103,7 +104,7 @@ export default function MarketplaceItemScreen() {
               {/* Use children instead of text prop */}
               <View style={styles.buttonContent}>
                 <Ionicons name="call-outline" size={20} color="white" style={styles.buttonIcon} />
-                <Text style={styles.contactButtonText}>Call {item.sellerName}</Text>
+                <Text style={styles.contactButtonText}>{t("MarketplaceItemScreen_CallButton")} {item.sellerName}</Text>
               </View>
             </FlipButton>
 
@@ -134,7 +135,7 @@ export default function MarketplaceItemScreen() {
               {/* Use children instead of text prop */}
               <View style={styles.buttonContent}>
                  <Ionicons name="logo-whatsapp" size={20} color="white" style={styles.buttonIcon} />
-                 <Text style={styles.contactButtonText}>Message on WhatsApp</Text>
+                 <Text style={styles.contactButtonText}>{t("MarketplaceItemScreen_MessageButton")} </Text>
               </View>
             </FlipButton>
 
@@ -157,12 +158,12 @@ export default function MarketplaceItemScreen() {
               {/* Use children instead of text prop */}
                <View style={styles.buttonContent}>
                  <Ionicons name="mail-outline" size={20} color="white" style={styles.buttonIcon} />
-                 <Text style={styles.contactButtonText}>Email {item.sellerName}</Text>
+                 <Text style={styles.contactButtonText}>{t("MarketplaceItemScreen_EmailButton")} {item.sellerName}</Text>
               </View>
             </FlipButton>
           </YStack>
 
-          <Text style={styles.detailText}>Publish date: {item.publishDate}</Text>
+          <Text style={styles.detailText}>{t("MarketplaceItemScreen_PublishedDate")} {item.publishDate}</Text>
 
         </View>
       </ScrollView>

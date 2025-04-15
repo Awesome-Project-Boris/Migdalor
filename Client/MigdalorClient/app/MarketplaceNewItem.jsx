@@ -14,12 +14,14 @@ import * as ImagePicker from 'expo-image-picker';
 import Header from '../components/Header';
 import {  useRouter } from "expo-router";
 import { Toast } from 'toastify-react-native';
+import { useTranslation } from 'react-i18next';
 
 
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export default function AddNewItem() {
+  const { t } = useTranslation();
   const [itemName, setItemName] = useState('');
   const [itemDescription, setItemDescription] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -205,17 +207,17 @@ const safeDeleteFile = async ( uri ) => {
         <View style={styles.contentContainer}>
 
           <View style={styles.headerRow}>
-            <Text style={styles.title}>New item listing</Text>
+            <Text style={styles.title}>{t(`MarketplaceNewItemScreen_ItemName`)}</Text>
           </View>
 
           <FloatingLabelInput
-            label={'שם המוצר'}
+            label={t(`MarketplaceNewItemScreen_ItemName`)}
             value={itemName}
             onChangeText={(text) => text.length <= ITEM_NAME_LIMIT && setItemName(text)}
           />
           <Text style={styles.charCount}>{itemName.length}/{ITEM_NAME_LIMIT}</Text>
           <FloatingLabelInput
-            label={`תיאור המוצר`}
+            label={t(`MarketplaceNewItemScreen_ItemDescription`)}
             value={itemDescription}
             onChangeText={(text) => text.length <= DESCRIPTION_LIMIT && setItemDescription(text)}
             multiline={true}
@@ -307,11 +309,11 @@ const safeDeleteFile = async ( uri ) => {
               <Spinner size="small" color="$color" /> // Use appropriate Tamagui color token or hardcoded color
             ) : (
 
-              <Text style={styles.buttonLabel}>Submit</Text>
+              <Text style={styles.buttonLabel}>{t("MarketplaceSearchItem_SubmitButton")}</Text>
             )}
           </FlipButton>
             <FlipButton onPress={handleCancel} bgColor="white" textColor="black" style={styles.cancelButton}>
-              <Text style={styles.buttonLabel}>Cancel</Text>
+              <Text style={styles.buttonLabel}>{t("MarketplaceSearchItem_CancelButton")}</Text>
             </FlipButton>
           </View>
         </View>
