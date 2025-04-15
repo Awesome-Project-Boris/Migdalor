@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // import auth from "@react-native-firebase/auth";
 // import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { Toast } from "toastify-react-native";
 
 import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
@@ -36,7 +37,6 @@ const LoginScreen = () => {
   const [loginGoogleLoading, setloginGoogleLoading] = useState(false);
 
   console.log("url is " + Globals.API_BASE_URL);
-  
 
   ///////////////////////////////// Google SignIn /////////////////////////////////
 
@@ -77,20 +77,19 @@ const LoginScreen = () => {
         }),
       });
       if (!response.ok) {
-        Alert.alert(
-          "שגיאה",
-          "המשתמש לא קיים במערכת או שהסיסמה שגויה",
-          [{ text: "אוקי", style: "cancel" }],
-          { cancelable: false }
-        );
+        Toast.show({
+          type: "info", // Type for styling (if themes are set up)
+          text1: "Submitted!", // Main text
+          text2: "Holy cow! you did it!", // Sub text
+          duration: 3500, // Custom duration
+          position: "top", // Example: 'top' or 'bottom'
+        });
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      // console.log("Login successful:", data);
 
-      // AsyncStorage.setItem("userToken", data.token); // Store the token in AsyncStorage
-      if (rememberMe) AsyncStorage.setItem("userID", data.personId); // Store the user ID in AsyncStorage
+      AsyncStorage.setItem("userID", data.personId);
       Alert.alert(
         "התחברות",
         "התחברת בהצלחה",
@@ -106,21 +105,21 @@ const LoginScreen = () => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setloginGoogleLoading(true);
-      await GoogleSignin.hasPlayServices({
-        showPlayServicesUpdateDialog: true,
-      });
-      const { idToken } = await GoogleSignin.signIn();
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-      await auth().signInWithCredential(googleCredential);
-    } catch (error) {
-      console.error("Google Sign-In error", error);
-    } finally {
-      setloginGoogleLoading(false);
-    }
-  };
+  // const handleGoogleSignIn = async () => {
+  //   try {
+  //     setloginGoogleLoading(true);
+  //     await GoogleSignin.hasPlayServices({
+  //       showPlayServicesUpdateDialog: true,
+  //     });
+  //     const { idToken } = await GoogleSignin.signIn();
+  //     const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+  //     await auth().signInWithCredential(googleCredential);
+  //   } catch (error) {
+  //     console.error("Google Sign-In error", error);
+  //   } finally {
+  //     setloginGoogleLoading(false);
+  //   }
+  // };
 
   return (
     <View style={styles.page}>
@@ -191,7 +190,7 @@ const LoginScreen = () => {
                     )}
                   </XStack>
                 </FlipButton>
-                <FlipButton
+                {/* <FlipButton
                   text="כניסה עם גוגל"
                   onPress={handleGoogleSignIn}
                   bgColor="#dc2626"
@@ -206,7 +205,7 @@ const LoginScreen = () => {
                       <Ionicons name="logo-google" size={34} />
                     )}
                   </XStack>
-                </FlipButton>
+                </FlipButton> */}
               </View>
             </View>
           </KeyboardAvoidingView>
