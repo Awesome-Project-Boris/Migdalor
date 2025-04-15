@@ -18,6 +18,8 @@ public partial class MigdalorDBContext : DbContext
 
     public virtual DbSet<OhClass> OhClasses { get; set; }
 
+    public virtual DbSet<OhListing> OhListings { get; set; }
+
     public virtual DbSet<OhNotice> OhNotices { get; set; }
 
     public virtual DbSet<OhParticipation> OhParticipations { get; set; }
@@ -60,6 +62,16 @@ public partial class MigdalorDBContext : DbContext
             entity.HasOne(d => d.Class).WithOne(p => p.OhClass)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Classes_Activities");
+        });
+
+        modelBuilder.Entity<OhListing>(entity =>
+        {
+            entity.Property(e => e.Date).HasDefaultValueSql("(getdate())");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+
+            entity.HasOne(d => d.Seller).WithMany(p => p.OhListings)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_OH_Listings_Seller");
         });
 
         modelBuilder.Entity<OhNotice>(entity =>
