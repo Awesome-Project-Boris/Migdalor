@@ -25,6 +25,7 @@ import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Checkbox from "@/components/CheckBox";
 
 import { Globals } from "./constants/Globals";
+import { router } from "expo-router";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -35,8 +36,6 @@ const LoginScreen = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [loginLoading, setloginLoading] = useState(false);
   const [loginGoogleLoading, setloginGoogleLoading] = useState(false);
-
-  console.log("url is " + Globals.API_BASE_URL);
 
   ///////////////////////////////// Google SignIn /////////////////////////////////
 
@@ -78,26 +77,27 @@ const LoginScreen = () => {
       });
       if (!response.ok) {
         Toast.show({
-          type: "info", // Type for styling (if themes are set up)
-          text1: "Submitted!", // Main text
-          text2: "Holy cow! you did it!", // Sub text
+          type: "error", // Type for styling (if themes are set up)
+          text1: "שגיאה!", // Main text
+          text2: "שם משתמש או סיסמה לא נכונים!", // Sub text
           duration: 3500, // Custom duration
           position: "top", // Example: 'top' or 'bottom'
         });
+
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
 
-      AsyncStorage.setItem("userID", data.personId);
-      Alert.alert(
-        "התחברות",
-        "התחברת בהצלחה",
-        [{ text: "אוקי", style: "cancel" }],
-        {
-          cancelable: false,
-        }
-      );
+      Toast.show({
+        type: "success", // Type for styling (if themes are set up)
+        text1: "התחברת בהצלחה", // Main text
+        text2: "", // Sub text
+        duration: 3500, // Custom duration
+        position: "top", // Example: 'top' or 'bottom'
+      });
+      await AsyncStorage.setItem("userID", data.personId);
+      router.replace("/");
     } catch (error) {
       console.error("Login failed:", error);
     } finally {
@@ -160,7 +160,7 @@ const LoginScreen = () => {
                   size={35}
                 />
 
-                <TouchableWithoutFeedback
+                {/* <TouchableWithoutFeedback
                   onPress={() => {
                     setRememberMe(!rememberMe);
                   }}
@@ -171,7 +171,7 @@ const LoginScreen = () => {
                     fillColor="black"
                     onPress={() => setRememberMe(!rememberMe)}
                   />
-                </TouchableWithoutFeedback>
+                </TouchableWithoutFeedback> */}
 
                 <FlipButton
                   text="כניסה"

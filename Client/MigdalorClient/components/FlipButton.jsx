@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     boxShadow: "0 3px 4px rgba(0, 0, 0, 0.25)",
   },
   textBase: {
-    // fontSize: 26,
+    fontSize: 32,
     fontWeight: "bold",
     pointerEvents: "none",
   },
