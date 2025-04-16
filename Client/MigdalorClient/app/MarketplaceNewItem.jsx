@@ -13,6 +13,7 @@ import ImageViewModal from '../components/ImageViewModal';
 import FloatingLabelInput from '../components/FloatingLabelInput';
 import Header from '../components/Header';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Globals}  from "@/app/constants/Globals"
 
 // Import Tamagui components if you use them elsewhere in this file
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from 'tamagui';
@@ -23,11 +24,20 @@ import { Card, H2, Paragraph, XStack, YStack, Spinner } from 'tamagui';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
+const sellerName = "TEMP NAME"; // WE NEED TO TAKE THE NAME OF THE SELLER HERE
+
+
 export default function AddNewItem() {
   const [itemName, setItemName] = useState('');
   const [itemDescription, setItemDescription] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+
+  const API = Globals.API_BASE_URL;
+
+  console.log("THIS IS API:" + API)
+
 
   // State for Local Image URIs
   const [mainImage, setMainImage] = useState(null); // Stores LOCAL URI after picking/copying
@@ -186,7 +196,7 @@ export default function AddNewItem() {
             const mainMimeType = `image/${mainFileType === 'jpg' ? 'jpeg' : mainFileType}`;
             formData.append('files', { uri: mainImage, name: `main.${mainFileType}`, type: mainMimeType });
             picRoles.push('marketplace');
-            picAlts.push(itemName.trim() || 'Main listing image');
+            picAlts.push("A photo of the item " + itemName.trim() + " by the seller " + sellerName);
             mainImageIndex = fileIndex++;
         }
         // Prepare Extra Image data
@@ -195,7 +205,7 @@ export default function AddNewItem() {
             const extraMimeType = `image/${extraFileType === 'jpg' ? 'jpeg' : extraFileType}`;
             formData.append('files', { uri: extraImage, name: `extra.${extraFileType}`, type: extraMimeType });
             picRoles.push('marketplace_extra');
-            picAlts.push(itemDescription.trim() || 'Extra listing image');
+            picAlts.push("A secondary photo of the item " + itemName.trim() + " by the seller " + sellerName);
             extraImageIndex = fileIndex++;
         }
         // Append metadata
@@ -205,14 +215,12 @@ export default function AddNewItem() {
 
         try {
             console.log("Attempting to upload images...");
-            // <<< REPLACE WITH YOUR SERVER IP >>>
-            const uploadResponse = await fetch('http://192.168.7.16:5293/api/Picture', {
+
+            const uploadResponse = await fetch( API + '/api/Picture', {
                 method: 'POST',
                 body: formData,
-                // headers: { 'Authorization': `Bearer ${user?.token}` } // Add auth if needed
             });
 
-            // Try to parse JSON regardless of status code first
             try {
                  uploadResults = await uploadResponse.json();
             } catch (jsonError) {
@@ -266,23 +274,20 @@ export default function AddNewItem() {
     }
 
 
-    // --- Step 2: Create Listing ---
     const listingData = {
         Title: itemName,
         Description: itemDescription,
-        SellerId: currentUserId, // Send the retrieved user ID
-        MainPicId: mainPicId,   // Null if not uploaded or failed critically
-        ExtraPicId: extraPicId, // Null if not uploaded or failed
+        SellerId: currentUserId, 
+        MainPicId: mainPicId,   
+        ExtraPicId: extraPicId, 
     };
 
     console.log("Attempting to create listing with data:", listingData);
     try {
-        // <<< REPLACE WITH YOUR SERVER IP and correct endpoint >>>
-        const listingResponse = await fetch('http://192.168.7.16:5293/api/Listings/Create', {
+        const listingResponse = await fetch(API + '/api/Listings/Create', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                // 'Authorization': `Bearer ${user?.token}`
             },
             body: JSON.stringify(listingData),
         });
@@ -294,8 +299,8 @@ export default function AddNewItem() {
 
         const finalResult = await listingResponse.json();
         Toast.show({ type: 'success', text1: 'Listing Created!', text2: `ID: ${finalResult.listingId}`, position: 'top' });
-        await resetState(); // Clean up local files and state
-        router.back(); // Navigate back only on full success
+        await resetState(); 
+        router.back(); 
 
     } catch (error) {
         console.error("Listing creation step failed:", error);
@@ -305,13 +310,9 @@ export default function AddNewItem() {
     }
   };
 
-
-  // --- JSX Render ---
   return (
     <>
-      {/* <Header /> */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
-         {/* ... Your existing JSX structure ... */}
          <View style={styles.contentContainer}>
             <View style={styles.headerRow}><Text style={styles.title}>New item listing</Text></View>
              <FloatingLabelInput label={'שם המוצר'} value={itemName} onChangeText={(text) => text.length <= ITEM_NAME_LIMIT && setItemName(text)} />

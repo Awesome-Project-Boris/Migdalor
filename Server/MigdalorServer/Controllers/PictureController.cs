@@ -43,8 +43,6 @@ namespace MigdalorServer.Controllers
             [FromForm] Guid uploaderId) // TODO: Get from HttpContext.User
         {
 
-            Console.WriteLine($"--- PictureController POST action HIT at {DateTime.UtcNow} ---");
-
             // --- Validation ---
             if (files == null || !files.Any()) return BadRequest(new { message = "No files provided." });
             if (picRoles == null || picAlts == null || files.Count != picRoles.Count || files.Count != picAlts.Count)
@@ -53,11 +51,11 @@ namespace MigdalorServer.Controllers
 
             var results = new List<FileUploadResult>();
             string uploadsFolderPath = Path.Combine(Directory.GetCurrentDirectory(), "uploadedFiles");
-            if (!Directory.Exists(uploadsFolderPath))
-            { /* ... create directory ... */
-                try { Directory.CreateDirectory(uploadsFolderPath); }
-                catch (Exception ex) { return StatusCode(500, new { message = "Cannot create upload directory.", error = ex.Message }); }
-            }
+            //if (!Directory.Exists(uploadsFolderPath))
+            //{ /* ... create directory ... */
+            //    try { Directory.CreateDirectory(uploadsFolderPath); }
+            //    catch (Exception ex) { return StatusCode(500, new { message = "Cannot create upload directory.", error = ex.Message }); }
+            //}
 
             for (int i = 0; i < files.Count; i++)
             {

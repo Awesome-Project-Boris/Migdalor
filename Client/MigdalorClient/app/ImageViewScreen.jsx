@@ -15,7 +15,7 @@ import { MarketplaceContext } from '../context/MarketplaceProvider';
 export default function ImageViewScreen() {
   const router = useRouter();
 
-  const { imageUri, imageType } = useLocalSearchParams<{ imageUri: string, imageType: 'main' | 'extra' }>();
+  const { imageUri, imageType } = useLocalSearchParams();
   const { setMainImage, setExtraImage } = useContext(MarketplaceContext); 
 
   const insets = useSafeAreaInsets(); // Get safe area distances
