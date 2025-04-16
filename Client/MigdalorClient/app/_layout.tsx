@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router/stack";
 import { usePathname, useRouter } from 'expo-router';
@@ -12,7 +12,7 @@ import { BottomSheetProvider } from "../components/BottomSheetMain";
 import { MainMenuEditProvider } from '@/context/MainMenuEditProvider';
 import 'i18next';
 import { MarketplaceProvider } from '@/context/MarketplaceProvider';
-import { CustomSuccessToast, CustomErrorToast, toastConfig } from '@/components/CustomToasts';
+import { toastConfig } from '@/components/CustomToasts';
 import * as SplashScreen from 'expo-splash-screen';
 
 const config = createTamagui(defaultConfig);
@@ -20,6 +20,7 @@ const config = createTamagui(defaultConfig);
 export default function Layout() {
   const pathname = usePathname();
   const router = useRouter();
+  const [appIsReady, setAppIsReady] = useState(false);
 
   // useEffect(() => {
   //   const checkLoginStatus = async () => {
@@ -36,6 +37,16 @@ export default function Layout() {
 
   //   checkLoginStatus();
   // }, [router]);
+
+  useEffect(() => {
+    if (appIsReady) {
+      SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    return null;
+  }
 
   return (
     <PaperProvider>
@@ -82,21 +93,21 @@ export default function Layout() {
             <Stack.Screen
               name="MarketplaceNewItem"
               options={{
-                title: "Marketplace new item",
+                title: "Marketplace New Item",
                 headerShown: false
               }}
             />
             <Stack.Screen
               name="MarketplaceItem"
               options={{
-                title: "Marketplace item",
+                title: "Marketplace Item",
                 headerShown: false
               }}
             />
             <Stack.Screen
               name="ImageViewScreen"
               options={{
-                title: "Image view screen",
+                title: "Image View Screen",
                 headerShown: false,
                 presentation: 'modal'
               }}
@@ -104,7 +115,35 @@ export default function Layout() {
             <Stack.Screen
               name="Map"
               options={{
-                title: "Site map",
+                title: "Site Map",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="Notices"
+              options={{
+                title: "Notice Board",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="NoticeFocus"
+              options={{
+                title: "Single Notice",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="ResidentList"
+              options={{
+                title: "List Of Residents",
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="CommittieePage"
+              options={{
+                title: "Committiee Members",
                 headerShown: false,
               }}
             />
@@ -132,3 +171,4 @@ export default function Layout() {
     </PaperProvider>
   );
 }
+// ResidentList

@@ -180,7 +180,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
 const styles = StyleSheet.create({
   sheetContent: {
     flex: 1,
-    padding: 16,
+    padding: 10,
   },
   row: {
     flexDirection: "row",
@@ -188,8 +188,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   button: {
-    width: SCREEN_WIDTH * 0.35,
-    height: 100,
+    width: SCREEN_WIDTH * 0.42,
+    height: 125,
     backgroundColor: "#4CAF50",
     borderRadius: 8,
     justifyContent: "center",
