@@ -78,5 +78,37 @@ namespace MigdalorServer.Models
 
             return newListing; // Return the successfully created listing
         }
+
+        public async Task<List<ListingSummary>> GetActiveListingSummariesAsync()
+        {
+            // This is the same query logic moved from the controller
+            var listings = await _context.OhListings
+                .Where(l => l.IsActive)
+                .Include(l => l.Seller)
+                .Select(l => new
+                {
+                    Listing = l,
+                    SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName,
+                    MainPicture = _context.OhPictures
+                                    .Where(p => p.ListingId == l.ListingId)
+                                    .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1)
+                                    .ThenBy(p => p.DateTime)
+                                    .FirstOrDefault()
+                })
+                .OrderByDescending(l => l.Listing.Date)
+                .Select(l_info => new ListingSummary
+                {
+                    ListingId = l_info.Listing.ListingId,
+                    Title = l_info.Listing.Title,
+                    Description = l_info.Listing.Description,
+                    Date = l_info.Listing.Date,
+                    SellerId = l_info.Listing.SellerId,
+                    SellerName = l_info.SellerName,
+                    MainImagePath = l_info.MainPicture != null ? l_info.MainPicture.PicPath : null
+                })
+                .ToListAsync();
+
+            return listings;
+        }
     }
 }

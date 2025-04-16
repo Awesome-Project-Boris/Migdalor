@@ -6,20 +6,14 @@ import BottomSheet, {
 import { View, StyleSheet, Dimensions, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FlipButton from "./FlipButton";
-import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
+import FlipButton from "./FlipButton"; // Assuming FlipButton exists and is compatible
+import { useMainMenuEdit } from "@/context/MainMenuEditProvider"; // Assuming this context exists
 import { Link, usePathname, useRouter } from "expo-router";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-interface BottomSheetContextType {
-  openSheet: () => void;
-  closeSheet: () => void;
-}
-
-const BottomSheetContext = createContext<BottomSheetContextType | undefined>(
-  undefined
-);
+// Context without TypeScript types
+const BottomSheetContext = createContext(undefined);
 
 export const useBottomSheet = () => {
   const context = useContext(BottomSheetContext);
@@ -29,10 +23,9 @@ export const useBottomSheet = () => {
   return context;
 };
 
-export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const bottomSheetRef = useRef<BottomSheet>(null);
+// Component definition as a standard JavaScript function
+export const BottomSheetProvider = ({ children }) => {
+  const bottomSheetRef = useRef(null); // useRef without generic type
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
   const router = useRouter();
@@ -52,7 +45,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
       {children}
       <BottomSheet
         ref={bottomSheetRef}
-        index={-1}
+        index={-1} // Start closed
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={(backdropProps) => (
@@ -71,7 +64,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               style={styles.button}
               onPress={() => {
                 router.navigate("/");
-                bottomSheetRef.current?.close();
+                closeSheet(); // Close sheet after navigation
                 console.log("Menu 1 pressed");
               }}
               bgColor="#4CAF50"
@@ -88,11 +81,10 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
 
             <FlipButton
               style={styles.button}
-              onPress={() => 
-              {
+              onPress={() => {
                 router.navigate("./FontSettings");
                 setEditing(false);
-                bottomSheetRef.current?.close();
+                closeSheet(); // Close sheet after navigation
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
@@ -114,8 +106,8 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               onPress={() => {
                 console.log("Menu 3 pressed");
                 setEditing(false);
-                router.navigate("LoginScreen" as any);
-                bottomSheetRef.current?.close();
+                router.navigate("LoginScreen"); // Removed 'as any'
+                closeSheet(); // Close sheet after navigation
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
@@ -134,7 +126,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 style={styles.button}
                 onPress={() => {
                   setEditing(true);
-                  bottomSheetRef.current?.close();
+                  closeSheet(); // Close sheet when activating edit mode
                 }}
                 bgColor="#4CAF50"
                 textColor="#ffffff"
@@ -187,7 +179,7 @@ const styles = StyleSheet.create({
   button: {
     width: SCREEN_WIDTH * 0.42,
     height: 145,
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#4CAF50", // Default color, overridden by prop
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -198,6 +190,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 18,
     textAlign: "center",
+    // Default color, overridden by prop
   },
 });
 
