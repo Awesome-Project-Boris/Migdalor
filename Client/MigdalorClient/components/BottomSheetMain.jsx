@@ -9,6 +9,8 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FlipButton from "./FlipButton"; // Assuming FlipButton exists and is compatible
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider"; // Assuming this context exists
 import { Link, usePathname, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -23,9 +25,11 @@ export const useBottomSheet = () => {
   return context;
 };
 
-// Component definition as a standard JavaScript function
-export const BottomSheetProvider = ({ children }) => {
-  const bottomSheetRef = useRef(null); // useRef without generic type
+export const BottomSheetProvider= ({
+  children,
+}) => {
+  const {t} = useTranslation();
+  const bottomSheetRef = useRef<BottomSheet>(null);
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
   const router = useRouter();
@@ -76,7 +80,7 @@ export const BottomSheetProvider = ({ children }) => {
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>בית</Text>
+              <Text style={styles.buttonText}>{t("SettingsPopup_HomeButton")}</Text>
             </FlipButton>
 
             <FlipButton
@@ -95,7 +99,7 @@ export const BottomSheetProvider = ({ children }) => {
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>הגדרות</Text>
+              <Text style={styles.buttonText}>{t("SettingsPopup_SettingsButton")}</Text>
             </FlipButton>
           </View>
 
@@ -118,7 +122,7 @@ export const BottomSheetProvider = ({ children }) => {
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>פרופיל</Text>
+              <Text style={styles.buttonText}>{t("SettingsPopup_ProfileButton")}</Text>
             </FlipButton>
 
             {pathname === "/" && (
@@ -137,7 +141,7 @@ export const BottomSheetProvider = ({ children }) => {
                   color="#fff"
                   style={styles.icon}
                 />
-                <Text style={styles.buttonText}>שנה סדר תפריט</Text>
+                <Text style={styles.buttonText}>{t("SettingsPopup_ChangeLayoutButton")}</Text>
               </FlipButton>
             )}
             {/* {true && (

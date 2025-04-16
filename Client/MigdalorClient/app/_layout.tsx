@@ -22,24 +22,21 @@ export default function Layout() {
   const router = useRouter();
   const [appIsReady, setAppIsReady] = useState(false);
 
-  SplashScreen.preventAutoHideAsync();
+  // useEffect(() => {
+  //   const checkLoginStatus = async () => {
+  //     try {
+  //       const userID = await AsyncStorage.getItem('userID');
+  //       if (!userID && pathname !== '/LoginScreen') {
+  //         router.replace('/LoginScreen');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error checking login status:', error);
+  //       router.replace('/LoginScreen');
+  //     }
+  //   };
 
-  useEffect(() => {
-  const checkLoginStatus = async () => {
-    try {
-      const userID = await AsyncStorage.getItem('userID');
-      if (!userID) {
-        router.replace('/LoginScreen');
-      }
-    } catch (error) {
-      console.error('Error checking login status:', error);
-      router.replace('/LoginScreen');
-    } finally {
-      setAppIsReady(true);
-    }
-  };
-  checkLoginStatus();
-}, []);
+  //   checkLoginStatus();
+  // }, [router]);
 
   useEffect(() => {
     if (appIsReady) {

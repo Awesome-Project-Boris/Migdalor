@@ -15,7 +15,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import Header from "@/components/Header";
-
+import { Toast } from "toastify-react-native";
 
 import ImageViewModal from "../components/ImageViewModal";
 
@@ -179,7 +179,15 @@ export default function EditProfile() {
 
     setForm(cleanedForm);
     console.log("Updated Data:", cleanedForm);
-    alert(t("EditProfileScreen_ProfileUpdated"));
+    //alert(t("EditProfileScreen_ProfileUpdated"));
+    Toast.show({
+      type: "success", // Type for styling (if themes are set up)
+      text1: t("EditProfileScreen_ProfileUpdated"),
+      //text1: 'Submitted!', // Main text
+      //text2: t("EditProfileScreen_ProfileUpdated"), // Sub text
+      duration: 3500, // Custom duration
+      position: "top", // Example: 'top' or 'bottom'
+    });
 
     // !! Add API call to save the data here
 
@@ -193,17 +201,25 @@ export default function EditProfile() {
 
   const handleCancel = () => {
     console.log("Cancelled Edit Profile");
-    
-    try {
-      const parsedInitialData = JSON.parse(initialData); 
-      setForm(parsedInitialData); 
 
-      alert(t("EditProfileScreen_ProfileUpdateCancelled"));
-  
+    try {
+      const parsedInitialData = JSON.parse(initialData);
+      setForm(parsedInitialData);
+
+      //alert(t("EditProfileScreen_ProfileUpdateCancelled"));
+      Toast.show({
+        type: "info", // Type for styling (if themes are set up)
+        text1: t("EditProfileScreen_ProfileUpdateCancelled"),
+        //text1: 'Submitted!', // Main text
+        //text2: t("EditProfileScreen_ProfileUpdated"), // Sub text
+        duration: 3500, // Custom duration
+        position: "top", // Example: 'top' or 'bottom'
+      });
+
       router.replace({
         pathname: "./Profile",
         params: {
-          updatedData: JSON.stringify(parsedInitialData), 
+          updatedData: JSON.stringify(parsedInitialData),
         },
       });
     } catch (err) {
@@ -213,7 +229,8 @@ export default function EditProfile() {
     }
   };
 
-  useEffect(() => { // Update the form with initialData
+  useEffect(() => {
+    // Update the form with initialData
     if (initialData) {
       try {
         const parsedData = JSON.parse(initialData);
@@ -385,7 +402,6 @@ export default function EditProfile() {
           </Text>
 
           {/* !! Add extra images here */}
-
 
           {/* <XStack space="$3" justifyContent="center" alignItems="center" marginVertical="$4">
               <Card

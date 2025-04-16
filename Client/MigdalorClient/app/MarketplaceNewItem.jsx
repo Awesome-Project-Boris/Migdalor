@@ -12,6 +12,9 @@ import FlipButton from '../components/FlipButton';
 import ImageViewModal from '../components/ImageViewModal';
 import FloatingLabelInput from '../components/FloatingLabelInput';
 import Header from '../components/Header';
+import {  useRouter } from "expo-router";
+import { Toast } from 'toastify-react-native';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals}  from "@/app/constants/Globals"
 
@@ -28,6 +31,7 @@ const sellerName = "TEMP NAME"; // WE NEED TO TAKE THE NAME OF THE SELLER HERE
 
 
 export default function AddNewItem() {
+  const { t } = useTranslation();
   const [itemName, setItemName] = useState('');
   const [itemDescription, setItemDescription] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -317,10 +321,10 @@ export default function AddNewItem() {
       {/* <Header /> */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
          <View style={styles.contentContainer}>
-            <View style={styles.headerRow}><Text style={styles.title}>New item listing</Text></View>
-             <FloatingLabelInput label={'שם המוצר'} value={itemName} onChangeText={(text) => text.length <= ITEM_NAME_LIMIT && setItemName(text)} />
+            <View style={styles.headerRow}><Text style={styles.title}>{t(`MarketplaceNewItemScreen_ItemName`)}</Text></View>
+             <FloatingLabelInput label={t(`MarketplaceNewItemScreen_ItemName`)} value={itemName} onChangeText={(text) => text.length <= ITEM_NAME_LIMIT && setItemName(text)} />
              <Text style={styles.charCount}>{itemName.length}/{ITEM_NAME_LIMIT}</Text>
-             <FloatingLabelInput label={`תיאור המוצר`} value={itemDescription} onChangeText={(text) => text.length <= DESCRIPTION_LIMIT && setItemDescription(text)} multiline={true} inputStyle={{ height: 80 }} />
+             <FloatingLabelInput label={t(`MarketplaceNewItemScreen_ItemDescription`)} value={itemDescription} onChangeText={(text) => text.length <= DESCRIPTION_LIMIT && setItemDescription(text)} multiline={true} inputStyle={{ height: 80 }} />
              <Text style={styles.charCount}>{itemDescription.length}/{DESCRIPTION_LIMIT}</Text>
              <XStack space="$3" justifyContent="center" alignItems="center" marginVertical="$4">
                  <Card elevate width={150} height={150} borderRadius="$4" overflow="hidden" margin={10} onPress={() => viewOrPickImage('main')}>
@@ -332,10 +336,10 @@ export default function AddNewItem() {
                </XStack>
              <View style={styles.buttonRow}>
                  <FlipButton onPress={handleSubmit} bgColor="white" textColor="black" style={styles.submitButton} disabled={isSubmitting}>
-                   {isSubmitting ? <Spinner size="small" color="black" /> : <Text style={styles.buttonLabel}>Submit</Text>}
+                   {isSubmitting ? <Spinner size="small" color="black" /> : <Text style={styles.buttonLabel}>{t("MarketplaceSearchItem_SubmitButton")}</Text>}
                  </FlipButton>
                  <FlipButton onPress={handleCancel} bgColor="white" textColor="black" style={styles.cancelButton} disabled={isSubmitting}>
-                   <Text style={styles.buttonLabel}>Cancel</Text>
+                   <Text style={styles.buttonLabel}>{t("MarketplaceSearchItem_CancelButton")}</Text>
                  </FlipButton>
                </View>
            </View>

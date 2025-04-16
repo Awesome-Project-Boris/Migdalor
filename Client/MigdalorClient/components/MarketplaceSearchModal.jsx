@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, forwardRef  } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
 import FloatingLabelInput from './FloatingLabelInput';
+import { useTranslation } from 'react-i18next';
 
 export default function MarketplaceSearchModal({ visible, onSearch, onCancel }) {
+  const { t } = useTranslation();
   const [localQuery, setLocalQuery] = useState('');
 
   // Clear local state when modal is closed
@@ -25,7 +27,7 @@ export default function MarketplaceSearchModal({ visible, onSearch, onCancel }) 
     <Modal visible={visible} transparent={true} animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <Text style={styles.title}>חיפוש מוצר</Text>
+          <Text style={styles.title}>{t("MarketplaceSearchItem_Header")}</Text>
           <FloatingLabelInput
             label= ''
             value={localQuery}
@@ -36,10 +38,10 @@ export default function MarketplaceSearchModal({ visible, onSearch, onCancel }) 
           />
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.modalButton} onPress={handleSearch}>
-              <Text style={styles.buttonText}>Search</Text>
+              <Text style={styles.buttonText}>{t("MarketplaceSearchItem_SearchButton")}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={onCancel}>
-              <Text style={styles.buttonText}>Cancel</Text>
+              <Text style={styles.buttonText}>{t("MarketplaceSearchItem_CancelButton")}</Text>
             </TouchableOpacity>
           </View>
         </View>
