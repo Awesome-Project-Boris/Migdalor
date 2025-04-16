@@ -57,12 +57,19 @@ export default function MarketplaceItemScreen() {
       <View style={styles.container}>
         <Header /> {/* Or Stack header */}
         <Text>Item not found.</Text>
-        <FlipButton onPress={() => router.back()} style={{}} >
+        {/* <FlipButton onPress={() => router.back()} style={{}} > */}
+        <FlipButton
+          onPress={() => router.back()}
+          onLongPress={() => {}}
+          delayLongPress={600}
+          testID="back-button"
+          style={{}}
+        >
           <Text>Go back</Text>
         </FlipButton>
       </View>
     );
-  }
+  } 
 
   // If item is found, render the details (adapted from your modal)
   return (
@@ -100,6 +107,9 @@ export default function MarketplaceItemScreen() {
                       else { Alert.alert(`Error`, `Cannot make phone calls`); }
                   } catch (error) { Alert.alert('Error', 'Could not open phone dialer.'); }
               }}
+              onLongPress={() => {}}
+              delayLongPress={600}
+              testID="call-button"
             >
               {/* Use children instead of text prop */}
               <View style={styles.buttonContent}>
@@ -131,6 +141,9 @@ export default function MarketplaceItemScreen() {
                       else { Alert.alert(`Error`, `WhatsApp is not installed.`); }
                   } catch (error) { Alert.alert('Error', 'Could not open WhatsApp.'); }
               }}
+              onLongPress={() => {}}
+              delayLongPress={600}
+              testID="message-button"
             >
               {/* Use children instead of text prop */}
               <View style={styles.buttonContent}>
@@ -154,6 +167,9 @@ export default function MarketplaceItemScreen() {
                       else { Alert.alert(`Error`, `Cannot open email client.`); }
                   } catch (error) { Alert.alert('Error', 'Could not open email client.'); }
               }}
+              onLongPress={() => {}}
+              delayLongPress={600}
+              testID="email-button"
             >
               {/* Use children instead of text prop */}
                <View style={styles.buttonContent}>
@@ -163,7 +179,7 @@ export default function MarketplaceItemScreen() {
             </FlipButton>
           </YStack>
 
-          <Text style={styles.detailText}>{t("MarketplaceItemScreen_PublishedDate")} {item.publishDate}</Text>
+          <Text style={styles.detailText}>{t("MarketplaceItemScreen_PublishedDate")} {new Date(item.publishDate.replace(/:(\d{3})Z$/, '.$1Z')).toLocaleDateString("he-IL")}</Text>
 
         </View>
       </ScrollView>
