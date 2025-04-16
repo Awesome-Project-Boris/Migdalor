@@ -511,7 +511,7 @@ export default function AddNewItem() {
                   </YStack>
                 </>
               ) : (
-                <YStack f={1} jc="center" ai="center" p="$2">
+                <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
                   <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
                   <Paragraph theme="alt2">
                     {t("MarketplaceNewItemScreen_ImageOptional")}
@@ -551,7 +551,7 @@ export default function AddNewItem() {
                   </YStack>
                 </>
               ) : (
-                <YStack f={1} jc="center" ai="center" p="$2">
+                <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
                   <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2>
                   <Paragraph theme="alt2">
                     {t("MarketplaceNewItemScreen_ImageOptional")}
