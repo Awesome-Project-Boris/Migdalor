@@ -51,6 +51,8 @@ namespace MigdalorServer.Controllers
                     user.PersonId,
                     user.HebFirstName,
                     user.HebLastName,
+                    user.EngFirstName,
+                    user.EngLastName,
                 });
                 
             }

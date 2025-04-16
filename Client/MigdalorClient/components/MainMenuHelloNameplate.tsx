@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -7,9 +8,29 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 // { Good Morning / Good Afternoon / Good Evening / Good Night }, { resident name }!
 
 function Greeting() {
+    const [name, setName] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchName = async () => {
+            try {
+                const storedName = await AsyncStorage.getItem("userEngFirstName");
+                if (storedName && storedName !== "null" && storedName !== "") {
+                    setName(storedName);
+                } else {
+                    setName(null);
+                }
+            } catch (e) {
+                setName(null);
+            }
+        };
+        fetchName();
+    }, []);
+
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Good Morning, {"resident name"}!</Text>
+            <Text style={styles.text}>
+                Good Morning{name ? `, ${name}` : ""}!
+            </Text>
         </View>
     );
 }
