@@ -117,6 +117,7 @@ export default function AddNewItem() {
   const resetState = async () => {
     setItemName('');
     setItemDescription('');
+    // Delete local copies before clearing state
     await safeDeleteFile(mainImage);
     await safeDeleteFile(extraImage);
     setMainImage(null);
@@ -312,6 +313,8 @@ export default function AddNewItem() {
 
   return (
     <>
+      {/* Use your actual Header component */}
+      {/* <Header /> */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
          <View style={styles.contentContainer}>
             <View style={styles.headerRow}><Text style={styles.title}>New item listing</Text></View>
