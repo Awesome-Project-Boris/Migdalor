@@ -3,6 +3,7 @@ import i18next from 'i18next';
 import { initReactI18next } from "react-i18next";
 import {Globals} from '../constants/Globals';
 import Profile from '../Profile';
+import SettingsLayout from '../(settings)/_layout';
 
 const resources = {
   en: { // English translations
@@ -61,6 +62,60 @@ const resources = {
       //EditProfileScreen_errorMessageImage: "Please fill in the 'Image' field",
 
 
+      MainMenuScreen_ProfileButton: 'Profile',
+      MainMenuScreen_ActivitiesAndClassesButton: 'Activities and Classes',
+      MainMenuScreen_MarketplaceButton: 'Marketplace',
+      MainMenuScreen_ResidentsCommitteeButton: "Residents' Committee",
+      MainMenuScreen_ActivityHoursButton: 'Activity Hours',
+      MainMenuScreen_MapButton: 'Map',
+
+
+      SettingsPopup_SettingsButton: 'Settings',
+      SettingsPopup_HomeButton: 'Home',
+      SettingsPopup_ProfileButton: 'Profile',
+      SettingsPopup_ChangeLayoutButton: 'Change Menu Layout',
+
+      MarketplaceScreen_SearchButton: "Search",
+      MarketplaceScreen_NewItemButton: "New Item",
+      MarketplaceScreen_NextButton: "Next",
+      MarketplaceScreen_PreviousButton: "Prev",
+      MarketplaceScreen_MoreDetailsButton: "Tap to learn more",
+      MarketplaceScreen_ShowingResultsFor: "Showing results for:",
+      MarketplaceScreen_ClearSearchButton: "Clear Search",
+      MarketplaceSearchItem_Header: "Search Item",
+      MarketplaceSearchItem_SearchButton: "Search",
+      MarketplaceSearchItem_CancelButton: "Cancel",
+      MarketplaceSearchItem_SubmitButton: "Sumbit",
+      
+
+
+
+
+
+      MarketplaceItemScreen_Seller: "Seller:",
+      MarketplaceItemScreen_Description: "Description:",
+      MarketplaceItemScreen_ContactDetails: "Contact Details",
+      MarketplaceItemScreen_CallButton: "Call",
+      MarketplaceItemScreen_MessageButton: "Message on WhatsApp",
+      MarketplaceItemScreen_EmailButton: "Email",
+      MarketplaceItemScreen_PublishedDate: "Published on:",
+
+
+      MarketplaceNewItemScreen_Header: "New Item Listing",
+      MarketplaceNewItemScreen_NewItem: "New Item",
+      MarketplaceNewItemScreen_ItemName: "Item Name",
+      MarketplaceNewItemScreen_ItemDescription: "Item Description",
+      MarketplaceNewItemScreen_CancelDiscardHeader: "Discard Unsaved Changes?",
+      MarketplaceNewItemScreen_CancelDiscard: "No, Stay",
+      MarketplaceNewItemScreen_CancelConfirmation: "Yes, Discard",
+      MarketplaceNewItemScreen_MainImage: "Main Image",
+      MarketplaceNewItemScreen_ExtraImage: "Extra Image",
+      MarketplaceNewItemScreen_ImageOptional: "(Optional)",
+      MarketplaceNewItemScreen_ImageTapToChoose: "Tap to choose",
+
+
+      
+
 
     },
   },
@@ -116,6 +171,57 @@ const resources = {
       EditProfileScreen_ProfileUpdateCancelled: "עדכון פרופיל בוטל",
       //EditProfileScreen_errorMessageExtraImages: "אנא מלא את שדה 'תמונות נוספות'",
       //EditProfileScreen_errorMessageImage: "אנא מלא את שדה 'תמונה'",
+
+      
+      MainMenuScreen_ProfileButton: 'פרופיל',
+      MainMenuScreen_ActivitiesAndClassesButton: 'חוגים ופעילויות',
+      MainMenuScreen_MarketplaceButton: 'שוק',
+      MainMenuScreen_ResidentsCommitteeButton: "וועד דיירים",
+      MainMenuScreen_ActivityHoursButton: 'שעות פעילות',
+      MainMenuScreen_MapButton: 'מפה',
+
+
+      SettingsPopup_SettingsButton: 'הגדרות',
+      SettingsPopup_HomeButton: 'בית',
+      SettingsPopup_ProfileButton: 'פרופיל',
+      SettingsPopup_ChangeLayoutButton: 'שנה סדר תפריט',
+
+
+      MarketplaceScreen_SearchButton: "חפש",
+      MarketplaceScreen_NewItemButton: "פריט חדש",
+      MarketplaceScreen_NextButton: "הבא",
+      MarketplaceScreen_PreviousButton: "הקודם",
+      MarketplaceScreen_MoreDetailsButton: "לחצו לפרטים נוספים",
+      MarketplaceScreen_ShowingResultsFor: "מראה תוצאות עבור:",
+      MarketplaceScreen_ClearSearchButton: "לביטול החיפוש",
+      MarketplaceSearchItem_Header: "חפש פריט",
+      MarketplaceSearchItem_SearchButton: "חפש",  
+      MarketplaceSearchItem_CancelButton: "ביטול",
+      MarketplaceSearchItem_SubmitButton: "שלח",
+      
+      
+
+      MarketplaceItemScreen_Seller:  "מוכר:",
+      MarketplaceItemScreen_Description: "תיאור:",
+      MarketplaceItemScreen_ContactDetails: "פרטי יצירת קשר",
+      MarketplaceItemScreen_CallButton: "התקשר",
+      MarketplaceItemScreen_MessageButton: "שלח הודעה בוואטסאפ",
+      MarketplaceItemScreen_EmailButton: "שלח מייל",
+      MarketplaceItemScreen_PublishedDate: "פורסם בתאריך:",
+
+
+      MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
+      MarketplaceNewItemScreen_NewItem: "פריט חדש",
+      MarketplaceNewItemScreen_ItemName: "שם הפריט",
+      MarketplaceNewItemScreen_ItemDescription: "תיאור הפריט",
+      MarketplaceNewItemScreen_CancelDiscardHeader: "למחוק שינויים שנעשו?",
+      MarketplaceNewItemScreen_CancelDiscard: "לא, השאר",
+      MarketplaceNewItemScreen_CancelConfirmation: "כן, מחק",
+      MarketplaceNewItemScreen_MainImage: "תמונה ראשית",
+      MarketplaceNewItemScreen_ExtraImage: "תמונה נוספת",
+      MarketplaceNewItemScreen_ImageOptional: "(אופציונלי)",
+      MarketplaceNewItemScreen_ImageTapToChoose: "לחץ לבחירה",
+      
 
 
 

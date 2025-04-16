@@ -14,6 +14,7 @@ import FloatingLabelInput from '../components/FloatingLabelInput';
 import Header from '../components/Header';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals}  from "@/app/constants/Globals"
+import { useTranslation } from "react-i18next";
 
 // Import Tamagui components if you use them elsewhere in this file
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from 'tamagui';
@@ -33,7 +34,8 @@ export default function AddNewItem() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
+  const { t } = useTranslation();
+  
   const API = Globals.API_BASE_URL;
 
   console.log("THIS IS API:" + API)
