@@ -16,7 +16,6 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import Header from "@/components/Header";
 
-
 import ImageViewModal from "../components/ImageViewModal";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -193,17 +192,17 @@ export default function EditProfile() {
 
   const handleCancel = () => {
     console.log("Cancelled Edit Profile");
-    
+
     try {
-      const parsedInitialData = JSON.parse(initialData); 
-      setForm(parsedInitialData); 
+      const parsedInitialData = JSON.parse(initialData);
+      setForm(parsedInitialData);
 
       alert(t("EditProfileScreen_ProfileUpdateCancelled"));
-  
+
       router.replace({
         pathname: "./Profile",
         params: {
-          updatedData: JSON.stringify(parsedInitialData), 
+          updatedData: JSON.stringify(parsedInitialData),
         },
       });
     } catch (err) {
@@ -213,7 +212,8 @@ export default function EditProfile() {
     }
   };
 
-  useEffect(() => { // Update the form with initialData
+  useEffect(() => {
+    // Update the form with initialData
     if (initialData) {
       try {
         const parsedData = JSON.parse(initialData);
@@ -386,7 +386,6 @@ export default function EditProfile() {
 
           {/* !! Add extra images here */}
 
-
           {/* <XStack space="$3" justifyContent="center" alignItems="center" marginVertical="$4">
               <Card
                 elevate width={150} height={150} borderRadius="$4" overflow="hidden"
@@ -557,7 +556,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   multiline: {
-    height: 80,
+    minHeight: 80,
     textAlignVertical: "top",
   },
   extraImages: {

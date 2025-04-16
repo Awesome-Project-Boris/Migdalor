@@ -1,6 +1,15 @@
-import React from "react";
 import { Redirect } from "expo-router";
+import { useAuth } from "@/context/AuthProvider";
+import { View, ActivityIndicator } from "react-native";
 
-export default () => {
-  return <Redirect href="/MainMenu" />;
-};
+export default function Index() {
+  const { user } = useAuth();
+
+  if (user === null) {
+    return <Redirect href="/LoginScreen" />;
+  }
+
+  if (user) {
+    return <Redirect href="/MainMenu" />;
+  }
+}

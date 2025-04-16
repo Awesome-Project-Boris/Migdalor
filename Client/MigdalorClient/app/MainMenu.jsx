@@ -9,8 +9,9 @@ import Header from "../components/Header";
 import { EditToggleButton } from "../components/MainMenuFinishEditButton";
 // import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Stack } from "expo-router";
 
-const showDevButton = true;
+const showDevButton = false;
 
 const viewAllData = async () => {
   try {
@@ -40,23 +41,26 @@ export default function Index() {
   }, [setEditing]);
 
   return (
-    <View style={styles.container}>
-      <Header />
-      <Greeting />(
-      {showDevButton && (
-        <FlipButton
-          text="View All Data"
-          bgColor="#fbbf24"
-          textColor="black"
-          style={styles.toggleButton}
-          flipborderwidth={5}
-          onPress={viewAllData}
-        ></FlipButton>
-      )}
-      )
-      <EditToggleButton />
-      <MainMenuButtons />
-    </View>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.container}>
+        <Header />
+        <Greeting />(
+        {showDevButton && (
+          <FlipButton
+            text="View All Data"
+            bgColor="#fbbf24"
+            textColor="black"
+            style={styles.toggleButton}
+            flipborderwidth={5}
+            onPress={viewAllData}
+          ></FlipButton>
+        )}
+        )
+        <EditToggleButton />
+        <MainMenuButtons />
+      </View>
+    </>
   );
 }
 

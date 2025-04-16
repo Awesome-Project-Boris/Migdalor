@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Dimensions, Text, ScrollView, Image, TextInput, TouchableOpacity} from "react-native";
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  Text,
+  ScrollView,
+  Image,
+  TextInput,
+  TouchableOpacity,
+} from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/components/Header";
 
-
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Ionicons } from "@expo/vector-icons";
 
 import FlipButton from "../components/FlipButton";
@@ -19,7 +27,7 @@ export default function Profile() {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const router = useRouter();
-  
+
   // !! Switch these with the values from the database
 
   // const [partner, setPartner] = useState("");
@@ -61,7 +69,7 @@ export default function Profile() {
   const params = useLocalSearchParams();
   useEffect(() => {
     const updated = params.updatedData;
-  
+
     if (typeof updated === "string") {
       try {
         const parsed = JSON.parse(updated);
@@ -71,87 +79,279 @@ export default function Profile() {
       }
     }
   }, [params.updatedData]);
-  
-  
 
   return (
-    <View style={styles.wrapper}>    
-      <ScrollView contentContainerStyle={styles.scroll} >
+    <View style={styles.wrapper}>
+      <ScrollView contentContainerStyle={styles.scroll}>
         <Header />
-           {/* !! Add check if profileID == userID */}
-          <FlipButton
-            onPress={() =>
-              router.push({
-                pathname: "./EditProfile",
-                params: {
-                  initialData: JSON.stringify(form), 
-                },
-              })
-            }
-            bgColor="white"
-            textColor="black"
-            style={styles.editProfileButton}
-          >
-            <Text style={styles.editProfileButtonText}>
-              {t("ProfileScreen_editButton")}
-            </Text>
-          </FlipButton>
+        {/* !! Add check if profileID == userID */}
+        <FlipButton
+          onPress={() =>
+            router.push({
+              pathname: "./EditProfile",
+              params: {
+                initialData: JSON.stringify(form),
+              },
+            })
+          }
+          bgColor="white"
+          textColor="black"
+          style={styles.editProfileButton}
+        >
+          <Text style={styles.editProfileButtonText}>
+            {t("ProfileScreen_editButton")}
+          </Text>
+        </FlipButton>
 
-          <View style={styles.profileImageContainer}>
-            {/* !! Change this to users profile picture */}
-            <Image
-              source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg" }} 
-              style={styles.profileImage}
-            />
-          </View>
+        <View style={styles.profileImageContainer}>
+          {/* !! Change this to users profile picture */}
+          <Image
+            source={{
+              uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+            }}
+            style={styles.profileImage}
+          />
+        </View>
 
-          <View style={styles.profileNameContainer}>
-              {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
+        <View style={styles.profileNameContainer}>
+          {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
 
-              {/* !! Change this to full name  */}
-              <Text style={styles.profileName}>Israel Israeli</Text> 
-          </View>
+          {/* !! Change this to full name  */}
+          <Text style={styles.profileName}>Israel Israeli</Text>
+        </View>
 
-          <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_partner")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ] }>{form.partner || t("ProfileScreen_emptyDataField")}</Text>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_partner")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.partner || t("ProfileScreen_emptyDataField")}
+        </Text>
 
-          <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_apartmentNumber")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.apartmentNumber || t("ProfileScreen_emptyDataField")}</Text>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_apartmentNumber")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.apartmentNumber || t("ProfileScreen_emptyDataField")}
+        </Text>
 
-          <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_mobilePhone")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.mobilePhone || t("ProfileScreen_emptyDataField")}</Text>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_mobilePhone")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.mobilePhone || t("ProfileScreen_emptyDataField")}
+        </Text>
 
-          <Text style={[styles.label,{ textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_email")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.email || t("ProfileScreen_emptyDataField")}</Text>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_email")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.email || t("ProfileScreen_emptyDataField")}
+        </Text>
 
-          <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_arrivalYear")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.arrivalYear || t("ProfileScreen_emptyDataField")}</Text>
-          
-          <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_origin")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.origin || t("ProfileScreen_emptyDataField")}</Text>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_arrivalYear")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.arrivalYear || t("ProfileScreen_emptyDataField")}
+        </Text>
 
-          <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_profession")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.profession || t("ProfileScreen_emptyDataField")}</Text>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_origin")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.origin || t("ProfileScreen_emptyDataField")}
+        </Text>
 
-            
-          <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_interests")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" } ]}>{form.interests || t("ProfileScreen_emptyDataField")}</Text>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_profession")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.profession || t("ProfileScreen_emptyDataField")}
+        </Text>
 
-          <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_aboutMe")}</Text>
-          <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{form.aboutMe || t("ProfileScreen_emptyDataField")}</Text>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_interests")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.interests || t("ProfileScreen_emptyDataField")}
+        </Text>
 
-          <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>{t("ProfileScreen_extraImages")}</Text>
-          <View style={styles.profileExtraImageContainer}>
-            <Image
-              source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg" }} 
-              style={styles.extraImage}
-            />
-            <Image
-              source={{ uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg" }} 
-              style={styles.extraImage}
-            />
-          </View>
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_aboutMe")}
+        </Text>
+        <Text
+          style={[
+            styles.box,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {form.aboutMe || t("ProfileScreen_emptyDataField")}
+        </Text>
 
+        <Text
+          style={[
+            styles.label,
+            {
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("ProfileScreen_extraImages")}
+        </Text>
+        <View style={styles.profileExtraImageContainer}>
+          <Image
+            source={{
+              uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+            }}
+            style={styles.extraImage}
+          />
+          <Image
+            source={{
+              uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+            }}
+            style={styles.extraImage}
+          />
+        </View>
       </ScrollView>
     </View>
   );
@@ -171,7 +371,7 @@ const styles = StyleSheet.create({
   scroll: {
     alignItems: "center",
     paddingBottom: 60,
-    paddingTop: 80
+    paddingTop: 80,
   },
   title: {
     fontSize: 24,
@@ -181,7 +381,6 @@ const styles = StyleSheet.create({
   profileImageContainer: {
     alignItems: "center",
     marginVertical: 10,
-
   },
   profileImage: {
     width: 300,
@@ -205,7 +404,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
-
   },
   profileName: {
     opacity: 0.9,
@@ -218,8 +416,6 @@ const styles = StyleSheet.create({
     // flexWrap: "wrap", // allow long names to wrap
     width: "100%",
     textAlign: "center",
-
-
   },
   inputContainer: {
     width: "85%",
@@ -239,7 +435,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   multiline: {
-    height: 80,
+    minHeight: 80,
     textAlignVertical: "top",
   },
   extraImages: {
@@ -323,7 +519,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
     marginBottom: 10,
-
   },
   editProfileButtonText: {
     fontSize: 26,

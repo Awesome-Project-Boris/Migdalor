@@ -10,7 +10,7 @@ const Header: React.FC = () => {
   const { openSheet } = useBottomSheet(); // Get the openSheet function from context
 
   // Show the back button only if we're not on the home page
-  const showBackButton = pathname !== "/";
+  const showBackButton = pathname !== "/MainMenu";
 
   return (
     <View style={styles.header}>
@@ -20,7 +20,7 @@ const Header: React.FC = () => {
             <Ionicons name="arrow-back" size={32} color="#000" />
           </TouchableOpacity>
         )}
-        <TouchableOpacity onPress={() => router.push("/")} style= {styles.border}>
+        <TouchableOpacity onPress={() => router.navigate("/MainMenu")} style= {styles.border}>
           <Ionicons name="home" size={32} color="#000" />
         </TouchableOpacity>
       </View>

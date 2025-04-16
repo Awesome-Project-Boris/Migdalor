@@ -27,6 +27,7 @@ import Checkbox from "@/components/CheckBox";
 import { Globals } from "./constants/Globals";
 import { router } from "expo-router";
 import { useAuth } from "@/context/AuthProvider";
+import { Stack } from "expo-router";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -68,77 +69,80 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.page}>
-      <ScrollView>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-          >
-            <View style={styles.container}>
-              <View style={styles.logoContainer}>
-                <Image
-                  source={require("../assets/images/TEMPLOGO.png")}
-                  resizeMode="contain"
-                  style={styles.logo}
-                />
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.page}>
+        <ScrollView>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+            >
+              <View style={styles.container}>
+                <View style={styles.logoContainer}>
+                  <Image
+                    source={require("../assets/images/TEMPLOGO.png")}
+                    resizeMode="contain"
+                    style={styles.logo}
+                  />
+                </View>
+                <View style={styles.formContainer}>
+                  <FloatingLabelInput
+                    label="מספר טלפון"
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    textContentType="telephoneNumber"
+                    keyboardType="numeric"
+                    maxLength={10}
+                    size={35}
+                  />
+                  <FloatingLabelInput
+                    label="סיסמה"
+                    value={password}
+                    onChangeText={setPassword}
+                    textContentType="password"
+                    secureTextEntry
+                    size={35}
+                  />
+                  <FlipButton
+                    onPress={handleLogin}
+                    bgColor="#60a5fa"
+                    textColor="black"
+                    flipborderwidth={5}
+                    disabled={loginLoading}
+                  >
+                    <XStack gap={5} style={{ paddingStart: 15 }}>
+                      <Text style={styles.loginButtonText}>כניסה</Text>
+                      {loginLoading ? (
+                        <ActivityIndicator size="large" />
+                      ) : (
+                        <Ionicons name="log-in-outline" size={38} />
+                      )}
+                    </XStack>
+                  </FlipButton>
+                  <FlipButton
+                    text="Clear Storage"
+                    onPress={() => {
+                      AsyncStorage.clear();
+                      Toast.show({
+                        type: "info",
+                        text1: "הסיסמה שלך הוסרה",
+                        text2: "אנא התחבר מחדש",
+                        duration: 1500,
+                        position: "top",
+                      });
+                    }}
+                    bgColor="#fbbf24"
+                    textColor="black"
+                    flipborderwidth={5}
+                    disabled={loginLoading}
+                  ></FlipButton>
+                </View>
               </View>
-              <View style={styles.formContainer}>
-                <FloatingLabelInput
-                  label="מספר טלפון"
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  textContentType="telephoneNumber"
-                  keyboardType="numeric"
-                  maxLength={10}
-                  size={35}
-                />
-                <FloatingLabelInput
-                  label="סיסמה"
-                  value={password}
-                  onChangeText={setPassword}
-                  textContentType="password"
-                  secureTextEntry
-                  size={35}
-                />
-                <FlipButton
-                  onPress={handleLogin}
-                  bgColor="#60a5fa"
-                  textColor="black"
-                  flipborderwidth={5}
-                  disabled={loginLoading}
-                >
-                  <XStack gap={5} style={{ paddingStart: 15 }}>
-                    <Text style={styles.loginButtonText}>כניסה</Text>
-                    {loginLoading ? (
-                      <ActivityIndicator size="large" />
-                    ) : (
-                      <Ionicons name="log-in-outline" size={38} />
-                    )}
-                  </XStack>
-                </FlipButton>
-                <FlipButton
-                  text="Clear Storage"
-                  onPress={() => {
-                    AsyncStorage.clear();
-                    Toast.show({
-                      type: "info",
-                      text1: "הסיסמה שלך הוסרה",
-                      text2: "אנא התחבר מחדש",
-                      duration: 1500,
-                      position: "top",
-                    });
-                  }}
-                  bgColor="#fbbf24"
-                  textColor="black"
-                  flipborderwidth={5}
-                  disabled={loginLoading}
-                ></FlipButton>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
-        </TouchableWithoutFeedback>
-      </ScrollView>
-    </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </View>
+    </>
   );
 };
 

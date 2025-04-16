@@ -76,10 +76,11 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
+              flipborderwidth={3}
             >
               <Ionicons
                 name="home"
-                size={32}
+                size={45}
                 color="#fff"
                 style={styles.icon}
               />
@@ -96,10 +97,11 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
+              flipborderwidth={3}
             >
               <Ionicons
                 name="settings"
-                size={32}
+                size={45}
                 color="#fff"
                 style={styles.icon}
               />
@@ -119,17 +121,18 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
+              flipborderwidth={3}
             >
               <Ionicons
                 name="person"
-                size={32}
+                size={45}
                 color="#fff"
                 style={styles.icon}
               />
               <Text style={styles.buttonText}>פרופיל</Text>
             </FlipButton>
 
-            {pathname === "/" && (
+            {pathname === "/MainMenu" && (
               <FlipButton
                 style={styles.button}
                 onPress={() => {
@@ -138,10 +141,11 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 }}
                 bgColor="#4CAF50"
                 textColor="#ffffff"
+                flipborderwidth={3}
               >
                 <MaterialCommunityIcons
                   name="menu-swap-outline"
-                  size={32}
+                  size={45}
                   color="#fff"
                   style={styles.icon}
                 />
@@ -160,7 +164,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               >
                 <MaterialCommunityIcons
                   name="account-tie"
-                  size={32}
+                  size={45}
                   color="#fff"
                   style={styles.icon}
                 />
