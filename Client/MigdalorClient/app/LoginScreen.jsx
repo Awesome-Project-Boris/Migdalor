@@ -96,7 +96,13 @@ const LoginScreen = () => {
         duration: 3500, // Custom duration
         position: "top", // Example: 'top' or 'bottom'
       });
-      await AsyncStorage.setItem("userID", data.personId);
+      await AsyncStorage.multiSet([
+        ["userID", data.personId],
+        ["userHebFirstName", data.hebFirstName],
+        ["userHebLastName", data.hebLastName],
+        ["userEngFirstName", data.engFirstName],
+        ["userEngLastName", data.engLastName],
+      ]);
       router.replace("/");
     } catch (error) {
       console.error("Login failed:", error);
@@ -206,6 +212,29 @@ const LoginScreen = () => {
                     )}
                   </XStack>
                 </FlipButton> */}
+
+                <FlipButton
+                  text="Dev Button"
+                  onPress={() => {
+                    AsyncStorage.clear();
+                    Toast.show({
+                      type: "info",
+                      text1: "הסיסמה שלך הוסרה",
+                      text2: "אנא התחבר מחדש",
+                      duration: 3500,
+                      position: "top",
+                    });
+                  }}
+                  bgColor="#fbbf24"
+                  textColor="black"
+                  flipborderwidth={5}
+                  disabled={loginLoading}
+                >
+                  <XStack gap={5} style={{ paddingStart: 15 }}>
+                    <Text style={styles.loginButtonText}>Dev Button</Text>
+                    <Ionicons name="hammer-outline" size={38} />
+                  </XStack>
+                </FlipButton>
               </View>
             </View>
           </KeyboardAvoidingView>

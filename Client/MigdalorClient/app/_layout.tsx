@@ -18,33 +18,38 @@ import * as SplashScreen from 'expo-splash-screen';
 const config = createTamagui(defaultConfig);
 
 export default function Layout() {
-  const pathname = usePathname();
+  // const pathname = usePathname();
   const router = useRouter();
   const [appIsReady, setAppIsReady] = useState(false);
 
+  SplashScreen.preventAutoHideAsync();
+
   useEffect(() => {
-    SplashScreen.preventAutoHideAsync();
-    const checkLoginStatus = async () => {
-      try {
-        const userID = await AsyncStorage.getItem('userID');
-        if (!userID && pathname !== '/LoginScreen') {
-          router.replace('/LoginScreen');
-        }
-      } catch (error) {
-        console.error('Error checking login status:', error);
+  const checkLoginStatus = async () => {
+    try {
+      const userID = await AsyncStorage.getItem('userID');
+      if (!userID) {
         router.replace('/LoginScreen');
-      } finally {
-        setAppIsReady(true);
       }
-    };
-    checkLoginStatus();
-  }, [router]);
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      router.replace('/LoginScreen');
+    } finally {
+      setAppIsReady(true);
+    }
+  };
+  checkLoginStatus();
+}, []);
 
   useEffect(() => {
     if (appIsReady) {
       SplashScreen.hideAsync();
     }
   }, [appIsReady]);
+
+  if (!appIsReady) {
+    return null;
+  }
 
   if (!appIsReady) {
     return null;
