@@ -79,18 +79,18 @@ export default function AddNewItem() {
   const pickImage = async (setImage) => {
     const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (libraryPermission.status !== 'granted') {
-        Alert.alert('Permission Denied', 'Permission to access photos is required!');
+        Alert.alert('Permission Denied', 'Permission to access photos is required!'); // TOAST
         return;
     }
 
-    Alert.alert("Select Image Source", "Choose how to select the image", [
+    Alert.alert("Select Image Source", "Choose how to select the image", [ 
       { text: "Take Photo", onPress: async () => {
           const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
            if (cameraPermission.status !== 'granted') {
               Alert.alert('Permission Denied', 'Camera permission is required!');
               return;
            }
-           let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.7 });
+           let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.5 });
            if (!result.canceled && result.assets) {
                try {
                    const newUri = await copyImageToAppDir(result.assets[0].uri, 'camera');
@@ -117,7 +117,6 @@ export default function AddNewItem() {
   const resetState = async () => {
     setItemName('');
     setItemDescription('');
-    // Delete local copies before clearing state
     await safeDeleteFile(mainImage);
     await safeDeleteFile(extraImage);
     setMainImage(null);
@@ -313,32 +312,155 @@ export default function AddNewItem() {
 
   return (
     <>
-      {/* Use your actual Header component */}
-      {/* <Header /> */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
-         <View style={styles.contentContainer}>
-            <View style={styles.headerRow}><Text style={styles.title}>New item listing</Text></View>
-             <FloatingLabelInput label={'שם המוצר'} value={itemName} onChangeText={(text) => text.length <= ITEM_NAME_LIMIT && setItemName(text)} />
-             <Text style={styles.charCount}>{itemName.length}/{ITEM_NAME_LIMIT}</Text>
-             <FloatingLabelInput label={`תיאור המוצר`} value={itemDescription} onChangeText={(text) => text.length <= DESCRIPTION_LIMIT && setItemDescription(text)} multiline={true} inputStyle={{ height: 80 }} />
-             <Text style={styles.charCount}>{itemDescription.length}/{DESCRIPTION_LIMIT}</Text>
-             <XStack space="$3" justifyContent="center" alignItems="center" marginVertical="$4">
-                 <Card elevate width={150} height={150} borderRadius="$4" overflow="hidden" margin={10} onPress={() => viewOrPickImage('main')}>
-                   {mainImage ? ( <> <Card.Background><ExpoImage source={{ uri: mainImage }} style={StyleSheet.absoluteFill} contentFit="cover" /></Card.Background> <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)"><Paragraph theme="alt2">Main image</Paragraph></YStack> </> ) : ( <YStack f={1} jc="center" ai="center" p="$2"><H2 size="$5">Main Image</H2><Paragraph theme="alt2">(Optional)</Paragraph><Paragraph theme="alt2">Tap to choose</Paragraph></YStack> )}
-                 </Card>
-                 <Card elevate width={150} height={150} borderRadius="$4" overflow="hidden" onPress={() => viewOrPickImage('extra')}>
-                   {extraImage ? ( <> <Card.Background><ExpoImage source={{ uri: extraImage }} style={StyleSheet.absoluteFill} contentFit="cover" /></Card.Background> <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)"><Paragraph theme="alt2" color="$color">Extra image</Paragraph></YStack> </> ) : ( <YStack f={1} jc="center" ai="center" p="$2"><H2 size="$5">Extra Image</H2><Paragraph theme="alt2">(Optional)</Paragraph><Paragraph theme="alt2">Tap to choose</Paragraph></YStack> )}
-                 </Card>
-               </XStack>
-             <View style={styles.buttonRow}>
-                 <FlipButton onPress={handleSubmit} bgColor="white" textColor="black" style={styles.submitButton} disabled={isSubmitting}>
-                   {isSubmitting ? <Spinner size="small" color="black" /> : <Text style={styles.buttonLabel}>Submit</Text>}
-                 </FlipButton>
-                 <FlipButton onPress={handleCancel} bgColor="white" textColor="black" style={styles.cancelButton} disabled={isSubmitting}>
-                   <Text style={styles.buttonLabel}>Cancel</Text>
-                 </FlipButton>
-               </View>
-           </View>
+        {/* ... Your existing JSX structure ... */}
+        <View style={styles.contentContainer}>
+          <View style={styles.headerRow}>
+            <Text style={styles.title}>
+              {t(`MarketplaceNewItemScreen_NewItem`)}
+            </Text>
+          </View>
+          <FloatingLabelInput
+            label={t(`MarketplaceNewItemScreen_ItemName`)}
+            alignRight={Globals.userSelectedDirection === "rtl"}
+            value={itemName}
+            onChangeText={(text) =>
+              text.length <= ITEM_NAME_LIMIT && setItemName(text)
+            }
+          />
+          <Text style={styles.charCount}>
+            {itemName.length}/{ITEM_NAME_LIMIT}
+          </Text>
+          <FloatingLabelInput
+            label={t(`MarketplaceNewItemScreen_ItemDescription`)}
+            alignRight={Globals.userSelectedDirection === "rtl"}
+            value={itemDescription}
+            onChangeText={(text) =>
+              text.length <= DESCRIPTION_LIMIT && setItemDescription(text)
+            }
+            multiline={true}
+            inputStyle={{ height: 80 }}
+          />
+          <Text style={styles.charCount}>
+            {itemDescription.length}/{DESCRIPTION_LIMIT}
+          </Text>
+          <XStack
+            space="$3"
+            justifyContent="center"
+            alignItems="center"
+            marginVertical="$4"
+          >
+            <Card
+              elevate
+              width={150}
+              height={150}
+              borderRadius="$4"
+              overflow="hidden"
+              margin={10}
+              onPress={() => viewOrPickImage("main")}
+            >
+              {mainImage ? (
+                <>
+                  <Card.Background>
+                    <ExpoImage
+                      source={{ uri: mainImage }}
+                      style={StyleSheet.absoluteFill}
+                      contentFit="cover"
+                    />
+                  </Card.Background>
+                  <YStack
+                    f={1}
+                    jc="center"
+                    ai="center"
+                    backgroundColor="rgba(0,0,0,0.4)"
+                  >
+                    <Paragraph theme="alt2">
+                      {t("MarketplaceNewItemScreen_MainImage")}
+                    </Paragraph>
+                  </YStack>
+                </>
+              ) : (
+                <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
+                  <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
+                  <Paragraph theme="alt2">
+                    {t("MarketplaceNewItemScreen_ImageOptional")}
+                  </Paragraph>
+                  <Paragraph theme="alt2">
+                    {t("MarketplaceNewItemScreen_ImageTapToChoose")}
+                  </Paragraph>
+                </YStack>
+              )}
+            </Card>
+            <Card
+              elevate
+              width={150}
+              height={150}
+              borderRadius="$4"
+              overflow="hidden"
+              onPress={() => viewOrPickImage("extra")}
+            >
+              {extraImage ? (
+                <>
+                  <Card.Background>
+                    <ExpoImage
+                      source={{ uri: extraImage }}
+                      style={StyleSheet.absoluteFill}
+                      contentFit="cover"
+                    />
+                  </Card.Background>
+                  <YStack
+                    f={1}
+                    jc="center"
+                    ai="center"
+                    backgroundColor="rgba(0,0,0,0.4)"
+                  >
+                    <Paragraph theme="alt2" color="$color">
+                      {t("MarketplaceNewItemScreen_ExtraImage")}
+                    </Paragraph>
+                  </YStack>
+                </>
+              ) : (
+                <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
+                  <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2>
+                  <Paragraph theme="alt2">
+                    {t("MarketplaceNewItemScreen_ImageOptional")}
+                  </Paragraph>
+                  <Paragraph theme="alt2">
+                    {t("MarketplaceNewItemScreen_ImageTapToChoose")}
+                  </Paragraph>
+                </YStack>
+              )}
+            </Card>
+          </XStack>
+          <View style={styles.buttonRow}>
+            <FlipButton
+              onPress={handleSubmit}
+              bgColor="white"
+              textColor="black"
+              style={styles.submitButton}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Spinner size="small" color="black" />
+              ) : (
+                <Text style={styles.buttonLabel}>
+                  {t("MarketplaceSearchItem_SubmitButton")}
+                </Text>
+              )}
+            </FlipButton>
+            <FlipButton
+              onPress={handleCancel}
+              bgColor="white"
+              textColor="black"
+              style={styles.cancelButton}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.buttonLabel}>
+                {t("MarketplaceSearchItem_CancelButton")}
+              </Text>
+            </FlipButton>
+          </View>
+        </View>
       </ScrollView>
        {showConfirm && ( <Modal visible={true} transparent={true} animationType="fade"> <View style={styles.confirmOverlay}> <View style={styles.confirmContainer}> <Text style={styles.confirmText}>Discard unsaved changes?</Text> <View style={styles.confirmButtonRow}> <FlipButton onPress={confirmCancel} bgColor="#e0e0e0" textColor="black" style={styles.confirmButton}><Text style={styles.buttonLabel}>Yes, Discard</Text></FlipButton> <FlipButton onPress={() => setShowConfirm(false)} bgColor="#007bff" textColor="white" style={styles.confirmButton}><Text style={[styles.buttonLabel, {color: 'white'}]}>No, Stay</Text></FlipButton> </View> </View> </View> </Modal> )}
         <ImageViewModal visible={showImageViewModal} imageUri={imageToViewUri} onClose={() => { setShowImageViewModal(false); setImageToViewUri(null); setImageTypeToClear(null); }} onRemove={handleRemoveImage} />
