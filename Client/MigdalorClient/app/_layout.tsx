@@ -38,15 +38,17 @@ export default function Layout() {
   //   checkLoginStatus();
   // }, [router]);
 
-  useEffect(() => {
-    if (appIsReady) {
-      SplashScreen.hideAsync();
-    }
-  }, [appIsReady]);
 
-  if (!appIsReady) {
-    return null;
-  }
+
+  // useEffect(() => {
+  //   if (appIsReady) {
+  //     SplashScreen.hideAsync();
+  //   }
+  // }, [appIsReady]);
+
+  // if (!appIsReady) {
+  //   return null;
+  // }
 
   if (!appIsReady) {
     return null;

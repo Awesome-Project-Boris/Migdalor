@@ -102,8 +102,16 @@ const resources = {
 
 
       MarketplaceNewItemScreen_Header: "New Item Listing",
+      MarketplaceNewItemScreen_NewItem: "New Item",
       MarketplaceNewItemScreen_ItemName: "Item Name",
       MarketplaceNewItemScreen_ItemDescription: "Item Description",
+      MarketplaceNewItemScreen_CancelDiscardHeader: "Discard Unsaved Changes?",
+      MarketplaceNewItemScreen_CancelDiscard: "No, Stay",
+      MarketplaceNewItemScreen_CancelConfirmation: "Yes, Discard",
+      MarketplaceNewItemScreen_MainImage: "Main Image",
+      MarketplaceNewItemScreen_ExtraImage: "Extra Image",
+      MarketplaceNewItemScreen_ImageOptional: "(Optional)",
+      MarketplaceNewItemScreen_ImageTapToChoose: "Tap to choose",
 
 
       
@@ -203,9 +211,16 @@ const resources = {
 
 
       MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
+      MarketplaceNewItemScreen_NewItem: "פריט חדש",
       MarketplaceNewItemScreen_ItemName: "שם הפריט",
       MarketplaceNewItemScreen_ItemDescription: "תיאור הפריט",
-
+      MarketplaceNewItemScreen_CancelDiscardHeader: "למחוק שינויים שנעשו?",
+      MarketplaceNewItemScreen_CancelDiscard: "לא, השאר",
+      MarketplaceNewItemScreen_CancelConfirmation: "כן, מחק",
+      MarketplaceNewItemScreen_MainImage: "תמונה ראשית",
+      MarketplaceNewItemScreen_ExtraImage: "תמונה נוספת",
+      MarketplaceNewItemScreen_ImageOptional: "(אופציונלי)",
+      MarketplaceNewItemScreen_ImageTapToChoose: "לחץ לבחירה",
       
 
 
