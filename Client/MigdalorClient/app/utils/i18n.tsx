@@ -80,10 +80,13 @@ const resources = {
       MarketplaceScreen_NextButton: "Next",
       MarketplaceScreen_PreviousButton: "Prev",
       MarketplaceScreen_MoreDetailsButton: "Tap to learn more",
+      MarketplaceScreen_ShowingResultsFor: "Showing results for:",
+      MarketplaceScreen_ClearSearchButton: "Clear Search",
       MarketplaceSearchItem_Header: "Search Item",
       MarketplaceSearchItem_SearchButton: "Search",
       MarketplaceSearchItem_CancelButton: "Cancel",
       MarketplaceSearchItem_SubmitButton: "Sumbit",
+      
 
 
 
@@ -181,10 +184,13 @@ const resources = {
       MarketplaceScreen_NextButton: "הבא",
       MarketplaceScreen_PreviousButton: "הקודם",
       MarketplaceScreen_MoreDetailsButton: "לחצו לפרטים נוספים",
+      MarketplaceScreen_ShowingResultsFor: "מראה תוצאות עבור:",
+      MarketplaceScreen_ClearSearchButton: "לביטול החיפוש",
       MarketplaceSearchItem_Header: "חפש פריט",
       MarketplaceSearchItem_SearchButton: "חפש",  
       MarketplaceSearchItem_CancelButton: "ביטול",
       MarketplaceSearchItem_SubmitButton: "שלח",
+      
       
 
       MarketplaceItemScreen_Seller:  "מוכר:",
