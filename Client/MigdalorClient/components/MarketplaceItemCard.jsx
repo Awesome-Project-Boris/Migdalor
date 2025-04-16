@@ -44,7 +44,7 @@ function MarketplaceItemCard({ data, onPress }) {
 const styles = StyleSheet.create({
   container: {
     width: SCREEN_WIDTH * 0.9,
-    minHeight: 150, // Use minHeight to allow content growth if text wraps
+    height: 150, // Use minHeight to allow content growth if text wraps
     borderRadius: 10,
     backgroundColor: '#fff',
     flexDirection: 'row', // Keep row layout

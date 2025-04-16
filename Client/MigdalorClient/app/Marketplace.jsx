@@ -115,8 +115,7 @@ export default function MarketplaceScreen() {
       data={item} // Pass the whole DTO item
       onPress={() => {
         console.log("Item pressed", item.listingId);
-        // Adjust navigation params if needed
-        // router.push({ pathname: '/MarketplaceItem', params: { itemId: item.listingId }});
+        router.push({ pathname: './MarketplaceItem', params: { listingId: item.listingId }});
       }}
     />
   );

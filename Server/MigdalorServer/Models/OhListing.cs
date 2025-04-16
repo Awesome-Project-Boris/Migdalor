@@ -11,10 +11,9 @@ namespace MigdalorServer.Models
     // *** Corrected class name to OhListings (plural) ***
     public partial class OhListing
     {
-        /// <summary>
-        /// Creates OhListings record & links optional OhPicture records.
-        /// Lean version: Saves listing, then links pictures. Throws exceptions on failure.
-        /// </summary>
+        
+
+
         public static async Task<OhListing> CreateAndLinkPicturesAsync(
             ListingCreation listingDto, // Uses DTO with optional Pic IDs
             MigdalorDBContext dbContext)
@@ -79,7 +78,7 @@ namespace MigdalorServer.Models
             return newListing; // Return the successfully created listing
         }
 
-        public async Task<List<ListingSummary>> GetActiveListingSummariesAsync()
+        public async Task<List<ListingSummary>> GetActiveListingSummariesAsync(MigdalorDBContext _context)
         {
             // This is the same query logic moved from the controller
             var listings = await _context.OhListings
@@ -110,5 +109,71 @@ namespace MigdalorServer.Models
 
             return listings;
         }
+
+
+        public static async Task<ListingDetail?> GetListingDetailsByIdAsync(int listingId, MigdalorDBContext context)
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+
+            // Step 1: Fetch the core listing details and include the Seller (OhPerson)
+            var listing = await context.OhListings
+                .Where(l => l.ListingId == listingId)
+                .Include(l => l.Seller) // Include seller data (OhPerson) - This FK relationship is usually reliable
+                .FirstOrDefaultAsync();
+
+            if (listing == null)
+            {
+                return null; // Listing not found
+            }
+
+            // Step 2: Explicitly query for pictures related to this listing ID
+            var pictures = await context.OhPictures
+                .Where(p => p.ListingId == listingId) // Filter pictures by the ListingID foreign key
+                .ToListAsync(); // Get all related pictures
+
+            // Step 3: Find main and extra pictures from the retrieved list (LINQ to Objects)
+            var mainPic = pictures
+                .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1) // Prioritize 'marketplace' role
+                .ThenBy(p => p.DateTime) // Secondary sort by date
+                .FirstOrDefault(); // Get the best match for main picture
+
+            var extraPic = pictures
+                .OrderBy(p => p.PicRole == "marketplace_extra" ? 0 : 1) // Prioritize 'marketplace_extra' role
+                .ThenByDescending(p => p.DateTime) // Secondary sort
+                .FirstOrDefault(p => p.PicId != mainPic?.PicId); // Ensure it's not the same as mainPic (if mainPic exists)
+
+            // Step 4: Map entity data to DTO
+            var dto = new ListingDetail
+            {
+                ListingId = listing.ListingId,
+                Title = listing.Title,
+                Description = listing.Description,
+                Date = listing.Date,
+                IsActive = listing.IsActive,
+
+                // Seller info comes from the included Seller navigation property
+                SellerId = listing.SellerId,
+                SellerName = $"{listing.Seller.HebFirstName} {listing.Seller.HebLastName}",
+                SellerEmail = listing.Seller.Email,
+                SellerPhone = listing.Seller.PhoneNumber,
+
+                // Map picture details from the separately queried pictures list
+                MainPicture = mainPic == null ? null : new PictureDetail
+                {
+                    PicId = mainPic.PicId,
+                    PicPath = mainPic.PicPath,
+                    PicAlt = mainPic.PicAlt
+                },
+                ExtraPicture = extraPic == null ? null : new PictureDetail
+                {
+                    PicId = extraPic.PicId,
+                    PicPath = extraPic.PicPath,
+                    PicAlt = extraPic.PicAlt
+                }
+            };
+
+            return dto;
+        }
+
     }
 }

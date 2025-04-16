@@ -121,6 +121,34 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        [HttpGet("Details/{id}")]
+        // Use the correct DTO name here
+        public async Task<ActionResult<ListingDetail>> GetListingDetails(int id)
+        {
+            try
+            {
+                // Call the static method on OhListing, passing the context
+                var listingDetails = await OhListing.GetListingDetailsByIdAsync(id, _context);
+
+                if (listingDetails == null)
+                {
+                    return NotFound($"Listing with ID {id} not found.");
+                }
+
+                return Ok(listingDetails);
+            }
+            catch (ArgumentNullException ex) // Catch specific exceptions if needed
+            {
+                Console.WriteLine($"ERROR in GetListingDetails Endpoint (ID: {id}): Null argument - {ex.Message}");
+                return StatusCode(500, "An internal server error occurred (null argument).");
+            }
+            catch (Exception ex) // General catch
+            {
+                Console.WriteLine($"ERROR in GetListingDetails Endpoint (ID: {id}): {ex.Message}");
+                return StatusCode(500, "An error occurred while fetching listing details.");
+            }
+        }
+
         // PUT api/<ListingsController>/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
