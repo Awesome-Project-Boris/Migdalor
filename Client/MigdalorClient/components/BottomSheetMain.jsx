@@ -11,17 +11,9 @@ import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
 import { Link, usePathname, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
-
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-interface BottomSheetContextType {
-  openSheet: () => void;
-  closeSheet: () => void;
-}
-
-const BottomSheetContext = createContext<BottomSheetContextType | undefined>(
-  undefined
-);
+const BottomSheetContext = createContext(undefined);
 
 export const useBottomSheet = () => {
   const context = useContext(BottomSheetContext);
@@ -31,11 +23,9 @@ export const useBottomSheet = () => {
   return context;
 };
 
-export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const {t} = useTranslation();
-  const bottomSheetRef = useRef<BottomSheet>(null);
+export const BottomSheetProvider = ({ children }) => {
+  const { t } = useTranslation();
+  const bottomSheetRef = useRef(null);
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
   const router = useRouter();
@@ -87,13 +77,14 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>{t("SettingsPopup_HomeButton")}</Text>
+              <Text style={styles.buttonText}>
+                {t("SettingsPopup_HomeButton")}
+              </Text>
             </FlipButton>
 
             <FlipButton
               style={styles.button}
-              onPress={() => 
-              {
+              onPress={() => {
                 router.navigate("./FontSettings");
                 setEditing(false);
                 bottomSheetRef.current?.close();
@@ -108,7 +99,9 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>{t("SettingsPopup_SettingsButton")}</Text>
+              <Text style={styles.buttonText}>
+                {t("SettingsPopup_SettingsButton")}
+              </Text>
             </FlipButton>
           </View>
 
@@ -119,7 +112,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               onPress={() => {
                 console.log("Menu 3 pressed");
                 setEditing(false);
-                router.navigate("LoginScreen" as any);
+                router.navigate("LoginScreen");
                 bottomSheetRef.current?.close();
               }}
               bgColor="#4CAF50"
@@ -132,7 +125,9 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>{t("SettingsPopup_ProfileButton")}</Text>
+              <Text style={styles.buttonText}>
+                {t("SettingsPopup_ProfileButton")}
+              </Text>
             </FlipButton>
 
             {pathname === "/MainMenu" && (
@@ -152,28 +147,11 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                   color="#fff"
                   style={styles.icon}
                 />
-                <Text style={styles.buttonText}>{t("SettingsPopup_ChangeLayoutButton")}</Text>
+                <Text style={styles.buttonText}>
+                  {t("SettingsPopup_ChangeLayoutButton")}
+                </Text>
               </FlipButton>
             )}
-            {/* {true && (
-              <FlipButton
-                style={styles.button}
-                onPress={() => {
-                  setEditing(true);
-                  bottomSheetRef.current?.close();
-                }}
-                bgColor="#000000"
-                textColor="#ffffff"
-              >
-                <MaterialCommunityIcons
-                  name="account-tie"
-                  size={45}
-                  color="#fff"
-                  style={styles.icon}
-                />
-                <Text style={styles.buttonText}>תפריט ניהול</Text>
-              </FlipButton>
-            )} */}
           </View>
         </BottomSheetView>
       </BottomSheet>

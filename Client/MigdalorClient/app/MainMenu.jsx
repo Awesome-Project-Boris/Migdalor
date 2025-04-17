@@ -34,7 +34,7 @@ const initialDataStructure = [
 
 const ASYNC_STORAGE_KEY = "mainMenuOrder";
 
-const showDevButton = true;
+const showDevButton = false;
 
 const viewAllData = async () => {
   try {
