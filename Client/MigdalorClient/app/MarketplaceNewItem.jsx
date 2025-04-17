@@ -24,6 +24,8 @@ import FloatingLabelInput from "../components/FloatingLabelInput";
 import Header from "../components/Header";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Globals}  from "@/app/constants/Globals"
+import { useTranslation } from "react-i18next";
 
 // Import Tamagui components if you use them elsewhere in this file
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
@@ -42,6 +44,12 @@ export default function AddNewItem() {
   const [itemDescription, setItemDescription] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  
+  const API = Globals.API_BASE_URL;
+
+  console.log("THIS IS API:" + API)
+
 
   // State for Local Image URIs
   const [mainImage, setMainImage] = useState(null); // Stores LOCAL URI after picking/copying
@@ -81,47 +89,28 @@ export default function AddNewItem() {
 
   // --- Image Picker ---
   const pickImage = async (setImage) => {
-    const libraryPermission =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (libraryPermission.status !== "granted") {
-      Alert.alert(
-        "Permission Denied",
-        "Permission to access photos is required!"
-      );
-      return;
+    const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (libraryPermission.status !== 'granted') {
+        Alert.alert('Permission Denied', 'Permission to access photos is required!'); // TOAST
+        return;
     }
 
-    Alert.alert("Select Image Source", "Choose how to select the image", [
-      {
-        text: "Take Photo",
-        onPress: async () => {
-          const cameraPermission =
-            await ImagePicker.requestCameraPermissionsAsync();
-          if (cameraPermission.status !== "granted") {
-            Alert.alert("Permission Denied", "Camera permission is required!");
-            return;
-          }
-          let result = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            quality: 0.7,
-          });
-          if (!result.canceled && result.assets) {
-            try {
-              const newUri = await copyImageToAppDir(
-                result.assets[0].uri,
-                "camera"
-              );
-              setImage(newUri);
-            } catch (copyError) {
-              Alert.alert("Error", "Could not save camera image.");
-              setImage(null);
-            }
-          }
-        },
-      },
-      {
-        text: "Choose From Library",
-        onPress: async () => {
+    Alert.alert("Select Image Source", "Choose how to select the image", [ 
+      { text: "Take Photo", onPress: async () => {
+          const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+           if (cameraPermission.status !== 'granted') {
+              Alert.alert('Permission Denied', 'Camera permission is required!');
+              return;
+           }
+           let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.5 });
+           if (!result.canceled && result.assets) {
+               try {
+                   const newUri = await copyImageToAppDir(result.assets[0].uri, 'camera');
+                   setImage(newUri);
+               } catch (copyError) { Alert.alert("Error", "Could not save camera image."); setImage(null); }
+           }
+      }},
+      { text: "Choose From Library", onPress: async () => {
           try {
             let result = await ImagePicker.launchImageLibraryAsync({
               mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -151,8 +140,8 @@ export default function AddNewItem() {
 
   // --- State Reset ---
   const resetState = async () => {
-    setItemName("");
-    setItemDescription("");
+    setItemName('');
+    setItemDescription('');
     await safeDeleteFile(mainImage);
     await safeDeleteFile(extraImage);
     setMainImage(null);
@@ -442,7 +431,6 @@ export default function AddNewItem() {
   // --- JSX Render ---
   return (
     <>
-      {/* <Header /> */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* ... Your existing JSX structure ... */}
         <View style={styles.contentContainer}>
