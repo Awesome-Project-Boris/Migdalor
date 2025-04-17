@@ -1,5 +1,13 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+
+import { Stack } from "expo-router";
 
 import MainMenuButtons from "@/components/MainMenuButtons";
 import { useMainMenuEdit } from "../context/MainMenuEditProvider";
@@ -9,22 +17,22 @@ import Header from "../components/Header";
 import { EditToggleButton } from "../components/MainMenuFinishEditButton";
 // import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Toast } from 'toastify-react-native';
+import { Toast } from "toastify-react-native";
 
 const initialDataStructure = [
-  { key: 'menu0', name: 'עריכת פרופיל', destination: 'EditProfile' },
-  { key: 'menu1', name: 'פרופיל', destination: 'Profile' },
-  { key: 'menu2', name: 'חוגים ופעילויות', destination: '' },
-  { key: 'menu3', name: 'שוק', destination: 'Marketplace' },
-  { key: 'menu4', name: 'וועד', destination: 'CommittieePage' },
-  { key: 'menu5', name: 'שעות פעילות', destination: '' },
-  { key: 'menu6', name: 'מפה', destination: 'Map' },
-  { key: 'menu7', name: 'לוח מודעות', destination: 'Notices' },
-  { key: 'menu8', name: 'רשימת הדיירים', destination: 'ResidentList' },
-  { key: 'menu9', name: 'Menu 9', destination: '' }, 
+  { key: "menu0", name: "עריכת פרופיל", destination: "EditProfile" },
+  { key: "menu1", name: "פרופיל", destination: "Profile" },
+  { key: "menu2", name: "חוגים ופעילויות", destination: "" },
+  { key: "menu3", name: "שוק", destination: "Marketplace" },
+  { key: "menu4", name: "וועד", destination: "CommittieePage" },
+  { key: "menu5", name: "שעות פעילות", destination: "" },
+  { key: "menu6", name: "מפה", destination: "Map" },
+  { key: "menu7", name: "לוח מודעות", destination: "Notices" },
+  { key: "menu8", name: "רשימת הדיירים", destination: "ResidentList" },
+  { key: "menu9", name: "Menu 9", destination: "" },
 ];
 
-const ASYNC_STORAGE_KEY = 'mainMenuOrder';
+const ASYNC_STORAGE_KEY = "mainMenuOrder";
 
 const showDevButton = true;
 
@@ -46,8 +54,16 @@ const viewAllData = async () => {
   }
 };
 
-export default function Index() {
+const clearAllData = async () => {
+  try {
+    await AsyncStorage.clear();
+    console.log("AsyncStorage cleared successfully.");
+  } catch (error) {
+    console.error("Error clearing AsyncStorage:", error);
+  }
+};
 
+export default function Index() {
   const [buttonData, setButtonData] = useState([]);
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const { editing, setEditing } = useMainMenuEdit();
@@ -64,22 +80,24 @@ export default function Index() {
         const savedOrderJson = await AsyncStorage.getItem(ASYNC_STORAGE_KEY);
         if (savedOrderJson !== null) {
           const savedKeys = JSON.parse(savedOrderJson);
-          const orderedData = savedKeys.map(key =>
-            initialDataStructure.find(item => item.key === key)
-          ).filter(item => item !== undefined);
-          const currentKeys = new Set(orderedData.map(item => item.key));
-          const newItems = initialDataStructure.filter(item => !currentKeys.has(item.key));
+          const orderedData = savedKeys
+            .map((key) => initialDataStructure.find((item) => item.key === key))
+            .filter((item) => item !== undefined);
+          const currentKeys = new Set(orderedData.map((item) => item.key));
+          const newItems = initialDataStructure.filter(
+            (item) => !currentKeys.has(item.key)
+          );
           finalData = [...orderedData, ...newItems];
         } else {
-           console.log("No saved menu order found.");
+          console.log("No saved menu order found.");
         }
       } catch (error) {
         console.error("Failed to load menu order:", error);
       } finally {
-         setButtonData(finalData);
-         latestButtonDataRef.current = finalData; // Ensure ref is initialized correctly
-         setIsLoadingOrder(false);
-         console.log("Finished loading menu order."); // Keep simple log
+        setButtonData(finalData);
+        latestButtonDataRef.current = finalData; // Ensure ref is initialized correctly
+        setIsLoadingOrder(false);
+        console.log("Finished loading menu order."); // Keep simple log
       }
     };
     loadOrder();
@@ -87,7 +105,9 @@ export default function Index() {
 
   // --- Turn off editing on unmount ---
   useEffect(() => {
-    return () => { setEditing(false); };
+    return () => {
+      setEditing(false);
+    };
   }, [setEditing]);
 
   const handleDragEnd = useCallback(({ data: reorderedData }) => {
@@ -96,55 +116,79 @@ export default function Index() {
     latestButtonDataRef.current = reorderedData; // Keep ref update immediate
   }, []);
 
-
   // --- Function to Save Order ---
   const saveOrder = async () => {
     if (isLoadingOrder) return; // Prevent saving while loading
     const currentOrderToSave = latestButtonDataRef.current; // Read from ref
-    const orderKeysToSave = currentOrderToSave.map(item => item.key);
+    const orderKeysToSave = currentOrderToSave.map((item) => item.key);
     console.log("Saving menu order keys:", orderKeysToSave); // Keep simple log
     try {
-       await AsyncStorage.setItem(ASYNC_STORAGE_KEY, JSON.stringify(orderKeysToSave));
-       Toast.show({ type: 'success', text1: 'Menu order saved!', position: 'bottom', visibilityTime: 2000});
+      await AsyncStorage.setItem(
+        ASYNC_STORAGE_KEY,
+        JSON.stringify(orderKeysToSave)
+      );
+      Toast.show({
+        type: "success",
+        text1: "Menu order saved!",
+        position: "bottom",
+        visibilityTime: 2000,
+      });
     } catch (error) {
-       console.error("Failed to save menu order:", error);
-       Toast.show({ type: 'error', text1: 'Failed to save order', position: 'bottom'});
+      console.error("Failed to save menu order:", error);
+      Toast.show({
+        type: "error",
+        text1: "Failed to save order",
+        position: "bottom",
+      });
     }
- };
+  };
 
- useEffect(() => {
-  if (prevEditingRef.current === true && editing === false) {
-     saveOrder();
-  }
-  prevEditingRef.current = editing; 
-}, [editing]);
+  useEffect(() => {
+    if (prevEditingRef.current === true && editing === false) {
+      saveOrder();
+    }
+    prevEditingRef.current = editing;
+  }, [editing]);
 
-   if (isLoadingOrder) {
-     return (
-        <View style={[styles.container, { justifyContent: 'center' }]}>
-            <ActivityIndicator size="large" color="#006aab" />
-            <Text>Loading menu...</Text>
-        </View>
-     )
+  if (isLoadingOrder) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color="#006aab" />
+        <Text>Loading menu...</Text>
+      </View>
+    );
   }
 
   return (
-    <View style={styles.container}>
-      <Header />
-      <Greeting />
-      {showDevButton && (
-        <FlipButton
-          text="View All Data"
-          bgColor="#fbbf24"
-          textColor="black"
-          style={styles.toggleButton}
-          flipborderwidth={5}
-          onPress={viewAllData}
-        ></FlipButton>
-      )}
-      <EditToggleButton onSave={saveOrder} />
-      <MainMenuButtons data={buttonData} onDragEnd={handleDragEnd} />
-    </View>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.container}>
+        <Header />
+        <Greeting />
+        {showDevButton && (
+          <>
+            <FlipButton
+              text="View All Data"
+              bgColor="#fbbf24"
+              textColor="black"
+              style={styles.toggleButton}
+              flipborderwidth={5}
+              onPress={viewAllData}
+            ></FlipButton>
+            <FlipButton
+              text="Clear All Data"
+              bgColor="#fbbf24"
+              textColor="black"
+              style={styles.toggleButton}
+              flipborderwidth={5}
+              onPress={clearAllData}
+            ></FlipButton>
+          </>
+        )}
+        <EditToggleButton onSave={saveOrder} />
+        <MainMenuButtons data={buttonData} onDragEnd={handleDragEnd} />
+      </View>
+    </>
   );
 }
 

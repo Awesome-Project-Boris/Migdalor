@@ -118,23 +118,6 @@ const LoginScreen = () => {
                       )}
                     </XStack>
                   </FlipButton>
-                  <FlipButton
-                    text="Clear Storage"
-                    onPress={() => {
-                      AsyncStorage.clear();
-                      Toast.show({
-                        type: "info",
-                        text1: "הסיסמה שלך הוסרה",
-                        text2: "אנא התחבר מחדש",
-                        duration: 1500,
-                        position: "top",
-                      });
-                    }}
-                    bgColor="#fbbf24"
-                    textColor="black"
-                    flipborderwidth={5}
-                    disabled={loginLoading}
-                  ></FlipButton>
                 </View>
               </View>
             </KeyboardAvoidingView>
