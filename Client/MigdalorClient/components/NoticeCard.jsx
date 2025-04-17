@@ -1,7 +1,7 @@
 import React, { useRef, useCallback } from "react";
 import { StyleSheet, View, Text, Animated, Pressable } from "react-native";
 
-// Depends on how date actually looks
+// Format date helper
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   try {
@@ -13,24 +13,25 @@ const formatDate = (dateString) => {
   }
 };
 
-// Helper function to create a snippet
+// Create snippet helper
 const createSnippet = (message, maxLength = 100) => {
   if (!message) return "";
-  if (message.length <= maxLength) return message;
-  return message.substring(0, maxLength) + "...";
+  return message.length <= maxLength
+    ? message
+    : message.substring(0, maxLength) + "...";
 };
 
-function NoticeCard({ data, onPress }) {
+export default function NoticeCard({ data, onPress }) {
   if (!data) return null;
 
   const displayDate = formatDate(data.creationDate);
   const displaySnippet = createSnippet(data.noticeMessage);
   const borderColor = data.categoryColor || "#ccc";
 
-  // Animated scale value
+  // Animated scale
   const scale = useRef(new Animated.Value(1)).current;
 
-  // Shrink on press in
+  // Press handlers
   const handlePressIn = useCallback(() => {
     Animated.spring(scale, {
       toValue: 0.95,
@@ -39,7 +40,6 @@ function NoticeCard({ data, onPress }) {
     }).start();
   }, [scale]);
 
-  // Bounce back on press out
   const handlePressOut = useCallback(() => {
     Animated.spring(scale, {
       toValue: 1,
@@ -134,5 +134,3 @@ const styles = StyleSheet.create({
     color: "#aaa",
   },
 });
-
-export default NoticeCard;
