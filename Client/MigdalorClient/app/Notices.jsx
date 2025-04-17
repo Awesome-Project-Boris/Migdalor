@@ -27,15 +27,10 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 10;
 
 const fetchNoticesAPI = async () => {
-  // kick both requests off in parallel
-  console.log("Fetching notices from API...", Globals.API_BASE_URL);
+  console.log("Fetching notices from API...", Globals.API_BASE_URL, Date.now());
   const [noticesRes, categoriesRes] = await Promise.all([
-    fetch(`${Globals.API_BASE_URL}/api/Notices`, {
-      method: "GET",
-    }),
-    fetch(`${Globals.API_BASE_URL}/api/Categories`, {
-      method: "GET",
-    }),
+    fetch(`${Globals.API_BASE_URL}/api/Notices`, { method: "GET" }),
+    fetch(`${Globals.API_BASE_URL}/api/Categories`, { method: "GET" }),
   ]);
 
   if (!noticesRes.ok)
@@ -43,29 +38,23 @@ const fetchNoticesAPI = async () => {
   if (!categoriesRes.ok)
     throw new Error(`Failed to load categories: HTTP ${categoriesRes.status}`);
 
-  const rawNotices = await noticesRes.json(); // ← array of OhNotice objects
-  const rawCategories = await categoriesRes.json(); // ← array of OhCategory objects
+  // const rawNotices = await noticesRes.json();
+  const notices = await noticesRes.json();
+  const rawCategories = await categoriesRes.json();
 
-  // Normalise the notice payload so it matches what the screen already expects.
-  // (Keeps front‑end refactor cost ~zero.)
-  const notices = rawNotices.map((n) => ({
-    noticeId: n.noticeId,
-    senderId: n.senderId,
-    // `creationDate` comes back as "YYYY‑MM‑DD" from the DateOnly field.
-    creationDate: n.creationDate,
-    noticeTitle: n.noticeTitle,
-    noticeMessage: n.noticeMessage,
-    noticeCategory: n.noticeCategory,
-    noticeSubCategory: n.noticeSubCategory || null,
-  }));
+  // const notices = rawNotices.map((n) => ({
+  //   noticeId: n.noticeId,
+  //   senderId: n.senderId,
+  //   creationDate: n.creationDate,
+  //   noticeTitle: n.noticeTitle,
+  //   noticeMessage: n.noticeMessage,
+  //   noticeCategory: n.noticeCategory,
+  //   noticeSubCategory: n.noticeSubCategory || null,
+  // }));
 
   const availableCategories = rawCategories.map((c) => c.categoryName);
 
-  return {
-    notices,
-    totalCount: notices.length,
-    availableCategories,
-  };
+  return { notices, totalCount: notices.length, availableCategories };
 };
 
 export default function NoticesScreen() {
@@ -73,16 +62,14 @@ export default function NoticesScreen() {
   const [allCategories, setAllCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [sortOrder, setSortOrder] = useState("recent"); // 'recent' | 'oldest'
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sortOrder, setSortOrder] = useState("recent");
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 
   const router = useRouter();
   const flatListRef = useRef(null);
 
-  // ────────────────────────────────────────────────────────────────────────────
-  //   🔄  Data fetch   ––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-  // ────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     const loadNotices = async () => {
       setIsLoading(true);
@@ -101,28 +88,53 @@ export default function NoticesScreen() {
         setIsLoading(false);
       }
     };
-
     loadNotices();
   }, []);
 
-  // ────────────────────────────────────────────────────────────────────────────
-  //   🔍  Filter + sort memoisation
-  // ────────────────────────────────────────────────────────────────────────────
+  ///////////////////////////////// LIVE REFRESH /////////////////////////////////
+
+  // useEffect(() => {
+  //   const intervalId = setInterval(async () => {
+  //     try {
+  //       const { notices } = await fetchNoticesAPI();
+  //       setAllNotices(notices);
+  //     } catch (err) {
+  //       console.error("Polling notices failed:", err);
+  //     }
+  //   }, 3000);
+  //   return () => clearInterval(intervalId);
+  // }, []);
+
+  ///////////////////////////////// LIVE REFRESH /////////////////////////////////
+
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const { notices, availableCategories } = await fetchNoticesAPI();
+      setAllNotices(notices);
+      setAllCategories(availableCategories);
+      setCurrentPage(1);
+      setSelectedCategories([]);
+      setSortOrder("recent");
+    } catch (err) {
+      console.error("Failed to refresh notices:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
   const processedNotices = useMemo(() => {
     let filtered = [...allNotices];
-
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((n) =>
         selectedCategories.includes(n.noticeCategory)
       );
     }
-
     filtered.sort((a, b) => {
       const dateA = new Date(a.creationDate);
       const dateB = new Date(b.creationDate);
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
-
     return filtered;
   }, [allNotices, selectedCategories, sortOrder]);
 
@@ -130,19 +142,15 @@ export default function NoticesScreen() {
   const totalPages = Math.ceil(totalFilteredItems / ITEMS_PER_PAGE);
 
   const itemsForCurrentPage = useMemo(() => {
-    const newTotalPages = Math.ceil(processedNotices.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0)
-      setTimeout(() => setCurrentPage(newTotalPages), 0);
-    else if (currentPage === 0 && newTotalPages > 0)
+    const newTotal = Math.ceil(processedNotices.length / ITEMS_PER_PAGE);
+    if (currentPage > newTotal && newTotal > 0)
+      setTimeout(() => setCurrentPage(newTotal), 0);
+    else if (currentPage === 0 && newTotal > 0)
       setTimeout(() => setCurrentPage(1), 0);
-
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return processedNotices.slice(start, start + ITEMS_PER_PAGE);
   }, [processedNotices, currentPage]);
 
-  // ────────────────────────────────────────────────────────────────────────────
-  //   🖱  UI handlers
-  // ────────────────────────────────────────────────────────────────────────────
   const toggleSortOrder = useCallback(() => {
     setSortOrder((prev) => (prev === "recent" ? "oldest" : "recent"));
     setCurrentPage(1);
@@ -160,7 +168,6 @@ export default function NoticesScreen() {
     const safeTotal = Math.max(1, totalPages);
     const maxPages = 3;
     const pages = [];
-
     if (safeTotal <= maxPages) {
       for (let i = 1; i <= safeTotal; i++) pages.push(i);
     } else {
@@ -192,19 +199,13 @@ export default function NoticesScreen() {
     />
   );
 
-  // ────────────────────────────────────────────────────────────────────────────
-  //   📱  Render
-  // ────────────────────────────────────────────────────────────────────────────
   return (
     <>
       <Header />
-
       <View style={styles.Head}>
         <Text style={styles.H1}>לוח המודעות</Text>
       </View>
-
       <View style={styles.container}>
-        {/* Controls */}
         <View style={styles.controlsContainer}>
           <FlipButton
             onPress={() => setIsFilterModalVisible(true)}
@@ -222,7 +223,6 @@ export default function NoticesScreen() {
               </Text>
             </View>
           </FlipButton>
-
           <FlipButton onPress={toggleSortOrder} style={styles.controlButton}>
             <View style={styles.buttonContent}>
               <Ionicons
@@ -238,7 +238,6 @@ export default function NoticesScreen() {
           </FlipButton>
         </View>
 
-        {/* Loading / empty states */}
         {isLoading && totalFilteredItems === 0 && (
           <ActivityIndicator
             size="large"
@@ -246,7 +245,6 @@ export default function NoticesScreen() {
             style={styles.loadingIndicator}
           />
         )}
-
         {!isLoading && totalFilteredItems === 0 && (
           <View style={styles.centeredMessage}>
             <Text style={styles.noDataText}>
@@ -257,7 +255,6 @@ export default function NoticesScreen() {
           </View>
         )}
 
-        {/* List */}
         {totalFilteredItems > 0 && (
           <FlatList
             ref={flatListRef}
@@ -265,10 +262,11 @@ export default function NoticesScreen() {
             renderItem={renderItem}
             keyExtractor={(item) => item.noticeId.toString()}
             contentContainerStyle={styles.listContainer}
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
           />
         )}
 
-        {/* Pagination */}
         {!isLoading && totalPages > 1 && (
           <View style={styles.paginationContainer}>
             <TouchableOpacity
@@ -281,7 +279,6 @@ export default function NoticesScreen() {
             >
               <Text style={styles.paginationButtonText}>Prev</Text>
             </TouchableOpacity>
-
             {pagesToShow.map((p) => (
               <TouchableOpacity
                 key={p}
@@ -302,7 +299,6 @@ export default function NoticesScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
-
             <TouchableOpacity
               style={[
                 styles.paginationButton,
@@ -316,7 +312,6 @@ export default function NoticesScreen() {
           </View>
         )}
 
-        {/* Filter modal */}
         <FilterModal
           visible={isFilterModalVisible}
           onClose={() => setIsFilterModalVisible(false)}
@@ -329,9 +324,6 @@ export default function NoticesScreen() {
   );
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-//   🎨  Styles
-// ────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -361,13 +353,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+  buttonIcon: { marginRight: 8 },
+  buttonText: { fontSize: 16, fontWeight: "bold" },
   listContainer: {
     paddingHorizontal: 16,
     paddingBottom: 16,

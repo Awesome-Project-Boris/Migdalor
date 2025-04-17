@@ -1,3 +1,4 @@
+using System.Text;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth.OAuth2;
@@ -6,9 +7,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using MigdalorServer.Database;
-using System.Text;
 using MigdalorServer.BL;
+using MigdalorServer.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,22 +20,35 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+    options.AddPolicy(
+        "AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        }
+    );
 });
 
 // Add controllers and Swagger
-builder.Services.AddControllers();
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(opts =>
+    {
+        opts.JsonSerializerOptions.ReferenceHandler = System
+            .Text
+            .Json
+            .Serialization
+            .ReferenceHandler
+            .IgnoreCycles;
+    });
+;
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add DB Context
 builder.Services.AddDbContext<MigdalorDBContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("myProjDB")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("myProjDB"))
+);
 
 // ---- JWT Setup ----
 //var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
@@ -80,12 +93,15 @@ if (app.Environment.IsDevelopment())
 }
 
 // Static file support for uploaded files
-app.UseStaticFiles(new StaticFileOptions()
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), @"uploadedFiles")),
-    RequestPath = new PathString("/Images")
-});
+app.UseStaticFiles(
+    new StaticFileOptions()
+    {
+        FileProvider = new PhysicalFileProvider(
+            Path.Combine(Directory.GetCurrentDirectory(), @"uploadedFiles")
+        ),
+        RequestPath = new PathString("/Images"),
+    }
+);
 
 // Apply CORS
 app.UseCors("AllowAll");

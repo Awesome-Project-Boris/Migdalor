@@ -16,8 +16,8 @@ public partial class OhNotice
     [Column("senderID")]
     public Guid? SenderId { get; set; }
 
-    [Column("creationDate")]
-    public DateOnly? CreationDate { get; set; }
+    [Column("creationDate", TypeName = "datetime")]
+    public DateTime? CreationDate { get; set; }
 
     [Column("noticeTitle")]
     [StringLength(100)]
