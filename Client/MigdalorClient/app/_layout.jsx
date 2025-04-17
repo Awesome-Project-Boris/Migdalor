@@ -106,6 +106,27 @@ export default function Layout() {
                         headerShown: false,
                       }}
                     />
+                    <Stack.Screen
+                      name="MainMenu"
+                      options={{
+                        title: "Main Menu",
+                        headerShown: false
+                      }}
+                    />
+                    <Stack.Screen
+                      name="Notices"
+                      options={{
+                        title: "Notices",
+                        headerShown: false
+                      }}
+                    />
+                    <Stack.Screen
+                      name="ResidentList"
+                      options={{
+                        title: "Resident List",
+                        headerShown: false
+                      }}
+                    />
                   </Stack>
                 </MarketplaceProvider>
               </BottomSheetProvider>

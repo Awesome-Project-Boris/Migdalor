@@ -12,21 +12,17 @@ function MarketplaceItemCard({ data, onPress }) {
 
   // Construct the full image URL if mainImagePath exists, otherwise use placeholder
   const imageUrl = data?.mainImagePath
-    ? { uri: `${Globals.API_BASE_URL}${data.mainImagePath}` } // Prepend base URL
-    : placeholderImage; // Fallback to the placeholder
+    ? { uri: `${Globals.API_BASE_URL}${data.mainImagePath}` } 
+    : placeholderImage;
 
-    // console.log("Card Image URL:", imageUrl.uri || "Using placeholder"); // Optional: Log image URL
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <Image
         style={styles.image}
-        source={imageUrl} // Use the dynamically determined image source
-        // Add an error handler for debugging image loading issues
+        source={imageUrl}
         onError={(e) => console.log(`Error loading image ${imageUrl.uri || 'placeholder'}:`, e.nativeEvent.error)}
       />
-
-      {/* Remove the console.log(data.itemImage1) */}
 
       <View style={styles.infoContainer}>
         <Text style={styles.itemName} numberOfLines={2}>{data?.title || t('MarketplaceItemCard_Untitled')}</Text>
@@ -34,7 +30,6 @@ function MarketplaceItemCard({ data, onPress }) {
       </View>
 
       <View style={styles.moreInfoContainer}>
-         {/* Keep the translation for the button text */}
         <Text style={styles.moreInfoText}>{t("MarketplaceScreen_MoreDetailsButton")}</Text>
       </View>
     </TouchableOpacity>

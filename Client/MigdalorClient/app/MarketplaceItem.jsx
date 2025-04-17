@@ -127,15 +127,46 @@ export default function MarketplaceItemScreen() {
   };
 
 
-  if (isLoading) { 
-      return ( <View style={styles.centered}> <ActivityIndicator size="large" /> <Text>{t('MarketplaceItemScreen_Loading')}</Text> </View> );
-  }
-  if (error) { 
-      return ( <View style={styles.centered}> <Header /> <Text style={styles.errorText}>{error}</Text> <FlipButton text={t('Common_BackButton')} onPress={() => router.back()} style={styles.backButton} /> </View> );
-  }
-  if (!listingDetails) {
-      return ( <View style={styles.centered}> <Header /> <Text>{t('MarketplaceItemScreen_NoDetails')}</Text> <FlipButton text={t('Common_BackButton')} onPress={() => router.back()} style={styles.backButton}/> </View> );
-  }
+  if (isLoading) {
+    return (
+        <View style={styles.centered}>
+            <ActivityIndicator size="large" />
+            <Text style={styles.loadingText}>{t('MarketplaceItemScreen_Loading')}</Text>
+        </View>
+    );
+}
+if (error) {
+    return (
+        <View style={styles.centered}>
+            <Header />
+            <Text style={styles.errorText}>{error}</Text>
+            <FlipButton
+                onPress={() => router.back()}
+                style={styles.backButton} // Reuse back button style
+                bgColor="#f8f9fa"
+                textColor="#343a40"
+            >
+                <Text style={styles.backButtonText}>{t('Common_BackButton')}</Text>
+            </FlipButton>
+        </View>
+    );
+}
+if (!listingDetails) {
+    return (
+        <View style={styles.centered}>
+            <Header />
+            <Text>{t('MarketplaceItemScreen_NoDetails')}</Text>
+            <FlipButton
+                onPress={() => router.back()}
+                style={styles.backButton} // Reuse back button style
+                bgColor="#f8f9fa"
+                textColor="#343a40"
+            >
+                 <Text style={styles.backButtonText}>{t('Common_BackButton')}</Text>
+            </FlipButton>
+        </View>
+    );
+}
 
   const mainImageUrl = listingDetails.mainPicture?.picPath ? `${Globals.API_BASE_URL}${listingDetails.mainPicture.picPath}` : null;
   const extraImageUrl = listingDetails.extraPicture?.picPath ? `${Globals.API_BASE_URL}${listingDetails.extraPicture.picPath}` : null;
@@ -144,97 +175,100 @@ export default function MarketplaceItemScreen() {
 
   return (
     <>
-        <Header />
-        <ScrollView style={styles.screenContainer} contentContainerStyle={styles.scrollContent}>
-            <View style={styles.contentContainer}>
-                 <Text style={styles.title}>{listingDetails.title}</Text>
-                 <Text style={styles.dateText}>
-                   {t('MarketplaceItemScreen_PostedOn', { date: new Date(listingDetails.date).toLocaleDateString() })}
-                 </Text>
+      <Header />
+      <ScrollView style={styles.screenContainer} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.contentContainer}>
+            {/* Title, Date ... */}
+            <Text style={styles.title}>{listingDetails.title}</Text>
+            <Text style={styles.dateText}>
+                {t('MarketplaceItemScreen_PostedOn', { date: new Date(listingDetails.date).toLocaleDateString() })}
+            </Text>
 
-                <View style={styles.imageRow}>
-                    <TouchableOpacity
-
-                        onPress={() => handleImagePress(
-                            mainImageUrl,
-                            listingDetails.mainPicture?.picAlt,
-                            listingDetails.mainPicture?.picId,
-                            'marketplace' // Explicit role for main
-                        )}
-                        disabled={!mainImageUrl}
-                    >
-                        <Image source={mainImageSource} style={styles.image} />
-                        {!mainImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_MainImage')}</Text>}
+            {/* Images ... */}
+            <View style={styles.imageRow}>
+                {/* Image rendering remains the same */}
+                <TouchableOpacity onPress={() => handleImagePress( mainImageUrl, listingDetails.mainPicture?.picAlt )} disabled={!mainImageUrl} >
+                    <Image source={mainImageSource} style={styles.image} />
+                    {!mainImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_MainImage')}</Text>}
+                </TouchableOpacity>
+                {(extraImageUrl || mainImageUrl) && (
+                    <TouchableOpacity onPress={() => handleImagePress( extraImageUrl, listingDetails.extraPicture?.picAlt )} disabled={!extraImageUrl} >
+                        <Image source={extraImageSource} style={[styles.image, !extraImageUrl && styles.imagePlaceholder]} />
+                        {!extraImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_ExtraImage')}</Text>}
                     </TouchableOpacity>
+                )}
+            </View>
 
-                    {(extraImageUrl || mainImageUrl) && ( // Show placeholder if main exists but extra doesn't
-                        <TouchableOpacity
-                           
-                            onPress={() => handleImagePress(
-                                extraImageUrl,
-                                listingDetails.extraPicture?.picAlt,
-                                listingDetails.extraPicture?.picId,
-                                listingDetails.extraPicture?.picRole || 'marketplace_extra' 
-                            )}
-                            disabled={!extraImageUrl} 
+            {/* Description ... */}
+            {listingDetails.description && (
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_DescriptionTitle')}</Text>
+                    <Text style={styles.descriptionText}>{listingDetails.description}</Text>
+                </View>
+            )}
+
+            {/* Seller Info & Contact Buttons... */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_SellerTitle')}</Text>
+                <Text style={styles.sellerText}>{listingDetails.sellerName}</Text>
+                <View style={styles.contactColumn}>
+                    {/* Refactored Buttons to use text prop */}
+                    {listingDetails.sellerEmail && (
+                        <FlipButton
+                            style={[styles.contactButton, styles.emailButton]}
+                            onPress={() => handleContactPress('email')}
+                            bgColor="#e0f0ff"
+                            textColor="#007bff"
+                            >
+                            <Ionicons name="mail" size={28} color="#007bff" style={styles.icon} /> 
+                            <Text>{t('MarketplaceItemScreen_ContactEmail')}</Text>
+                          </FlipButton>
+                    )}
+                    {listingDetails.sellerPhone && (
+                        <FlipButton
+                            style={[styles.contactButton, styles.phoneButton]}
+                            onPress={() => handleContactPress('phone')}
+                            bgColor="#d4edda"
+                            textColor="#155724"
                         >
-                            <Image source={extraImageSource} style={[styles.image, !extraImageUrl && styles.imagePlaceholder]} />
-                            {!extraImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_ExtraImage')}</Text>}
-                        </TouchableOpacity>
+                          <Ionicons name="home" size={28} color="#155724" style={styles.icon} /> 
+                          <Text>{t('MarketplaceItemScreen_ContactPhone')}</Text>
+                        </FlipButton>
+                    )}
+                    {listingDetails.sellerPhone && (
+                        <FlipButton                         
+                            style={[styles.contactButton, styles.whatsappButton]}
+                            onPress={() => handleContactPress('whatsapp')}
+                            bgColor="#d1f8d1"
+                            textColor="#1f9e44" // Slightly darker green for text on light green bg
+                            >
+                            <Ionicons name="logo-whatsapp" size={28} color="#1f9e44" style={styles.icon} /> 
+                            <Text>{t('MarketplaceItemScreen_ContactWhatsApp')}</Text>
+                          </FlipButton>
                     )}
                 </View>
-
-                {listingDetails.description && (
-                    <View style={styles.section}>
-                       <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_DescriptionTitle')}</Text>
-                       <Text style={styles.descriptionText}>{listingDetails.description}</Text>
-                    </View>
+                {!listingDetails.sellerEmail && !listingDetails.sellerPhone && (
+                    <Text style={styles.noContactText}>{t('MarketplaceItemScreen_NoContactInfo')}</Text>
                 )}
-
-                <View style={styles.section}>
-                   <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_SellerTitle')}</Text>
-                   <Text style={styles.sellerText}>{listingDetails.sellerName}</Text>
-                   <View style={styles.contactColumn}>
-
-                       {listingDetails.sellerEmail && (
-                         <FlipButton style={[styles.contactButton, styles.emailButton]} onPress={() => handleContactPress('email')} >
-                            <Ionicons name="mail-outline" size={24} color="#007bff" />
-                            <Text style={[styles.contactButtonText, { color: "#007bff" }]}> {t('MarketplaceItemScreen_ContactEmail')}</Text>
-                         </FlipButton>
-                       )}
-                       {listingDetails.sellerPhone && (
-                         <FlipButton style={[styles.contactButton, styles.phoneButton]} onPress={() => handleContactPress('phone')} >
-                            <Ionicons name="call-outline" size={24} color="#155724" />
-                            <Text style={[styles.contactButtonText, { color: "#155724" }]}> {t('MarketplaceItemScreen_ContactPhone')}</Text>
-                         </FlipButton>
-                       )}
-                       {listingDetails.sellerPhone && (
-                         <FlipButton style={[styles.contactButton, styles.whatsappButton]} onPress={() => handleContactPress('whatsapp')} >
-                            <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
-                            <Text style={[styles.contactButtonText, { color: "#25D366" }]}> {t('MarketplaceItemScreen_ContactWhatsApp')}</Text>
-                         </FlipButton>
-                       )}
-                   </View>
-                   {!listingDetails.sellerEmail && !listingDetails.sellerPhone && (
-                       <Text style={styles.noContactText}>{t('MarketplaceItemScreen_NoContactInfo')}</Text>
-                   )}
-                </View>
-
-                 <FlipButton
-                    text={t('Common_BackButton')}
-                    onPress={() => router.back()}
-                    style={styles.backButton}
-                    bgColor="#f8f9fa"
-                    textColor="#343a40"
-                 />
-
             </View>
-        </ScrollView>
+
+            {/* Refactored Back Button */}
+            <FlipButton
+                text={t('Common_BackButton')} // Use text prop
+                onPress={() => router.back()}
+                style={styles.backButton}
+                bgColor="#f8f9fa"
+                textColor="#343a40"
+            />
+
+        </View>
+      </ScrollView>
     </>
-);
+  );
 }
 
 // --- Styles ---
+// --- Styles for MarketplaceItem.jsx ---
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
@@ -300,7 +334,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#eee',
-    alignItems: 'center'
+    alignItems: 'center' // Center content within sections
   },
   sectionTitle: {
     fontSize: 22, // Bigger
@@ -310,12 +344,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#eee',
     paddingBottom: 8, // Adjusted
     textAlign: 'center', // Center section titles
+    width: '100%', // Make title take width for border
   },
   descriptionText: {
     fontSize: 17, // Bigger
     lineHeight: 26, // Bigger line height
     color: '#333',
-    textAlign: 'left', // Or 'center' if preferred
+    textAlign: 'left', // Keep description left-aligned
+    alignSelf: 'stretch', // Allow text to take full width of section padding
   },
   sellerText: { // Seller Name Style
     fontSize: 20, // Bigger
@@ -324,40 +360,34 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center', // Centered
   },
-  contactColumn: { // Changed from contactRow
-    // Items will stack vertically by default in a View
+  contactColumn: { // Container for vertical buttons
     alignItems: 'center', // Center buttons horizontally in the column
     marginTop: 10,
     width: '100%', // Take full width of parent section
     justifyContent: 'center'
   },
-  contactButton: {
-    flexDirection: 'row',
+  contactButton: { // Style for the button container (FlipButton)
+    // Note: Text styling is now handled inside FlipButton via textBase + textColor prop
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14, // Bigger padding
+    paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 25, // More rounded
+    borderRadius: 25,
     borderWidth: 1,
-    width: SCREEN_WIDTH * 0.75, // Make buttons wide
-    maxWidth: 350, // Max width
-    marginVertical: 8, // Add vertical space BETWEEN buttons
+    width: SCREEN_WIDTH * 0.75, // Buttons take 75% of screen width
+    maxWidth: 350,
+    marginVertical: 8, // Vertical space between buttons
   },
-   emailButton: { backgroundColor: '#e0f0ff', borderColor: '#a0c8ff', },
-   phoneButton: { backgroundColor: '#d4edda', borderColor: '#a3d1a4', },
-   whatsappButton: { backgroundColor: '#d1f8d1', borderColor: '#9ae6b4', },
-   contactButtonText: {
-     marginLeft: 10, // More space between icon and text
-     fontSize: 16, // Bigger text
-     fontWeight: 'bold',
-   },
+  emailButton: { backgroundColor: '#e0f0ff', borderColor: '#a0c8ff', },
+  phoneButton: { backgroundColor: '#d4edda', borderColor: '#a3d1a4', },
+  whatsappButton: { backgroundColor: '#d1f8d1', borderColor: '#9ae6b4', },
+  // Removed contactButtonText style definition
   noContactText: {
     fontSize: 15, // Bigger
     color: '#777', fontStyle: 'italic', textAlign: 'center', marginTop: 15,
   },
-  backButton: {
-    marginTop: 40, // More space above
-    paddingVertical: 14, // Bigger
+  backButton: { // Style for the main back button container (FlipButton)
+    marginTop: 40,
+    paddingVertical: 14,
     paddingHorizontal: 25,
     alignSelf: 'center',
     width: '70%', // Wider
@@ -366,11 +396,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
   },
-   loadingText: { // Style for loading text
-      marginTop: 10,
-      fontSize: 16,
-      color: '#555',
-   },
+  // Removed backButtonText style definition
+  loadingText: { // Style for loading text
+    marginTop: 10,
+    fontSize: 16,
+    color: '#555',
+  },
   errorText: {
     color: 'red', fontSize: 17, textAlign: 'center', marginBottom: 20,
   }
