@@ -82,54 +82,95 @@ export default function AddNewItem() {
 
   // --- Image Picker ---
   const pickImage = async (setImage) => {
-    const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (libraryPermission.status !== 'granted') {
-        Alert.alert('Permission Denied', 'Permission to access photos is required!'); // TOAST
-        return;
+    const libraryPermission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (libraryPermission.status !== "granted") {
+      Alert.alert(
+        t("ImagePicker_permissionDeniedTitle"),
+        t("ImagePicker_libraryPermissionDeniedMessage"),
+        [{ text: t("ImagePicker_cancelButton") }],
+      );
+      return;
     }
-
-    Alert.alert("Select Image Source", "Choose how to select the image", [ 
-      { text: "Take Photo", onPress: async () => {
-          const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-           if (cameraPermission.status !== 'granted') {
-              Alert.alert('Permission Denied', 'Camera permission is required!');
+  
+    Alert.alert(
+      t("ImagePicker_selectSourceTitle"),
+      t("ImagePicker_selectSourceMessage"),
+      [
+        {
+          text: t("ImagePicker_takePhotoButton"),
+          onPress: async () => {
+            const cameraPermission =
+              await ImagePicker.requestCameraPermissionsAsync();
+            if (cameraPermission.status !== "granted") {
+              Alert.alert(
+                t("ImagePicker_permissionDeniedTitle"),
+                t("ImagePicker_cameraPermissionDeniedMessage"),
+                [{ text: t("ImagePicker_cancelButton") }],
+              );
               return;
-           }
-           let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.5 });
-           if (!result.canceled && result.assets) {
-               try {
-                   const newUri = await copyImageToAppDir(result.assets[0].uri, 'camera');
-                   setImage(newUri);
-               } catch (copyError) { Alert.alert("Error", "Could not save camera image."); setImage(null); }
-           }
-      }},
-      { text: "Choose From Library", onPress: async () => {
-          try {
-            let result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            }
+            let result = await ImagePicker.launchCameraAsync({
               allowsEditing: true,
-              quality: 0.7,
+              quality: 0.5,
             });
             if (!result.canceled && result.assets) {
               try {
                 const newUri = await copyImageToAppDir(
                   result.assets[0].uri,
-                  "library"
+                  "camera",
                 );
                 setImage(newUri);
               } catch (copyError) {
-                Alert.alert("Error", "Could not save library image.");
+                Alert.alert(
+                  t("ImagePicker_errorTitle"),
+                  t("ImagePicker_saveCameraImageFailure"),
+                  [{ text: t("ImagePicker_cancelButton") }],
+                );
                 setImage(null);
               }
             }
-          } catch (error) {
-            Alert.alert("Error", "Could not open image library.");
-          }
+          },
         },
-      },
-      { text: "Cancel", style: "cancel" },
-    ]);
+        {
+          text: t("ImagePicker_chooseFromLibraryButton"),
+          onPress: async () => {
+            try {
+              let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 0.7,
+              });
+              if (!result.canceled && result.assets) {
+                try {
+                  const newUri = await copyImageToAppDir(
+                    result.assets[0].uri,
+                    "library",
+                  );
+                  setImage(newUri);
+                } catch (copyError) {
+                  Alert.alert(
+                    t("ImagePicker_errorTitle"),
+                    t("ImagePicker_saveLibraryImageFailure"),
+                    [{ text: t("ImagePicker_cancelButton") }],
+                  );
+                  setImage(null);
+                }
+              }
+            } catch (error) {
+              Alert.alert(
+                t("ImagePicker_errorTitle"),
+                t("ImagePicker_openLibraryFailure"),
+                [{ text: t("ImagePicker_cancelButton") }],
+              );
+            }
+          },
+        },
+        { text: t("ImagePicker_cancelButton"), style: "cancel" },
+      ],
+    );
   };
+  
 
   // --- State Reset ---
   const resetState = async () => {
@@ -192,31 +233,34 @@ export default function AddNewItem() {
   const handleSubmit = async () => {
     // --- Client-Side Validation ---
     if (!itemName.trim()) {
-      Alert.alert("Missing Info", "Please enter an item name.");
+      Alert.alert(
+        t("MarketplaceNewItemScreen_missingInfoTitle"),
+        t("MarketplaceNewItemScreen_missingInfoMessage"),
+      );
       return;
     }
-    // Main image is optional
-
+    
     // --- Get User ID ---
     let currentUserId = null;
     try {
-      currentUserId = await AsyncStorage.getItem("userID"); // Retrieve from storage
+      currentUserId = await AsyncStorage.getItem("userID");
       if (!currentUserId) {
-        // Handle case where user ID isn't found (e.g., user not logged in)
         Alert.alert(
-          "Authentication Error",
-          "User not identified. Please log in again."
+          t("MarketplaceNewItemScreen_authErrorTitle"),
+          t("MarketplaceNewItemScreen_authErrorMessage"),
         );
-        // Optionally navigate to login screen: router.replace('/LoginScreen');
         return;
       }
-      // Optional: Validate if it looks like a GUID if needed, though server should handle invalid GUIDs
       console.log("Retrieved UserID:", currentUserId);
     } catch (e) {
       console.error("Failed to get userID from AsyncStorage", e);
-      Alert.alert("Error", "Could not retrieve user information.");
+      Alert.alert(
+        t("MarketplaceNewItemScreen_errorTitle"),
+        t("MarketplaceNewItemScreen_userInfoRetrievalError"),
+      );
       return;
     }
+    
 
     setIsSubmitting(true);
     let mainPicId = null;
@@ -354,7 +398,7 @@ export default function AddNewItem() {
         console.error("Image upload step failed:", error);
         Toast.show({
           type: "error",
-          text1: "Image Upload Failed",
+          text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
           text2: error.message,
           position: "top",
         });
@@ -409,7 +453,7 @@ export default function AddNewItem() {
       console.error("Listing creation step failed:", error);
       Toast.show({
         type: "error",
-        text1: "Listing Creation Failed",
+        text1: t("MarketplaceNewItemScreen_listingCreationFailedTitle"),
         text2: error.message,
         position: "top",
       });

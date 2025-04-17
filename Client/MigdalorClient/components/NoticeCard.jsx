@@ -1,123 +1,167 @@
-import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
-
+import React from "react";
+import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { useTranslation } from "react-i18next";
+import { Globals } from "../app/constants/Globals"; // Adjust the import path as necessary
 
 // Depends on how date acutally looks, could be ISO, could be Date, could be DateTime - CHANGE IF NEEDED. Maybe we'll also want the time?
 const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
+  if (!dateString) return "N/A";
   try {
     // If input is "YYYY-MM-DD"
-    const [year, month, day] = dateString.split('-');
+    const [year, month, day] = dateString.split("-");
     return `${day}/${month}/${year}`;
   } catch (e) {
     console.error("Error formatting date:", dateString, e);
-    return dateString; 
+    return dateString;
   }
 };
 
-// Helper function to create a snippet 
+// Helper function to create a snippet
 const createSnippet = (message, maxLength = 100) => {
-    if (!message) return '';
-    if (message.length <= maxLength) return message;
-    return message.substring(0, maxLength) + '...';
-}
+  if (!message) return "";
+  if (message.length <= maxLength) return message;
+  return message.substring(0, maxLength) + "...";
+};
 
 // NoticeCard component expects 'data' and 'onPress' props
 function NoticeCard({ data, onPress }) {
+  const { t } = useTranslation();
+
   if (!data) {
-    return null; 
+    return null;
   }
 
   // data will have the notice's data
 
   const displayDate = formatDate(data.creationDate);
-  const displaySnippet = createSnippet(data.noticeMessage); 
+  const displaySnippet = createSnippet(data.noticeMessage);
 
   return (
     <TouchableOpacity style={styles.container} onPress={onPress}>
       <View style={styles.infoContainer}>
-        <Text style={styles.noticeTitle}>{data.noticeTitle}</Text>
+        <Text
+          style={[
+            styles.noticeCategory,
+            {
+              /* flip alignment based on the app’s direction setting */
+              // textAlign:
+              //   Globals.userSelectedDirection === "rtl" ? "right" : "left",
+              textAlign: "center",
+            },
+          ]}
+        >
+          {data.noticeTitle}
+        </Text>
 
         {data.noticeCategory && (
-          <Text style={styles.noticeCategory}>
-             Category: {data.noticeCategory}
-             {data.noticeSubCategory ? ` (${data.noticeSubCategory})` : ''}
-           </Text>
+          <Text
+            style={[
+              styles.noticeCategory,
+              {
+                /* flip alignment based on the app’s direction setting */
+                textAlign:
+                  Globals.userSelectedDirection === "rtl" ? "right" : "left",
+              },
+            ]}
+          >
+            {t("NoticeDetailsScreen_categoryLabel")} {data.noticeCategory}
+            {data.noticeSubCategory ? ` (${data.noticeSubCategory})` : ""}
+          </Text>
         )}
 
-        <Text style={styles.noticeDate}>Date: {displayDate}</Text>
+        <Text
+          style={[
+            styles.noticeDate,
+            {
+              /* flip alignment based on the app’s direction setting */
+              textAlign:
+                Globals.userSelectedDirection === "rtl" ? "right" : "left",
+            },
+          ]}
+        >
+          {t("NoticeDetailsScreen_dateLabel")} {displayDate}
+        </Text>
 
         {displaySnippet && (
-             <Text style={styles.noticeSnippet}>{displaySnippet}</Text>
+          <Text
+            style={[
+              styles.noticeSnippet,
+              {
+                /* flip alignment based on the app’s direction setting */
+                // textAlign:
+                //   Globals.userSelectedDirection === "rtl" ? "right" : "left",
+              },
+            ]}
+          >
+            {displaySnippet}
+          </Text>
         )}
-
       </View>
 
       <View style={styles.moreInfoContainer}>
-         <Text style={styles.moreInfoText}>יש ללחוץ לפרטים נוספים</Text>
+        <Text style={styles.moreInfoText}>{t("MarketplaceScreen_MoreDetailsButton")}</Text>
       </View>
     </TouchableOpacity>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    width: "100%",
     minHeight: 120,
     borderRadius: 10,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
     padding: 15,
     marginVertical: 8,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 5,
-    position: 'relative',
+    position: "relative",
     paddingBottom: 30,
   },
   infoContainer: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
   },
   noticeTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 5,
   },
   noticeCategory: {
     fontSize: 14,
-    color: '#555',
+    color: "#555",
     marginBottom: 3,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   noticeDate: {
-      fontSize: 14,
-      color: '#555',
-      marginBottom: 8,
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 8,
   },
   noticeSnippet: {
-      fontSize: 14,
-      color: '#333',
-      lineHeight: 18,
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 18,
   },
-   // Optional: Style for sender info
-   // senderInfo: {
-   //    fontSize: 12,
-   //    color: '#888',
-   //    marginTop: 5,
-   // },
+  // Optional: Style for sender info
+  // senderInfo: {
+  //    fontSize: 12,
+  //    color: '#888',
+  //    marginTop: 5,
+  // },
   moreInfoContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 5,
     left: 0,
     right: 0,
-    alignItems: 'center',
+    alignItems: "center",
   },
   moreInfoText: {
     fontSize: 12,
-    color: '#aaa',
+    color: "#aaa",
   },
 });
 

@@ -9,19 +9,19 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 function Greeting() {
   const { user } = useAuth(); 
   const { t } = useTranslation(); 
-  const [greetingKey, setGreetingKey] = useState("greeting_goodMorning"); // Default greeting key
+  const [greetingKey, setGreetingKey] = useState("MainMenuNameplate_greetingGoodMorning"); // Default greeting key
 
   useEffect(() => {
     const updateGreeting = () => {
       const currentHour = new Date().getHours();
       if (currentHour >= 5 && currentHour < 12) {
-        setGreetingKey("greeting_goodMorning");
+        setGreetingKey("MainMenuNameplate_greetingGoodMorning");
       } else if (currentHour >= 12 && currentHour < 18) {
-        setGreetingKey("greeting_goodAfternoon");
+        setGreetingKey("MainMenuNameplate_greetingGoodAfternoon");
       } else if (currentHour >= 18 && currentHour < 22) {
-        setGreetingKey("greeting_goodEvening");
+        setGreetingKey("MainMenuNameplate_greetingGoodEvening");
       } else {
-        setGreetingKey("greeting_goodNight");
+        setGreetingKey("MainMenuNameplate_greetingGoodNight");
       }
     };
     updateGreeting();
@@ -36,7 +36,7 @@ function Greeting() {
 
   const fullGreeting = `${t(greetingKey)}${
     firstName ? `, ${firstName}` : ""
-  }${t("greeting_punctuation")}`; // Use translated punctuation like '!' or '!'
+  }${t("MainMenuNameplate_greetingPunctuation")}`; // Use translated punctuation like '!' or '!'
 
   return (
     <View style={styles.container}>

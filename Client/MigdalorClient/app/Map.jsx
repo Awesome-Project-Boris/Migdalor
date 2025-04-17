@@ -18,6 +18,7 @@ import MapView, { PROVIDER_GOOGLE, Polygon, Marker } from "react-native-maps";
 import * as Location from "expo-location"; // Use expo-location
 import pointInPolygon from "point-in-polygon";
 import FlipButton from "@/components/FlipButton";
+import { useTranslation } from "react-i18next";
 
 // --- Constants ---
 const { width, height } = Dimensions.get("window");
@@ -55,26 +56,27 @@ const boundaryPolygonForCheck = MapBoundsCoordinations.map((p) => [
   p.latitude,
 ]);
 
-const buildingsCoordinations = [
-  {
-    id: "1",
-    name: "בניין מספר אחת",
-    info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",
-    coordinates: [
-      { latitude: 32.310919, longitude: 34.895532 },
-      { latitude: 32.310909, longitude: 34.895903 },
-      { latitude: 32.310824, longitude: 34.895906 },
-      { latitude: 32.310824, longitude: 34.895655 },
-      { latitude: 32.310532, longitude: 34.895652 },
-      { latitude: 32.310533, longitude: 34.895527 },
-      // Make sure polygon is closed
-      { latitude: 32.310919, longitude: 34.895532 },
-    ],
-  },
-];
 // -----------------
 
 const Map = () => {
+  const { t } = useTranslation();
+
+  const buildingsCoordinations = [
+    {
+      id: "1",
+      name: t("MapScreen_building1Name"),
+      info: t("MapScreen_building1Info"),
+      coordinates: [
+        { latitude: 32.310919, longitude: 34.895532 },
+        { latitude: 32.310909, longitude: 34.895903 },
+        { latitude: 32.310824, longitude: 34.895906 },
+        { latitude: 32.310824, longitude: 34.895655 },
+        { latitude: 32.310532, longitude: 34.895652 },
+        { latitude: 32.310533, longitude: 34.895527 },
+        { latitude: 32.310919, longitude: 34.895532 }, // close polygon
+      ],
+    },
+  ];
   // --- State & Refs ---
   const [mapRegion, setMapRegion] = useState({
     latitude: MAP_CENTER_LATITUDE,
@@ -105,15 +107,19 @@ const Map = () => {
       console.log("[Permissions] Expo Location permission denied");
       setLocationPermissionGranted(false);
       // Suggest opening settings only if permission was denied permanently
-      const alertMessage = "Location permission is needed to show position.";
-      const alertButtons = [{ text: "OK" }];
+      const alertMessage = t("Permissions_locationPermissionMessage");
+      const alertButtons = [{ text: t("Permissions_okButton") }];
       if (!canAskAgain) {
         alertButtons.push({
-          text: "Open Settings",
+          text: t("Permissions_openSettingsButton"),
           onPress: () => Linking.openSettings(),
         });
       }
-      Alert.alert("Permission denied", alertMessage, alertButtons);
+      Alert.alert(
+        t("Permissions_permissionDeniedTitle"),
+        alertMessage,
+        alertButtons
+      );
       return false;
     }
     console.log("[Permissions] Expo Location permission granted");
@@ -279,12 +285,12 @@ const Map = () => {
       {/*/ For dev purposes mainly/*/}
       <View style={styles.statusOverlay}>
         <Text style={styles.statusText}>
-          Location Permission:{" "}
-          {locationPermissionGranted ? "Granted" : "Not Granted"}
+        {t("LocationScreen_locationPermissionLabel")}{" "}
+        {locationPermissionGranted ? "Granted" : "Not Granted"}
         </Text>
         {locationPermissionGranted && (
           <Text style={styles.statusText}>
-            User Location:{" "}
+            {t("LocationScreen_userLocationLabel")}{" "}
             {currentUserLocation
               ? `${currentUserLocation.latitude.toFixed(
                   4
@@ -299,7 +305,7 @@ const Map = () => {
               { color: isInsideBoundary ? "lime" : "red", fontWeight: "bold" },
             ]}
           >
-            Inside Boundary: {isInsideBoundary ? "Yes" : "No"}
+            {t("LocationScreen_insideBoundaryLabel")}{" "} {isInsideBoundary ? "Yes" : "No"}
           </Text>
         )}
       </View>
@@ -330,7 +336,7 @@ const Map = () => {
                 setSelectedBuilding(null);
               }}
             >
-              <Text>חזרה למפה</Text>
+              <Text>{t("MapScreen_backToMapButton")}</Text>
             </FlipButton>
           </View>
         </View>

@@ -18,6 +18,7 @@ import { EditToggleButton } from "../components/MainMenuFinishEditButton";
 // import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
+import { useTranslation } from "react-i18next";
 
 const initialDataStructure = [
   { key: "menu0", name: "עריכת פרופיל", destination: "EditProfile" },
@@ -64,6 +65,7 @@ const clearAllData = async () => {
 };
 
 export default function Index() {
+  const { t } = useTranslation();
   const [buttonData, setButtonData] = useState([]);
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const { editing, setEditing } = useMainMenuEdit();
@@ -129,7 +131,7 @@ export default function Index() {
       );
       Toast.show({
         type: "success",
-        text1: "Menu order saved!",
+        text1: t("MainMenuScreen_saveOrderSuccess"),
         position: "bottom",
         visibilityTime: 2000,
       });
@@ -137,7 +139,7 @@ export default function Index() {
       console.error("Failed to save menu order:", error);
       Toast.show({
         type: "error",
-        text1: "Failed to save order",
+        text1: t("MainMenuScreen_saveOrderFailure"),
         position: "bottom",
       });
     }
@@ -154,7 +156,7 @@ export default function Index() {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <ActivityIndicator size="large" color="#006aab" />
-        <Text>Loading menu...</Text>
+        <Text>{t("MainMenuScreen_loadingMenu")}</Text>
       </View>
     );
   }

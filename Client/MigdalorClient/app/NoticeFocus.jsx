@@ -1,17 +1,26 @@
-import React, { useState, useEffect, useContext } from 'react'; // Added useContext
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Button } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import FlipButton from '@/components/FlipButton';
+import React, { useState, useEffect, useContext } from "react"; // Added useContext
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Button,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import FlipButton from "@/components/FlipButton";
 // Assume you have or will create a NoticesContext similar to MarketplaceContext
 // import { NoticesContext } from '../context/NoticesProvider'; // Example context import
 
-import Header from '@/components/Header';
+import Header from "@/components/Header";
+import { useTranslation } from "react-i18next";
+import { Globals } from "./constants/Globals"; // Adjust the import path as necessary
 
 // Helper function to format date string (reuse or define here)
 const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
+  if (!dateString) return "N/A";
   try {
-    const [year, month, day] = dateString.split('-');
+    const [year, month, day] = dateString.split("-");
     return `${day}/${month}/${year}`;
   } catch (e) {
     return dateString;
@@ -19,6 +28,7 @@ const formatDate = (dateString) => {
 };
 
 export default function NoticeFocusScreen() {
+  const { t } = useTranslation();
   const [noticeData, setNoticeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null); // Keep error state for context/fetch issues
@@ -33,11 +43,11 @@ export default function NoticeFocusScreen() {
 
   useEffect(() => {
     const loadNoticeDetails = () => {
-       if (!noticeId) {
-         setError("Notice ID not provided");
-         setIsLoading(false);
-         return;
-       }
+      if (!noticeId) {
+        setError("Notice ID not provided");
+        setIsLoading(false);
+        return;
+      }
       // if (!getNoticeById) { // Check if context function is available
       //    setError("Notice context not available");
       //    setIsLoading(false);
@@ -48,42 +58,52 @@ export default function NoticeFocusScreen() {
       setIsLoading(true);
       setError(null);
       try {
-         // --- Mock call ---
-         console.log(`Attempting to get notice by ID from context (mock): ${noticeId}`);
-         // const foundNotice = getNoticeById(noticeId); // Replace with actual context call
+        // --- Mock call ---
+        console.log(
+          `Attempting to get notice by ID from context (mock): ${noticeId}`
+        );
+        // const foundNotice = getNoticeById(noticeId); // Replace with actual context call
 
-         // --- Mock logic START ---
-         const allMockNotices = Array.from({ length: 35 }, (_, i) => ({ /* ... same mock data as before ... */
-             noticeId: i + 1, senderId: `guid_${i}`, creationDate: `2025-04-${String(14 + (i % 5)).padStart(2, '0')}`, noticeTitle: `Important Notice #${i + 1}`, noticeMessage: `This is the FULL notice message...`, noticeCategory: i % 3 === 0 ? 'Urgent' : (i % 3 === 1 ? 'General' : 'Events'), noticeSubCategory: i % 5 === 0 ? 'Sub Cat A' : null,
-         }));
-         const foundNotice = allMockNotices.find(n => n.noticeId.toString() === noticeId.toString());
-         // --- Mock logic END ---
+        // --- Mock logic START ---
+        const allMockNotices = Array.from({ length: 35 }, (_, i) => ({
+          /* ... same mock data as before ... */ noticeId: i + 1,
+          senderId: `guid_${i}`,
+          creationDate: `2025-04-${String(14 + (i % 5)).padStart(2, "0")}`,
+          noticeTitle: `Important Notice #${i + 1}`,
+          noticeMessage: `This is the FULL notice message...`,
+          noticeCategory:
+            i % 3 === 0 ? "Urgent" : i % 3 === 1 ? "General" : "Events",
+          noticeSubCategory: i % 5 === 0 ? "Sub Cat A" : null,
+        }));
+        const foundNotice = allMockNotices.find(
+          (n) => n.noticeId.toString() === noticeId.toString()
+        );
+        // --- Mock logic END ---
 
-         if (foundNotice) {
-           setNoticeData(foundNotice);
-         } else {
-           setError("Notice not found"); 
-           setNoticeData(null);
-         }
+        if (foundNotice) {
+          setNoticeData(foundNotice);
+        } else {
+          setError("Notice not found");
+          setNoticeData(null);
+        }
       } catch (err) {
-         console.error("Error loading notice from context:", err);
-         setError("An error occurred while loading the notice.");
-         setNoticeData(null);
+        console.error("Error loading notice from context:", err);
+        setError("An error occurred while loading the notice.");
+        setNoticeData(null);
       } finally {
-         setIsLoading(false);
+        setIsLoading(false);
       }
     };
 
     loadNoticeDetails();
-  // Add getNoticeById to dependencies if using real context
+    // Add getNoticeById to dependencies if using real context
   }, [noticeId /*, getNoticeById */]);
 
-  
   if (isLoading) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Loading notice details...</Text>
+        <Text>{t("NoticeDetailsScreen_loadingDetails")}</Text>
       </View>
     );
   }
@@ -101,98 +121,122 @@ export default function NoticeFocusScreen() {
 
   return (
     <>
-    <Header/>
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.title}>{noticeData.noticeTitle}</Text>
+      <Header />
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+      >
+        <Text style={styles.title}>{noticeData.noticeTitle}</Text>
 
-      <View style={styles.metaContainer}>
-         {noticeData.noticeCategory && (
-           <Text style={styles.metaText}>
-             Category: {noticeData.noticeCategory}
-             {noticeData.noticeSubCategory ? ` (${noticeData.noticeSubCategory})` : ''}
-           </Text>
-         )}
-         <Text style={styles.metaText}>Date: {displayDate}</Text>
-         {/* Optional: Display Sender Info if available in noticeData */}
-         {/* noticeData.senderName && <Text style={styles.metaText}>From: {noticeData.senderName}</Text> */}
-      </View>
+        <View style={styles.metaContainer}>
+          {noticeData.noticeCategory && (
+            <Text
+              style={[
+                styles.metaText,
+                {
+                  textAlign:
+                    Globals.userSelectedDirection === "rtl" ? "right" : "left",
+                },
+              ]}
+            >
+              {" "}
+              {t("NoticeDetailsScreen_categoryLabel")}{" "}
+              {noticeData.noticeCategory}
+              {noticeData.noticeSubCategory
+                ? ` (${noticeData.noticeSubCategory})`
+                : ""}
+            </Text>
+          )}
+          <Text
+            style={[
+              styles.metaText,
+              {
+                textAlign:
+                  Globals.userSelectedDirection === "rtl" ? "right" : "left",
+              },
+            ]}
+          >
+            {t("NoticeDetailsScreen_dateLabel")} {displayDate}
+          </Text>
+          {/* Optional: Display Sender Info if available in noticeData */}
+          {/* noticeData.senderName && <Text style={styles.metaText}>From: {noticeData.senderName}</Text> */}
+        </View>
 
-      <Text style={styles.message}>{noticeData.noticeMessage}</Text>
+        <Text style={styles.message}>{noticeData.noticeMessage}</Text>
 
-      {/* Contact buttons if we want to direct to an activity/whatever
+        {/* Contact buttons if we want to direct to an activity/whatever
           <YStack width="90%" space="$3" marginTop="$4" alignItems="center">
              <Text> ... </Text>
              <FlipButton ... />
           </YStack>
        */}
 
-      <View style={styles.backButtonContainer}>
-         <FlipButton style={styles.backButton} onPress={() => router.back()}>
-            <Text style={{fontSize: 20}}>חזרה לאחור</Text>
+        <View style={styles.backButtonContainer}>
+          <FlipButton style={styles.backButton} onPress={() => router.back()}>
+            <Text style={{ fontSize: 20 }}>{t("Common_backButton")}</Text>
           </FlipButton>
-      </View>
-    </ScrollView>
+        </View>
+      </ScrollView>
     </>
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', 
-    marginTop: 60
+    backgroundColor: "#fff",
+    marginTop: 60,
   },
   contentContainer: {
-     padding: 20, 
+    padding: 20,
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   errorText: {
-      color: 'red',
-      fontSize: 16,
-      marginBottom: 15,
-      textAlign: 'center',
-  },
-  title: { 
-    fontSize: 24, 
-    fontWeight: 'bold',
+    color: "red",
+    fontSize: 16,
     marginBottom: 15,
-    color: '#333',
-    textAlign: 'center', 
+    textAlign: "center",
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 15,
+    color: "#333",
+    textAlign: "center",
   },
   metaContainer: {
-     marginBottom: 20,
-     paddingBottom: 10,
-     borderBottomWidth: 1,
-     borderBottomColor: '#eee',
+    marginBottom: 20,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   metaText: {
-     fontSize: 14, 
-     color: '#555',
-     marginBottom: 5,
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 5,
   },
   message: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#333',
+    color: "#333",
     marginBottom: 30,
   },
   backButtonContainer: {
-      marginTop: 20,
-      alignItems: 'center',
+    marginTop: 20,
+    alignItems: "center",
   },
   backButton: {
-      minWidth: '50%',
-      maxWidth: '90%',
-      paddingVertical: 10,
-      borderRadius: 10,
-      alignItems: 'center',
-      justifyContent: 'center',
-      elevation: 2, 
+    minWidth: "50%",
+    maxWidth: "90%",
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 2,
   },
 });

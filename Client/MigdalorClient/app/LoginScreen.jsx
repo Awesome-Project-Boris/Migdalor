@@ -28,11 +28,13 @@ import { Globals } from "./constants/Globals";
 import { router } from "expo-router";
 import { useAuth } from "@/context/AuthProvider";
 import { Stack } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
 
 const LoginScreen = () => {
+  const { t } = useTranslation();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [loginLoading, setloginLoading] = useState(false);
@@ -48,7 +50,7 @@ const LoginScreen = () => {
 
       Toast.show({
         type: "success",
-        text1: "התחברת בהצלחה",
+        text1: t("LoginScreen_loginSuccess"),
         duration: 3500,
         position: "top",
       });
@@ -56,8 +58,8 @@ const LoginScreen = () => {
     } catch (error) {
       Toast.show({
         type: "error",
-        text1: "שגיאה!",
-        text2: "שם משתמש או סיסמה לא נכונים!",
+        text1: t("LoginScreen_loginErrorTitle"),
+        text2: t("LoginScreen_loginErrorMessage"),
         duration: 3500,
         position: "top",
       });
@@ -86,7 +88,7 @@ const LoginScreen = () => {
                 </View>
                 <View style={styles.formContainer}>
                   <FloatingLabelInput
-                    label="מספר טלפון"
+                    label={t("LoginScreen_phoneNumberLabel")}
                     value={phoneNumber}
                     onChangeText={setPhoneNumber}
                     textContentType="telephoneNumber"
@@ -94,8 +96,9 @@ const LoginScreen = () => {
                     maxLength={10}
                     size={35}
                   />
+
                   <FloatingLabelInput
-                    label="סיסמה"
+                    label={t("LoginScreen_passwordLabel")}
                     value={password}
                     onChangeText={setPassword}
                     textContentType="password"
