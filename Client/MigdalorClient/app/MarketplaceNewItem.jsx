@@ -24,14 +24,11 @@ import FloatingLabelInput from "../components/FloatingLabelInput";
 import Header from "../components/Header";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Globals } from "@/app/constants/Globals";
+import { Globals}  from "@/app/constants/Globals"
 
-// Import Tamagui components if you use them elsewhere in this file
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
 
-// Import context if needed for user ID or image state management
-// import { MarketplaceContext } from '../context/MarketplaceProvider'; // Example if using context for images
-// import { AuthContext } from '../context/AuthProvider'; // Example for user ID
+
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
@@ -42,9 +39,11 @@ export default function AddNewItem() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  
   const API = Globals.API_BASE_URL;
 
-  console.log("THIS IS API:" + API);
+  console.log("THIS IS API:" + API)
+
 
   // State for Local Image URIs
   const [mainImage, setMainImage] = useState(null); // Stores LOCAL URI after picking/copying
@@ -55,7 +54,6 @@ export default function AddNewItem() {
   const ITEM_NAME_LIMIT = 50;
   const DESCRIPTION_LIMIT = 200;
 
-  // --- Helper: Copy Image to App Directory ---
   const copyImageToAppDir = async (sourceUri, prefix) => {
     try {
       const filename = `${prefix}-${Date.now()}-${sourceUri.split("/").pop()}`;
@@ -84,47 +82,28 @@ export default function AddNewItem() {
 
   // --- Image Picker ---
   const pickImage = async (setImage) => {
-    const libraryPermission =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (libraryPermission.status !== "granted") {
-      Alert.alert(
-        "Permission Denied",
-        "Permission to access photos is required!"
-      ); // TOAST
-      return;
+    const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (libraryPermission.status !== 'granted') {
+        Alert.alert('Permission Denied', 'Permission to access photos is required!'); // TOAST
+        return;
     }
 
-    Alert.alert("Select Image Source", "Choose how to select the image", [
-      {
-        text: "Take Photo",
-        onPress: async () => {
-          const cameraPermission =
-            await ImagePicker.requestCameraPermissionsAsync();
-          if (cameraPermission.status !== "granted") {
-            Alert.alert("Permission Denied", "Camera permission is required!");
-            return;
-          }
-          let result = await ImagePicker.launchCameraAsync({
-            allowsEditing: true,
-            quality: 0.5,
-          });
-          if (!result.canceled && result.assets) {
-            try {
-              const newUri = await copyImageToAppDir(
-                result.assets[0].uri,
-                "camera"
-              );
-              setImage(newUri);
-            } catch (copyError) {
-              Alert.alert("Error", "Could not save camera image.");
-              setImage(null);
-            }
-          }
-        },
-      },
-      {
-        text: "Choose From Library",
-        onPress: async () => {
+    Alert.alert("Select Image Source", "Choose how to select the image", [ 
+      { text: "Take Photo", onPress: async () => {
+          const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+           if (cameraPermission.status !== 'granted') {
+              Alert.alert('Permission Denied', 'Camera permission is required!');
+              return;
+           }
+           let result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.5 });
+           if (!result.canceled && result.assets) {
+               try {
+                   const newUri = await copyImageToAppDir(result.assets[0].uri, 'camera');
+                   setImage(newUri);
+               } catch (copyError) { Alert.alert("Error", "Could not save camera image."); setImage(null); }
+           }
+      }},
+      { text: "Choose From Library", onPress: async () => {
           try {
             let result = await ImagePicker.launchImageLibraryAsync({
               mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -154,8 +133,8 @@ export default function AddNewItem() {
 
   // --- State Reset ---
   const resetState = async () => {
-    setItemName("");
-    setItemDescription("");
+    setItemName('');
+    setItemDescription('');
     await safeDeleteFile(mainImage);
     await safeDeleteFile(extraImage);
     setMainImage(null);
@@ -267,7 +246,7 @@ export default function AddNewItem() {
           type: mainMimeType,
         });
         picRoles.push("marketplace");
-        picAlts.push(itemName.trim() || "Main listing image");
+        picAlts.push("A photo of the item " + {itemName} + " by the seller " + "TEMP NAME");
         mainImageIndex = fileIndex++;
       }
       // Prepare Extra Image data
@@ -284,27 +263,25 @@ export default function AddNewItem() {
           type: extraMimeType,
         });
         picRoles.push("marketplace_extra");
-        picAlts.push(itemDescription.trim() || "Extra listing image");
+        picAlts.push("An extra photo of the item " + {itemName} + " by the seller " + "TEMP NAME");
         extraImageIndex = fileIndex++;
       }
       // Append metadata
       picRoles.forEach((role) => formData.append("picRoles", role));
       picAlts.forEach((alt) => formData.append("picAlts", alt));
-      formData.append("uploaderId", currentUserId); // Send retrieved user ID
+      formData.append("uploaderId", currentUserId); 
 
       try {
         console.log("Attempting to upload images...");
-        // <<< REPLACE WITH YOUR SERVER IP >>>
+
         const uploadResponse = await fetch(
-          "http://192.168.7.16:5293/api/Picture",
+          API + "/api/Picture",
           {
             method: "POST",
             body: formData,
-            // headers: { 'Authorization': `Bearer ${user?.token}` } // Add auth if needed
           }
         );
 
-        // Try to parse JSON regardless of status code first
         try {
           uploadResults = await uploadResponse.json();
         } catch (jsonError) {
@@ -392,21 +369,20 @@ export default function AddNewItem() {
     const listingData = {
       Title: itemName,
       Description: itemDescription,
-      SellerId: currentUserId, // Send the retrieved user ID
-      MainPicId: mainPicId, // Null if not uploaded or failed critically
-      ExtraPicId: extraPicId, // Null if not uploaded or failed
+      SellerId: currentUserId,
+      MainPicId: mainPicId,
+      ExtraPicId: extraPicId,
     };
 
     console.log("Attempting to create listing with data:", listingData);
     try {
       // <<< REPLACE WITH YOUR SERVER IP and correct endpoint >>>
       const listingResponse = await fetch(
-        "http://192.168.7.16:5293/api/Listings/Create",
+         API + "/api/Listings/Create",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // 'Authorization': `Bearer ${user?.token}`
           },
           body: JSON.stringify(listingData),
         }
@@ -513,13 +489,7 @@ export default function AddNewItem() {
                   </YStack>
                 </>
               ) : (
-                <YStack
-                  f={1}
-                  jc="center"
-                  ai="center"
-                  p="$2"
-                  style={{ direction: Globals.userSelectedDirection }}
-                >
+                <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
                   <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
                   <Paragraph theme="alt2">
                     {t("MarketplaceNewItemScreen_ImageOptional")}
@@ -559,13 +529,7 @@ export default function AddNewItem() {
                   </YStack>
                 </>
               ) : (
-                <YStack
-                  f={1}
-                  jc="center"
-                  ai="center"
-                  p="$2"
-                  style={{ direction: Globals.userSelectedDirection }}
-                >
+                <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
                   <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2>
                   <Paragraph theme="alt2">
                     {t("MarketplaceNewItemScreen_ImageOptional")}

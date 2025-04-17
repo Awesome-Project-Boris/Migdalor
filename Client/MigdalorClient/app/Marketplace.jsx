@@ -41,7 +41,7 @@ export default function MarketplaceScreen() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("Fetched listings:", data.length);
+        console.log("Fetched listings:", data);
         setListings(data || []);
       } catch (err) {
         console.error("Failed to fetch listings:", err);
@@ -112,10 +112,10 @@ export default function MarketplaceScreen() {
   // --- Handlers ---
   const renderItem = ({ item }) => (
     <MarketplaceItemCard
-      data={item} // Pass the whole DTO item
-      onPress={() => {
-        console.log("Item pressed", item.listingId);
-        router.push({ pathname: './MarketplaceItem', params: { listingId: item.listingId }});
+    data={item} // Pass the whole DTO item
+    onPress={() => {
+      console.log("Item pressed", item.listingId);
+      router.push({ pathname: './MarketplaceItem', params: { listingId: item.listingId }});
       }}
     />
   );
