@@ -6,7 +6,7 @@ namespace MigdalorServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NoticeController : ControllerBase
+    public class NoticesController : ControllerBase
     {
         // GET: api/<NoticeController>
         [HttpGet]
