@@ -25,16 +25,10 @@ import Header from "../components/Header";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals}  from "@/app/constants/Globals"
-import { useTranslation } from "react-i18next";
 
-// Import Tamagui components if you use them elsewhere in this file
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
 
-import { Globals } from "../app/constants/Globals"; // Adjust the import path as needed
 
-// Import context if needed for user ID or image state management
-// import { MarketplaceContext } from '../context/MarketplaceProvider'; // Example if using context for images
-// import { AuthContext } from '../context/AuthProvider'; // Example for user ID
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
@@ -60,7 +54,6 @@ export default function AddNewItem() {
   const ITEM_NAME_LIMIT = 50;
   const DESCRIPTION_LIMIT = 200;
 
-  // --- Helper: Copy Image to App Directory ---
   const copyImageToAppDir = async (sourceUri, prefix) => {
     try {
       const filename = `${prefix}-${Date.now()}-${sourceUri.split("/").pop()}`;
@@ -253,7 +246,7 @@ export default function AddNewItem() {
           type: mainMimeType,
         });
         picRoles.push("marketplace");
-        picAlts.push(itemName.trim() || "Main listing image");
+        picAlts.push("A photo of the item " + {itemName} + " by the seller " + "TEMP NAME");
         mainImageIndex = fileIndex++;
       }
       // Prepare Extra Image data
@@ -270,27 +263,25 @@ export default function AddNewItem() {
           type: extraMimeType,
         });
         picRoles.push("marketplace_extra");
-        picAlts.push(itemDescription.trim() || "Extra listing image");
+        picAlts.push("An extra photo of the item " + {itemName} + " by the seller " + "TEMP NAME");
         extraImageIndex = fileIndex++;
       }
       // Append metadata
       picRoles.forEach((role) => formData.append("picRoles", role));
       picAlts.forEach((alt) => formData.append("picAlts", alt));
-      formData.append("uploaderId", currentUserId); // Send retrieved user ID
+      formData.append("uploaderId", currentUserId); 
 
       try {
         console.log("Attempting to upload images...");
-        // <<< REPLACE WITH YOUR SERVER IP >>>
+
         const uploadResponse = await fetch(
-          "http://192.168.7.16:5293/api/Picture",
+          API + "/api/Picture",
           {
             method: "POST",
             body: formData,
-            // headers: { 'Authorization': `Bearer ${user?.token}` } // Add auth if needed
           }
         );
 
-        // Try to parse JSON regardless of status code first
         try {
           uploadResults = await uploadResponse.json();
         } catch (jsonError) {
@@ -378,21 +369,20 @@ export default function AddNewItem() {
     const listingData = {
       Title: itemName,
       Description: itemDescription,
-      SellerId: currentUserId, // Send the retrieved user ID
-      MainPicId: mainPicId, // Null if not uploaded or failed critically
-      ExtraPicId: extraPicId, // Null if not uploaded or failed
+      SellerId: currentUserId,
+      MainPicId: mainPicId,
+      ExtraPicId: extraPicId,
     };
 
     console.log("Attempting to create listing with data:", listingData);
     try {
       // <<< REPLACE WITH YOUR SERVER IP and correct endpoint >>>
       const listingResponse = await fetch(
-        "http://192.168.7.16:5293/api/Listings/Create",
+         API + "/api/Listings/Create",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            // 'Authorization': `Bearer ${user?.token}`
           },
           body: JSON.stringify(listingData),
         }
