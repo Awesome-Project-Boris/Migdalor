@@ -68,11 +68,11 @@ export default function MarketplaceItemScreen() {
   const handleImagePress = (imageUriToView, altText = '') => {
     if (!imageUriToView) {
          console.log("handleImagePress: No valid imageUri provided.");
-         return; // Don't navigate if no image URI
+         return; 
     }
 
     const paramsToPass = {
-        imageUri: imageUriToView, // Pass the already constructed URL
+        imageUri: imageUriToView, 
         altText: altText,
     };
 
@@ -84,7 +84,6 @@ export default function MarketplaceItemScreen() {
     });
 };
 
-  // --- UPDATED Contact Press Handler ---
   const handleContactPress = (type) => {
     if (!listingDetails || !listingDetails.sellerId) return;
 
@@ -96,18 +95,18 @@ export default function MarketplaceItemScreen() {
       url = `mailto:${contactValue}`;
     } else if (type === 'phone' && listingDetails.sellerPhone) {
       contactValue = listingDetails.sellerPhone;
-      url = `tel:${contactValue}`; // Standard phone call link
+      url = `tel:${contactValue}`; 
     } else if (type === 'whatsapp' && listingDetails.sellerPhone) {
        contactValue = formatPhoneNumberForWhatsApp(listingDetails.sellerPhone);
        if (contactValue) {
-           url = `https://wa.me/${contactValue}`; // WhatsApp API link
+           url = `https://wa.me/${contactValue}`; 
        } else {
           Alert.alert(t('MarketplaceItemScreen_CannotFormatWhatsAppTitle'), t('MarketplaceItemScreen_CannotFormatWhatsAppMsg'));
           return;
        }
     }
 
-    if (!url || !contactValue) { // Check if a valid action could be determined
+    if (!url || !contactValue) { 
       Alert.alert(t('MarketplaceItemScreen_ContactNotAvailableTitle'), t('MarketplaceItemScreen_ContactNotAvailableMsg'));
       return;
     }
@@ -128,13 +127,13 @@ export default function MarketplaceItemScreen() {
   };
 
 
-  if (isLoading) { /* ... Loading state ... */
+  if (isLoading) { 
       return ( <View style={styles.centered}> <ActivityIndicator size="large" /> <Text>{t('MarketplaceItemScreen_Loading')}</Text> </View> );
   }
-  if (error) { /* ... Error state ... */
+  if (error) { 
       return ( <View style={styles.centered}> <Header /> <Text style={styles.errorText}>{error}</Text> <FlipButton text={t('Common_BackButton')} onPress={() => router.back()} style={styles.backButton} /> </View> );
   }
-  if (!listingDetails) { /* ... No details state ... */
+  if (!listingDetails) {
       return ( <View style={styles.centered}> <Header /> <Text>{t('MarketplaceItemScreen_NoDetails')}</Text> <FlipButton text={t('Common_BackButton')} onPress={() => router.back()} style={styles.backButton}/> </View> );
   }
 
@@ -148,24 +147,21 @@ export default function MarketplaceItemScreen() {
         <Header />
         <ScrollView style={styles.screenContainer} contentContainerStyle={styles.scrollContent}>
             <View style={styles.contentContainer}>
-                {/* Title, Date ... */}
                  <Text style={styles.title}>{listingDetails.title}</Text>
                  <Text style={styles.dateText}>
                    {t('MarketplaceItemScreen_PostedOn', { date: new Date(listingDetails.date).toLocaleDateString() })}
                  </Text>
 
-
-                {/* Images - Pass calculated URLs and metadata */}
                 <View style={styles.imageRow}>
                     <TouchableOpacity
-                        // Pass calculated URL and specific details
+
                         onPress={() => handleImagePress(
                             mainImageUrl,
                             listingDetails.mainPicture?.picAlt,
                             listingDetails.mainPicture?.picId,
                             'marketplace' // Explicit role for main
                         )}
-                        disabled={!mainImageUrl} // Disable if no image URL
+                        disabled={!mainImageUrl}
                     >
                         <Image source={mainImageSource} style={styles.image} />
                         {!mainImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_MainImage')}</Text>}
@@ -173,14 +169,14 @@ export default function MarketplaceItemScreen() {
 
                     {(extraImageUrl || mainImageUrl) && ( // Show placeholder if main exists but extra doesn't
                         <TouchableOpacity
-                            // Pass calculated URL and specific details
+                           
                             onPress={() => handleImagePress(
                                 extraImageUrl,
                                 listingDetails.extraPicture?.picAlt,
                                 listingDetails.extraPicture?.picId,
-                                listingDetails.extraPicture?.picRole || 'marketplace_extra' // Use actual role or default
+                                listingDetails.extraPicture?.picRole || 'marketplace_extra' 
                             )}
-                            disabled={!extraImageUrl} // Disable if no image URL
+                            disabled={!extraImageUrl} 
                         >
                             <Image source={extraImageSource} style={[styles.image, !extraImageUrl && styles.imagePlaceholder]} />
                             {!extraImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_ExtraImage')}</Text>}
@@ -188,7 +184,6 @@ export default function MarketplaceItemScreen() {
                     )}
                 </View>
 
-                {/* Description ... */}
                 {listingDetails.description && (
                     <View style={styles.section}>
                        <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_DescriptionTitle')}</Text>
@@ -196,12 +191,11 @@ export default function MarketplaceItemScreen() {
                     </View>
                 )}
 
-                {/* Seller Info & Contact Buttons... */}
                 <View style={styles.section}>
                    <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_SellerTitle')}</Text>
                    <Text style={styles.sellerText}>{listingDetails.sellerName}</Text>
                    <View style={styles.contactColumn}>
-                      {/* Buttons remain the same, calling handleContactPress */}
+
                        {listingDetails.sellerEmail && (
                          <FlipButton style={[styles.contactButton, styles.emailButton]} onPress={() => handleContactPress('email')} >
                             <Ionicons name="mail-outline" size={24} color="#007bff" />
@@ -226,7 +220,6 @@ export default function MarketplaceItemScreen() {
                    )}
                 </View>
 
-                {/* Back Button ... */}
                  <FlipButton
                     text={t('Common_BackButton')}
                     onPress={() => router.back()}
