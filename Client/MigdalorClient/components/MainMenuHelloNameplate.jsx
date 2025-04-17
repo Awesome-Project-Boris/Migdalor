@@ -3,13 +3,40 @@ import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { useAuth } from "@/context/AuthProvider"; // Import useAuth
 import { useTranslation } from "react-i18next"; // Import useTranslation
 import i18n from "../app/utils/i18n"; // Assuming your i18n config is here
+import AsyncStorage from "@react-native-async-storage/async-storage"; 
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 function Greeting() {
-  const { user } = useAuth(); 
+  
+  const [userHebFirstName, setUserHebFirstName] = useState("");
+  const [userEngFirstName, setUserEngFirstName] = useState("");
+
   const { t } = useTranslation(); 
   const [greetingKey, setGreetingKey] = useState("greeting_goodMorning"); // Default greeting key
+
+  useEffect(() => {
+    const fetchUserNames = async () => {
+      try {
+        const storedHebName = await AsyncStorage.getItem("userHebFirstName");
+        const storedEngName = await AsyncStorage.getItem("userEngFirstName");
+
+        setUserHebFirstName(storedHebName || ""); 
+        setUserEngFirstName(storedEngName || ""); 
+
+        console.log("Fetched Heb Name:", storedHebName);
+        console.log("Fetched Eng Name:", storedEngName);
+      } catch (e) {
+        console.error("Failed to fetch names from storage for Greeting", e);
+        // Optionally set names to empty strings or handle error state
+        setUserHebFirstName("");
+        setUserEngFirstName("");
+      }
+    };
+
+    fetchUserNames(); // Call the async function
+  }, []);
+
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -30,9 +57,11 @@ function Greeting() {
  
   const currentLanguage = i18n.language; // Get current language
   const firstName =
-    currentLanguage === "he" && user?.userHebFirstName
-      ? user.userHebFirstName
-      : user?.userEngFirstName || ""; // Fallback to English name or empty string
+    currentLanguage === "he" && userHebFirstName
+      ? userHebFirstName
+      : userEngFirstName || ""; // Fallback to English name or empty string
+
+console.log("Name from greet plate:", firstName)
 
   const fullGreeting = `${t(greetingKey)}${
     firstName ? `, ${firstName}` : ""
