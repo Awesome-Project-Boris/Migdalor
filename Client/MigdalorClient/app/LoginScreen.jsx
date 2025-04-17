@@ -25,6 +25,9 @@ import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Checkbox from "@/components/CheckBox";
 
 import { Globals } from "./constants/Globals";
+import { router } from "expo-router";
+import { useAuth } from "@/context/AuthProvider";
+import { Stack } from "expo-router";
 
 I18nManager.allowRTL(true);
 I18nManager.forceRTL(true);
@@ -32,190 +35,116 @@ I18nManager.forceRTL(true);
 const LoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [loginLoading, setloginLoading] = useState(false);
-  const [loginGoogleLoading, setloginGoogleLoading] = useState(false);
-
-  console.log("url is " + Globals.API_BASE_URL);
-
-  ///////////////////////////////// Google SignIn /////////////////////////////////
-
-  // useEffect(() => {
-  //   GoogleSignin.configure({
-  //     webClientId:
-  //       "190847974757-0tma92g00au1nv1m1jp4elefpg6ut0d9.apps.googleusercontent.com",
-  //   });
-  // }, []);
-
-  // useEffect(() => {
-  //   const unsubscribe = auth().onAuthStateChanged((user) => {
-  //     if (user) setUserInfo(user);
-  //   });
-  //   return unsubscribe;
-  // }, []);
-
-  ///////////////////////////////// Google SignIn /////////////////////////////////
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     try {
       setloginLoading(true);
       console.log("Login button pressed");
 
-      const phone = phoneNumber;
-      const pass = password;
-      const apiurl = `${Globals.API_BASE_URL}/api/People/login`;
-      console.log("API URL:", apiurl);
+      // Call the provider's login function
+      const data = await login(phoneNumber, password);
 
-      const response = await fetch(`${Globals.API_BASE_URL}/api/People/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          phoneNumber: phone,
-          password: pass,
-        }),
+      Toast.show({
+        type: "success",
+        text1: "התחברת בהצלחה",
+        duration: 3500,
+        position: "top",
       });
-      if (!response.ok) {
-        Toast.show({
-          type: "info", // Type for styling (if themes are set up)
-          text1: "Submitted!", // Main text
-          text2: "Holy cow! you did it!", // Sub text
-          duration: 3500, // Custom duration
-          position: "top", // Example: 'top' or 'bottom'
-        });
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
-      const data = await response.json();
-
-      AsyncStorage.setItem("userID", data.personId);
-      Alert.alert(
-        "התחברות",
-        "התחברת בהצלחה",
-        [{ text: "אוקי", style: "cancel" }],
-        {
-          cancelable: false,
-        }
-      );
+      router.replace("/");
     } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "שגיאה!",
+        text2: "שם משתמש או סיסמה לא נכונים!",
+        duration: 3500,
+        position: "top",
+      });
       console.error("Login failed:", error);
     } finally {
       setloginLoading(false);
     }
   };
 
-  // const handleGoogleSignIn = async () => {
-  //   try {
-  //     setloginGoogleLoading(true);
-  //     await GoogleSignin.hasPlayServices({
-  //       showPlayServicesUpdateDialog: true,
-  //     });
-  //     const { idToken } = await GoogleSignin.signIn();
-  //     const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-  //     await auth().signInWithCredential(googleCredential);
-  //   } catch (error) {
-  //     console.error("Google Sign-In error", error);
-  //   } finally {
-  //     setloginGoogleLoading(false);
-  //   }
-  // };
-
   return (
-    <View style={styles.page}>
-      <ScrollView>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-          >
-            <View style={styles.container}>
-              {/* Logo */}
-              <View style={styles.logoContainer}>
-                <Image
-                  source={require("../assets/images/TEMPLOGO.png")}
-                  resizeMode="contain"
-                  alignSelf="center"
-                />
-              </View>
-
-              {/* Login Form */}
-
-              <View style={styles.formContainer}>
-                <FloatingLabelInput
-                  label="מספר טלפון"
-                  value={phoneNumber}
-                  onChangeText={setPhoneNumber}
-                  textContentType="telephoneNumber"
-                  keyboardType="numeric"
-                  maxLength={10}
-                  size={35}
-                />
-                <FloatingLabelInput
-                  label="סיסמה"
-                  value={password}
-                  onChangeText={setPassword}
-                  textContentType="password"
-                  keyboardType="default"
-                  secureTextEntry
-                  size={35}
-                />
-
-                <TouchableWithoutFeedback
-                  onPress={() => {
-                    setRememberMe(!rememberMe);
-                  }}
-                >
-                  <Checkbox
-                    alignRight={true}
-                    text="זכור אותי"
-                    fillColor="black"
-                    onPress={() => setRememberMe(!rememberMe)}
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.page}>
+        <ScrollView>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+            >
+              <View style={styles.container}>
+                <View style={styles.logoContainer}>
+                  <Image
+                    source={require("../assets/images/TEMPLOGO.png")}
+                    resizeMode="contain"
+                    style={styles.logo}
                   />
-                </TouchableWithoutFeedback>
-
-                <FlipButton
-                  text="כניסה"
-                  onPress={handleLogin}
-                  bgColor="#60a5fa"
-                  textColor="black"
-                  flipborderwidth={5}
-                  disabled={loginLoading}
-                >
-                  <XStack gap={5} style={{ paddingStart: 15 }}>
-                    <Text style={styles.loginButtonText}>כניסה</Text>
-                    {loginLoading ? (
-                      <ActivityIndicator size="large" />
-                    ) : (
-                      <Ionicons name="log-in-outline" size={38} />
-                    )}
-                  </XStack>
-                </FlipButton>
-                {/* <FlipButton
-                  text="כניסה עם גוגל"
-                  onPress={handleGoogleSignIn}
-                  bgColor="#dc2626"
-                  textColor="white"
-                  flipborderwidth={5}
-                >
-                  <XStack gap={8} style={{ paddingStart: 15 }}>
-                    <Text style={styles.loginButtonText}>כניסה עם גוגל</Text>
-                    {loginGoogleLoading ? (
-                      <ActivityIndicator size="large" />
-                    ) : (
-                      <Ionicons name="logo-google" size={34} />
-                    )}
-                  </XStack>
-                </FlipButton> */}
+                </View>
+                <View style={styles.formContainer}>
+                  <FloatingLabelInput
+                    label="מספר טלפון"
+                    value={phoneNumber}
+                    onChangeText={setPhoneNumber}
+                    textContentType="telephoneNumber"
+                    keyboardType="numeric"
+                    maxLength={10}
+                    size={35}
+                  />
+                  <FloatingLabelInput
+                    label="סיסמה"
+                    value={password}
+                    onChangeText={setPassword}
+                    textContentType="password"
+                    secureTextEntry
+                    size={35}
+                  />
+                  <FlipButton
+                    onPress={handleLogin}
+                    bgColor="#60a5fa"
+                    textColor="black"
+                    flipborderwidth={5}
+                    disabled={loginLoading}
+                  >
+                    <XStack gap={5} style={{ paddingStart: 15 }}>
+                      <Text style={styles.loginButtonText}>כניסה</Text>
+                      {loginLoading ? (
+                        <ActivityIndicator size="large" />
+                      ) : (
+                        <Ionicons name="log-in-outline" size={38} />
+                      )}
+                    </XStack>
+                  </FlipButton>
+                  <FlipButton
+                    text="Clear Storage"
+                    onPress={() => {
+                      AsyncStorage.clear();
+                      Toast.show({
+                        type: "info",
+                        text1: "הסיסמה שלך הוסרה",
+                        text2: "אנא התחבר מחדש",
+                        duration: 1500,
+                        position: "top",
+                      });
+                    }}
+                    bgColor="#fbbf24"
+                    textColor="black"
+                    flipborderwidth={5}
+                    disabled={loginLoading}
+                  ></FlipButton>
+                </View>
               </View>
-            </View>
-          </KeyboardAvoidingView>
-        </TouchableWithoutFeedback>
-      </ScrollView>
-    </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
+        </ScrollView>
+      </View>
+    </>
   );
 };
-
-export default LoginScreen;
 
 const styles = StyleSheet.create({
   page: {
@@ -251,8 +180,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logo: {
-    width: 180,
-    height: 60,
+    width: 250,
+    height: 140,
   },
   formContainer: {
     backgroundColor: "rgba(255, 255, 255, 0.8)",
@@ -291,3 +220,5 @@ const styles = StyleSheet.create({
     pointerEvents: "none",
   },
 });
+
+export default LoginScreen;

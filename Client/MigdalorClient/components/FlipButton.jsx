@@ -4,16 +4,24 @@ import { Pressable, Text, StyleSheet } from "react-native";
 const FlipButton = ({
   text = "Button",
   children,
-  onPress,
+  onPress = () => {},
+  onLongPress = () => {},
+  delayLongPress = 500,
+  disabled = false,
   bgColor = "#FFFFFF",
   textColor = "#000000",
   style,
   bordered = true,
   flipborderwidth = 2,
+  testID = "flip-button",
 }) => {
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={delayLongPress}
+      disabled={disabled}
+      testID={testID}
       style={({ pressed }) => [
         styles.buttonBase,
         style,
@@ -23,13 +31,13 @@ const FlipButton = ({
             borderWidth: flipborderwidth,
             borderColor: pressed ? bgColor : textColor,
           }),
+          opacity: disabled ? 0.5 : 1,
         },
       ]}
     >
       {({ pressed }) => {
         const dynamicTextStyle = { color: pressed ? bgColor : textColor };
 
-        // Recursive helper to apply dynamic text style to all nested children.
         const renderChildWithStyle = (child) => {
           if (React.isValidElement(child)) {
             return React.cloneElement(child, {
@@ -39,7 +47,7 @@ const FlipButton = ({
                 : child.props.children,
             });
           }
-          // Wrap non-element children (like strings) in a Text component.
+
           return (
             <Text style={[styles.textBase, dynamicTextStyle]}>{child}</Text>
           );
@@ -64,7 +72,7 @@ const styles = StyleSheet.create({
     boxShadow: "0 3px 4px rgba(0, 0, 0, 0.25)",
   },
   textBase: {
-    // fontSize: 26,
+    fontSize: 32,
     fontWeight: "bold",
     pointerEvents: "none",
   },

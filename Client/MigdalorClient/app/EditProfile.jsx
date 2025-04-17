@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   multiline: {
-    height: 80,
+    minHeight: 80,
     textAlignVertical: "top",
   },
   extraImages: {

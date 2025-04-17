@@ -40,7 +40,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
   const pathname = usePathname();
   const router = useRouter();
 
-  const snapPoints = useMemo(() => ["40%"], []);
+  const snapPoints = useMemo(() => ["50%"], []);
 
   const openSheet = () => {
     bottomSheetRef.current?.snapToIndex(0);
@@ -79,10 +79,11 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
+              flipborderwidth={3}
             >
               <Ionicons
                 name="home"
-                size={32}
+                size={45}
                 color="#fff"
                 style={styles.icon}
               />
@@ -99,10 +100,11 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
+              flipborderwidth={3}
             >
               <Ionicons
                 name="settings"
-                size={32}
+                size={45}
                 color="#fff"
                 style={styles.icon}
               />
@@ -122,17 +124,18 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               }}
               bgColor="#4CAF50"
               textColor="#ffffff"
+              flipborderwidth={3}
             >
               <Ionicons
                 name="person"
-                size={32}
+                size={45}
                 color="#fff"
                 style={styles.icon}
               />
               <Text style={styles.buttonText}>{t("SettingsPopup_ProfileButton")}</Text>
             </FlipButton>
 
-            {pathname === "/" && (
+            {pathname === "/MainMenu" && (
               <FlipButton
                 style={styles.button}
                 onPress={() => {
@@ -141,10 +144,11 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 }}
                 bgColor="#4CAF50"
                 textColor="#ffffff"
+                flipborderwidth={3}
               >
                 <MaterialCommunityIcons
                   name="menu-swap-outline"
-                  size={32}
+                  size={45}
                   color="#fff"
                   style={styles.icon}
                 />
@@ -163,7 +167,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
               >
                 <MaterialCommunityIcons
                   name="account-tie"
-                  size={32}
+                  size={45}
                   color="#fff"
                   style={styles.icon}
                 />
@@ -180,7 +184,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
 const styles = StyleSheet.create({
   sheetContent: {
     flex: 1,
-    padding: 16,
+    padding: 10,
   },
   row: {
     flexDirection: "row",
@@ -188,8 +192,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   button: {
-    width: SCREEN_WIDTH * 0.35,
-    height: 100,
+    width: SCREEN_WIDTH * 0.42,
+    height: 145,
     backgroundColor: "#4CAF50",
     borderRadius: 8,
     justifyContent: "center",
