@@ -52,7 +52,6 @@ const LoginScreen = () => {
         duration: 3500,
         position: "top",
       });
-
       router.replace("/");
     } catch (error) {
       Toast.show({

@@ -13,6 +13,7 @@ import { useMainMenuEdit } from "../context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
 import { useTranslation } from "react-i18next";
 
+
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 // Choose your two colors:

@@ -40,7 +40,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
   const pathname = usePathname();
   const router = useRouter();
 
-  const snapPoints = useMemo(() => ["50%"], []);
+  const snapPoints = useMemo(() => ["40%"], []);
 
   const openSheet = () => {
     bottomSheetRef.current?.snapToIndex(0);
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: SCREEN_WIDTH * 0.42,
-    height: 145,
+    height: 125,
     backgroundColor: "#4CAF50",
     borderRadius: 8,
     justifyContent: "center",

@@ -27,7 +27,6 @@ export default function Profile() {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const router = useRouter();
-
   // !! Switch these with the values from the database
 
   // const [partner, setPartner] = useState("");
@@ -69,7 +68,6 @@ export default function Profile() {
   const params = useLocalSearchParams();
   useEffect(() => {
     const updated = params.updatedData;
-
     if (typeof updated === "string") {
       try {
         const parsed = JSON.parse(updated);
