@@ -15,24 +15,12 @@ const placeholderImage = require('../assets/images/tempItem.jpg');
 // Helper function to format phone number for WhatsApp
 const formatPhoneNumberForWhatsApp = (phone) => {
   if (!phone) return null;
-  let cleaned = phone.replace(/\D/g, ''); // Remove all non-digit characters
-
-  if (cleaned.startsWith('0')) {
-    // Assume local format like 05... or 07...
-    // Remove leading 0 and prepend +972
-    return `+972${cleaned.substring(1)}`;
-  } else if (cleaned.startsWith('972')) {
-    // Assume format like 9725...
-    // Prepend +
-    return `+${cleaned}`;
-  } else if (cleaned.startsWith('+972') && cleaned.length >= 12) {
-     // Already in international format (check length for basic validity)
-     return cleaned;
-  }
-
-  // If it doesn't match expected formats, return null or original cleaned
+  let cleaned = phone.replace(/\D/g, '');
+  if (cleaned.startsWith('0')) { return `+972${cleaned.substring(1)}`; }
+  if (cleaned.startsWith('972')) { return `+${cleaned}`; }
+  if (cleaned.startsWith('+972') && cleaned.length >= 12) { return cleaned; }
   console.warn("Could not reliably format phone for WhatsApp:", phone);
-  return null; // Indicate formatting failure
+  return null;
 };
 
 
@@ -77,12 +65,24 @@ export default function MarketplaceItemScreen() {
     fetchDetails();
   }, [listingId, t]);
 
-  const handleImagePress = (imageUri, altText = '') => {
-    // --- Image press logic remains the same ---
-    if (!imageUri) return;
-    console.log("Navigating to ImageViewScreen with:", imageUri);
-    router.push({ pathname: '/ImageViewScreen', params: { imageUri: imageUri, altText: altText } });
-  };
+  const handleImagePress = (imageUriToView, altText = '') => {
+    if (!imageUriToView) {
+         console.log("handleImagePress: No valid imageUri provided.");
+         return; // Don't navigate if no image URI
+    }
+
+    const paramsToPass = {
+        imageUri: imageUriToView, // Pass the already constructed URL
+        altText: altText,
+    };
+
+    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
+
+    router.push({
+        pathname: '/ImageViewScreen',
+        params: paramsToPass
+    });
+};
 
   // --- UPDATED Contact Press Handler ---
   const handleContactPress = (type) => {
@@ -128,7 +128,6 @@ export default function MarketplaceItemScreen() {
   };
 
 
-  // --- Render Logic ---
   if (isLoading) { /* ... Loading state ... */
       return ( <View style={styles.centered}> <ActivityIndicator size="large" /> <Text>{t('MarketplaceItemScreen_Loading')}</Text> </View> );
   }
@@ -146,101 +145,100 @@ export default function MarketplaceItemScreen() {
 
   return (
     <>
-      <Header />
-      <ScrollView style={styles.screenContainer} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.contentContainer}>
-          {/* Title */}
-          <Text style={styles.title}>{listingDetails.title}</Text>
-          <Text style={styles.dateText}>
-            {t('MarketplaceItemScreen_PostedOn', { date: new Date(listingDetails.date).toLocaleDateString() })}
-          </Text>
+        <Header />
+        <ScrollView style={styles.screenContainer} contentContainerStyle={styles.scrollContent}>
+            <View style={styles.contentContainer}>
+                {/* Title, Date ... */}
+                 <Text style={styles.title}>{listingDetails.title}</Text>
+                 <Text style={styles.dateText}>
+                   {t('MarketplaceItemScreen_PostedOn', { date: new Date(listingDetails.date).toLocaleDateString() })}
+                 </Text>
 
-          {/* Images */}
-          <View style={styles.imageRow}>
-            {/* ... Image rendering remains the same ... */}
-             <TouchableOpacity onPress={() => handleImagePress(mainImageUrl, listingDetails.mainPicture?.picAlt)}>
-                <Image source={mainImageSource} style={styles.image} />
-                {!mainImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_MainImage')}</Text>}
-             </TouchableOpacity>
-             {(extraImageUrl || mainImageUrl) && (
-                 <TouchableOpacity onPress={() => handleImagePress(extraImageUrl, listingDetails.extraPicture?.picAlt)} disabled={!extraImageUrl}>
-                   <Image source={extraImageSource} style={[styles.image, !extraImageUrl && styles.imagePlaceholder]} />
-                   {!extraImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_ExtraImage')}</Text>}
-                 </TouchableOpacity>
-             )}
-          </View>
 
-          {listingDetails.description && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_DescriptionTitle')}</Text>
-              <Text style={styles.descriptionText}>{listingDetails.description}</Text>
+                {/* Images - Pass calculated URLs and metadata */}
+                <View style={styles.imageRow}>
+                    <TouchableOpacity
+                        // Pass calculated URL and specific details
+                        onPress={() => handleImagePress(
+                            mainImageUrl,
+                            listingDetails.mainPicture?.picAlt,
+                            listingDetails.mainPicture?.picId,
+                            'marketplace' // Explicit role for main
+                        )}
+                        disabled={!mainImageUrl} // Disable if no image URL
+                    >
+                        <Image source={mainImageSource} style={styles.image} />
+                        {!mainImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_MainImage')}</Text>}
+                    </TouchableOpacity>
+
+                    {(extraImageUrl || mainImageUrl) && ( // Show placeholder if main exists but extra doesn't
+                        <TouchableOpacity
+                            // Pass calculated URL and specific details
+                            onPress={() => handleImagePress(
+                                extraImageUrl,
+                                listingDetails.extraPicture?.picAlt,
+                                listingDetails.extraPicture?.picId,
+                                listingDetails.extraPicture?.picRole || 'marketplace_extra' // Use actual role or default
+                            )}
+                            disabled={!extraImageUrl} // Disable if no image URL
+                        >
+                            <Image source={extraImageSource} style={[styles.image, !extraImageUrl && styles.imagePlaceholder]} />
+                            {!extraImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_ExtraImage')}</Text>}
+                        </TouchableOpacity>
+                    )}
+                </View>
+
+                {/* Description ... */}
+                {listingDetails.description && (
+                    <View style={styles.section}>
+                       <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_DescriptionTitle')}</Text>
+                       <Text style={styles.descriptionText}>{listingDetails.description}</Text>
+                    </View>
+                )}
+
+                {/* Seller Info & Contact Buttons... */}
+                <View style={styles.section}>
+                   <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_SellerTitle')}</Text>
+                   <Text style={styles.sellerText}>{listingDetails.sellerName}</Text>
+                   <View style={styles.contactColumn}>
+                      {/* Buttons remain the same, calling handleContactPress */}
+                       {listingDetails.sellerEmail && (
+                         <FlipButton style={[styles.contactButton, styles.emailButton]} onPress={() => handleContactPress('email')} >
+                            <Ionicons name="mail-outline" size={24} color="#007bff" />
+                            <Text style={[styles.contactButtonText, { color: "#007bff" }]}> {t('MarketplaceItemScreen_ContactEmail')}</Text>
+                         </FlipButton>
+                       )}
+                       {listingDetails.sellerPhone && (
+                         <FlipButton style={[styles.contactButton, styles.phoneButton]} onPress={() => handleContactPress('phone')} >
+                            <Ionicons name="call-outline" size={24} color="#155724" />
+                            <Text style={[styles.contactButtonText, { color: "#155724" }]}> {t('MarketplaceItemScreen_ContactPhone')}</Text>
+                         </FlipButton>
+                       )}
+                       {listingDetails.sellerPhone && (
+                         <FlipButton style={[styles.contactButton, styles.whatsappButton]} onPress={() => handleContactPress('whatsapp')} >
+                            <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
+                            <Text style={[styles.contactButtonText, { color: "#25D366" }]}> {t('MarketplaceItemScreen_ContactWhatsApp')}</Text>
+                         </FlipButton>
+                       )}
+                   </View>
+                   {!listingDetails.sellerEmail && !listingDetails.sellerPhone && (
+                       <Text style={styles.noContactText}>{t('MarketplaceItemScreen_NoContactInfo')}</Text>
+                   )}
+                </View>
+
+                {/* Back Button ... */}
+                 <FlipButton
+                    text={t('Common_BackButton')}
+                    onPress={() => router.back()}
+                    style={styles.backButton}
+                    bgColor="#f8f9fa"
+                    textColor="#343a40"
+                 />
+
             </View>
-          )}
-
-          {/* Seller Info */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t('MarketplaceItemScreen_SellerTitle')}</Text>
-            <Text style={styles.sellerText}>{listingDetails.sellerName}</Text>
-
-            {/* --- UPDATED Contact Buttons Row --- */}
-            <View style={styles.contactRow}>
-              {listingDetails.sellerEmail && (
-                <FlipButton
-                  style={[styles.contactButton, styles.emailButton]} // Added specific style
-                   bgColor="#e0f0ff"
-                   textColor="#007bff"
-                  onPress={() => handleContactPress('email')}
-                  // text={t('MarketplaceItemScreen_ContactEmail')} // Can use text prop or children
-                >
-                   {/* Example using Icon + Text */}
-                   <Ionicons name="mail-outline" size={36} color="#007bff" />
-                   <Text style={[styles.contactButtonText, { color: "#007bff" }]}> {t('MarketplaceItemScreen_ContactEmail')}</Text>
-                 </FlipButton>
-              )}
-               {listingDetails.sellerPhone && (
-                <FlipButton
-                  style={[styles.contactButton, styles.phoneButton]} // Added specific style
-                   bgColor="#d4edda"
-                   textColor="#155724"
-                  onPress={() => handleContactPress('phone')}
-                >
-                   <Ionicons name="call-outline" size={36} color="#155724" />
-                   <Text style={[styles.contactButtonText, { color: "#155724" }]}> {t('MarketplaceItemScreen_ContactPhone')}</Text>
-                </FlipButton>
-              )}
-              {/* --- ADDED WhatsApp Button --- */}
-              {listingDetails.sellerPhone && (
-                <FlipButton
-                  style={[styles.contactButton, styles.whatsappButton]} // Added specific style
-                   bgColor="#d1f8d1" 
-                   textColor="#25D366" 
-                  onPress={() => handleContactPress('whatsapp')}
-                >
-                   <Ionicons name="logo-whatsapp" size={36} color="#25D366" />
-                   <Text style={[styles.contactButtonText, { color: "#25D366" }]}> {t('MarketplaceItemScreen_ContactWhatsApp')}</Text>
-                </FlipButton>
-              )}
-            </View>
-            {/* --- End Updated Contact Buttons Row --- */}
-
-            {!listingDetails.sellerEmail && !listingDetails.sellerPhone && (
-              <Text style={styles.noContactText}>{t('MarketplaceItemScreen_NoContactInfo')}</Text>
-            )}
-          </View>
-
-          {/* Back Button */}
-          <FlipButton
-            text={t('Common_BackButton')}
-            onPress={() => router.back()}
-            style={styles.backButton}
-            bgColor="#f8f9fa"
-            textColor="#343a40"
-          />
-
-        </View>
-      </ScrollView>
+        </ScrollView>
     </>
-  );
+);
 }
 
 // --- Styles ---

@@ -51,9 +51,6 @@ export default function Layout() {
     return null;
   }
 
-  if (!appIsReady) {
-    return null;
-  }
 
   return (
     <PaperProvider>

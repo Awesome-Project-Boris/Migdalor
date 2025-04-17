@@ -1,14 +1,18 @@
-// ImageViewModal.jsx
+// frontend/components/ImageViewModal.jsx
 
-import { Modal, Image as RNImage, StyleSheet, Dimensions, Text } from 'react-native';
-// Import FlipButton
-import FlipButton from './FlipButton';
-// Import Tamagui components needed (removed Button)
-import { XStack, YStack } from 'tamagui';
+import React from 'react';
+import { Modal, Image as RNImage, StyleSheet, Dimensions, Text, View // Use RN View for positioning if needed
+} from 'react-native';
+import FlipButton from './FlipButton'; // Assuming FlipButton can accept style props
+import { Ionicons } from '@expo/vector-icons'; // For button icons
+
+// Removed Tamagui imports as they weren't essential for this structure anymore
+// If you use Tamagui elsewhere, you might re-introduce YStack/XStack if preferred
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
+// Use standard function declaration
 function ImageViewModal({ visible, imageUri, onClose, onRemove }) {
 
   if (!visible || !imageUri) return null;
@@ -16,81 +20,128 @@ function ImageViewModal({ visible, imageUri, onClose, onRemove }) {
   return (
     <Modal
       visible={visible}
-      transparent={true}
+      transparent={true} // Keep transparent to see backdrop
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={onClose} // Handle hardware back button on Android
     >
-      {/* 1. Backdrop YStack - REMOVED jc="center" ai="center" */}
-      <YStack
-        position="absolute"
-        top={0}
-        left={0}
-        right={0}
-        bottom={0}
-        backgroundColor="rgba(0,0,0,0.7)"
-        // Removed padding here, apply to inner if needed
-      >
-        {/* 2. Inner Content Box YStack - Adjust sizing/positioning for top-left */}
-        <YStack
-          // Adjust width/height/margins as needed for top-left positioning
-          width="95%" // Keep it slightly less than full width
-          maxWidth={500}
-          maxHeight="90%"
-          backgroundColor="white" // Or $background token
-          borderRadius={10} // Or $4/$6 token
-          p="$4"
-          space="$4"
-          position="absolute" // Position it explicitly
-          top={20} // Example: Add some top margin
-          left={10} // Example: Add some left margin
-          // If you want strict top-left corner: top={0}, left={0}, width='100%', etc.
-          overflow="hidden"
-        >
-          {/* 3. Image Container YStack */}
-          <YStack
-            flexShrink={1}
-            jc="center"
-            ai="center"
-            borderColor="lightgrey" // Or $borderColor
-            borderWidth={1}
-            borderRadius={8} // Or $4
-            overflow="hidden"
-            aspectRatio={1} // Keeps it square, adjust/remove if needed
-            width="100%"
-          >
-            {/* 4. Use RN Image */}
+      {/* 1. Backdrop View - Centered, Darker */}
+      <View style={styles.backdrop}>
+
+        {/* 2. Inner Content Box View - Centered */}
+        <View style={styles.contentBox}>
+
+          {/* 3. Image Container View - Allow image to be large */}
+          <View style={styles.imageContainer}>
+            {/* Use RN Image */}
             <RNImage
               source={{ uri: imageUri }}
-              style={{ width: '100%', height: '100%'}}
-              resizeMode="contain"
+              style={styles.image} // Style ensures it fits container
+              resizeMode="contain" // Keeps aspect ratio
             />
-          </YStack>
+          </View>
 
-          {/* 5. Button Container XStack - Now using FlipButton */}
-          <XStack jc="space-around" space={10} /* Or $3 */ ai="center" >
-             {/* Use FlipButton, apply flex style */}
+          {/* 4. Button Container View */}
+          <View style={styles.buttonContainer}>
+             {/* Clearer Buttons */}
              <FlipButton
-                text="Remove"
                 onPress={onRemove}
-                bgColor="#ffffff" // Example styling
-                textColor="#000000" // Example styling
-                style={{ flexGrow: 1, marginHorizontal: 5 }} // Use style prop for flex/margin
-             />
+                style={[styles.button, styles.removeButton]} // Apply base and specific style
+                // Pass text/colors via props if FlipButton supports it,
+                // otherwise, style the Text child directly if FlipButton accepts children
+             >
+                <Ionicons name="trash-outline" size={22} color="#dc3545" />
+                <Text style={[styles.buttonText, styles.removeButtonText]}>Remove</Text>
+             </FlipButton>
+
              <FlipButton
-                text="Return"
                 onPress={onClose}
-                bgColor="#ffffff" // Example styling
-                textColor="#000000" // Example styling
-                style={{ flexGrow: 1, marginHorizontal: 5 }} // Use style prop for flex/margin
-             />
-          </XStack>
-        </YStack>
-      </YStack>
+                style={[styles.button, styles.returnButton]} // Apply base and specific style
+             >
+               <Ionicons name="arrow-back-outline" size={22} color="#007bff" />
+               <Text style={[styles.buttonText, styles.returnButtonText]}>Return</Text>
+             </FlipButton>
+          </View>
+        </View>
+      </View>
     </Modal>
   );
 }
 
-export default ImageViewModal;
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)', // Darker backdrop
+    justifyContent: 'center', // Center content vertically
+    alignItems: 'center', // Center content horizontally
+    padding: 15, // Add some padding around the content box
+  },
+  contentBox: {
+    backgroundColor: '#ffffff', // White background for the content
+    borderRadius: 15, // More rounded corners
+    padding: 20, // Padding inside the box
+    width: '95%', // Width relative to screen width
+    maxWidth: 500, // Max width on larger devices
+    maxHeight: '90%', // Max height relative to screen height
+    alignItems: 'center', // Center items like image container and button container
+    shadowColor: '#000', // Optional: add shadow for depth
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  imageContainer: {
+    width: '100%', // Take full width of content box
+    // Height will be determined by available space and aspect ratio
+    // Or set a specific max height: maxHeight: windowHeight * 0.6,
+    marginBottom: 25, // Space between image and buttons
+    overflow: 'hidden', // Ensure image respects border radius if container has one
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  image: {
+    width: '100%',
+    aspectRatio: 1, // Make it square, or remove if you want original aspect ratio to fill height
+    // If removing aspectRatio, you might need to set a height or flex: 1 on the image container
+    // height: windowHeight * 0.5, // Example fixed height
+    borderRadius: 8, // Optional: slight rounding on image itself
+  },
+  buttonContainer: {
+    flexDirection: 'row', // Arrange buttons side-by-side
+    justifyContent: 'space-around', // Space them out evenly
+    width: '100%', // Take full width for button spacing
+    marginTop: 10, // Ensure some space from image if marginbottom wasn't enough
+  },
+  button: {
+    flexDirection: 'row', // Align icon and text
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12, // Increased padding
+    paddingHorizontal: 20, // Increased padding
+    borderRadius: 8,
+    borderWidth: 1, // Add border for definition
+    flexGrow: 1, // Allow buttons to share space
+    marginHorizontal: 10, // Space between buttons
+    minWidth: 120, // Ensure buttons have minimum width
+  },
+  removeButton: {
+    backgroundColor: '#f8d7da', // Light red background
+    borderColor: '#f5c6cb', // Reddish border
+  },
+  returnButton: {
+    backgroundColor: '#e0f0ff', // Light blue background
+    borderColor: '#a0c8ff', // Bluish border
+  },
+  buttonText: {
+    fontSize: 18, // Bigger text
+    fontWeight: '600', // Semi-bold
+    marginLeft: 8, // Space between icon and text
+  },
+  removeButtonText: {
+      color: '#721c24', // Darker red text for contrast
+  },
+  returnButtonText: {
+      color: '#004085', // Darker blue text for contrast
+  }
+});
 
-// Add StyleSheet if you need it elsewhere, otherwise can remove if only inline styles used now
-// const styles = StyleSheet.create({ ... });
+export default ImageViewModal;
