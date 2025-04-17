@@ -4,16 +4,16 @@ import { Pressable, Text, StyleSheet } from "react-native";
 const FlipButton = ({
   text = "Button",
   children,
-  onPress,
-  onLongPress,
-  delayLongPress,
+  onPress = () => {},
+  onLongPress = () => {},
+  delayLongPress = 500,
   disabled = false,
   bgColor = "#FFFFFF",
   textColor = "#000000",
   style,
   bordered = true,
   flipborderwidth = 2,
-  testID,
+  testID = "flipButton",
 }) => {
   return (
     <Pressable
@@ -31,7 +31,7 @@ const FlipButton = ({
             borderWidth: flipborderwidth,
             borderColor: pressed ? bgColor : textColor,
           }),
-          opacity: disabled ? 0.5 : 1,
+          opacity: disabled ? 0.4 : 1,
         },
       ]}
     >
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     boxShadow: "0 3px 4px rgba(0, 0, 0, 0.25)",
   },
   textBase: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "bold",
     pointerEvents: "none",
   },
