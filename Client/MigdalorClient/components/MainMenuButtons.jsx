@@ -11,18 +11,8 @@ import * as Animatable from "react-native-animatable";
 import { useRouter } from "expo-router";
 import { useMainMenuEdit } from "../context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
-
-const initialData = [
-  { key: "menu1", name: "פרופיל", destination: "Profile" },
-  { key: "menu2", name: "חוגים ופעילויות", destination: "" },
-  { key: "menu3", name: "שוק", destination: "Marketplace" },
-  { key: "menu4", name: "וועד", destination: "" },
-  { key: "menu5", name: "שעות פעילות", destination: "" },
-  { key: "menu6", name: "מפה", destination: "Map" },
-  { key: "menu7", name: "Menu 7", destination: "" },
-  { key: "menu8", name: "Menu 8", destination: "" },
-  { key: "menu9", name: "Menu 9", destination: "" },
-];
+import { useTranslation } from "react-i18next";
+import { Ionicons } from '@expo/vector-icons';
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -30,41 +20,48 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 const flashColor1 = "#fafafa"; // normal button color
 const flashColor2 = "#006aab"; // alternate flash color for the flash effect
 
-// Define custom keyframes for a smooth flash (backgroundColor change)
 const flashAnimation = {
   0: { backgroundColor: flashColor1 },
   0.5: { backgroundColor: flashColor2 },
   1: { backgroundColor: flashColor1 },
 };
 
-export default function MainMenuButtons() {
+export default function MainMenuButtons({ data, onDragEnd }) {
   const router = useRouter();
-  const [data, setData] = useState(initialData);
+
   const { editing } = useMainMenuEdit();
 
   const renderItem = ({ item, drag, isActive }) => {
     const handleLongPress = editing ? drag : undefined;
     const handlePress = () => {
-      if (!editing) {
+      if (!editing && item.destination) {
         console.log("Navigating to:", item.destination);
         router.navigate(item.destination);
+      } else if (!editing && !item.destination) {
+         console.log("No destination for:", item.name);
       }
     };
+
+    if (!data || data.length === 0) {
+      return null; 
+   }
 
     return (
       <Animatable.View
         animation={editing ? flashAnimation : undefined}
         iterationCount={editing ? "infinite" : 1}
-        duration={4000} // duration of one cycle in ms
+        duration={4000}
         style={[styles.item, isActive && styles.activeItem]}
       >
         <FlipButton
           onLongPress={handleLongPress}
           delayLongPress={300}
-          disabled={isActive}
+          disabled={isActive || (!editing && !item.destination)} // Disable press if not editing AND no destination
           onPress={handlePress}
           style={styles.touchable}
           flipborderwidth={5}
+          bgColor={flashColor1} // Pass initial color if needed by FlipButton
+          // Pass text color if needed, or let FlipButton handle defaults
         >
           <Text style={styles.itemText}>{item.name}</Text>
         </FlipButton>
@@ -75,8 +72,8 @@ export default function MainMenuButtons() {
   return (
     <View style={styles.container}>
       <DraggableFlatList
-        data={data}
-        onDragEnd={({ data }) => setData(data)}
+        data={data} 
+        onDragEnd={onDragEnd}
         keyExtractor={(item) => item.key}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}

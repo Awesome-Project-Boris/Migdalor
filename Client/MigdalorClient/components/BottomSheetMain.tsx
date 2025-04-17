@@ -9,6 +9,8 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FlipButton from "./FlipButton";
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
 import { Link, usePathname, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -32,12 +34,13 @@ export const useBottomSheet = () => {
 export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const {t} = useTranslation();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
   const router = useRouter();
 
-  const snapPoints = useMemo(() => ["50%"], []);
+  const snapPoints = useMemo(() => ["40%"], []);
 
   const openSheet = () => {
     bottomSheetRef.current?.snapToIndex(0);
@@ -84,7 +87,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>בית</Text>
+              <Text style={styles.buttonText}>{t("SettingsPopup_HomeButton")}</Text>
             </FlipButton>
 
             <FlipButton
@@ -105,7 +108,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>הגדרות</Text>
+              <Text style={styles.buttonText}>{t("SettingsPopup_SettingsButton")}</Text>
             </FlipButton>
           </View>
 
@@ -129,7 +132,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                 color="#fff"
                 style={styles.icon}
               />
-              <Text style={styles.buttonText}>פרופיל</Text>
+              <Text style={styles.buttonText}>{t("SettingsPopup_ProfileButton")}</Text>
             </FlipButton>
 
             {pathname === "/MainMenu" && (
@@ -149,7 +152,7 @@ export const BottomSheetProvider: React.FC<{ children: React.ReactNode }> = ({
                   color="#fff"
                   style={styles.icon}
                 />
-                <Text style={styles.buttonText}>שנה סדר תפריט</Text>
+                <Text style={styles.buttonText}>{t("SettingsPopup_ChangeLayoutButton")}</Text>
               </FlipButton>
             )}
             {/* {true && (
@@ -190,7 +193,7 @@ const styles = StyleSheet.create({
   },
   button: {
     width: SCREEN_WIDTH * 0.42,
-    height: 145,
+    height: 125,
     backgroundColor: "#4CAF50",
     borderRadius: 8,
     justifyContent: "center",
