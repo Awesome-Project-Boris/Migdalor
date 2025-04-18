@@ -78,16 +78,16 @@ namespace MigdalorServer.Controllers
             try
             {
                 var listings = await _context.OhListings
-                    .Where(l => l.IsActive) // Filter for active listings [cite: 8]
-                    .Include(l => l.Seller) // Include Seller navigation property [cite: 8, 15]
+                    .Where(l => l.IsActive) // Filter for active listings 
+                    .Include(l => l.Seller) // Include Seller navigation property 
                     .Select(l => new
                     {
                         Listing = l,
-                        SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName, // Combine seller names [cite: 10]
+                        SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName, // Combine seller names 
                         // Get the main picture (role 'marketplace') or the first one if 'marketplace' role doesn't exist or fallback to null
                         MainPicture = _context.OhPictures
-                                        .Where(p => p.ListingId == l.ListingId) // Filter pictures for this listing [cite: 12]
-                                        .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1) // Prioritize 'marketplace' role [cite: 12, 18]
+                                        .Where(p => p.ListingId == l.ListingId) // Filter pictures for this listing 
+                                        .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1) // Prioritize 'marketplace' role 
                                         .ThenBy(p => p.DateTime) // Then by date as a fallback ordering
                                         .FirstOrDefault() // Take the first one matching the criteria
                     })
@@ -100,7 +100,7 @@ namespace MigdalorServer.Controllers
                         Date = l_info.Listing.Date,
                         SellerId = l_info.Listing.SellerId,
                         SellerName = l_info.SellerName,
-                        MainImagePath = l_info.MainPicture != null ? l_info.MainPicture.PicPath : null // Select the path or null [cite: 12]
+                        MainImagePath = l_info.MainPicture != null ? l_info.MainPicture.PicPath : null // Select the path or null 
                     })
                     .ToListAsync(); // Execute the query
 

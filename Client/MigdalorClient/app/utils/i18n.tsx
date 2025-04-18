@@ -172,10 +172,12 @@ const resources = {
 
 
 
-
+      ResidentsSearchScreen_title: "Resident list",
       ResidentSearchScreen_searchByLabel: "Search by:", ResidentSearchScreen_searchByName: "Name", ResidentSearchScreen_searchByHobby: "Hobby",
       ResidentSearchScreen_enterNamePlaceholder: "Enter name...", ResidentSearchScreen_enterHobbyPlaceholder: "Enter hobby...",
       ResidentSearchScreen_noMatchMessage: "No users match your search.", ResidentSearchScreen_noUsersMessage: "No users found.",
+      ResidentSearchScreen_accordionClose: "Press to open search options",
+      ResidentSearchScreen_accordionOpen: "Press to close search field",
 
 
       
@@ -364,10 +366,12 @@ const resources = {
       NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
 
 
-
+      ResidentsSearchScreen_title: "רשימת הדיירים",
       ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
       ResidentSearchScreen_enterNamePlaceholder: "הכנס שם...", ResidentSearchScreen_enterHobbyPlaceholder: "הכנס תחביב...",
       ResidentSearchScreen_noMatchMessage: "אין משתמשים התואמים לחיפוש שלך.", ResidentSearchScreen_noUsersMessage: "לא נמצאו משתמשים.",
+      ResidentSearchScreen_accordionClose: "לחיצה לחיפוש",
+      ResidentSearchScreen_accordionOpen: "לחיצה לסגירת החיפוש",
 
 
 
