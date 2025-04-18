@@ -4,6 +4,7 @@ import React, {
   useMemo,
   useRef,
   useCallback,
+  useTransition,
 } from "react";
 import {
   View,
@@ -21,6 +22,8 @@ import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import FilterModal from "../components/NoticeFilterModal";
 import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+
 import { Globals } from "../app/constants/Globals";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
