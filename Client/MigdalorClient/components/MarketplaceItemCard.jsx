@@ -1,81 +1,47 @@
-import React, { useRef } from "react";
-import {
-  StyleSheet,
-  View,
-  Text,
-  Image,
-  Animated,
-  Pressable,
-} from "react-native";
+import React from "react";
+import { StyleSheet, View, Text, Image } from "react-native";
 import { useTranslation } from "react-i18next";
 import { SCREEN_WIDTH, Globals } from "../app/constants/Globals";
+import BouncyButton from "@/components/BouncyButton";
 
 const placeholderImage = require("../assets/images/tempItem.jpg");
 
 export default function MarketplaceItemCard({ data, onPress }) {
   const { t } = useTranslation();
 
-  // Animated value for press shrink effect
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.95,
-      useNativeDriver: true,
-      friction: 3,
-      tension: 40,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      friction: 3,
-      tension: 40,
-    }).start();
-  };
-
+  // Construct the full image URL if mainImagePath exists, otherwise use placeholder
   const imageUrl = data?.mainImagePath
     ? { uri: `${Globals.API_BASE_URL}${data.mainImagePath}` }
     : placeholderImage;
 
   return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-    >
-      <Animated.View
-        style={[styles.container, { transform: [{ scale: scaleAnim }] }]}
-      >
-        <Image
-          style={styles.image}
-          source={imageUrl}
-          onError={(e) =>
-            console.log(
-              `Error loading image ${imageUrl.uri || "placeholder"}:`,
-              e.nativeEvent.error
-            )
-          }
-        />
+    <BouncyButton onPress={onPress} style={styles.container}>
+      <Image
+        style={styles.image}
+        source={imageUrl}
+        onError={(e) =>
+          console.log(
+            `Error loading image ${imageUrl.uri || "placeholder"}:`,
+            e.nativeEvent.error
+          )
+        }
+      />
 
-        <View style={styles.infoContainer}>
-          <Text style={styles.itemName} numberOfLines={2}>
-            {data?.title || t("MarketplaceItemCard_Untitled")}
-          </Text>
-          <Text style={styles.sellerName}>
-            {data?.sellerName || t("MarketplaceItemCard_UnknownSeller")}
-          </Text>
-        </View>
+      <View style={styles.infoContainer}>
+        <Text style={styles.itemName} numberOfLines={2}>
+          {data?.title || t("MarketplaceItemCard_Untitled")}
+        </Text>
+        <Text style={styles.sellerName}>
+          {data?.sellerName || t("MarketplaceItemCard_UnknownSeller")}
+        </Text>
+      </View>
 
-        <View style={styles.moreInfoContainer}>
-          <Text style={styles.moreInfoText}>
-            {t("MarketplaceScreen_MoreDetailsButton")}
-          </Text>
-        </View>
-      </Animated.View>
-    </Pressable>
+      <View style={styles.moreInfoContainer}>
+        <Text style={styles.moreInfoText}>
+          {t("MarketplaceScreen_MoreDetailsButton")}
+        </Text>
+      </View>
+    </BouncyButton>
   );
 }
 

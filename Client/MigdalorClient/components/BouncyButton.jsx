@@ -18,7 +18,7 @@ export default function BouncyButton({
   children,
   onPress,
   onLongPress,
-  shrinkScale = 0.95,
+  shrinkScale = 0.85,
   springConfig = { bounciness: 10, speed: 20 },
   style,
   pressableProps = {},

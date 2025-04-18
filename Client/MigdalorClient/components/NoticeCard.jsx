@@ -1,5 +1,6 @@
-import React, { useRef, useCallback } from "react";
-import { StyleSheet, View, Text, Animated, Pressable } from "react-native";
+import React from "react";
+import { StyleSheet, View, Text } from "react-native";
+import BouncyButton from "./BouncyButton";
 
 // Format date helper
 const formatDate = (dateString) => {
@@ -21,6 +22,11 @@ const createSnippet = (message, maxLength = 100) => {
     : message.substring(0, maxLength) + "...";
 };
 
+/**
+ * NoticeCard displays a notice with a bouncy press animation.
+ * Expects data with noticeTitle, noticeCategory, noticeSubCategory,
+ * creationDate, noticeMessage, and categoryColor fields.
+ */
 export default function NoticeCard({ data, onPress }) {
   if (!data) return null;
 
@@ -28,57 +34,33 @@ export default function NoticeCard({ data, onPress }) {
   const displaySnippet = createSnippet(data.noticeMessage);
   const borderColor = data.categoryColor || "#ccc";
 
-  // Animated scale
-  const scale = useRef(new Animated.Value(1)).current;
-
-  // Press handlers
-  const handlePressIn = useCallback(() => {
-    Animated.spring(scale, {
-      toValue: 0.95,
-      useNativeDriver: true,
-      bounciness: 10,
-    }).start();
-  }, [scale]);
-
-  const handlePressOut = useCallback(() => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      bounciness: 10,
-    }).start();
-  }, [scale]);
-
   return (
-    <Pressable
+    <BouncyButton
       onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
+      style={[styles.container, { borderColor }]}
+      springConfig={{ speed: 20, bounciness: 10 }}
     >
-      <Animated.View
-        style={[styles.container, { borderColor }, { transform: [{ scale }] }]}
-      >
-        <View style={styles.infoContainer}>
-          <Text style={styles.noticeTitle}>{data.noticeTitle}</Text>
+      <View style={styles.infoContainer}>
+        <Text style={styles.noticeTitle}>{data.noticeTitle}</Text>
 
-          {data.noticeCategory && (
-            <Text style={styles.noticeCategory}>
-              Category: {data.noticeCategory}
-              {data.noticeSubCategory ? ` (${data.noticeSubCategory})` : ""}
-            </Text>
-          )}
+        {data.noticeCategory && (
+          <Text style={styles.noticeCategory}>
+            Category: {data.noticeCategory}
+            {data.noticeSubCategory ? ` (${data.noticeSubCategory})` : ""}
+          </Text>
+        )}
 
-          <Text style={styles.noticeDate}>Date: {displayDate}</Text>
+        <Text style={styles.noticeDate}>Date: {displayDate}</Text>
 
-          {displaySnippet && (
-            <Text style={styles.noticeSnippet}>{displaySnippet}</Text>
-          )}
-        </View>
+        {displaySnippet && (
+          <Text style={styles.noticeSnippet}>{displaySnippet}</Text>
+        )}
+      </View>
 
-        <View style={styles.moreInfoContainer}>
-          <Text style={styles.moreInfoText}>יש ללחוץ לפרטים נוספים</Text>
-        </View>
-      </Animated.View>
-    </Pressable>
+      <View style={styles.moreInfoContainer}>
+        <Text style={styles.moreInfoText}>יש ללחוץ לפרטים נוספים</Text>
+      </View>
+    </BouncyButton>
   );
 }
 
