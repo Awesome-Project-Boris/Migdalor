@@ -118,6 +118,7 @@ const resources = {
       MarketplaceNewItemScreen_imageUploadFailedTitle: "Image Upload Failed",
       MarketplaceNewItemScreen_listingCreationFailedTitle: "Listing Creation Failed",
       MarketplaceNewItemScreen_listingCreatedTitle: "Listing Created!",
+      MarketplaceNewItemScreen_listingCreatedSuccessMsg: "Your listing has been created successfully!",
 
       MainMenuNameplate_greetingGoodMorning: "Good Morning",
       MainMenuNameplate_greetingGoodAfternoon: "Good Afternoon",
@@ -299,8 +300,9 @@ const resources = {
       MarketplaceNewItemScreen_ImageTapToChoose: "לחץ לבחירה",
       MarketplaceNewItemScreen_missingInfoTitle: "מידע חסר", MarketplaceNewItemScreen_missingInfoMessage: "אנא הזן שם פריט.", MarketplaceNewItemScreen_authErrorTitle: "שגיאת אימות", MarketplaceNewItemScreen_authErrorMessage: "המשתמש לא זוהה. אנא התחבר מחדש.", MarketplaceNewItemScreen_errorTitle: "שגיאה", MarketplaceNewItemScreen_userInfoRetrievalError: "לא ניתן לאחזר פרטי משתמש.",
       MarketplaceNewItemScreen_imageUploadFailedTitle: "העלאת התמונה נכשלה",
-      MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת הרישום נכשלה",
-      MarketplaceNewItemScreen_listingCreatedTitle: "הרישום נוצר!",
+      MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת ההצעה נכשלה",
+      MarketplaceNewItemScreen_listingCreatedTitle: "ההצעה נוצרה!",
+      MarketplaceNewItemScreen_listingCreatedSuccessMsg: "ההצעה שלך נוצרה בהצלחה!",
 
 
 
