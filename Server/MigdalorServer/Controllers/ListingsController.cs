@@ -51,26 +51,19 @@ namespace MigdalorServer.Controllers
         // [Authorize] // TODO: Add authorization
         public async Task<IActionResult> CreateListing([FromBody] ListingCreation listingDto)
         {
-            // Minimal validation in controller
-            // TODO: Security Check
 
             try
             {
-                // Call the Static Method in the CORRECT Model class
-                // *** Ensure OhListings (plural) is used here ***
                 OhListing savedListing = await OhListing.CreateAndLinkPicturesAsync(
                     listingDto,
                     _context
                 );
 
-                // Return Success
-                // *** Access ListingID from the correctly typed savedListing object ***
                 return Ok(new { message = "Listing created successfully.", listingId = savedListing.ListingId });
             }
             catch (Exception ex) // Catch all exceptions
             {
                 Console.WriteLine($"ERROR in CreateListing: {ex.Message} | Inner: {ex.InnerException?.Message}");
-                // Return a generic 500 error
                 return StatusCode(500, new
                 {
                     message = "An error occurred while creating the listing.",

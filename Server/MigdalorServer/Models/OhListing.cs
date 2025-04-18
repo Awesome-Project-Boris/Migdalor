@@ -5,77 +5,113 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 namespace MigdalorServer.Models
 {
     // *** Corrected class name to OhListings (plural) ***
     public partial class OhListing
     {
-        
-
 
         public static async Task<OhListing> CreateAndLinkPicturesAsync(
-            ListingCreation listingDto, // Uses DTO with optional Pic IDs
-            MigdalorDBContext dbContext)
+    ListingCreation listingDto, // Uses DTO with optional Pic IDs
+    MigdalorDBContext dbContext)
         {
             if (listingDto == null) throw new ArgumentNullException(nameof(listingDto));
             if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+            if (listingDto.SellerId == Guid.Empty) throw new ArgumentException("SellerId cannot be empty.", nameof(listingDto.SellerId));
 
-            // --- Create Listing Entity ---
-            var newListing = new OhListing // Use correct class name
+            // --- 1. Validation & Basic Sanitization ---
+
+            // Title Validation & Sanitization
+            if (string.IsNullOrWhiteSpace(listingDto.Title))
+            {
+                throw new ValidationException("Listing title cannot be empty.");
+            }
+            string sanitizedTitle = listingDto.Title.Trim(); // Basic trim
+            if (sanitizedTitle.Length > 100) // Check against DB limit [cite: 8]
+            {
+                throw new ValidationException("Listing title cannot exceed 100 characters.");
+            }
+
+            string sanitizedDescription = listingDto.Description?.Trim(); // Trim if not null
+            if (sanitizedDescription != null && sanitizedDescription.Length > 300) // Check against DB limit [cite: 8]
+            {
+                throw new ValidationException("Listing description cannot exceed 300 characters.");
+            }
+
+
+            // --- 2. Create Listing Entity (using sanitized values) ---
+            var newListing = new OhListing
             {
                 ListingId = 0,
-                Title = listingDto.Title,
-                Description = listingDto.Description,
+                Title = sanitizedTitle,           // Use sanitized value
+                Description = sanitizedDescription, // Use sanitized value (could be null)
                 SellerId = listingDto.SellerId,
                 IsActive = true,
                 Date = DateTime.UtcNow
             };
 
-            dbContext.OhListings.Add(newListing); // Use correct DbSet property name
+            dbContext.OhListings.Add(newListing);
 
-            // --- Step 1: Save Listing to get the ID ---
-            await dbContext.SaveChangesAsync(); // Let exceptions propagate
-            // *** newListing.ListingID is now populated by the database ***
+            // --- 3. Save Listing to get the ID ---
+            try
+            {
+                await dbContext.SaveChangesAsync(); // Let EF Core handle parameterization
+            }
+            catch (DbUpdateException ex)
+            {
+                // Handle potential database-level errors (e.g., unique constraints, FK violations)
+                Console.WriteLine($"ERROR saving initial listing: {ex.Message} | Inner: {ex.InnerException?.Message}");
+                // You might want to throw a more specific custom exception here
+                throw new InvalidOperationException("Failed to save the new listing to the database.", ex);
+            }
+            // newListing.ListingId is now populated
 
-            // --- Step 2: Link Pictures (Only if IDs were provided) ---
+
+            // --- 4. Link Pictures (logic remains the same) ---
             var pictureIdsToLink = new List<int>();
             if (listingDto.MainPicId.HasValue) pictureIdsToLink.Add(listingDto.MainPicId.Value);
             if (listingDto.ExtraPicId.HasValue) pictureIdsToLink.Add(listingDto.ExtraPicId.Value);
 
             if (pictureIdsToLink.Any())
             {
-                // Fetch pictures that were created earlier and are not yet linked
                 var pictures = await dbContext.OhPictures
-                                             .Where(p => pictureIdsToLink.Contains(p.PicId) && p.ListingId == null)
-                                             .ToListAsync();
+                                              .Where(p => pictureIdsToLink.Contains(p.PicId) && p.ListingId == null)
+                                              .ToListAsync();
 
                 if (pictures.Count != pictureIdsToLink.Count)
                 {
-                    // Log or handle the case where some provided IDs weren't found/linkable
                     Console.WriteLine($"WARNING: Could not find/link all provided picture IDs for Listing {newListing.ListingId}.");
-                    // Optional: Check if MainPicId was provided but not found, throw if critical
                     if (listingDto.MainPicId.HasValue && !pictures.Any(p => p.PicId == listingDto.MainPicId.Value))
                     {
+                        // Consider rolling back or throwing a more severe error if main pic link fails
                         throw new InvalidOperationException($"Main picture (ID: {listingDto.MainPicId.Value}) required for linking was not found or already linked.");
                     }
                 }
 
-                // Link all pictures found
                 foreach (var pic in pictures)
                 {
-                    // *** Use the ListingID obtained AFTER saving the listing ***
                     pic.ListingId = newListing.ListingId;
                 }
 
-                // Save the updates to the OhPicture records (only if any were found)
                 if (pictures.Any())
                 {
-                    await dbContext.SaveChangesAsync(); // Let exceptions propagate
+                    try
+                    {
+                        await dbContext.SaveChangesAsync(); // Save picture FK updates
+                    }
+                    catch (DbUpdateException ex)
+                    {
+                        // Handle errors linking pictures
+                        Console.WriteLine($"ERROR saving picture links for listing {newListing.ListingId}: {ex.Message} | Inner: {ex.InnerException?.Message}");
+                        // Decide on error handling: maybe log and continue, or throw?
+                        throw new InvalidOperationException("Failed to link pictures to the new listing.", ex);
+                    }
                 }
             }
 
-            return newListing; // Return the successfully created listing
+            return newListing;
         }
 
         public async Task<List<ListingSummary>> GetActiveListingSummariesAsync(MigdalorDBContext _context)

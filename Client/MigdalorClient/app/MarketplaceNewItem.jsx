@@ -1,7 +1,8 @@
 import React, {
   useState,
   useContext,
-  useEffect /* Add if needed */,
+  useEffect ,
+  useRef
 } from "react";
 import {
   Modal,
@@ -31,6 +32,7 @@ import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
 
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
+const SCREEN_WIDTH = Dimensions.get("window").width; 
 
 export default function AddNewItem() {
   const { t } = useTranslation();
@@ -38,11 +40,14 @@ export default function AddNewItem() {
   const [itemDescription, setItemDescription] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   
   const API = Globals.API_BASE_URL;
 
-  console.log("THIS IS API:" + API)
+
+  const itemNameRef = useRef(null);
+  const itemDescriptionRef = useRef(null);
 
 
   // State for Local Image URIs
@@ -51,8 +56,9 @@ export default function AddNewItem() {
 
   const router = useRouter();
 
-  const ITEM_NAME_LIMIT = 50;
-  const DESCRIPTION_LIMIT = 200;
+  const ITEM_NAME_LIMIT = 100;
+  const DESCRIPTION_LIMIT = 300;
+  const ESCAPED_DESCRIPTION_LIMIT = 400;
 
   const copyImageToAppDir = async (sourceUri, prefix) => {
     try {
@@ -67,6 +73,14 @@ export default function AddNewItem() {
       throw e;
     }
   };
+
+
+  function estimateEscapedLength(str) {
+  if (!str) return 0;
+  let estimatedLength = str.length;
+  estimatedLength += (str.match(/'/g) || []).length; 
+  return estimatedLength;
+}
 
   // --- Helper: Safely Delete Local File ---
   const safeDeleteFile = async (uri) => {
@@ -170,6 +184,65 @@ export default function AddNewItem() {
       ],
     );
   };
+
+  const validateField = (name, value) => {
+    const trimmedValue = value; // Don't trim here
+
+    switch (name) {
+      case "itemName":
+        if (!trimmedValue.trim()) { // Trim only for the required check
+          return t("MarketplaceNewItemScreen_errorTitleRequired");
+        }
+        if (value.length >= ITEM_NAME_LIMIT) { // Check raw length >= limit
+          return t("MarketplaceNewItemScreen_errorTitleTooLong", {
+            count: ITEM_NAME_LIMIT,
+          });
+        }
+        return null; // No error
+
+      case "itemDescription":
+        // First, check raw length against visual/DB limit
+        if (value.length >= DESCRIPTION_LIMIT) { // Check raw length >= limit
+          return t("MarketplaceNewItemScreen_errorDescriptionTooLong", {
+            count: DESCRIPTION_LIMIT,
+          });
+        }
+        // If raw length is okay, check estimated escaped length
+        const estimatedLength = estimateEscapedLength(value);
+        if (estimatedLength >= ESCAPED_DESCRIPTION_LIMIT) { // Check estimated >= 400
+          return t("MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars", {
+            count: ESCAPED_DESCRIPTION_LIMIT,
+          });
+        }
+        return null; // No error
+
+      default:
+        return null;
+    }
+  };
+
+  const handleFormChange = (name, value) => {
+    let limitedValue = value;
+    let error = null;
+
+    // Prevent exceeding visual limits directly
+    if (name === "itemName") {
+        if (value.length > ITEM_NAME_LIMIT) {
+            limitedValue = value.substring(0, ITEM_NAME_LIMIT); // Truncate visually
+        }
+        setItemName(limitedValue);
+        error = validateField(name, limitedValue); // Validate the potentially truncated value
+    } else if (name === "itemDescription") {
+        if (value.length > DESCRIPTION_LIMIT) {
+            limitedValue = value.substring(0, DESCRIPTION_LIMIT); // Truncate visually
+        }
+        setItemDescription(limitedValue);
+        error = validateField(name, limitedValue); // Validate the potentially truncated value
+    }
+
+    // Update errors state
+    setFormErrors((prev) => ({ ...prev, [name]: error }));
+  };
   
 
   // --- State Reset ---
@@ -180,6 +253,7 @@ export default function AddNewItem() {
     await safeDeleteFile(extraImage);
     setMainImage(null);
     setExtraImage(null);
+    setFormErrors({});
   };
 
   // --- Cancel Logic ---
@@ -231,16 +305,41 @@ export default function AddNewItem() {
 
   // --- Main Submission Handler ---
   const handleSubmit = async () => {
-    // --- Client-Side Validation ---
-    if (!itemName.trim()) {
-      Alert.alert(
-        t("MarketplaceNewItemScreen_missingInfoTitle"),
-        t("MarketplaceNewItemScreen_missingInfoMessage"),
-      );
-      return;
+    Keyboard.dismiss(); // Dismiss keyboard first
+
+    // --- Perform Full Validation ---
+    const titleError = validateField("itemName", itemName);
+    const descriptionError = validateField("itemDescription", itemDescription);
+
+    const currentErrors = {
+        itemName: titleError,
+        itemDescription: descriptionError,
+    };
+    setFormErrors(currentErrors);
+
+    // --- Check for Errors and Focus ---
+    if (titleError || descriptionError) {
+        Toast.show({
+           type: "error",
+           text1: t("Common_ValidationErrorTitle"), // Generic validation error title
+           text2: t("Common_ValidationErrorMsg"),   // Generic message
+           position: "top",
+        });
+       // Focus on the first field with an error
+       if (titleError && itemNameRef.current) {
+            itemNameRef.current.focus();
+       } else if (descriptionError && itemDescriptionRef.current) {
+            itemDescriptionRef.current.focus();
+       }
+       return; // Stop submission
     }
-    
-    // --- Get User ID ---
+
+    // --- Trim values before sending ---
+    const trimmedItemName = itemName.trim();
+    const trimmedItemDescription = itemDescription.trim();
+
+
+    // --- Get User ID (unchanged) ---
     let currentUserId = null;
     try {
       currentUserId = await AsyncStorage.getItem("userID");
@@ -260,159 +359,121 @@ export default function AddNewItem() {
       );
       return;
     }
-    
+
 
     setIsSubmitting(true);
     let mainPicId = null;
     let extraPicId = null;
     let uploadResults = null;
 
-    // --- Step 1: Upload Pictures (if any selected) ---
+    // --- Step 1: Upload Pictures (unchanged logic, but ensure itemName used for alt text is trimmed) ---
     if (mainImage || extraImage) {
-      const formData = new FormData();
-      const picRoles = [];
-      const picAlts = [];
-      let fileIndex = 0;
-      let mainImageIndex = -1;
-      let extraImageIndex = -1;
+        const formData = new FormData();
+        const picRoles = [];
+        const picAlts = [];
+        let fileIndex = 0;
+        let mainImageIndex = -1;
+        let extraImageIndex = -1;
 
-      // Prepare Main Image data
-      if (mainImage) {
-        const mainFileType = mainImage.substring(
-          mainImage.lastIndexOf(".") + 1
-        );
-        const mainMimeType = `image/${
-          mainFileType === "jpg" ? "jpeg" : mainFileType
-        }`;
-        formData.append("files", {
-          uri: mainImage,
-          name: `main.${mainFileType}`,
-          type: mainMimeType,
-        });
-        picRoles.push("marketplace");
-        picAlts.push("A photo of the item " + {itemName} + " by the seller " + "TEMP NAME");
-        mainImageIndex = fileIndex++;
-      }
-      // Prepare Extra Image data
-      if (extraImage) {
-        const extraFileType = extraImage.substring(
-          extraImage.lastIndexOf(".") + 1
-        );
-        const extraMimeType = `image/${
-          extraFileType === "jpg" ? "jpeg" : extraFileType
-        }`;
-        formData.append("files", {
-          uri: extraImage,
-          name: `extra.${extraFileType}`,
-          type: extraMimeType,
-        });
-        picRoles.push("marketplace_extra");
-        picAlts.push("An extra photo of the item " + {itemName} + " by the seller " + "TEMP NAME");
-        extraImageIndex = fileIndex++;
-      }
-      // Append metadata
-      picRoles.forEach((role) => formData.append("picRoles", role));
-      picAlts.forEach((alt) => formData.append("picAlts", alt));
-      formData.append("uploaderId", currentUserId); 
-
-      try {
-        console.log("Attempting to upload images...");
-
-        const uploadResponse = await fetch(
-          API + "/api/Picture",
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
+        // Prepare Main Image data
+        if (mainImage) {
+          const mainFileType = mainImage.substring(
+            mainImage.lastIndexOf(".") + 1
+          );
+          const mainMimeType = `image/${
+            mainFileType === "jpg" ? "jpeg" : mainFileType
+          }`;
+          formData.append("files", {
+            uri: mainImage,
+            name: `main.${mainFileType}`,
+            type: mainMimeType,
+          });
+          picRoles.push("marketplace");
+          // Using trimmedItemName here
+          picAlts.push(`A photo of the item ${trimmedItemName} by the seller TEMP NAME`); // TRANSLATION NEEDED
+          mainImageIndex = fileIndex++;
+        }
+        // Prepare Extra Image data
+        if (extraImage) {
+          const extraFileType = extraImage.substring(
+            extraImage.lastIndexOf(".") + 1
+          );
+          const extraMimeType = `image/${
+            extraFileType === "jpg" ? "jpeg" : extraFileType
+          }`;
+          formData.append("files", {
+            uri: extraImage,
+            name: `extra.${extraFileType}`,
+            type: extraMimeType,
+          });
+          picRoles.push("marketplace_extra");
+           // Using trimmedItemName here
+          picAlts.push(`An extra photo of the item ${trimmedItemName} by the seller TEMP NAME`);
+          extraImageIndex = fileIndex++;
+        }
+        // Append metadata
+        picRoles.forEach((role) => formData.append("picRoles", role));
+        picAlts.forEach((alt) => formData.append("picAlts", alt));
+        formData.append("uploaderId", currentUserId);
 
         try {
-          uploadResults = await uploadResponse.json();
-        } catch (jsonError) {
-          console.error("Failed to parse upload response JSON:", jsonError);
-          let textResponse = "";
-          try {
-            textResponse = await uploadResponse.text();
-          } catch {}
-          throw new Error(
-            `Image upload failed with status ${uploadResponse.status}. Could not parse response. Response text: ${textResponse}`
-          );
-        }
+          console.log("Attempting to upload images...");
+          const uploadResponse = await fetch(API + "/api/Picture", {
+            method: "POST",
+            body: formData,
+            // Consider adding timeout? headers: { 'Connection': 'close' } // May help with timeouts sometimes
+          });
 
-        // Handle response status
-        if (!uploadResponse.ok && uploadResponse.status !== 207) {
-          // Treat 207 as potentially recoverable below
-          const errorMsg =
-            uploadResults?.error ||
-            uploadResults?.message ||
-            `Image upload failed (HTTP ${uploadResponse.status})`;
-          throw new Error(errorMsg);
-        }
+          // JSON parsing and error handling (unchanged)
+           try {
+             uploadResults = await uploadResponse.json();
+           } catch (jsonError) {
+             console.error("Failed to parse upload response JSON:", jsonError);
+             let textResponse = "";
+             try { textResponse = await uploadResponse.text(); } catch {}
+             throw new Error(`Image upload failed (status ${uploadResponse.status}). Response: ${textResponse}`);
+           }
+           if (!uploadResponse.ok && uploadResponse.status !== 207) {
+             const errorMsg = uploadResults?.error || uploadResults?.message || `Image upload failed (HTTP ${uploadResponse.status})`;
+             throw new Error(errorMsg);
+           }
+           console.log("Upload response status:", uploadResponse.status, "Results:", uploadResults);
 
-        console.log(
-          "Upload response status:",
-          uploadResponse.status,
-          "Results:",
-          uploadResults
-        );
+           // Pic ID extraction (unchanged)
+           if (Array.isArray(uploadResults)) {
+                if (mainImageIndex !== -1) {
+                  if (uploadResults[mainImageIndex]?.success) {
+                     mainPicId = uploadResults[mainImageIndex].picId;
+                  } else { throw new Error(`Main image failed: ${uploadResults[mainImageIndex]?.errorMessage ?? 'Unknown upload error'}`); }
+                }
+                if (extraImageIndex !== -1) {
+                  if (uploadResults[extraImageIndex]?.success) {
+                     extraPicId = uploadResults[extraImageIndex].picId;
+                  } else { console.warn(`Extra image failed: ${uploadResults[extraImageIndex]?.errorMessage ?? 'Unknown upload error'}`); extraPicId = null; }
+                }
+              } else if (uploadResponse.ok) { throw new Error("Image upload OK but unexpected response format."); }
 
-        // Extract PicIds - Safely check if uploadResults is an array and index exists
-        if (Array.isArray(uploadResults)) {
-          if (mainImageIndex !== -1) {
-            // If main image was sent
-            if (uploadResults[mainImageIndex]?.success) {
-              mainPicId = uploadResults[mainImageIndex].picId;
-            } else {
-              // Main image upload failed, this is critical
-              throw new Error(
-                `Main image failed to process: ${
-                  uploadResults[mainImageIndex]?.errorMessage ??
-                  "Unknown upload error"
-                }`
-              );
-            }
-          }
-          if (extraImageIndex !== -1) {
-            // If extra image was sent
-            if (uploadResults[extraImageIndex]?.success) {
-              extraPicId = uploadResults[extraImageIndex].picId;
-            } else {
-              // Log warning but allow proceeding if only extra failed
-              console.warn(
-                `Extra image failed to process: ${
-                  uploadResults[extraImageIndex]?.errorMessage ??
-                  "Unknown upload error"
-                }`
-              );
-              extraPicId = null; // Ensure it's null
-            }
-          }
-        } else if (uploadResponse.ok) {
-          // Status was OK but response wasn't an array - unexpected server format
-          throw new Error(
-            "Image upload succeeded but received an unexpected response format."
-          );
+
+        } catch (error) {
+          console.error("Image upload step failed:", error);
+          Toast.show({
+            type: "error",
+            text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
+            text2: error.message,
+            position: "top",
+          });
+          setIsSubmitting(false);
+          return;
         }
-        // If !uploadResponse.ok and not 207, an error was already thrown above
-      } catch (error) {
-        console.error("Image upload step failed:", error);
-        Toast.show({
-          type: "error",
-          text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
-          text2: error.message,
-          position: "top",
-        });
-        setIsSubmitting(false);
-        return; // Stop submission
+      } else {
+        console.log("No images selected for upload.");
       }
-    } else {
-      console.log("No images selected for upload.");
-    }
 
-    // --- Step 2: Create Listing ---
+
+    // --- Step 2: Create Listing (use trimmed values) ---
     const listingData = {
-      Title: itemName,
-      Description: itemDescription,
+      Title: trimmedItemName, // Use trimmed value
+      Description: trimmedItemDescription, // Use trimmed value
       SellerId: currentUserId,
       MainPicId: mainPicId,
       ExtraPicId: extraPicId,
@@ -420,20 +481,15 @@ export default function AddNewItem() {
 
     console.log("Attempting to create listing with data:", listingData);
     try {
-      // <<< REPLACE WITH YOUR SERVER IP and correct endpoint >>>
-      const listingResponse = await fetch(
-         API + "/api/Listings/Create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(listingData),
-        }
-      );
+      const listingResponse = await fetch(API + "/api/Listings/Create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(listingData),
+      });
 
       if (!listingResponse.ok) {
-        const errorData = await listingResponse.json();
+        let errorData = {}; // Default to empty object
+         try { errorData = await listingResponse.json(); } catch (e) { console.warn("Could not parse error JSON from listing creation"); }
         throw new Error(
           errorData?.message ||
             `Failed to create listing (HTTP ${listingResponse.status})`
@@ -443,12 +499,12 @@ export default function AddNewItem() {
       const finalResult = await listingResponse.json();
       Toast.show({
         type: "success",
-        text1: "Listing Created!",
-        text2: `ID: ${finalResult.listingId}`,
+        text1: t("MarketplaceNewItemScreen_listingCreatedSuccessTitle"),
+        text2: t("MarketplaceNewItemScreen_listingCreatedSuccessMsg", {id: finalResult.listingId}), // Use translation
         position: "top",
       });
-      await resetState(); // Clean up local files and state
-      router.back(); // Navigate back only on full success
+      await resetState();
+      router.back();
     } catch (error) {
       console.error("Listing creation step failed:", error);
       Toast.show({
@@ -462,144 +518,79 @@ export default function AddNewItem() {
     }
   };
 
-  // --- JSX Render ---
   return (
     <>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* ... Your existing JSX structure ... */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled" // Helps dismiss keyboard when tapping outside inputs
+      >
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>
               {t(`MarketplaceNewItemScreen_NewItem`)}
             </Text>
           </View>
+
+
           <FloatingLabelInput
+            ref={itemNameRef} // Assign ref
             label={t(`MarketplaceNewItemScreen_ItemName`)}
             alignRight={Globals.userSelectedDirection === "rtl"}
             value={itemName}
-            onChangeText={(text) =>
-              text.length <= ITEM_NAME_LIMIT && setItemName(text)
-            }
+            onChangeText={(text) => handleFormChange("itemName", text)}
+             maxLength={ITEM_NAME_LIMIT} // Enforce visual limit
           />
-          <Text style={styles.charCount}>
-            {itemName.length}/{ITEM_NAME_LIMIT}
-          </Text>
+
+          {formErrors.itemName ? (
+             <Text style={styles.errorText}>{formErrors.itemName}</Text>
+           ) : (
+             <Text style={styles.charCount}>
+                {itemName.length}/{ITEM_NAME_LIMIT}
+             </Text>
+           )
+          }
+
+
           <FloatingLabelInput
+            ref={itemDescriptionRef} // Assign ref
             label={t(`MarketplaceNewItemScreen_ItemDescription`)}
             alignRight={Globals.userSelectedDirection === "rtl"}
             value={itemDescription}
-            onChangeText={(text) =>
-              text.length <= DESCRIPTION_LIMIT && setItemDescription(text)
-            }
+            onChangeText={(text) => handleFormChange("itemDescription", text)}
             multiline={true}
-            inputStyle={{ height: 80 }}
+            inputStyle={{ height: 80, textAlignVertical: 'top' }} // Added textAlignVertical
+             maxLength={DESCRIPTION_LIMIT} // Enforce visual limit
           />
-          <Text style={styles.charCount}>
-            {itemDescription.length}/{DESCRIPTION_LIMIT}
-          </Text>
-          <XStack
-            space="$3"
-            justifyContent="center"
-            alignItems="center"
-            marginVertical="$4"
-          >
-            <Card
-              elevate
-              width={150}
-              height={150}
-              borderRadius="$4"
-              overflow="hidden"
-              margin={10}
-              onPress={() => viewOrPickImage("main")}
-            >
-              {mainImage ? (
-                <>
-                  <Card.Background>
-                    <ExpoImage
-                      source={{ uri: mainImage }}
-                      style={StyleSheet.absoluteFill}
-                      contentFit="cover"
-                    />
-                  </Card.Background>
-                  <YStack
-                    f={1}
-                    jc="center"
-                    ai="center"
-                    backgroundColor="rgba(0,0,0,0.4)"
-                  >
-                    <Paragraph theme="alt2">
-                      {t("MarketplaceNewItemScreen_MainImage")}
-                    </Paragraph>
-                  </YStack>
-                </>
-              ) : (
-                <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
-                  <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
-                  <Paragraph theme="alt2">
-                    {t("MarketplaceNewItemScreen_ImageOptional")}
-                  </Paragraph>
-                  <Paragraph theme="alt2">
-                    {t("MarketplaceNewItemScreen_ImageTapToChoose")}
-                  </Paragraph>
-                </YStack>
-              )}
-            </Card>
-            <Card
-              elevate
-              width={150}
-              height={150}
-              borderRadius="$4"
-              overflow="hidden"
-              onPress={() => viewOrPickImage("extra")}
-            >
-              {extraImage ? (
-                <>
-                  <Card.Background>
-                    <ExpoImage
-                      source={{ uri: extraImage }}
-                      style={StyleSheet.absoluteFill}
-                      contentFit="cover"
-                    />
-                  </Card.Background>
-                  <YStack
-                    f={1}
-                    jc="center"
-                    ai="center"
-                    backgroundColor="rgba(0,0,0,0.4)"
-                  >
-                    <Paragraph theme="alt2" color="$color">
-                      {t("MarketplaceNewItemScreen_ExtraImage")}
-                    </Paragraph>
-                  </YStack>
-                </>
-              ) : (
-                <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
-                  <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2>
-                  <Paragraph theme="alt2">
-                    {t("MarketplaceNewItemScreen_ImageOptional")}
-                  </Paragraph>
-                  <Paragraph theme="alt2">
-                    {t("MarketplaceNewItemScreen_ImageTapToChoose")}
-                  </Paragraph>
-                </YStack>
-              )}
-            </Card>
-          </XStack>
+           {formErrors.itemDescription ? (
+                <Text style={styles.errorText}>{formErrors.itemDescription}</Text>
+            ) : (
+                <Text style={styles.charCount}>
+                    {itemDescription.length}/{DESCRIPTION_LIMIT}
+                </Text>
+            )
+           }
+
+           <XStack gap="$3" justifyContent="center" alignItems="center" marginVertical="$4" >
+              <Card elevate width={150} height={150} borderRadius="$4" overflow="hidden" margin={10} onPress={() => viewOrPickImage("main")} >
+                  {mainImage ? ( <> <Card.Background> <ExpoImage source={{ uri: mainImage }} style={StyleSheet.absoluteFill} contentFit="cover"/> </Card.Background> <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)"> <Paragraph theme="alt2">{t("MarketplaceNewItemScreen_MainImage")}</Paragraph> </YStack> </>
+                  ) : ( <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}> <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2> <Paragraph theme="alt2">{t("MarketplaceNewItemScreen_ImageOptional")}</Paragraph> <Paragraph theme="alt2">{t("MarketplaceNewItemScreen_ImageTapToChoose")}</Paragraph> </YStack> )}
+               </Card>
+               <Card elevate width={150} height={150} borderRadius="$4" overflow="hidden" onPress={() => viewOrPickImage("extra")} >
+                   {extraImage ? ( <> <Card.Background> <ExpoImage source={{ uri: extraImage }} style={StyleSheet.absoluteFill} contentFit="cover"/> </Card.Background> <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)"> <Paragraph theme="alt2" color="$color">{t("MarketplaceNewItemScreen_ExtraImage")}</Paragraph> </YStack> </>
+                   ) : ( <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}> <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2> <Paragraph theme="alt2">{t("MarketplaceNewItemScreen_ImageOptional")}</Paragraph> <Paragraph theme="alt2">{t("MarketplaceNewItemScreen_ImageTapToChoose")}</Paragraph> </YStack> )}
+               </Card>
+           </XStack>
+
+
           <View style={styles.buttonRow}>
             <FlipButton
-              onPress={handleSubmit}
+              onPress={handleSubmit} // handleSubmit uses updated validation
               bgColor="white"
               textColor="black"
               style={styles.submitButton}
               disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <Spinner size="small" color="black" />
-              ) : (
-                <Text style={styles.buttonLabel}>
-                  {t("MarketplaceSearchItem_SubmitButton")}
-                </Text>
-              )}
+              {isSubmitting ? ( <Spinner size="small" color="black" /> ) : ( <Text style={styles.buttonLabel}> {t("MarketplaceSearchItem_SubmitButton")} </Text> )}
             </FlipButton>
             <FlipButton
               onPress={handleCancel}
@@ -608,56 +599,14 @@ export default function AddNewItem() {
               style={styles.cancelButton}
               disabled={isSubmitting}
             >
-              <Text style={styles.buttonLabel}>
-                {t("MarketplaceSearchItem_CancelButton")}
-              </Text>
+              <Text style={styles.buttonLabel}> {t("MarketplaceSearchItem_CancelButton")} </Text>
             </FlipButton>
           </View>
         </View>
       </ScrollView>
-      {showConfirm && (
-        <Modal visible={true} transparent={true} animationType="fade">
-          <View style={styles.confirmOverlay}>
-            <View style={styles.confirmContainer}>
-              <Text style={styles.confirmText}>
-                {t("MarketplaceNewItemScreen_CancelDiscardHeader")}
-              </Text>
-              <View style={styles.confirmButtonRow}>
-                <FlipButton
-                  onPress={confirmCancel}
-                  bgColor="#e0e0e0"
-                  textColor="black"
-                  style={styles.confirmButton}
-                >
-                  <Text style={styles.buttonLabel}>
-                    {t("MarketplaceNewItemScreen_CancelConfirmation")}
-                  </Text>
-                </FlipButton>
-                <FlipButton
-                  onPress={() => setShowConfirm(false)}
-                  bgColor="#007bff"
-                  textColor="white"
-                  style={styles.confirmButton}
-                >
-                  <Text style={[styles.buttonLabel, { color: "white" }]}>
-                    {t("MarketplaceNewItemScreen_CancelDiscard")}
-                  </Text>
-                </FlipButton>
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
-      <ImageViewModal
-        visible={showImageViewModal}
-        imageUri={imageToViewUri}
-        onClose={() => {
-          setShowImageViewModal(false);
-          setImageToViewUri(null);
-          setImageTypeToClear(null);
-        }}
-        onRemove={handleRemoveImage}
-      />
+
+       {showConfirm && ( <Modal visible={true} transparent={true} animationType="fade"> <View style={styles.confirmOverlay}> <View style={styles.confirmContainer}> <Text style={styles.confirmText}>{t("MarketplaceNewItemScreen_CancelDiscardHeader")}</Text> <View style={styles.confirmButtonRow}> <FlipButton onPress={confirmCancel} bgColor="#e0e0e0" textColor="black" style={styles.confirmButton}> <Text style={styles.buttonLabel}>{t("MarketplaceNewItemScreen_CancelConfirmation")}</Text> </FlipButton> <FlipButton onPress={() => setShowConfirm(false)} bgColor="#007bff" textColor="white" style={styles.confirmButton}> <Text style={[styles.buttonLabel, { color: "white" }]}>{t("MarketplaceNewItemScreen_CancelDiscard")}</Text> </FlipButton> </View> </View> </View> </Modal> )}
+      <ImageViewModal visible={showImageViewModal} imageUri={imageToViewUri} onClose={() => { setShowImageViewModal(false); setImageToViewUri(null); setImageTypeToClear(null); }} onRemove={handleRemoveImage} />
     </>
   );
 }
@@ -672,7 +621,7 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   contentContainer: {
-    width: "100%",
+    width: SCREEN_WIDTH * 0.95,
     maxHeight: SCREEN_HEIGHT * 0.95,
     padding: 20,
     borderRadius: 12,
@@ -749,5 +698,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     width: "48%",
     alignItems: "center",
+  },
+  errorText: {
+    color: "red",
+    alignSelf: 'flex-start', // Align with input start
+    marginLeft: 10, // Indent slightly
+    marginTop: -10, // Move closer to the input above
+    marginBottom: 5, // Space before char count
+    fontSize: 12, // Smaller error font size
   },
 });
