@@ -68,6 +68,8 @@ const resources = {
       MainMenuScreen_ResidentsCommitteeButton: "Residents' Committee",
       MainMenuScreen_ActivityHoursButton: 'Activity Hours',
       MainMenuScreen_MapButton: 'Map',
+      MainMenuScreen_NoticeBoardButton: "Notice Board",
+      MainMenuScreen_ResidentListButton: "Resident List",
 
 
       SettingsPopup_SettingsButton: 'Settings',
@@ -112,9 +114,70 @@ const resources = {
       MarketplaceNewItemScreen_ExtraImage: "Extra Image",
       MarketplaceNewItemScreen_ImageOptional: "(Optional)",
       MarketplaceNewItemScreen_ImageTapToChoose: "Tap to choose",
+      MarketplaceNewItemScreen_missingInfoTitle: "Missing Info", MarketplaceNewItemScreen_missingInfoMessage: "Please enter an item name.", MarketplaceNewItemScreen_authErrorTitle: "Authentication Error", MarketplaceNewItemScreen_authErrorMessage: "User not identified. Please log in again.", MarketplaceNewItemScreen_errorTitle: "Error", MarketplaceNewItemScreen_userInfoRetrievalError: "Could not retrieve user information.",
+      MarketplaceNewItemScreen_imageUploadFailedTitle: "Image Upload Failed",
+      MarketplaceNewItemScreen_listingCreationFailedTitle: "Listing Creation Failed",
+
+      MainMenuNameplate_greetingGoodMorning: "Good Morning",
+      MainMenuNameplate_greetingGoodAfternoon: "Good Afternoon",
+      MainMenuNameplate_greetingGoodEvening: "Good Evening",
+      MainMenuNameplate_greetingGoodNight: "Good Night",
+      MainMenuNameplate_greetingPunctuation: "!",
+
+
+
+      MainMenuScreen_DoneButton: "Done",
+      MainMenuScreen_saveOrderSuccess: "Menu order saved!", MainMenuScreen_saveOrderFailure: "Failed to save order",MainMenuScreen_loadingMenu: "Loading menu…",
+
+
+      LoginScreen_loginSuccess: "Logged in successfully",
+      LoginScreen_loginErrorTitle: "Error!",
+      LoginScreen_loginErrorMessage: "Incorrect username or password!",
+      LoginScreen_phoneNumberLabel: "Phone Number", LoginScreen_passwordLabel: "Password",
+      LoginScreen_loginButton: "Login",
+
+
+      MapScreen_building1Name: "Building One", MapScreen_building1Info: "This is the first building we defined – the entrance building",Permissions_locationPermissionMessage: "Location permission is needed to show position.", Permissions_okButton: "OK.", Permissions_openSettingsButton: "Open Settings.", Permissions_permissionDeniedTitle: "Permission denied.",
+      LocationScreen_locationPermissionLabel: "Location Permission:", LocationScreen_insideBoundaryLabel: "Inside Boundary:", LocationScreen_userLocationLabel: "User Location:",MapScreen_backToMapButton: "Back to Map", 
+    
+    
+      ImagePicker_selectSourceTitle: "Select Image Source", ImagePicker_selectSourceMessage: "Choose how to select the image", ImagePicker_takePhotoButton: "Take Photo", ImagePicker_chooseFromLibraryButton: "Choose From Library", ImagePicker_cancelButton: "Cancel", ImagePicker_permissionDeniedTitle: "Permission Denied", ImagePicker_libraryPermissionDeniedMessage: "Permission to access photos is required!", ImagePicker_cameraPermissionDeniedMessage: "Camera permission is required!", ImagePicker_errorTitle: "Error", ImagePicker_saveCameraImageFailure: "Could not save camera image.", ImagePicker_saveLibraryImageFailure: "Could not save library image.", ImagePicker_openLibraryFailure: "Could not open image library.",
+
+
+      NoticeDetailsScreen_loadingDetails: "Loading notice details...",
+      NoticeDetailsScreen_categoryLabel: "Category:",
+      NoticeDetailsScreen_dateLabel: "Date:",
+      Common_backButton: "Go back",
+      NoticeBoardScreen_boardTitle: "Notice Board", 
+      NoticeBoardScreen_filterButton: "Filter", NoticeBoardScreen_all: "All",
+
+      NoticeBoardScreen_filterLabel: "Filter:",
+      NoticeBoardScreen_sortOldest: "Oldest",
+      NoticeBoardScreen_sortNewest: "Newest",
+      NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
+
+
+
+
+
+
+
+      ResidentSearchScreen_searchByLabel: "Search by:", ResidentSearchScreen_searchByName: "Name", ResidentSearchScreen_searchByHobby: "Hobby",
+      ResidentSearchScreen_enterNamePlaceholder: "Enter name...", ResidentSearchScreen_enterHobbyPlaceholder: "Enter hobby...",
+      ResidentSearchScreen_noMatchMessage: "No users match your search.", ResidentSearchScreen_noUsersMessage: "No users found.",
 
 
       
+      
+      ResidentsCommitte_nameUnavailable: "Name Unavailable", ResidentsCommitte_titleUnavailable: "Title Unavailable",
+      
+
+      UserProfileCard_unnamedUser: "Unnamed User",
+
+
+
+      Common_viewAllDataButton: "View All Data",
+      Common_clearAllDataButton: "Clear All Data",
 
 
     },
@@ -179,6 +242,9 @@ const resources = {
       MainMenuScreen_ResidentsCommitteeButton: "וועד דיירים",
       MainMenuScreen_ActivityHoursButton: 'שעות פעילות',
       MainMenuScreen_MapButton: 'מפה',
+      MainMenuScreen_NoticeBoardButton: "לוח מודעות",
+       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
+
 
 
       SettingsPopup_SettingsButton: 'הגדרות',
@@ -221,7 +287,70 @@ const resources = {
       MarketplaceNewItemScreen_ExtraImage: "תמונה נוספת",
       MarketplaceNewItemScreen_ImageOptional: "(אופציונלי)",
       MarketplaceNewItemScreen_ImageTapToChoose: "לחץ לבחירה",
+      MarketplaceNewItemScreen_missingInfoTitle: "מידע חסר", MarketplaceNewItemScreen_missingInfoMessage: "אנא הזן שם פריט.", MarketplaceNewItemScreen_authErrorTitle: "שגיאת אימות", MarketplaceNewItemScreen_authErrorMessage: "המשתמש לא זוהה. אנא התחבר מחדש.", MarketplaceNewItemScreen_errorTitle: "שגיאה", MarketplaceNewItemScreen_userInfoRetrievalError: "לא ניתן לאחזר פרטי משתמש.",
+      MarketplaceNewItemScreen_imageUploadFailedTitle: "העלאת התמונה נכשלה",
+      MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת הרישום נכשלה",
+
+
+      MainMenuNameplate_greetingGoodMorning: "בוקר טוב",
+      MainMenuNameplate_greetingGoodAfternoon: "אחר הצהריים טובים",
+      MainMenuNameplate_greetingGoodEvening: "ערב טוב",
+      MainMenuNameplate_greetingGoodNight: "לילה טוב",
+      MainMenuNameplate_greetingPunctuation: "!",
+
+
+      MainMenuScreen_DoneButton: "סיימתי",
+      MainMenuScreen_saveOrderSuccess: "סדר התפריט נשמר!", MainMenuScreen_saveOrderFailure: "שמירת הסדר נכשלה", MainMenuScreen_loadingMenu: "טוען תפריט…",
+
+
+      LoginScreen_loginSuccess: "התחברת בהצלחה",
+      LoginScreen_loginErrorTitle: "שגיאה!",
+      LoginScreen_loginErrorMessage: "שם משתמש או סיסמה שגויים!",
+      LoginScreen_phoneNumberLabel: "מספר טלפון", LoginScreen_passwordLabel: "סיסמה",
+      LoginScreen_loginButton: "כניסה",
+
+
+      MapScreen_building1Name: "בניין מספר אחת", MapScreen_building1Info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",Permissions_locationPermissionMessage: "נדרשת הרשאת מיקום להצגת המיקום.", Permissions_okButton: "אישור.", Permissions_openSettingsButton: "פתח הגדרות.", Permissions_permissionDeniedTitle: "ההרשאה נדחתה.",
+      LocationScreen_locationPermissionLabel: "הרשאת מיקום:", LocationScreen_insideBoundaryLabel: "בתוך הגבול:", LocationScreen_userLocationLabel: "מיקום משתמש:",MapScreen_backToMapButton: "חזרה למפה",
+    
+    
+    
+    
+    
+      ImagePicker_selectSourceTitle: "בחר מקור תמונה", ImagePicker_selectSourceMessage: "בחר כיצד לבחור את התמונה", ImagePicker_takePhotoButton: "צלם תמונה", ImagePicker_chooseFromLibraryButton: "בחר מהספרייה", ImagePicker_cancelButton: "ביטול", ImagePicker_permissionDeniedTitle: "ההרשאה נדחתה", ImagePicker_libraryPermissionDeniedMessage: "נדרשת הרשאה לגישה לתמונות!", ImagePicker_cameraPermissionDeniedMessage: "נדרשת הרשאת מצלמה!", ImagePicker_errorTitle: "שגיאה", ImagePicker_saveCameraImageFailure: "לא ניתן לשמור את תמונת המצלמה.", ImagePicker_saveLibraryImageFailure: "לא ניתן לשמור את תמונת הספרייה.", ImagePicker_openLibraryFailure: "לא ניתן לפתוח את ספריית התמונות.",
       
+    
+    
+      NoticeDetailsScreen_loadingDetails: "טוען פרטי הודעה...",
+      NoticeDetailsScreen_categoryLabel: "קטגוריה:",
+      NoticeDetailsScreen_dateLabel: "תאריך:",
+      Common_backButton: "חזרה לאחור",
+      NoticeBoardScreen_boardTitle: "לוח המודעות",
+      NoticeBoardScreen_filterButton: "סינון", NoticeBoardScreen_all: "הכל",
+      NoticeBoardScreen_filterLabel: "סינון:",
+      NoticeBoardScreen_sortOldest: "הישן ביותר",
+      NoticeBoardScreen_sortNewest: "החדש ביותר",
+      NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
+
+
+
+      ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
+      ResidentSearchScreen_enterNamePlaceholder: "הכנס שם...", ResidentSearchScreen_enterHobbyPlaceholder: "הכנס תחביב...",
+      ResidentSearchScreen_noMatchMessage: "אין משתמשים התואמים לחיפוש שלך.", ResidentSearchScreen_noUsersMessage: "לא נמצאו משתמשים.",
+
+
+
+      ResidentsCommitte_nameUnavailable: "שם לא זמין", ResidentsCommitte_titleUnavailable: "תואר לא זמין",
+
+
+
+
+      UserProfileCard_unnamedUser: "משתמש ללא שם",
+
+
+
+      Common_viewAllDataButton: "הצג את כל הנתונים",
+      Common_clearAllDataButton: "נקה את כל הנתונים",
 
 
 

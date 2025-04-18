@@ -13,7 +13,7 @@ function Greeting() {
   const [userEngFirstName, setUserEngFirstName] = useState("");
 
   const { t } = useTranslation(); 
-  const [greetingKey, setGreetingKey] = useState("greeting_goodMorning"); // Default greeting key
+  const [greetingKey, setGreetingKey] = useState("MainMenuNameplate_greetingGoodMorning"); // Default greeting key
 
   useEffect(() => {
     const fetchUserNames = async () => {
@@ -42,13 +42,13 @@ function Greeting() {
     const updateGreeting = () => {
       const currentHour = new Date().getHours();
       if (currentHour >= 5 && currentHour < 12) {
-        setGreetingKey("greeting_goodMorning");
+        setGreetingKey("MainMenuNameplate_greetingGoodMorning");
       } else if (currentHour >= 12 && currentHour < 18) {
-        setGreetingKey("greeting_goodAfternoon");
+        setGreetingKey("MainMenuNameplate_greetingGoodAfternoon");
       } else if (currentHour >= 18 && currentHour < 22) {
-        setGreetingKey("greeting_goodEvening");
+        setGreetingKey("MainMenuNameplate_greetingGoodEvening");
       } else {
-        setGreetingKey("greeting_goodNight");
+        setGreetingKey("MainMenuNameplate_greetingGoodNight");
       }
     };
     updateGreeting();
@@ -65,7 +65,7 @@ console.log("Name from greet plate:", firstName)
 
   const fullGreeting = `${t(greetingKey)}${
     firstName ? `, ${firstName}` : ""
-  }${t("greeting_punctuation")}`; // Use translated punctuation like '!' or '!'
+  }${t("MainMenuNameplate_greetingPunctuation")}`; // Use translated punctuation like '!' or '!'
 
   return (
     <View style={styles.container}>

@@ -4,9 +4,11 @@ import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
 import { Text, StyleSheet } from "react-native";
 import React from 'react'; // Import React
+import { useTranslation } from "react-i18next";
 
 // Accept onSave prop
 export function EditToggleButton({ onSave }) {
+  const { t } = useTranslation();
   const { editing, setEditing } = useMainMenuEdit();
 
   // Don't render the button if not in editing mode
@@ -28,7 +30,7 @@ export function EditToggleButton({ onSave }) {
       flipborderwidth={3}
     >
       {/* Assuming text is passed as children */}
-      <Text style={styles.toggleButtonText}>סיימתי</Text>
+      <Text style={styles.toggleButtonText}>{t('MainMenuScreen_DoneButton')}</Text>
     </FlipButton>
   );
 }
