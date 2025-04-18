@@ -20,19 +20,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
 import { useTranslation } from "react-i18next";
 
-const initialDataStructure = [
-  { key: "menu0", name: "עריכת פרופיל", destination: "EditProfile" },
-  { key: "menu1", name: "פרופיל", destination: "Profile" },
-  { key: "menu2", name: "חוגים ופעילויות", destination: "" },
-  { key: "menu3", name: "שוק", destination: "Marketplace" },
-  { key: "menu4", name: "וועד", destination: "CommittieePage" },
-  { key: "menu5", name: "שעות פעילות", destination: "" },
-  { key: "menu6", name: "מפה", destination: "Map" },
-  { key: "menu7", name: "לוח מודעות", destination: "Notices" },
-  { key: "menu8", name: "רשימת הדיירים", destination: "ResidentList" },
-  { key: "menu9", name: "Menu 9", destination: "" },
-];
-
 const ASYNC_STORAGE_KEY = "mainMenuOrder";
 
 const showDevButton = true;
@@ -72,6 +59,46 @@ export default function Index() {
 
   const latestButtonDataRef = useRef(initialDataStructure); // ref for latest buttons order
   const prevEditingRef = useRef(editing); // prev ref for DEBUG
+
+  const initialDataStructure = [
+    {
+      key: "menu1",
+      name: t("MainMenuScreen_ProfileButton"),
+      destination: "Profile",
+    },
+    {
+      key: "menu2",
+      name: t("MainMenuScreen_ActivitiesAndClassesButton"),
+      destination: "",
+    },
+    {
+      key: "menu3",
+      name: t("MainMenuScreen_MarketplaceButton"),
+      destination: "Marketplace",
+    },
+    {
+      key: "menu4",
+      name: t("MainMenuScreen_ResidentsCommitteeButton"),
+      destination: "CommittieePage",
+    },
+    {
+      key: "menu5",
+      name: t("MainMenuScreen_ActivityHoursButton"),
+      destination: "",
+    },
+    { key: "menu6", name: t("MainMenuScreen_MapButton"), destination: "Map" },
+    {
+      key: "menu7",
+      name: t("MainMenuScreen_NoticeBoardButton"),
+      destination: "Notices",
+    },
+    {
+      key: "menu8",
+      name: t("MainMenuScreen_ResidentListButton"),
+      destination: "ResidentList",
+    },
+    // { key: "menu9", name: "Menu 9", destination: "" },
+  ];
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -170,21 +197,21 @@ export default function Index() {
         {showDevButton && (
           <>
             <FlipButton
-              text="View All Data"
+              text={t("Common_viewAllDataButton")}
               bgColor="#fbbf24"
               textColor="black"
               style={styles.toggleButton}
               flipborderwidth={5}
               onPress={viewAllData}
-            ></FlipButton>
+            />
             <FlipButton
-              text="Clear All Data"
+              text={t("Common_clearAllDataButton")}
               bgColor="#fbbf24"
               textColor="black"
               style={styles.toggleButton}
               flipborderwidth={5}
               onPress={clearAllData}
-            ></FlipButton>
+            />
           </>
         )}
         <EditToggleButton onSave={saveOrder} />

@@ -89,6 +89,7 @@ const LoginScreen = () => {
                 <View style={styles.formContainer}>
                   <FloatingLabelInput
                     label={t("LoginScreen_phoneNumberLabel")}
+                    alignRight={Globals.userSelectedDirection === "rtl"}
                     value={phoneNumber}
                     onChangeText={setPhoneNumber}
                     textContentType="telephoneNumber"
@@ -99,6 +100,7 @@ const LoginScreen = () => {
 
                   <FloatingLabelInput
                     label={t("LoginScreen_passwordLabel")}
+                    alignRight={Globals.userSelectedDirection === "rtl"}
                     value={password}
                     onChangeText={setPassword}
                     textContentType="password"
@@ -113,7 +115,9 @@ const LoginScreen = () => {
                     disabled={loginLoading}
                   >
                     <XStack gap={5} style={{ paddingStart: 15 }}>
-                      <Text style={styles.loginButtonText}>כניסה</Text>
+                      <Text style={styles.loginButtonText}>
+                        {t("LoginScreen_loginButton")}
+                      </Text>{" "}
                       {loginLoading ? (
                         <ActivityIndicator size="large" />
                       ) : (

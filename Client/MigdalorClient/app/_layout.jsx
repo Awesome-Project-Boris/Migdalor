@@ -127,6 +127,13 @@ export default function Layout() {
                         headerShown: false
                       }}
                     />
+                    <Stack.Screen
+                      name="CommittieePage"
+                      options={{
+                        title: "Committiee Page",
+                        headerShown: false
+                      }}
+                    />
                   </Stack>
                 </MarketplaceProvider>
               </BottomSheetProvider>

@@ -68,6 +68,8 @@ const resources = {
       MainMenuScreen_ResidentsCommitteeButton: "Residents' Committee",
       MainMenuScreen_ActivityHoursButton: 'Activity Hours',
       MainMenuScreen_MapButton: 'Map',
+      MainMenuScreen_NoticeBoardButton: "Notice Board",
+      MainMenuScreen_ResidentListButton: "Resident List",
 
 
       SettingsPopup_SettingsButton: 'Settings',
@@ -132,6 +134,8 @@ const resources = {
       LoginScreen_loginErrorTitle: "Error!",
       LoginScreen_loginErrorMessage: "Incorrect username or password!",
       LoginScreen_phoneNumberLabel: "Phone Number", LoginScreen_passwordLabel: "Password",
+      LoginScreen_loginButton: "Login",
+
 
       MapScreen_building1Name: "Building One", MapScreen_building1Info: "This is the first building we defined – the entrance building",Permissions_locationPermissionMessage: "Location permission is needed to show position.", Permissions_okButton: "OK.", Permissions_openSettingsButton: "Open Settings.", Permissions_permissionDeniedTitle: "Permission denied.",
       LocationScreen_locationPermissionLabel: "Location Permission:", LocationScreen_insideBoundaryLabel: "Inside Boundary:", LocationScreen_userLocationLabel: "User Location:",MapScreen_backToMapButton: "Back to Map", 
@@ -158,14 +162,22 @@ const resources = {
 
 
 
-
-
+      ResidentSearchScreen_searchByLabel: "Search by:", ResidentSearchScreen_searchByName: "Name", ResidentSearchScreen_searchByHobby: "Hobby",
+      ResidentSearchScreen_enterNamePlaceholder: "Enter name...", ResidentSearchScreen_enterHobbyPlaceholder: "Enter hobby...",
+      ResidentSearchScreen_noMatchMessage: "No users match your search.", ResidentSearchScreen_noUsersMessage: "No users found.",
 
 
       
       
+      ResidentsCommitte_nameUnavailable: "Name Unavailable", ResidentsCommitte_titleUnavailable: "Title Unavailable",
+      
+
+      UserProfileCard_unnamedUser: "Unnamed User",
 
 
+
+      Common_viewAllDataButton: "View All Data",
+      Common_clearAllDataButton: "Clear All Data",
 
 
     },
@@ -230,6 +242,9 @@ const resources = {
       MainMenuScreen_ResidentsCommitteeButton: "וועד דיירים",
       MainMenuScreen_ActivityHoursButton: 'שעות פעילות',
       MainMenuScreen_MapButton: 'מפה',
+      MainMenuScreen_NoticeBoardButton: "לוח מודעות",
+       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
+
 
 
       SettingsPopup_SettingsButton: 'הגדרות',
@@ -292,6 +307,7 @@ const resources = {
       LoginScreen_loginErrorTitle: "שגיאה!",
       LoginScreen_loginErrorMessage: "שם משתמש או סיסמה שגויים!",
       LoginScreen_phoneNumberLabel: "מספר טלפון", LoginScreen_passwordLabel: "סיסמה",
+      LoginScreen_loginButton: "כניסה",
 
 
       MapScreen_building1Name: "בניין מספר אחת", MapScreen_building1Info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",Permissions_locationPermissionMessage: "נדרשת הרשאת מיקום להצגת המיקום.", Permissions_okButton: "אישור.", Permissions_openSettingsButton: "פתח הגדרות.", Permissions_permissionDeniedTitle: "ההרשאה נדחתה.",
@@ -318,6 +334,23 @@ const resources = {
 
 
 
+      ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
+      ResidentSearchScreen_enterNamePlaceholder: "הכנס שם...", ResidentSearchScreen_enterHobbyPlaceholder: "הכנס תחביב...",
+      ResidentSearchScreen_noMatchMessage: "אין משתמשים התואמים לחיפוש שלך.", ResidentSearchScreen_noUsersMessage: "לא נמצאו משתמשים.",
+
+
+
+      ResidentsCommitte_nameUnavailable: "שם לא זמין", ResidentsCommitte_titleUnavailable: "תואר לא זמין",
+
+
+
+
+      UserProfileCard_unnamedUser: "משתמש ללא שם",
+
+
+
+      Common_viewAllDataButton: "הצג את כל הנתונים",
+      Common_clearAllDataButton: "נקה את כל הנתונים",
 
 
 
