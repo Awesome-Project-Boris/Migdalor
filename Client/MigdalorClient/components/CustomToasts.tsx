@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Globals } from '../app/constants/Globals'; // Adjust the import path as necessary
 
 interface CustomToastProps {
   text1?: string;
@@ -11,8 +12,8 @@ export const CustomSuccessToast: React.FC<CustomToastProps> = ({ text1, text2 })
   <View style={[styles.toastBase, styles.successToast]}>
    <Ionicons name="checkmark-circle" size={24} color="white" style={styles.toastIcon} /> 
     <View style={styles.toastTextContainer}>
-      {text1 && <Text style={[styles.toastText, styles.toastTitle]}>{text1}</Text>}
-      {text2 && <Text style={[styles.toastText, styles.toastMessage]}>{text2}</Text>}
+      {text1 && <Text style={[styles.toastText, styles.toastTitle, {textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left"}]}>{text1}</Text>}
+      {text2 && <Text style={[styles.toastText, styles.toastMessage, {textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left"}]}>{text2}</Text>}
     </View>
   </View>
 );
@@ -23,8 +24,8 @@ export const CustomErrorToast: React.FC<CustomToastProps> = ({ text1, text2 }) =
   <View style={[styles.toastBase, styles.errorToast]}>
     <Ionicons name="alert-circle" size={24} color="white" style={styles.toastIcon} /> 
     <View style={styles.toastTextContainer}>
-      {text1 && <Text style={[styles.toastText, styles.toastTitle]}>{text1}</Text>}
-      {text2 && <Text style={[styles.toastText, styles.toastMessage]}>{text2}</Text>}
+      {text1 && <Text style={[styles.toastText, styles.toastTitle, {textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left"}]}>{text1}</Text>}
+      {text2 && <Text style={[styles.toastText, styles.toastMessage, {textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left"}]}>{text2}</Text>}
     </View>
   </View>
 );
@@ -33,8 +34,8 @@ export const CustomInfoToast: React.FC<CustomToastProps> = ({ text1, text2 }) =>
   <View style={[styles.toastBase, styles.infoToast]}>
     <Ionicons name="information-circle" size={24} color="white" style={styles.toastIcon} />
     <View style={styles.toastTextContainer}>
-      {text1 && <Text style={[styles.toastText, styles.toastTitle]}>{text1}</Text>}
-      {text2 && <Text style={[styles.toastText, styles.toastMessage]}>{text2}</Text>}
+      {text1 && <Text style={[styles.toastText, styles.toastTitle, {textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left"}]}>{text1}</Text>}
+      {text2 && <Text style={[styles.toastText, styles.toastMessage, {textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left"}]}>{text2}</Text>}
     </View>
   </View>
 );

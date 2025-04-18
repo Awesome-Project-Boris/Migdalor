@@ -499,9 +499,11 @@ export default function AddNewItem() {
       const finalResult = await listingResponse.json();
       Toast.show({
         type: "success",
-        text1: t("MarketplaceNewItemScreen_listingCreatedSuccessTitle"),
+        text1: t("MarketplaceNewItemScreen_listingCreatedTitle"),
         text2: t("MarketplaceNewItemScreen_listingCreatedSuccessMsg", {id: finalResult.listingId}), // Use translation
         position: "top",
+        // alignRight: Globals.userSelectedDirection === "rtl"
+        //textAlign: Globals.userSelectedDirection === "rtl",
       });
       await resetState();
       router.back();

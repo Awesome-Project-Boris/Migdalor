@@ -139,7 +139,6 @@ export default function NoticeFocusScreen() {
                 },
               ]}
             >
-              {" "}
               {t("NoticeDetailsScreen_categoryLabel")}{" "}
               {noticeData.noticeCategory}
               {noticeData.noticeSubCategory
