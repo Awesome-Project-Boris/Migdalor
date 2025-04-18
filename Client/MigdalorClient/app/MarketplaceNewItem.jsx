@@ -443,9 +443,11 @@ export default function AddNewItem() {
       const finalResult = await listingResponse.json();
       Toast.show({
         type: "success",
-        text1: "Listing Created!",
+        text1: t("MarketplaceNewItemScreen_listingCreatedTitle"),
         text2: `ID: ${finalResult.listingId}`,
         position: "top",
+        // alignRight: Globals.userSelectedDirection === "rtl"
+        //textAlign: Globals.userSelectedDirection === "rtl",
       });
       await resetState(); // Clean up local files and state
       router.back(); // Navigate back only on full success

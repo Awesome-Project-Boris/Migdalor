@@ -146,7 +146,7 @@ if (error) {
                 bgColor="#f8f9fa"
                 textColor="#343a40"
             >
-                <Text style={styles.backButtonText}>{t('Common_BackButton')}</Text>
+                <Text style={styles.backButtonText}>{t('Common_BackButtonShort')}</Text>
             </FlipButton>
         </View>
     );
@@ -162,7 +162,7 @@ if (!listingDetails) {
                 bgColor="#f8f9fa"
                 textColor="#343a40"
             >
-                 <Text style={styles.backButtonText}>{t('Common_BackButton')}</Text>
+                 <Text style={styles.backButtonText}>{t('Common_BackButtonShortShort')}</Text>
             </FlipButton>
         </View>
     );
@@ -181,7 +181,7 @@ if (!listingDetails) {
             {/* Title, Date ... */}
             <Text style={styles.title}>{listingDetails.title}</Text>
             <Text style={styles.dateText}>
-                {t('MarketplaceItemScreen_PostedOn', { date: new Date(listingDetails.date).toLocaleDateString() })}
+                {t('MarketplaceItemScreen_PublishedDate' )} {new Date(listingDetails.date).toLocaleDateString('en-GB') }
             </Text>
 
             {/* Images ... */}
@@ -189,12 +189,12 @@ if (!listingDetails) {
                 {/* Image rendering remains the same */}
                 <TouchableOpacity onPress={() => handleImagePress( mainImageUrl, listingDetails.mainPicture?.picAlt )} disabled={!mainImageUrl} >
                     <Image source={mainImageSource} style={styles.image} />
-                    {!mainImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_MainImage')}</Text>}
+                    {!mainImageUrl && <Text style={styles.noImageText}>{t('MarketplaceNewItemScreen_MainImage')}</Text>}
                 </TouchableOpacity>
                 {(extraImageUrl || mainImageUrl) && (
                     <TouchableOpacity onPress={() => handleImagePress( extraImageUrl, listingDetails.extraPicture?.picAlt )} disabled={!extraImageUrl} >
                         <Image source={extraImageSource} style={[styles.image, !extraImageUrl && styles.imagePlaceholder]} />
-                        {!extraImageUrl && <Text style={styles.noImageText}>{t('MarketplaceItemScreen_ExtraImage')}</Text>}
+                        {!extraImageUrl && <Text style={styles.noImageText}>{t('MarketplaceNewItemScreen_ExtraImage')}</Text>}
                     </TouchableOpacity>
                 )}
             </View>
@@ -254,7 +254,7 @@ if (!listingDetails) {
 
             {/* Refactored Back Button */}
             <FlipButton
-                text={t('Common_BackButton')} // Use text prop
+                text={t('Common_BackButtonShort')} // Use text prop
                 onPress={() => router.back()}
                 style={styles.backButton}
                 bgColor="#f8f9fa"

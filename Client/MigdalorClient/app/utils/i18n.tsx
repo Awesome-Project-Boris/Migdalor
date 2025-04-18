@@ -101,6 +101,8 @@ const resources = {
       MarketplaceItemScreen_MessageButton: "Message on WhatsApp",
       MarketplaceItemScreen_EmailButton: "Email",
       MarketplaceItemScreen_PublishedDate: "Published on:",
+      MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp", 
+      MarketplaceItemScreen_Loading: "Loading item...",
 
 
       MarketplaceNewItemScreen_Header: "New Item Listing",
@@ -117,6 +119,7 @@ const resources = {
       MarketplaceNewItemScreen_missingInfoTitle: "Missing Info", MarketplaceNewItemScreen_missingInfoMessage: "Please enter an item name.", MarketplaceNewItemScreen_authErrorTitle: "Authentication Error", MarketplaceNewItemScreen_authErrorMessage: "User not identified. Please log in again.", MarketplaceNewItemScreen_errorTitle: "Error", MarketplaceNewItemScreen_userInfoRetrievalError: "Could not retrieve user information.",
       MarketplaceNewItemScreen_imageUploadFailedTitle: "Image Upload Failed",
       MarketplaceNewItemScreen_listingCreationFailedTitle: "Listing Creation Failed",
+      MarketplaceNewItemScreen_listingCreatedTitle: "Listing Created!",
 
       MainMenuNameplate_greetingGoodMorning: "Good Morning",
       MainMenuNameplate_greetingGoodAfternoon: "Good Afternoon",
@@ -148,6 +151,7 @@ const resources = {
       NoticeDetailsScreen_categoryLabel: "Category:",
       NoticeDetailsScreen_dateLabel: "Date:",
       Common_backButton: "Go back",
+      Common_BackButtonShort: "Back",
       NoticeBoardScreen_boardTitle: "Notice Board", 
       NoticeBoardScreen_filterButton: "Filter", NoticeBoardScreen_all: "All",
 
@@ -274,6 +278,8 @@ const resources = {
       MarketplaceItemScreen_MessageButton: "שלח הודעה בוואטסאפ",
       MarketplaceItemScreen_EmailButton: "שלח מייל",
       MarketplaceItemScreen_PublishedDate: "פורסם בתאריך:",
+      MarketplaceItemScreen_ExtraImage: "תמונה נוספת", MarketplaceItemScreen_DescriptionTitle: "תיאור", MarketplaceItemScreen_SellerTitle: "מוכר", MarketplaceItemScreen_ContactEmail: "דוא״ל", MarketplaceItemScreen_ContactPhone: "טלפון", MarketplaceItemScreen_ContactWhatsApp: "וואטסאפ",
+      MarketplaceItemScreen_Loading: "טוען פריט...",
 
 
       MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
@@ -290,6 +296,9 @@ const resources = {
       MarketplaceNewItemScreen_missingInfoTitle: "מידע חסר", MarketplaceNewItemScreen_missingInfoMessage: "אנא הזן שם פריט.", MarketplaceNewItemScreen_authErrorTitle: "שגיאת אימות", MarketplaceNewItemScreen_authErrorMessage: "המשתמש לא זוהה. אנא התחבר מחדש.", MarketplaceNewItemScreen_errorTitle: "שגיאה", MarketplaceNewItemScreen_userInfoRetrievalError: "לא ניתן לאחזר פרטי משתמש.",
       MarketplaceNewItemScreen_imageUploadFailedTitle: "העלאת התמונה נכשלה",
       MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת הרישום נכשלה",
+      MarketplaceNewItemScreen_listingCreatedTitle: "הרישום נוצר!",
+
+
 
 
       MainMenuNameplate_greetingGoodMorning: "בוקר טוב",
@@ -351,6 +360,7 @@ const resources = {
 
       Common_viewAllDataButton: "הצג את כל הנתונים",
       Common_clearAllDataButton: "נקה את כל הנתונים",
+      Common_BackButtonShort: "חזרה",
 
 
 
