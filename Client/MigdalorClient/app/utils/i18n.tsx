@@ -119,6 +119,12 @@ const resources = {
       MarketplaceNewItemScreen_listingCreationFailedTitle: "Listing Creation Failed",
       MarketplaceNewItemScreen_listingCreatedTitle: "Listing Created!",
       MarketplaceNewItemScreen_listingCreatedSuccessMsg: "Your listing has been created successfully!",
+      MarketplaceNewItemScreen_errorTitleRequired: "Item name is required.",
+      MarketplaceNewItemScreen_errorTitleTooLong: "Item name is too long.",
+      MarketplaceNewItemScreen_errorDescriptionTooLong: "Item description is too long.",
+      MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars: "Description contains too many special characters.",
+
+
 
       MainMenuNameplate_greetingGoodMorning: "Good Morning",
       MainMenuNameplate_greetingGoodAfternoon: "Good Afternoon",
@@ -302,9 +308,12 @@ const resources = {
       MarketplaceNewItemScreen_imageUploadFailedTitle: "העלאת התמונה נכשלה",
       MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת ההצעה נכשלה",
       MarketplaceNewItemScreen_listingCreatedTitle: "ההצעה נוצרה!",
+
       MarketplaceNewItemScreen_listingCreatedSuccessMsg: "ההצעה שלך נוצרה בהצלחה!",
-
-
+      MarketplaceNewItemScreen_errorTitleRequired: "חובה להזין שם הפריט.",
+      MarketplaceNewItemScreen_errorTitleTooLong: "שם הפריט ארוך מדי.",
+      MarketplaceNewItemScreen_errorDescriptionTooLong: "תיאור הפריט ארוך מדי.",
+      MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars: "התיאור מכיל יותר מדי תווים מיוחדים.",
 
 
       MainMenuNameplate_greetingGoodMorning: "בוקר טוב",
