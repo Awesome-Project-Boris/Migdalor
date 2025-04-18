@@ -74,6 +74,7 @@ const fetchUsersAPI = async (
   );
   return { users: paginatedUsers, totalCount: totalCount };
 };
+
 // --- End Mock API ---
 
 export default function UserProfilesScreen() {

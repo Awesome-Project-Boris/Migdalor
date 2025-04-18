@@ -27,7 +27,7 @@ export default function Layout() {
             <MainMenuEditProvider>
               <BottomSheetProvider>
                 <MarketplaceProvider>
-                  <Stack>
+                  <Stack screenOptions={{ headerShown: false }}>
                     <Stack.Screen
                       name="index"
                       options={{
@@ -110,21 +110,21 @@ export default function Layout() {
                       name="MainMenu"
                       options={{
                         title: "Main Menu",
-                        headerShown: false
+                        headerShown: false,
                       }}
                     />
                     <Stack.Screen
                       name="Notices"
                       options={{
                         title: "Notices",
-                        headerShown: false
+                        headerShown: false,
                       }}
                     />
                     <Stack.Screen
                       name="ResidentList"
                       options={{
                         title: "Resident List",
-                        headerShown: false
+                        headerShown: false,
                       }}
                     />
                     <Stack.Screen

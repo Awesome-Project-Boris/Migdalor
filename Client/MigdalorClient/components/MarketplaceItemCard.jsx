@@ -1,54 +1,63 @@
-import { useTranslation } from 'react-i18next';
-import React from 'react';
-import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native';
-// Import Globals to construct the image URL
+import React from "react";
+import { StyleSheet, View, Text, Image } from "react-native";
+import { useTranslation } from "react-i18next";
 import { SCREEN_WIDTH, Globals } from "../app/constants/Globals";
+import BouncyButton from "@/components/BouncyButton";
 
-// Define a placeholder image for when no image is available
-const placeholderImage = require('../assets/images/tempItem.jpg');
+const placeholderImage = require("../assets/images/tempItem.jpg");
 
-function MarketplaceItemCard({ data, onPress }) {
+export default function MarketplaceItemCard({ data, onPress }) {
   const { t } = useTranslation();
 
   // Construct the full image URL if mainImagePath exists, otherwise use placeholder
   const imageUrl = data?.mainImagePath
-    ? { uri: `${Globals.API_BASE_URL}${data.mainImagePath}` } 
+    ? { uri: `${Globals.API_BASE_URL}${data.mainImagePath}` }
     : placeholderImage;
 
-
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <BouncyButton onPress={onPress} style={styles.container}>
       <Image
         style={styles.image}
         source={imageUrl}
-        onError={(e) => console.log(`Error loading image ${imageUrl.uri || 'placeholder'}:`, e.nativeEvent.error)}
+        onError={(e) =>
+          console.log(
+            `Error loading image ${imageUrl.uri || "placeholder"}:`,
+            e.nativeEvent.error
+          )
+        }
       />
 
       <View style={styles.infoContainer}>
-        <Text style={styles.itemName} numberOfLines={2}>{data?.title || t('MarketplaceItemCard_Untitled')}</Text>
-        <Text style={styles.sellerName}>{data?.sellerName || t('MarketplaceItemCard_UnknownSeller')}</Text>
+        <Text style={styles.itemName} numberOfLines={2}>
+          {data?.title || t("MarketplaceItemCard_Untitled")}
+        </Text>
+        <Text style={styles.sellerName}>
+          {data?.sellerName || t("MarketplaceItemCard_UnknownSeller")}
+        </Text>
       </View>
 
       <View style={styles.moreInfoContainer}>
-        <Text style={styles.moreInfoText}>{t("MarketplaceScreen_MoreDetailsButton")}</Text>
+        <Text style={styles.moreInfoText}>
+          {t("MarketplaceScreen_MoreDetailsButton")}
+        </Text>
       </View>
-    </TouchableOpacity>
+    </BouncyButton>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     width: SCREEN_WIDTH * 0.9,
-    height: 150, // Use minHeight to allow content growth if text wraps
+    height: 150,
     borderRadius: 10,
-    backgroundColor: '#fff',
-    flexDirection: 'row', // Keep row layout
-    alignItems: 'center', // Vertically center image and info container
-    padding: 10, // Adjusted padding
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
     marginVertical: 8,
-    borderColor: '#ddd', // Lighter border
+    borderColor: "#ddd",
     borderWidth: 1,
-    shadowColor: '#000', // Add subtle shadow
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -57,39 +66,36 @@ const styles = StyleSheet.create({
   image: {
     width: 120,
     height: 120,
-    borderRadius: 8, // Slightly less rounded corners
-    marginRight: 15, // Space between image and text
-    backgroundColor: '#e0e0e0', // Background color for placeholder or while loading
+    borderRadius: 8,
+    marginRight: 15,
+    backgroundColor: "#e0e0e0",
   },
   infoContainer: {
-    flex: 1, // Allow this container to take up remaining space
-    justifyContent: 'center', // Vertically center text content
-    height: '100%', // Ensure it takes full height for alignment
-    paddingRight: 5, // Prevent text touching edge
+    flex: 1,
+    justifyContent: "center",
+    height: "100%",
+    paddingRight: 5,
   },
   itemName: {
-    fontSize: 18, // Slightly smaller for potentially longer titles
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 6, // Adjusted margin
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 6,
   },
   sellerName: {
-    fontSize: 14, // Smaller size for seller name
-    color: '#555',
-    marginBottom: 20, // Add space above the "more info" text
+    fontSize: 14,
+    color: "#555",
+    marginBottom: 20,
   },
   moreInfoContainer: {
-    position: 'absolute',
-    bottom: 8, // Position near the bottom
-    // Align based on the infoContainer, not the whole card width
-    left: 135, // Start after image width + margin (120 + 15)
-    right: 10, // Padding from right edge
-    alignItems: 'flex-start', // Align text to the start (left in LTR, right in RTL?)
+    position: "absolute",
+    bottom: 8,
+    left: 135,
+    right: 10,
+    alignItems: "flex-start",
   },
   moreInfoText: {
-    fontSize: 12, // Smaller text for "more details"
-    color: '#999',
+    fontSize: 12,
+    color: "#999",
   },
 });
-
-export default MarketplaceItemCard;

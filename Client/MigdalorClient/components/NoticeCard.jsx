@@ -1,13 +1,13 @@
 import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Globals } from "../app/constants/Globals"; // Adjust the import path as necessary
+import BouncyButton from "./BouncyButton";
 
-// Depends on how date acutally looks, could be ISO, could be Date, could be DateTime - CHANGE IF NEEDED. Maybe we'll also want the time?
+// Format date helper
 const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   try {
-    // If input is "YYYY-MM-DD"
     const [year, month, day] = dateString.split("-");
     return `${day}/${month}/${year}`;
   } catch (e) {
@@ -16,28 +16,32 @@ const formatDate = (dateString) => {
   }
 };
 
-// Helper function to create a snippet
+// Create snippet helper
 const createSnippet = (message, maxLength = 100) => {
   if (!message) return "";
-  if (message.length <= maxLength) return message;
-  return message.substring(0, maxLength) + "...";
+  return message.length <= maxLength
+    ? message
+    : message.substring(0, maxLength) + "...";
 };
 
-// NoticeCard component expects 'data' and 'onPress' props
-function NoticeCard({ data, onPress }) {
-  const { t } = useTranslation();
-
-  if (!data) {
-    return null;
-  }
-
-  // data will have the notice's data
+/**
+ * NoticeCard displays a notice with a bouncy press animation.
+ * Expects data with noticeTitle, noticeCategory, noticeSubCategory,
+ * creationDate, noticeMessage, and categoryColor fields.
+ */
+export default function NoticeCard({ data, onPress }) {
+  if (!data) return null;
 
   const displayDate = formatDate(data.creationDate);
   const displaySnippet = createSnippet(data.noticeMessage);
+  const borderColor = data.categoryColor || "#ccc";
 
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <BouncyButton
+      onPress={onPress}
+      style={[styles.container, { borderColor }]}
+      springConfig={{ speed: 20, bounciness: 10 }}
+    >
       <View style={styles.infoContainer}>
         <Text
           style={[
@@ -83,25 +87,16 @@ function NoticeCard({ data, onPress }) {
         </Text>
 
         {displaySnippet && (
-          <Text
-            style={[
-              styles.noticeSnippet,
-              {
-                /* flip alignment based on the app’s direction setting */
-                // textAlign:
-                //   Globals.userSelectedDirection === "rtl" ? "right" : "left",
-              },
-            ]}
-          >
-            {displaySnippet}
-          </Text>
+          <Text style={styles.noticeSnippet}>{displaySnippet}</Text>
         )}
       </View>
 
       <View style={styles.moreInfoContainer}>
-        <Text style={styles.moreInfoText}>{t("MarketplaceScreen_MoreDetailsButton")}</Text>
+        <Text style={styles.moreInfoText}>
+          {t("MarketplaceScreen_MoreDetailsButton")}
+        </Text>
       </View>
-    </TouchableOpacity>
+    </BouncyButton>
   );
 }
 
@@ -115,7 +110,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     marginVertical: 8,
-    borderColor: "#ccc",
     borderWidth: 5,
     position: "relative",
     paddingBottom: 30,
@@ -146,12 +140,6 @@ const styles = StyleSheet.create({
     color: "#333",
     lineHeight: 18,
   },
-  // Optional: Style for sender info
-  // senderInfo: {
-  //    fontSize: 12,
-  //    color: '#888',
-  //    marginTop: 5,
-  // },
   moreInfoContainer: {
     position: "absolute",
     bottom: 5,
@@ -164,5 +152,3 @@ const styles = StyleSheet.create({
     color: "#aaa",
   },
 });
-
-export default NoticeCard;

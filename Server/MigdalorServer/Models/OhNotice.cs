@@ -1,14 +1,29 @@
-﻿using MigdalorServer.Database;
+﻿using Microsoft.EntityFrameworkCore;
+using MigdalorServer.Database;
 using MigdalorServer.Models.DTOs;
 
 namespace MigdalorServer.Models
 {
     public partial class OhNotice
     {
-        public static List<OhNotice> GetOhNotices()
+        public static List<dynamic> GetNotices()
         {
             using MigdalorDBContext db = new();
-            return db.OhNotices.ToList();
+            return db
+                .OhNotices.Include(n => n.NoticeCategoryNavigation)
+                .Select(n => new
+                {
+                    n.NoticeId,
+                    n.SenderId,
+                    n.CreationDate,
+                    n.NoticeTitle,
+                    n.NoticeMessage,
+                    n.NoticeCategory,
+                    n.NoticeSubCategory,
+                    n.NoticeCategoryNavigation!.CategoryColor,
+                })
+                .OrderByDescending(n => n.CreationDate)
+                .ToList<dynamic>();
         }
 
         public static OhNotice AddOhNotice(NewNotice notice)
@@ -29,10 +44,25 @@ namespace MigdalorServer.Models
             return ohNotice;
         }
 
-        public static List<OhNotice> GetOhNoticesByCategory(string category)
+        public static List<dynamic> GetOhNoticesByCategory(string category)
         {
             using MigdalorDBContext db = new();
-            var res = db.OhNotices.Where(n => n.NoticeCategory == category).ToList();
+            var res = db
+                .OhNotices.Include(n => n.NoticeCategoryNavigation)
+                .Select(n => new
+                {
+                    n.NoticeId,
+                    n.SenderId,
+                    n.CreationDate,
+                    n.NoticeTitle,
+                    n.NoticeMessage,
+                    n.NoticeCategory,
+                    n.NoticeSubCategory,
+                    n.NoticeCategoryNavigation!.CategoryColor,
+                })
+                .Where(n => n.NoticeCategory == category)
+                .ToList<dynamic>();
+
             if (res.Count == 0)
             {
                 throw new Exception("No notices found for this category");

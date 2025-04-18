@@ -8,6 +8,7 @@ import {
   Dimensions,
   TouchableOpacity,
 } from "react-native";
+import BouncyButton from "./BouncyButton";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -18,8 +19,10 @@ function UserProfileCard({ data }) {
   const imageUrl = data?.photoUrl ? { uri: data.photoUrl } : placeholderImage;
 
   return (
-    <TouchableOpacity
+    <BouncyButton
       style={styles.container}
+      springConfig={{ bounciness: 10, speed: 50 }}
+      shrinkScale={0.85}
       onPress={() =>
         console.log(
           "User profile card pressed" /*/ We will navigate to profile page here /*/
@@ -32,7 +35,7 @@ function UserProfileCard({ data }) {
           {data?.name || t("UserProfileCard_unnamedUser")}
         </Text>
       </View>
-    </TouchableOpacity>
+    </BouncyButton>
   );
 }
 

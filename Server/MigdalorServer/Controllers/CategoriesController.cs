@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using MigdalorServer.Database;
+using MigdalorServer.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -10,34 +12,35 @@ namespace MigdalorServer.Controllers
     {
         // GET: api/<CategoriesController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IActionResult Get()
         {
-            return new string[] { "value1", "value2" };
+            try
+            {
+                return Ok(OhCategory.GetAllCategories());
+            }
+            catch
+            {
+                return StatusCode(500, "Error Getting Categories");
+            }
         }
 
         // GET api/<CategoriesController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("{name}")]
+        public OhCategory Get(string name)
         {
-            return "value";
+            return OhCategory.GetCategoryByName(name);
         }
 
         // POST api/<CategoriesController>
         [HttpPost]
-        public void Post([FromBody]string value)
-        {
-        }
+        public void Post([FromBody] string value) { }
 
         // PUT api/<CategoriesController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
+        public void Put(int id, [FromBody] string value) { }
 
         // DELETE api/<CategoriesController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        public void Delete(int id) { }
     }
 }

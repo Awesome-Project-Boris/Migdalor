@@ -16,7 +16,7 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                return Ok(OhNotice.GetOhNotices());
+                return Ok(OhNotice.GetNotices());
             }
             catch (Exception e)
             {

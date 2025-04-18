@@ -4,7 +4,7 @@ import React, {
   useMemo,
   useRef,
   useCallback,
-} from "react"; // Added useCallback
+} from "react";
 import {
   View,
   Text,
@@ -15,65 +15,69 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
+
 import NoticeCard from "../components/NoticeCard";
 import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import FilterModal from "../components/NoticeFilterModal";
 import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next"; // Added for translation
+import { Globals } from "../app/constants/Globals";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 10;
 
-// --- Mock Fetch Function (Now includes categories) ---
 const fetchNoticesAPI = async () => {
-  // Removed page/query args assuming fetch all for client-side filter/sort
-  console.log(`Workspaceing all notices...`);
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  const allMockNotices = Array.from({ length: 35 }, (_, i) => ({
-    noticeId: i + 1,
-    senderId: `guid_${i}`,
-    // Generate dates for sorting demo: recent first by default
-    creationDate: `2025-04-${String(14 - Math.floor(i / 2)).padStart(2, "0")}`,
-    noticeTitle: `Notice #${i + 1}${i % 3 === 0 ? " Urgent!" : ""}`,
-    noticeMessage: `Message for notice ${i + 1}.`,
-    noticeCategory: i % 3 === 0 ? "Urgent" : i % 3 === 1 ? "General" : "Events",
-    noticeSubCategory: i % 5 === 0 ? "Sub Cat A" : null,
-  }));
-  // Derive categories from fetched data (or better: get from API)
-  const categories = [
-    ...new Set(allMockNotices.map((n) => n.noticeCategory).filter(Boolean)),
-  ];
+  console.log("Fetching notices from API...", Globals.API_BASE_URL, Date.now());
+  const [noticesRes, categoriesRes] = await Promise.all([
+    fetch(`${Globals.API_BASE_URL}/api/Notices`, { method: "GET" }),
+    fetch(`${Globals.API_BASE_URL}/api/Categories`, { method: "GET" }),
+  ]);
 
-  return {
-    notices: allMockNotices,
-    totalCount: allMockNotices.length,
-    availableCategories: categories,
-  };
+  if (!noticesRes.ok)
+    throw new Error(`Failed to load notices: HTTP ${noticesRes.status}`);
+  if (!categoriesRes.ok)
+    throw new Error(`Failed to load categories: HTTP ${categoriesRes.status}`);
+
+  // const rawNotices = await noticesRes.json();
+  const notices = await noticesRes.json();
+  const rawCategories = await categoriesRes.json();
+
+  // const notices = rawNotices.map((n) => ({
+  //   noticeId: n.noticeId,
+  //   senderId: n.senderId,
+  //   creationDate: n.creationDate,
+  //   noticeTitle: n.noticeTitle,
+  //   noticeMessage: n.noticeMessage,
+  //   noticeCategory: n.noticeCategory,
+  //   noticeSubCategory: n.noticeSubCategory || null,
+  // }));
+
+  const availableCategories = rawCategories.map((c) => c.categoryName);
+
+  return { notices, totalCount: notices.length, availableCategories };
 };
 
 export default function NoticesScreen() {
   const { t } = useTranslation(); // Initialize translation hook
   const [allNotices, setAllNotices] = useState([]);
-  const [allCategories, setAllCategories] = useState([]); // State for all categories
+  const [allCategories, setAllCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [sortOrder, setSortOrder] = useState("recent"); // 'recent' or 'oldest'
-  const [selectedCategories, setSelectedCategories] = useState([]); // Array of category names/IDs to filter by
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [sortOrder, setSortOrder] = useState("recent");
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 
   const router = useRouter();
   const flatListRef = useRef(null);
 
-  // Fetch notices and categories on mount
   useEffect(() => {
     const loadNotices = async () => {
       setIsLoading(true);
       try {
-        const response = await fetchNoticesAPI(); // Fetch all data
-        setAllNotices(response.notices);
-        setAllCategories(response.availableCategories || []); // Store categories
-        // Reset state on initial load
+        const { notices, availableCategories } = await fetchNoticesAPI();
+        setAllNotices(notices);
+        setAllCategories(availableCategories);
         setCurrentPage(1);
         setSelectedCategories([]);
         setSortOrder("recent");
@@ -86,21 +90,47 @@ export default function NoticesScreen() {
       }
     };
     loadNotices();
-  }, []); // Runs once on mount
+  }, []);
 
-  // Filter and Sort Logic (using useMemo for performance)
+  ///////////////////////////////// LIVE REFRESH /////////////////////////////////
+
+  // useEffect(() => {
+  //   const intervalId = setInterval(async () => {
+  //     try {
+  //       const { notices } = await fetchNoticesAPI();
+  //       setAllNotices(notices);
+  //     } catch (err) {
+  //       console.error("Polling notices failed:", err);
+  //     }
+  //   }, 3000);
+  //   return () => clearInterval(intervalId);
+  // }, []);
+
+  ///////////////////////////////// LIVE REFRESH /////////////////////////////////
+
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const { notices, availableCategories } = await fetchNoticesAPI();
+      setAllNotices(notices);
+      setAllCategories(availableCategories);
+      setCurrentPage(1);
+      setSelectedCategories([]);
+      setSortOrder("recent");
+    } catch (err) {
+      console.error("Failed to refresh notices:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
   const processedNotices = useMemo(() => {
     let filtered = [...allNotices];
-
-    // 1. Filter by selected categories
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((notice) =>
-        selectedCategories.includes(notice.noticeCategory)
+      filtered = filtered.filter((n) =>
+        selectedCategories.includes(n.noticeCategory)
       );
     }
-
-    // 2. Sort based on sortOrder
-    // Assuming creationDate is 'YYYY-MM-DD' string
     filtered.sort((a, b) => {
       const dateA = new Date(a.creationDate);
       const dateB = new Date(b.creationDate);
@@ -110,60 +140,46 @@ export default function NoticesScreen() {
         return dateA - dateB; // Older dates first
       }
     });
-
     return filtered;
-  }, [allNotices, selectedCategories, sortOrder]); // Recalculate when these change
+  }, [allNotices, selectedCategories, sortOrder]);
 
   const totalFilteredItems = processedNotices.length;
   const totalPages = Math.ceil(totalFilteredItems / ITEMS_PER_PAGE);
 
-  // Calculate items for the current page slice *after* filtering/sorting
   const itemsForCurrentPage = useMemo(() => {
-    // Reset page if filters/sort make current page invalid
-    const newTotalPages = Math.ceil(processedNotices.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      // Use a slight delay to allow state update before pagination calculation
-      setTimeout(() => setCurrentPage(newTotalPages), 0);
-    } else if (currentPage === 0 && newTotalPages > 0) {
+    const newTotal = Math.ceil(processedNotices.length / ITEMS_PER_PAGE);
+    if (currentPage > newTotal && newTotal > 0)
+      setTimeout(() => setCurrentPage(newTotal), 0);
+    else if (currentPage === 0 && newTotal > 0)
       setTimeout(() => setCurrentPage(1), 0);
-    }
-
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return processedNotices.slice(startIndex, endIndex);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return processedNotices.slice(start, start + ITEMS_PER_PAGE);
   }, [processedNotices, currentPage]);
 
-  // Handlers
   const toggleSortOrder = useCallback(() => {
     setSortOrder((prev) => (prev === "recent" ? "oldest" : "recent"));
-    setCurrentPage(1); // Reset to page 1 when sorting changes
+    setCurrentPage(1);
     flatListRef.current?.scrollToOffset({ animated: false, offset: 0 });
   }, []);
 
-  const handleApplyFilter = useCallback((newSelectedCategories) => {
-    setSelectedCategories(newSelectedCategories);
-    setCurrentPage(1); // Reset to page 1 when filter changes
+  const handleApplyFilter = useCallback((cats) => {
+    setSelectedCategories(cats);
+    setCurrentPage(1);
     setIsFilterModalVisible(false);
     flatListRef.current?.scrollToOffset({ animated: false, offset: 0 });
   }, []);
 
-  const handleOpenFilterModal = () => setIsFilterModalVisible(true);
-  const handleCloseFilterModal = () => setIsFilterModalVisible(false);
-
-  // --- Pagination Logic ---
   const pagesToShow = useMemo(() => {
-    const safeTotalPages = Math.max(1, totalPages);
-    const maxPagesToShow = 3;
+    const safeTotal = Math.max(1, totalPages);
+    const maxPages = 3;
     const pages = [];
-    if (safeTotalPages <= maxPagesToShow) {
-      for (let i = 1; i <= safeTotalPages; i++) pages.push(i);
+    if (safeTotal <= maxPages) {
+      for (let i = 1; i <= safeTotal; i++) pages.push(i);
     } else {
-      let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-      let endPage = Math.min(safeTotalPages, startPage + maxPagesToShow - 1);
-      if (endPage - startPage + 1 < maxPagesToShow) {
-        startPage = Math.max(1, endPage - maxPagesToShow + 1);
-      }
-      for (let i = startPage; i <= endPage; i++) pages.push(i);
+      let start = Math.max(1, currentPage - Math.floor(maxPages / 2));
+      let end = Math.min(safeTotal, start + maxPages - 1);
+      if (end - start + 1 < maxPages) start = Math.max(1, end - maxPages + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
     }
     return pages;
   }, [currentPage, totalPages]);
@@ -176,7 +192,6 @@ export default function NoticesScreen() {
     }
   };
 
-  // Render item function
   const renderItem = ({ item }) => (
     <NoticeCard
       data={item}
@@ -199,7 +214,7 @@ export default function NoticesScreen() {
       <View style={styles.container}>
         <View style={styles.controlsContainer}>
           <FlipButton
-            onPress={handleOpenFilterModal}
+            onPress={() => setIsFilterModalVisible(true)}
             style={styles.controlButton}
           >
             <View style={styles.buttonContent}>
@@ -262,6 +277,8 @@ export default function NoticesScreen() {
             renderItem={renderItem}
             keyExtractor={(item) => item.noticeId.toString()}
             contentContainerStyle={styles.listContainer}
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
           />
         )}
 
@@ -275,7 +292,9 @@ export default function NoticesScreen() {
               onPress={() => goToPage(currentPage - 1)}
               disabled={currentPage === 1}
             >
-              <Text style={styles.paginationButtonText}>{t("MarketplaceScreen_PreviousButton")}</Text>
+              <Text style={styles.paginationButtonText}>
+                {t("MarketplaceScreen_PreviousButton")}
+              </Text>
             </TouchableOpacity>
             {pagesToShow.map((p) => (
               <TouchableOpacity
@@ -305,16 +324,18 @@ export default function NoticesScreen() {
               onPress={() => goToPage(currentPage + 1)}
               disabled={currentPage === totalPages}
             >
-              <Text style={styles.paginationButtonText}>{t("MarketplaceScreen_NextButton")}</Text>
+              <Text style={styles.paginationButtonText}>
+                {t("MarketplaceScreen_NextButton")}
+              </Text>
             </TouchableOpacity>
           </View>
         )}
 
         <FilterModal
           visible={isFilterModalVisible}
-          onClose={handleCloseFilterModal}
+          onClose={() => setIsFilterModalVisible(false)}
           allCategories={allCategories}
-          initialSelectedCategories={selectedCategories} // Pass current selection
+          initialSelectedCategories={selectedCategories}
           onApply={handleApplyFilter}
         />
       </View>
@@ -322,7 +343,6 @@ export default function NoticesScreen() {
   );
 }
 
-// --- Styles ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
