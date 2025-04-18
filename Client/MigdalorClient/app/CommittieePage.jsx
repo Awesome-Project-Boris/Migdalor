@@ -7,6 +7,7 @@ import {
 import Header from '@/components/Header';
 import FlipButton from '../components/FlipButton';
 import CommitteeMemberCard from '../components/CommitteeMemberCard';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -29,6 +30,7 @@ const fetchCommitteeMembersAPI = async () => {
 const Separator = () => <View style={styles.separator} />;
 
 export default function CommitteePage() {
+  const { t } = useTranslation();
   const [committeeMembers, setCommitteeMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -145,6 +147,7 @@ const styles = StyleSheet.create({
       fontSize: 18,
       fontWeight: 'bold',
       color: '#fff',
+      textAlign: 'center',
   },
   loadingIndicator: {
       marginTop: 30, 

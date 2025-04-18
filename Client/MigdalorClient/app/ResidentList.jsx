@@ -24,6 +24,7 @@ import FlipButton from "../components/FlipButton";
 import FloatingLabelInput from "../components/FloatingLabelInput";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import { Globals } from "./constants/Globals";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 12;
@@ -203,7 +204,7 @@ export default function UserProfilesScreen() {
           style={styles.searchTypeButton}
         >
           <Text style={styles.searchTypeText}>
-            {t("ResidentSearchScreen_searchByLabel")}{" "}
+            {t("ResidentSearchScreen_searchByLabel")}
             <Text style={{ fontWeight: "bold" }}>
               {searchType === "name"
                 ? t("ResidentSearchScreen_searchByName")
@@ -222,8 +223,9 @@ export default function UserProfilesScreen() {
           onChangeText={setSearchQuery}
           returnKeyType="search"
           onSubmitEditing={handleSearchPress}
-          style={styles.searchInputContainer} // Apply container styles if needed
-          inputStyle={styles.searchInput} // Apply specific input styles
+          style={styles.searchInputContainer}
+          inputStyle={styles.searchInput}
+          alignRight={Globals.userSelectedDirection === "rtl"}
           // Adjust size/alignment if needed (defaults: size=30, alignRight=true)
           // size={25}
           // alignRight={false}
@@ -372,7 +374,6 @@ const styles = StyleSheet.create({
   searchInput: {
     fontSize: 20,
     color: "#333",
-    textAlign: "left",
   },
   searchSubmitButton: { paddingVertical: 12 },
   buttonContent: {

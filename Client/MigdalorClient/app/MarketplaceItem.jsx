@@ -179,34 +179,38 @@ export default function MarketplaceItemScreen() {
   }
   if (error) {
     return (
-        <View style={styles.centered}>
-            <Header />
-            <Text style={styles.errorText}>{error}</Text>
-            <FlipButton
-                onPress={() => router.back()}
-                style={styles.backButton} // Reuse back button style
-                bgColor="#f8f9fa"
-                textColor="#343a40"
-            >
-                <Text style={styles.backButtonText}>{t('Common_BackButtonShort')}</Text>
-            </FlipButton>
-        </View>
+      <View style={styles.centered}>
+        <Header />
+        <Text style={styles.errorText}>{error}</Text>
+        <FlipButton
+          onPress={() => router.back()}
+          style={styles.backButton} // Reuse back button style
+          bgColor="#f8f9fa"
+          textColor="#343a40"
+        >
+          <Text style={styles.backButtonText}>
+            {t("Common_BackButtonShort")}
+          </Text>
+        </FlipButton>
+      </View>
     );
   }
   if (!listingDetails) {
     return (
-        <View style={styles.centered}>
-            <Header />
-            <Text>{t('MarketplaceItemScreen_NoDetails')}</Text>
-            <FlipButton
-                onPress={() => router.back()}
-                style={styles.backButton} // Reuse back button style
-                bgColor="#f8f9fa"
-                textColor="#343a40"
-            >
-                 <Text style={styles.backButtonText}>{t('Common_BackButtonShortShort')}</Text>
-            </FlipButton>
-        </View>
+      <View style={styles.centered}>
+        <Header />
+        <Text>{t("MarketplaceItemScreen_NoDetails")}</Text>
+        <FlipButton
+          onPress={() => router.back()}
+          style={styles.backButton} // Reuse back button style
+          bgColor="#f8f9fa"
+          textColor="#343a40"
+        >
+          <Text style={styles.backButtonText}>
+            {t("Common_BackButtonShort")}
+          </Text>
+        </FlipButton>
+      </View>
     );
   }
 
@@ -231,26 +235,56 @@ export default function MarketplaceItemScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.contentContainer}>
-            {/* Title, Date ... */}
-            <Text style={styles.title}>{listingDetails.title}</Text>
-            <Text style={styles.dateText}>
-                {t('MarketplaceItemScreen_PublishedDate' )} {new Date(listingDetails.date).toLocaleDateString('en-GB') }
-            </Text>
+          {/* Title, Date ... */}
+          <Text style={styles.title}>{listingDetails.title}</Text>
+          <Text style={styles.dateText}>
+            {t("MarketplaceItemScreen_PublishedDate")}{" "}
+            {new Date(listingDetails.date).toLocaleDateString("en-GB")}
+          </Text>
 
-            {/* Images ... */}
-            <View style={styles.imageRow}>
-                {/* Image rendering remains the same */}
-                <TouchableOpacity onPress={() => handleImagePress( mainImageUrl, listingDetails.mainPicture?.picAlt )} disabled={!mainImageUrl} >
-                    <Image source={mainImageSource} style={styles.image} />
-                    {!mainImageUrl && <Text style={styles.noImageText}>{t('MarketplaceNewItemScreen_MainImage')}</Text>}
-                </TouchableOpacity>
-                {(extraImageUrl || mainImageUrl) && (
-                    <TouchableOpacity onPress={() => handleImagePress( extraImageUrl, listingDetails.extraPicture?.picAlt )} disabled={!extraImageUrl} >
-                        <Image source={extraImageSource} style={[styles.image, !extraImageUrl && styles.imagePlaceholder]} />
-                        {!extraImageUrl && <Text style={styles.noImageText}>{t('MarketplaceNewItemScreen_ExtraImage')}</Text>}
-                    </TouchableOpacity>
+          {/* Images ... */}
+          <View style={styles.imageRow}>
+            {/* Image rendering remains the same */}
+            <TouchableOpacity
+              onPress={() =>
+                handleImagePress(
+                  mainImageUrl,
+                  listingDetails.mainPicture?.picAlt
+                )
+              }
+              disabled={!mainImageUrl}
+            >
+              <Image source={mainImageSource} style={styles.image} />
+              {!mainImageUrl && (
+                <Text style={styles.noImageText}>
+                  {t("MarketplaceNewItemScreen_MainImage")}
+                </Text>
+              )}
+            </TouchableOpacity>
+            {(extraImageUrl || mainImageUrl) && (
+              <TouchableOpacity
+                onPress={() =>
+                  handleImagePress(
+                    extraImageUrl,
+                    listingDetails.extraPicture?.picAlt
+                  )
+                }
+                disabled={!extraImageUrl}
+              >
+                <Image
+                  source={extraImageSource}
+                  style={[
+                    styles.image,
+                    !extraImageUrl && styles.imagePlaceholder,
+                  ]}
+                />
+                {!extraImageUrl && (
+                  <Text style={styles.noImageText}>
+                    {t("MarketplaceNewItemScreen_ExtraImage")}
+                  </Text>
                 )}
-             
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Description ... */}
@@ -259,7 +293,17 @@ export default function MarketplaceItemScreen() {
               <Text style={styles.sectionTitle}>
                 {t("MarketplaceItemScreen_DescriptionTitle")}
               </Text>
-              <Text style={styles.descriptionText}>
+              <Text
+                style={[
+                  styles.descriptionText,
+                  // this tiny object gets merged _after_ the static styles:
+                  {
+                    textAlign: /[\u0590-\u05FF]/.test(listingDetails.description)
+                      ? "right"
+                      : "left",
+                  },
+                ]}
+              >
                 {listingDetails.description}
               </Text>
             </View>
@@ -331,7 +375,7 @@ export default function MarketplaceItemScreen() {
 
           {/* Refactored Back Button */}
           <FlipButton
-            text={t("Common_BackButton")} // Use text prop
+            text={t("Common_BackButtonShort")} // Use text prop
             onPress={() => router.back()}
             style={styles.backButton}
             bgColor="#f8f9fa"
@@ -432,7 +476,7 @@ const styles = StyleSheet.create({
     fontSize: 17, // Bigger
     lineHeight: 26, // Bigger line height
     color: "#333",
-    textAlign: "left", // Keep description left-aligned
+    //textAlign: "left", // Keep description left-aligned
     alignSelf: "stretch", // Allow text to take full width of section padding
   },
   sellerText: {
