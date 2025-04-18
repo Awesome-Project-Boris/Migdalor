@@ -66,7 +66,7 @@ export default function CommitteePage() {
       <FlatList
           ListHeaderComponent={
               <>
-                  <Text style={styles.mainTitle}>The Committee</Text>
+                  <Text style={styles.mainTitle}>{t("ResidentsCommittePage_title")}</Text>
 
                   <Text style={styles.introParagraph}>{introText}</Text>
 
@@ -77,7 +77,7 @@ export default function CommitteePage() {
                           bgColor="#ffffff"
                           textColor="#000000"
                       >
-                         <Text style={styles.contactButtonText}>Contact the Committee</Text>
+                         <Text style={styles.contactButtonText}>{t("ResidentsCommittePage_contact")}</Text>
                       </FlipButton>
                   </View>
 
@@ -94,7 +94,7 @@ export default function CommitteePage() {
           contentContainerStyle={styles.listContentContainer}
           ItemSeparatorComponent={Separator} // Add separator between cards
           ListEmptyComponent={
-            !isLoading ? ( <Text style={styles.emptyListText}>No committee members found.</Text> ) : null
+            !isLoading ? ( <Text style={styles.emptyListText}>{t("ResidentsCommittePage_committeeNotFound")}</Text> ) : null
           }
       />
     </View>
