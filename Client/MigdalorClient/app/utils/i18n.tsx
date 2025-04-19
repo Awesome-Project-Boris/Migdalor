@@ -195,6 +195,7 @@ const resources = {
 
       Common_viewAllDataButton: "View All Data",
       Common_clearAllDataButton: "Clear All Data",
+      Common_noResultsFound: "No results found",
 
 
       LoginScreen_rememberMe: "Remember Me", 
@@ -394,6 +395,7 @@ const resources = {
       Common_viewAllDataButton: "הצג את כל הנתונים",
       Common_clearAllDataButton: "נקה את כל הנתונים",
       Common_BackButtonShort: "חזרה",
+      Common_noResultsFound: "לא נמצאו תוצאות",
 
 
       LoginScreen_rememberMe: "זכור אותי",

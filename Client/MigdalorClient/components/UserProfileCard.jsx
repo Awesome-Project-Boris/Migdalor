@@ -9,11 +9,14 @@ import {
   TouchableOpacity,
 } from "react-native";
 import BouncyButton from "./BouncyButton";
+import { useTranslation } from "react-i18next";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 // Assuming data structure: { userId: '...', name: '...', photoUrl: '...' }
 function UserProfileCard({ data }) {
+  const { t } = useTranslation();
+  
   // Basic placeholder image if photoUrl is missing
   const placeholderImage = require("../assets/images/tempItem.jpg"); // CHANGE TO YOUR PLACEHOLDER IMAGE PATH
   const imageUrl = data?.photoUrl ? { uri: data.photoUrl } : placeholderImage;

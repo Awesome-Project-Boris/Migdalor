@@ -117,7 +117,7 @@ const LoginScreen = () => {
                     <XStack gap={5} style={{ paddingStart: 15 }}>
                       <Text style={styles.loginButtonText}>
                         {t("LoginScreen_loginButton")}
-                      </Text>{" "}
+                      </Text>
                       {loginLoading ? (
                         <ActivityIndicator size="large" />
                       ) : (

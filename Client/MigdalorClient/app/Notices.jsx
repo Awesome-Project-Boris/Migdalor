@@ -233,7 +233,7 @@ export default function NoticesScreen() {
                   ? selectedCategories.length
                   : t("NoticeBoardScreen_all")}
                 )
-              </Text>{" "}
+              </Text>
             </View>
           </FlipButton>
 
@@ -246,7 +246,7 @@ export default function NoticesScreen() {
                 style={styles.buttonIcon}
               />
               <Text style={styles.buttonText}>
-                {t("NoticeBoardScreen_filterLabel")}{" "}
+                {t("NoticeBoardScreen_filterLabel")}
                 {sortOrder === "recent"
                   ? t("NoticeBoardScreen_sortOldest")
                   : t("NoticeBoardScreen_sortNewest")}

@@ -285,12 +285,12 @@ const Map = () => {
       {/*/ For dev purposes mainly/*/}
       <View style={styles.statusOverlay}>
         <Text style={styles.statusText}>
-        {t("LocationScreen_locationPermissionLabel")}{" "}
+        {t("LocationScreen_locationPermissionLabel")}
         {locationPermissionGranted ? "Granted" : "Not Granted"}
         </Text>
         {locationPermissionGranted && (
           <Text style={styles.statusText}>
-            {t("LocationScreen_userLocationLabel")}{" "}
+            {t("LocationScreen_userLocationLabel")}
             {currentUserLocation
               ? `${currentUserLocation.latitude.toFixed(
                   4
@@ -305,7 +305,7 @@ const Map = () => {
               { color: isInsideBoundary ? "lime" : "red", fontWeight: "bold" },
             ]}
           >
-            {t("LocationScreen_insideBoundaryLabel")}{" "} {isInsideBoundary ? "Yes" : "No"}
+            {t("LocationScreen_insideBoundaryLabel")} {isInsideBoundary ? "Yes" : "No"}
           </Text>
         )}
       </View>
