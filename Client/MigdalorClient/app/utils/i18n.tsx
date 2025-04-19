@@ -102,6 +102,8 @@ const resources = {
       MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp", 
       MarketplaceItemScreen_Loading: "Loading item...",
 
+      MarketplaceItemCard_Untitled: "Untitled",
+      MarketplaceItemCard_UnknownSeller: "Unknown Seller",
 
       MarketplaceNewItemScreen_Header: "New Item Listing",
       MarketplaceNewItemScreen_NewItem: "New Item",
@@ -168,7 +170,7 @@ const resources = {
       NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
 
 
-
+      NoticeFilterModal_modalTitle: "Filter by categories", NoticeFilterModal_selectAll: "Select All", NoticeFilterModal_deselectAll: "Deselect All", NoticeFilterModal_cancelButton: "Cancel", NoticeFilterModal_applyFilter: "Apply Filter",
 
 
 
@@ -293,6 +295,10 @@ const resources = {
       MarketplaceItemScreen_Loading: "טוען פריט...",
 
 
+      MarketplaceItemCard_Untitled: "ללא כותרת",
+      MarketplaceItemCard_UnknownSeller: "מוכר לא ידוע",
+
+
       MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
       MarketplaceNewItemScreen_NewItem: "פריט חדש",
       MarketplaceNewItemScreen_ItemName: "שם הפריט",
@@ -363,6 +369,8 @@ const resources = {
       NoticeBoardScreen_sortNewest: "החדש ביותר",
       NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
 
+
+      NoticeFilterModal_modalTitle: "סנן לפי קטגוריות", NoticeFilterModal_selectAll: "בחר הכל", NoticeFilterModal_deselectAll: "בטל את כל הבחירות", NoticeFilterModal_cancelButton: "ביטול", NoticeFilterModal_applyFilter: "בצע סינון",
 
 
       ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
