@@ -29,16 +29,6 @@ export default function Profile() {
   const router = useRouter();
   // !! Switch these with the values from the database
 
-  // const [partner, setPartner] = useState("");
-  // const [apartmentNumber, setApartmentNumber] = useState("");
-  // const [mobilePhone, setMobilePhone] = useState("");
-  // const [email, setEmail] = useState("");
-  // const [arrivalYear, setArrivalYear] = useState("");
-  // const [origin, setOrigin] = useState("");
-  // const [profession, setProfession] = useState("");
-  // const [interests, setInterests] = useState("");
-  // const [aboutMe, setAboutMe] = useState("");
-
   const [form, setForm] = useState({
     partner: "",
     apartmentNumber: "",
@@ -50,20 +40,6 @@ export default function Profile() {
     interests: "",
     aboutMe: "",
   });
-
-  // const handleProfileUpdate = (updatedData: {
-  //   partner: string;
-  //   apartmentNumber: string;
-  //   mobilePhone: string;
-  //   email: string;
-  //   arrivalYear: string;
-  //   origin: string;
-  //   profession: string;
-  //   interests: string;
-  //   aboutMe: string;
-  // }) => {
-  //   setForm(updatedData);
-  // };
 
   const params = useLocalSearchParams();
   useEffect(() => {
@@ -77,6 +53,54 @@ export default function Profile() {
       }
     }
   }, [params.updatedData]);
+
+  // On mount, try to load the user data from AsyncStorage.
+  useEffect(() => {
+    const loadUserProfileData = async () => {
+      try {
+        const storedUserID = await AsyncStorage.getItem("userID");
+        if (storedUserID) {
+          //const apiurl = `${Globals.API_BASE_URL}/api/People/{id}`;
+          const apiurl = `${Globals.API_BASE_URL}/api/People/${storedUserID}`; // !! check this is the  correct endpoint
+          const response = await fetch(apiurl, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            //body: JSON.stringify({ phoneNumber, password }),
+          });
+
+          if (!response.ok) {
+            // You can throw an error or handle it with an error message.
+            throw new Error(`Login failed: HTTP ${response.status}`);
+          }
+
+          const userData = await response.json();
+
+          console.log("User data:", userData);
+
+          // !! now to load the data into the form
+          setForm({
+            partner: userData.partner,
+            apartmentNumber: userData.apartmentNumber,
+            mobilePhone: userData.mobilePhone,
+            email: userData.email,
+            arrivalYear: userData.arrivalYear,
+            origin: userData.origin,
+            profession: userData.profession,
+            interests: userData.interests,
+            aboutMe: userData.aboutMe,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading user data from storage", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserProfileData(); // Call the function to load user data
+  }, []);
 
   return (
     <View style={styles.wrapper}>

@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     loadUserFromStorage();
-  }, []);
+  }, []); 
 
   // login function that mirrors your current logic:
   const login = async (phoneNumber, password) => {
