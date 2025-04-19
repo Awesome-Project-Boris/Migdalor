@@ -112,7 +112,7 @@ export const BottomSheetProvider = ({ children }) => {
               onPress={() => {
                 console.log("Menu 3 pressed");
                 setEditing(false);
-                router.navigate("LoginScreen");
+                router.navigate("Profile");
                 bottomSheetRef.current?.close();
               }}
               bgColor="#4CAF50"

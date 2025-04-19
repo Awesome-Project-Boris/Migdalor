@@ -18,6 +18,9 @@ import {
   Keyboard,
 } from "react-native";
 
+import Accordion from 'react-native-collapsible/Accordion'; // Import Accordion
+import * as Animatable from 'react-native-animatable'; // Import Animatable
+
 import UserProfileCard from "../components/UserProfileCard";
 import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
@@ -89,8 +92,15 @@ export default function UserProfilesScreen() {
   const [searchType, setSearchType] = useState("name");
   const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const [activeSearchType, setActiveSearchType] = useState("name");
+  const [activeSections, setActiveSections] = useState([]); // accordion
 
   const flatListRef = useRef(null);
+
+  const SECTIONS = [ // for accordion
+    {
+      id: 'search',
+    },
+  ];
 
   const executeSearch = useCallback(
     async (page = 1, query = activeSearchQuery, type = activeSearchType) => {
@@ -133,7 +143,7 @@ export default function UserProfilesScreen() {
   // Initial Load
   useEffect(() => {
     executeSearch(1, "", "name");
-  }, [executeSearch]);
+  }, []);
 
   // Fetch more data when currentPage changes - maybe not needed
   useEffect(() => {
@@ -192,67 +202,113 @@ export default function UserProfilesScreen() {
   // Render item function
   const renderItem = ({ item }) => <UserProfileCard data={item} />;
 
+  const renderAccordionHeader = (section, index, isActive) => { // Accordion header
+    return (
+      <Animatable.View
+        duration={300}
+        transition="backgroundColor"
+        style={[styles.accordionHeader, isActive ? styles.active : styles.inactive]}
+      >
+        <Text style={styles.accordionHeaderText}>
+          {isActive
+            ? t("ResidentSearchScreen_accordionOpen")
+             // e.g., "Click to close search"
+            : t("ResidentSearchScreen_accordionClose")}{" "}
+          {/* e.g., "Open for search" */}
+        </Text>
+        <Ionicons
+           name={isActive ? 'chevron-up' : 'chevron-down'}
+           size={20}
+           color="#333"
+        />
+      </Animatable.View>
+    );
+  };
+
+  const renderAccordionContent = (section, index, isActive) => { // Accordion contents
+    // The content is the original search controls view
+    return (
+      <Animatable.View
+         duration={300}
+         transition="opacity" // Or "fadeInDown", etc.
+         style={styles.accordionContent} // Apply specific styles for content padding etc.
+      >
+          {/* Search Type Toggle Button */}
+          <TouchableOpacity
+            onPress={toggleSearchType}
+            style={styles.searchTypeButton} // Keep original styles
+          >
+            <Text style={styles.searchTypeText}>
+              {t("ResidentSearchScreen_searchByLabel")}
+              <Text style={{ fontWeight: "bold" }}>
+                {searchType === "name"
+                  ? t("ResidentSearchScreen_searchByName")
+                  : t("ResidentSearchScreen_searchByHobby")}
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
+          {/* Search Input */}
+          <FloatingLabelInput
+            label={
+              searchType === "name"
+                ? t("ResidentSearchScreen_enterNamePlaceholder")
+                : t("ResidentSearchScreen_enterHobbyPlaceholder")
+            }
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            onSubmitEditing={handleSearchPress}
+            style={styles.searchInputContainer} // Keep original styles
+            inputStyle={styles.searchInput} // Keep original styles
+            alignRight={Globals.userSelectedDirection === "rtl"}
+          />
+
+          {/* Search Button */}
+          <FlipButton
+            onPress={handleSearchPress}
+            style={styles.searchSubmitButton} // Keep original styles
+            bgColor="#007bff"
+            textColor="#fff"
+            disabled={isLoading}
+          >
+            <View style={styles.buttonContent}>
+              <Ionicons
+                name="search"
+                size={20}
+                color="white"
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.searchButtonText}>
+                {t("MarketplaceScreen_SearchButton")}
+              </Text>
+            </View>
+          </FlipButton>
+      </Animatable.View>
+    );
+  };
+
+  const updateSections = (activeSectionsIndexes) => { // Accordion state
+    setActiveSections(activeSectionsIndexes);
+  };
+
   return (
     <View style={styles.container}>
+       <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
       <Header title="User Profiles" />
-
-      {/* --- Search Controls --- */}
-      <View style={styles.searchControlsContainer}>
-        {/* Search Type Toggle Button */}
-        <TouchableOpacity
-          onPress={toggleSearchType}
-          style={styles.searchTypeButton}
-        >
-          <Text style={styles.searchTypeText}>
-            {t("ResidentSearchScreen_searchByLabel")}
-            <Text style={{ fontWeight: "bold" }}>
-              {searchType === "name"
-                ? t("ResidentSearchScreen_searchByName")
-                : t("ResidentSearchScreen_searchByHobby")}
-            </Text>
-          </Text>
-        </TouchableOpacity>
-
-        <FloatingLabelInput
-          label={
-            searchType === "name"
-              ? t("ResidentSearchScreen_enterNamePlaceholder")
-              : t("ResidentSearchScreen_enterHobbyPlaceholder")
-          }
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-          onSubmitEditing={handleSearchPress}
-          style={styles.searchInputContainer}
-          inputStyle={styles.searchInput}
-          alignRight={Globals.userSelectedDirection === "rtl"}
-          // Adjust size/alignment if needed (defaults: size=30, alignRight=true)
-          // size={25}
-          // alignRight={false}
+        <View style={styles.accordionContainer}>
+        <Accordion
+         sections={SECTIONS}
+          activeSections={activeSections}
+          renderHeader={renderAccordionHeader}
+          renderContent={renderAccordionContent}
+          onChange={updateSections}
+          touchableComponent={TouchableOpacity} // Use TouchableOpacity for the header
+          expandMultiple={false} // Only allow one section open (we only have one anyway)
+          underlayColor="transparent" // Prevent color flash on header press
         />
+        </View>
 
-        <FlipButton
-          onPress={handleSearchPress}
-          style={styles.searchSubmitButton}
-          bgColor="#007bff"
-          textColor="#fff"
-          disabled={isLoading}
-        >
-          <View style={styles.buttonContent}>
-            <Ionicons
-              name="search"
-              size={20}
-              color="white"
-              style={styles.buttonIcon}
-            />
-            <Text style={styles.searchButtonText}>
-              {t("MarketplaceScreen_SearchButton")}
-            </Text>
-          </View>
-        </FlipButton>
-      </View>
-
-      {/* --- Loading / No Results / List / Pagination --- */}
       {isLoading && displayedUsers.length === 0 && (
         <ActivityIndicator
           size="large"
@@ -421,4 +477,46 @@ const styles = StyleSheet.create({
   activePaginationButton: { backgroundColor: "#007bff" },
   activePaginationButtonText: { color: "#fff", fontWeight: "bold" },
   disabledButton: { opacity: 0.5, backgroundColor: "#e9ecef" },
+  accordionContainer: {
+    width: SCREEN_WIDTH * 0.9, // Match original container width
+    marginVertical: 10,
+    backgroundColor: '#fff', // Optional: background for the whole accordion block
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    overflow: 'hidden', // Ensures content stays within rounded corners
+    minHeight: 70,
+    marginTop: 15
+ },
+ accordionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    // backgroundColor: '#f9f9f9', // Slightly different bg for header
+ },
+ active: {
+   // backgroundColor: '#e7e7e7', // Slightly darker when open
+ },
+ inactive: {
+   // backgroundColor: '#f9f9f9',
+ },
+ accordionHeaderText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+ },
+ accordionContent: {
+    padding: 15, // Padding for the content area
+    backgroundColor: '#fff', // Background for content area
+ },
+ mainTitle: {
+  fontSize: 32,
+  fontWeight: 'bold',
+  textAlign: 'center',
+  marginTop: 70, 
+  marginBottom: 15, 
+  color: '#111',
+},
 });
