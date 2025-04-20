@@ -41,8 +41,8 @@ export default function EditProfile() {
 
   // !! Switch these with the values from the database
   const [form, setForm] = useState({
+    name: "",
     partner: "",
-    apartmentNumber: "",
     mobilePhone: "",
     email: "",
     arrivalYear: "",
@@ -50,7 +50,44 @@ export default function EditProfile() {
     profession: "",
     interests: "",
     aboutMe: "",
+    // profilePicID: "",
+    // additionalPic1ID: "",
+    // additionalPic2ID: "",
+    residentApartmentNumber: "",
   });
+
+  const [profilePic, setProfilePic] = useState({
+      PicID: "",
+      PicName: "",
+      PicPath: "",
+      PicAlt: "",
+      //UploaderID: "",
+      //PicRole: "",
+      //ListingID: "",
+      //DateTime: "",
+    });
+  
+    const [additionalPic1, setAdditionalPic1] = useState({
+      PicID: "",
+      PicName: "",
+      PicPath: "",
+      PicAlt: "",
+      //UploaderID: "",
+      //PicRole: "",
+      //ListingID: "",
+      //DateTime: "",
+    });
+  
+    const [additionalPic2, setAdditionalPic2] = useState({
+      PicID: "",
+      PicName: "",
+      PicPath: "",
+      PicAlt: "",
+      //UploaderID: "",
+      //PicRole: "",
+      //ListingID: "",
+      //DateTime: "",
+    });
 
   const maxLengths = {
     partner: 100,

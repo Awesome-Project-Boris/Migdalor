@@ -105,10 +105,10 @@ namespace MigdalorServer.Models
                         pp.PicName,
                         pp.PicPath,
                         pp.PicAlt,
-                        pp.UploaderId,
-                        pp.PicRole,
-                        pp.ListingId,
-                        pp.DateTime
+                        //pp.UploaderId,
+                        //pp.PicRole,
+                        //pp.ListingId,
+                        //pp.DateTime
                     },
 
                     // additional pic #1 (or null)
@@ -118,10 +118,10 @@ namespace MigdalorServer.Models
                         p1.PicName,
                         p1.PicPath,
                         p1.PicAlt,
-                        p1.UploaderId,
-                        p1.PicRole,
-                        p1.ListingId,
-                        p1.DateTime
+                        //p1.UploaderId,
+                        //p1.PicRole,
+                        //p1.ListingId,
+                        //p1.DateTime
                     },
 
                     // additional pic #2 (or null)
@@ -131,10 +131,10 @@ namespace MigdalorServer.Models
                         p2.PicName,
                         p2.PicPath,
                         p2.PicAlt,
-                        p2.UploaderId,
-                        p2.PicRole,
-                        p2.ListingId,
-                        p2.DateTime
+                        //p2.UploaderId,
+                        //p2.PicRole,
+                        //p2.ListingId,
+                        //p2.DateTime
                     }
                 }
             ).FirstOrDefault();

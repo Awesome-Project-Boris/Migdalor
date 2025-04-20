@@ -28,12 +28,10 @@ export default function Profile() {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const router = useRouter();
-  // !! Switch these with the values from the database
 
   const [form, setForm] = useState({
     name: "",
     partner: "",
-    apartmentNumber: "",
     mobilePhone: "",
     email: "",
     arrivalYear: "",
@@ -80,7 +78,38 @@ export default function Profile() {
     //DateTime: "",
   });
 
+  // const mainImageUrl = profilePic.PicName.PicPath
+  //     ? `${Globals.API_BASE_URL}${profilePic.PicName.PicPath}`
+  //     : null;
+  // console.log("mainImageUrl", mainImageUrl);
+  // const extraImageUrl = profilePic.extraPicture?.picPath
+  //   ? `${Globals.API_BASE_URL}${profilePic.extraPicture.picPath}`
+  //   : null;
+  // const mainImageSource = mainImageUrl
+  //   ? { uri: mainImageUrl }
+  //   : placeholderImage;
+  // const extraImageSource = extraImageUrl
+  //   ? { uri: extraImageUrl }
+  //   : placeholderImage;
 
+  const handleImagePress = (imageUriToView, altText = "") => {
+    if (!imageUriToView) {
+      console.log("handleImagePress: No valid imageUri provided.");
+      return;
+    }
+
+    const paramsToPass = {
+      imageUri: imageUriToView,
+      altText: altText,
+    };
+
+    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
+
+    router.push({
+      pathname: "/ImageViewScreen",
+      params: paramsToPass,
+    });
+  };
 
   const params = useLocalSearchParams();
   useEffect(() => {
@@ -138,22 +167,22 @@ export default function Profile() {
           });
 
           setProfilePic({
-            PicID: userData.profilePicID,
-            PicName: userData.profilePicName,
-            PicPath: userData.profilePicPath,
-            PicAlt: userData.profilePicAlt,
+            PicID: userData.profilePicture.PicID,
+            PicName: userData.profilePicture.picName,
+            PicPath: userData.profilePicture.picPath,
+            PicAlt: userData.profilePicture.picAlt,
           });
           setAdditionalPic1({
-            PicID: userData.additionalPic1ID,
-            PicName: userData.additionalPic1Name,
-            PicPath: userData.additionalPic1Path,
-            PicAlt: userData.additionalPic1Alt,
+            PicID: userData.additionalPicture1.PicID,
+            PicName: userData.additionalPicture1.picName,
+            PicPath: userData.additionalPicture1.picPath,
+            PicAlt: userData.additionalPicture1.picAlt,
           });
           setAdditionalPic2({
-            PicID: userData.additionalPic2ID,
-            PicName: userData.additionalPic2Name,
-            PicPath: userData.additionalPic2Path,
-            PicAlt: userData.additionalPic2Alt,
+            PicID: userData.additionalPicture2.PicID,
+            PicName: userData.additionalPicture2.picName,
+            PicPath: userData.additionalPicture2.picPath,
+            PicAlt: userData.additionalPicture2.picAlt,
           });
 
           if (Globals.userSelectedLanguage === "he") {
@@ -206,22 +235,44 @@ export default function Profile() {
         <View style={styles.profileImageContainer}>
           {/* !! Change this to users profile picture */}
 
-          <Image
-            alt = {profilePic.PicAlt}
+          {/* <Image
+            alt={profilePic.PicAlt}
             source={{
               uri: profilePic.PicPath?.trim()
-                ? API_BASE_URL + profilePic.PicPath
+                ? Globals.API_BASE_URL + profilePic.PicPath
                 : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
             }}
             style={styles.profileImage}
-          />
+          /> */}
+
+          <TouchableOpacity
+            onPress={() =>
+              handleImagePress(
+                Globals.API_BASE_URL + profilePic.PicPath,
+                profilePic.PicAlt
+              )
+            }
+            disabled={!(Globals.API_BASE_URL + profilePic.PicPath)}
+          >
+            <Image
+              alt={profilePic.PicAlt}
+              source={{
+                uri: profilePic.PicPath?.trim()
+                  ? Globals.API_BASE_URL + profilePic.PicPath
+                  : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+              }}
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.profileNameContainer}>
           {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
 
           {/* !! Change this to full name  */}
-          <Text style={styles.profileName}>{form.name || t("ProfileScreen_emptyDataField")}</Text>
+          <Text style={styles.profileName}>
+            {form.name || t("ProfileScreen_emptyDataField")}
+          </Text>
         </View>
 
         <Text
@@ -443,22 +494,61 @@ export default function Profile() {
           {t("ProfileScreen_extraImages")}
         </Text>
         <View style={styles.profileExtraImageContainer}>
-          <Image
+          {/* <Image
             source={{
               uri: form.additionalPic1ID?.trim()
                 ? form.additionalPic1ID
                 : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
             }}
             style={styles.extraImage}
-          />
-          <Image
+          /> */}
+          <TouchableOpacity
+            onPress={() =>
+              handleImagePress(
+                Globals.API_BASE_URL + additionalPic1.PicPath,
+                additionalPic1.PicAlt
+              )
+            }
+            disabled={!(Globals.API_BASE_URL + additionalPic1.PicPath)}
+          >
+            <Image
+              alt={additionalPic1.PicAlt}
+              source={{
+                uri: additionalPic1.PicPath?.trim()
+                  ? Globals.API_BASE_URL + additionalPic1.PicPath
+                  : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+              }}
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
+          {/* <Image
             source={{
               uri: form.additionalPic2ID?.trim()
                 ? form.additionalPic2ID
                 : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
             }}
             style={styles.extraImage}
-          />
+          /> */}
+
+          <TouchableOpacity
+            onPress={() =>
+              handleImagePress(
+                Globals.API_BASE_URL + additionalPic2.PicPath,
+                additionalPic2.PicAlt
+              )
+            }
+            disabled={!(Globals.API_BASE_URL + additionalPic2.PicPath)}
+          >
+            <Image
+              alt={additionalPic2.PicAlt}
+              source={{
+                uri: additionalPic2.PicPath?.trim()
+                  ? Globals.API_BASE_URL + additionalPic2.PicPath
+                  : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+              }}
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
