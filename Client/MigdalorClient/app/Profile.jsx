@@ -693,7 +693,8 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     width: "75%",
-    marginTop: 10,
+    marginTop: 20,
+    gap: 30,
   },
   // extraImage: {
   //   width: 300,

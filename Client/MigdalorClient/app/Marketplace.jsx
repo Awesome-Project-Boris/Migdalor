@@ -1,4 +1,10 @@
-import React, { useContext, useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
@@ -6,7 +12,8 @@ import {
   FlatList,
   StyleSheet,
   Dimensions,
-  ActivityIndicator, Keyboard 
+  ActivityIndicator,
+  Keyboard,
 } from "react-native"; // Added ActivityIndicator
 import { MarketplaceContext } from "../context/MarketplaceProvider"; // Still needed for search query potentially
 import MarketplaceItemCard from "../components/MarketplaceItemCard";
@@ -19,14 +26,14 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useRouter, useFocusEffect } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Globals } from "@/app/constants/Globals"; 
+import { Globals } from "@/app/constants/Globals";
+import { AlignRight } from "@tamagui/lucide-icons";
 
 const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
 const ITEMS_PER_PAGE = 10;
 
 export default function MarketplaceScreen() {
   const { t } = useTranslation();
-
 
   const { searchQuery, setSearchQuery } = useContext(MarketplaceContext) || {
     searchQuery: "",
@@ -35,13 +42,11 @@ export default function MarketplaceScreen() {
 
   console.log("MarketplaceScreen Render - Context searchQuery:", searchQuery);
 
-
   const [listings, setListings] = useState([]); // Holds raw data from API
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1); // Local pagination state
-  const [marketplaceQuery, setMarketplaceQuery] = useState('');
-
+  const [marketplaceQuery, setMarketplaceQuery] = useState("");
 
   const router = useRouter();
 
@@ -51,8 +56,12 @@ export default function MarketplaceScreen() {
     setError(null);
     console.log("Fetching active listings summary..."); // Log fetch start
     try {
-      const response = await fetch(`${Globals.API_BASE_URL}/api/Listings/ActiveSummaries`);
-      if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/Listings/ActiveSummaries`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       console.log("Refreshed listings:", data ? data.length : 0); // Log count or data
       setListings(data || []); // Update the state with fresh data
@@ -67,7 +76,9 @@ export default function MarketplaceScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("MarketplaceScreen focused, fetching listings and resetting page...");
+      console.log(
+        "MarketplaceScreen focused, fetching listings and resetting page..."
+      );
       setIsLoading(true); // Set loading true when focusing
       setCurrentPage(1); // Reset to page 1 when returning to the list
       fetchListings(); // Call the function to fetch data
@@ -83,15 +94,14 @@ export default function MarketplaceScreen() {
     setCurrentPage(1);
     // Optionally close accordion here if needed, though might be better UX to leave it
     // This would require passing a ref or callback to SearchAccordion
-};
+  };
 
-// Modified clear search handler
-const handleClearSearch = () => {
-  if (setSearchQuery) setSearchQuery(""); // Clear global/context query
-  setMarketplaceQuery(""); // Clear local input state
-  setCurrentPage(1);
-};
-
+  // Modified clear search handler
+  const handleClearSearch = () => {
+    if (setSearchQuery) setSearchQuery(""); // Clear global/context query
+    setMarketplaceQuery(""); // Clear local input state
+    setCurrentPage(1);
+  };
 
   // --- Filtering Logic ---
   const filteredListings = useMemo(() => {
@@ -99,9 +109,8 @@ const handleClearSearch = () => {
       return listings;
     }
     const lowerCaseQuery = searchQuery.toLowerCase();
-    return listings.filter(
-      (listing) =>
-        listing.title?.toLowerCase().includes(lowerCaseQuery)
+    return listings.filter((listing) =>
+      listing.title?.toLowerCase().includes(lowerCaseQuery)
     );
   }, [listings, searchQuery]);
 
@@ -189,33 +198,43 @@ const handleClearSearch = () => {
           headerOpenTextKey="MarketplaceScreen_accordionClose" // Need new translation keys
           headerClosedTextKey="MarketplaceScreen_accordionOpen"
           containerStyle={styles.accordionContainer} // Apply specific styles
-       >
+          //headerStyle={styles.accordionHeader} // Header styles
+          headerStyle={{
+            justifyContent:
+              Globals.userSelectedDirection === "rtl"
+                ? "flex-end"
+                : "space-between",
+            gap: 10,
+          }}
+          headerTextStyle={{}}
+        >
           {/* Content for Marketplace Search */}
-           <FloatingLabelInput
-              label={t("MarketplaceSearchItem_Header")} // Placeholder/Label text
-              value={marketplaceQuery}
-              onChangeText={setMarketplaceQuery}
-              returnKeyType="search"
-              onSubmitEditing={handleMarketplaceSearch}
-              style={styles.searchInputContainer}
-              inputStyle={styles.searchInput}
-              // alignRight={Globals.userSelectedDirection === "rtl"} // Add if needed
-            />
-            <FlipButton
-              onPress={handleMarketplaceSearch}
-              style={styles.searchSubmitButton}
-              bgColor="#007bff"
-              textColor="#fff"
-              disabled={isLoading}
-            >
-              <View style={styles.buttonContent}>
-                <Ionicons name="search" size={25} color="white" />
-                <Text style={styles.searchButtonText}>{t("MarketplaceScreen_SearchButton")}</Text>
-              </View>
+          <FloatingLabelInput
+            label={t("MarketplaceSearchItem_Header")} // Placeholder/Label text
+            value={marketplaceQuery}
+            onChangeText={setMarketplaceQuery}
+            returnKeyType="search"
+            onSubmitEditing={handleMarketplaceSearch}
+            style={styles.searchInputContainer}
+            inputStyle={styles.searchInput}
+            // alignRight={Globals.userSelectedDirection === "rtl"} // Add if needed
+          />
+          <FlipButton
+            onPress={handleMarketplaceSearch}
+            style={styles.searchSubmitButton}
+            bgColor="#007bff"
+            textColor="#fff"
+            disabled={isLoading}
+          >
+            <View style={styles.buttonContent}>
+              <Ionicons name="search" size={25} color="white" />
+              <Text style={styles.searchButtonText}>
+                {t("MarketplaceScreen_SearchButton")}
+              </Text>
+            </View>
           </FlipButton>
-           {/* End Content for Marketplace Search */}
-       </SearchAccordion>
-
+          {/* End Content for Marketplace Search */}
+        </SearchAccordion>
       </View>
       {searchQuery !== "" && !isLoading && (
         <View style={styles.inSearch}>
@@ -395,7 +414,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
   },
   inSearch: {
-    width: SCREEN_WIDTH * 0.90,
+    width: SCREEN_WIDTH * 0.9,
     minHeight: 130,
     padding: 15,
     marginBottom: 15, // Added margin below
@@ -414,21 +433,20 @@ const styles = StyleSheet.create({
   searchFocus: {
     fontSize: 18, // Slightly smaller font
     textAlign: "right", // Align text to the right (for RTL)
-    flex: 1, 
-    marginRight: 10, 
+    flex: 1,
+    marginRight: 10,
   },
   button: {
-    width: SCREEN_WIDTH * 0.8
+    width: SCREEN_WIDTH * 0.8,
   },
   mainTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 70, 
-    color: '#111',
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 70,
+    color: "#111",
   },
-  buttonContent:
-  {
-    flexDirection: "row"
-  }
+  buttonContent: {
+    flexDirection: "row",
+  },
 });
