@@ -6,37 +6,43 @@ import {
   FlatList,
   StyleSheet,
   Dimensions,
-  ActivityIndicator,
+  ActivityIndicator, Keyboard 
 } from "react-native"; // Added ActivityIndicator
 import { MarketplaceContext } from "../context/MarketplaceProvider"; // Still needed for search query potentially
 import MarketplaceItemCard from "../components/MarketplaceItemCard";
-import MarketplaceSearchModal from "../components/MarketplaceSearchModal";
 import FlipButton from "../components/FlipButton";
 import Header from "@/components/Header";
 import NoSearchMatchCard from "../components/NoSearchMatchCard";
+import SearchAccordion from "@/components/SearchAccordion";
+import FloatingLabelInput from "@/components/FloatingLabelInput";
+import { Ionicons } from "@expo/vector-icons";
+
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Globals } from "@/app/constants/Globals"; // Import Globals for API URL
+import { Globals } from "@/app/constants/Globals"; 
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
+const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
 const ITEMS_PER_PAGE = 10;
 
 export default function MarketplaceScreen() {
   const { t } = useTranslation();
-  // Get search query state management from context (if needed)
+
+
   const { searchQuery, setSearchQuery } = useContext(MarketplaceContext) || {
     searchQuery: "",
     setSearchQuery: () => {},
-  }; // Default if context undefined
+  };
 
-  // --- Local State for this screen's data ---
+  console.log("MarketplaceScreen Render - Context searchQuery:", searchQuery);
+
+
   const [listings, setListings] = useState([]); // Holds raw data from API
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1); // Local pagination state
-  // -------------------------------------------
+  const [marketplaceQuery, setMarketplaceQuery] = useState('');
 
-  const [isSearchModalVisible, setIsSearchModalVisible] = useState(false);
+
   const router = useRouter();
 
   // --- Fetch Data ---
@@ -73,6 +79,23 @@ export default function MarketplaceScreen() {
     // };
   }, []); // Fetch only on mount
 
+
+  const handleMarketplaceSearch = () => {
+    Keyboard.dismiss();
+    if (setSearchQuery) setSearchQuery(marketplaceQuery); // Update global/context query
+    setCurrentPage(1);
+    // Optionally close accordion here if needed, though might be better UX to leave it
+    // This would require passing a ref or callback to SearchAccordion
+};
+
+// Modified clear search handler
+const handleClearSearch = () => {
+  if (setSearchQuery) setSearchQuery(""); // Clear global/context query
+  setMarketplaceQuery(""); // Clear local input state
+  setCurrentPage(1);
+};
+
+
   // --- Filtering Logic ---
   const filteredListings = useMemo(() => {
     if (!searchQuery) {
@@ -81,9 +104,7 @@ export default function MarketplaceScreen() {
     const lowerCaseQuery = searchQuery.toLowerCase();
     return listings.filter(
       (listing) =>
-        listing.title?.toLowerCase().includes(lowerCaseQuery) ||
-        listing.description?.toLowerCase().includes(lowerCaseQuery) ||
-        listing.sellerName?.toLowerCase().includes(lowerCaseQuery)
+        listing.title?.toLowerCase().includes(lowerCaseQuery)
     );
   }, [listings, searchQuery]);
 
@@ -142,21 +163,6 @@ export default function MarketplaceScreen() {
     router.push("/MarketplaceNewItem");
   };
 
-  const openSearchModal = () => setIsSearchModalVisible(true);
-
-  const handleSearchSubmit = (query) => {
-    if (setSearchQuery) setSearchQuery(query); // Use context setter for search query
-    setCurrentPage(1); // Reset local page state
-    setIsSearchModalVisible(false);
-  };
-
-  const handleSearchCancel = () => setIsSearchModalVisible(false);
-
-  const handleClearSearch = () => {
-    if (setSearchQuery) setSearchQuery("");
-    setCurrentPage(1); // Reset local page state
-  };
-
   // --- Render Logic ---
   const ListEmptyComponent = () => {
     if (isLoading) return null; // Don't show if loading initially
@@ -174,6 +180,7 @@ export default function MarketplaceScreen() {
   return (
     <View style={styles.container}>
       <Header />
+      <Text style={styles.mainTitle}>{t("MarketplaceScreen_title")}</Text>
       <View style={styles.topButtonContainer}>
         <FlipButton
           text={t("MarketplaceScreen_NewItemButton")}
@@ -181,21 +188,47 @@ export default function MarketplaceScreen() {
           style={styles.newItemButton}
           disabled={isLoading}
         />
-        <FlipButton
-          text={t("MarketplaceScreen_SearchButton")}
-          onPress={openSearchModal}
-          style={styles.searchButton}
-          disabled={isLoading}
-        />
+        <SearchAccordion
+          headerOpenTextKey="MarketplaceScreen_accordionClose" // Need new translation keys
+          headerClosedTextKey="MarketplaceScreen_accordionOpen"
+          containerStyle={styles.accordionContainer} // Apply specific styles
+       >
+          {/* Content for Marketplace Search */}
+           <FloatingLabelInput
+              label={t("MarketplaceSearchItem_Header")} // Placeholder/Label text
+              value={marketplaceQuery}
+              onChangeText={setMarketplaceQuery}
+              returnKeyType="search"
+              onSubmitEditing={handleMarketplaceSearch}
+              style={styles.searchInputContainer}
+              inputStyle={styles.searchInput}
+              // alignRight={Globals.userSelectedDirection === "rtl"} // Add if needed
+            />
+            <FlipButton
+              onPress={handleMarketplaceSearch}
+              style={styles.searchSubmitButton}
+              bgColor="#007bff"
+              textColor="#fff"
+              disabled={isLoading}
+            >
+              <View style={styles.buttonContent}>
+                <Ionicons name="search" size={25} color="white" />
+                <Text style={styles.searchButtonText}>{t("MarketplaceScreen_SearchButton")}</Text>
+              </View>
+          </FlipButton>
+           {/* End Content for Marketplace Search */}
+       </SearchAccordion>
+
       </View>
       {searchQuery !== "" && !isLoading && (
         <View style={styles.inSearch}>
           <Text style={styles.searchFocus}>
-            {t("MarketplaceScreen_ShowingResultsFor", { query: searchQuery })}
+            {t("MarketplaceScreen_ShowingResultsFor")} {searchQuery}
           </Text>
           <FlipButton
             text={t("MarketplaceScreen_ClearSearchButton")}
             onPress={handleClearSearch}
+            style={styles.button}
           />
         </View>
       )}
@@ -272,12 +305,6 @@ export default function MarketplaceScreen() {
           </TouchableOpacity>
         </View>
       )}
-
-      <MarketplaceSearchModal
-        visible={isSearchModalVisible}
-        onSearch={handleSearchSubmit}
-        onCancel={handleSearchCancel}
-      />
     </View>
   );
 }
@@ -291,11 +318,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   topButtonContainer: {
-    flexDirection: "row",
+    flexDirection: "column",
     justifyContent: "space-evenly",
-    marginTop: 70,
+    marginTop: 20,
     marginBottom: 20,
-    width: SCREEN_WIDTH,
+    width: SCREEN_WIDTH * 0.9,
   },
   newItemButton: {
     backgroundColor: "#347af0",
@@ -371,8 +398,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
   },
   inSearch: {
-    width: "90%",
-    maxWidth: 500,
+    width: SCREEN_WIDTH * 0.90,
+    minHeight: 130,
     padding: 15,
     marginBottom: 15, // Added margin below
     alignItems: "center",
@@ -384,13 +411,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     zIndex: 5,
-    flexDirection: "row", // Arrange items horizontally
+    flexDirection: "column", // Arrange items horizontally
     justifyContent: "space-between", // Space out text and button
   },
   searchFocus: {
-    fontSize: 16, // Slightly smaller font
+    fontSize: 18, // Slightly smaller font
     textAlign: "right", // Align text to the right (for RTL)
-    flex: 1, // Allow text to take available space
-    marginRight: 10, // Add space between text and button
+    flex: 1, 
+    marginRight: 10, 
   },
+  button: {
+    width: SCREEN_WIDTH * 0.8
+  },
+  mainTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 70, 
+    color: '#111',
+  },
+  buttonContent:
+  {
+    flexDirection: "row"
+  }
 });

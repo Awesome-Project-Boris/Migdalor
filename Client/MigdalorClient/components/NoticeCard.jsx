@@ -3,7 +3,8 @@ import { StyleSheet, View, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Globals } from "../app/constants/Globals"; // Adjust the import path as necessary
 import BouncyButton from "./BouncyButton";
-import { SCREEN_WIDTH } from "@gorhom/bottom-sheet";
+
+const SCREEN_WIDTH = Globals.SCREEN_WIDTH
 
 const textAlignStyle = {
   textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left",
@@ -87,7 +88,7 @@ export default function NoticeCard({ data, onPress }) {
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH * 0.90,
+    width: SCREEN_WIDTH * 0.9,
     minHeight: 150, // Adjusted minHeight slightly if needed
     borderRadius: 10,
     backgroundColor: "#fff",

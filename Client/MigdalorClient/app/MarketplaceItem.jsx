@@ -20,6 +20,7 @@ import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons"; // Import icons if you want for buttons
 import { SCREEN_WIDTH } from "@gorhom/bottom-sheet";
 import BouncyButton from "@/components/BouncyButton";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const placeholderImage = require("../assets/images/tempItem.jpg");
 
@@ -49,6 +50,9 @@ export default function MarketplaceItemScreen() {
   const [listingDetails, setListingDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOwner, setIsOwner] = useState(false); // State to track ownership
+  const [currentUserId, setCurrentUserId] = useState(null);
+
 
   useEffect(() => {
     // --- Fetching logic remains the same ---
@@ -91,6 +95,37 @@ export default function MarketplaceItemScreen() {
     fetchDetails();
   }, [listingId, t]);
 
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const storedUserID = await AsyncStorage.getItem("userID");
+        if (storedUserID) {
+          console.log("MarketplaceItemScreen: Fetched UserID from AsyncStorage:", storedUserID);
+          setCurrentUserId(storedUserID);
+        } else {
+          console.warn("MarketplaceItemScreen: UserID not found in AsyncStorage.");
+          setCurrentUserId(null); // Explicitly set to null if not found
+        }
+      } catch (e) {
+        console.error("MarketplaceItemScreen: Failed to fetch userID from storage", e);
+        setCurrentUserId(null); // Set to null on error
+        // Optionally show an error message to the user
+      }
+    };
+  
+    fetchUserId();
+  }, []);
+
+  useEffect(() => {
+    if (listingDetails && currentUserId) {
+       console.log(`Comparing UserID (${currentUserId}) with SellerID (${listingDetails.sellerId})`);
+       // Ensure comparison is correct (e.g., case-insensitive if needed, though GUIDs should be exact)
+      setIsOwner(String(listingDetails.sellerId).toLowerCase() === String(currentUserId).toLowerCase());
+    } else {
+      setIsOwner(false);
+    }
+  }, [listingDetails, currentUserId]);
+
   const handleImagePress = (imageUriToView, altText = "") => {
     if (!imageUriToView) {
       console.log("handleImagePress: No valid imageUri provided.");
@@ -108,6 +143,61 @@ export default function MarketplaceItemScreen() {
       pathname: "/ImageViewScreen",
       params: paramsToPass,
     });
+  };
+
+  const handleEditListing = () => {
+    if (!listingDetails) return;
+    console.log("Navigating to Edit with data:", listingDetails);
+    router.push({
+      pathname: '/MarketplaceNewItem', // Use the correct path
+      params: {
+        mode: 'edit', // Pass mode
+        listingData: JSON.stringify(listingDetails) // Pass existing data as JSON
+      }
+    });
+  };
+
+  const handleDeleteListing = async () => {
+    if (!listingDetails) return;
+
+    Alert.alert(
+      t("MarketplaceItemScreen_DeleteConfirmTitle"), // "Confirm Deletion"
+      t("MarketplaceItemScreen_DeleteConfirmMsg"), // "Are you sure you want to delete this listing? This cannot be undone."
+      [
+        { text: t("Common_CancelButton"), style: 'cancel' },
+        {
+          text: t("Common_DeleteButton"),
+          style: 'destructive',
+          onPress: async () => {
+            console.log(`Attempting to delete listing ID: ${listingDetails.listingId}`);
+            // ** TODO: Implement Backend Call **
+            // You need a DELETE endpoint like /api/Listings/{listingId}
+             try {
+                setIsLoading(true); // Show loading indicator potentially
+                const response = await fetch(`${Globals.API_BASE_URL}/api/Listings/${listingDetails.listingId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    // Try to get error message from backend
+                    let errorMsg = `HTTP error ${response.status}`;
+                    try { const errData = await response.json(); errorMsg = errData.message || errorMsg; } catch {}
+                    throw new Error(errorMsg);
+                }
+
+                // Deletion successful
+                Toast.show({ type: 'success', text1: t("MarketplaceItemScreen_DeleteSuccessMsg")});
+                router.back(); // Go back to the previous screen
+
+             } catch (err) {
+                console.error("Failed to delete listing:", err);
+                Toast.show({ type: 'error', text1: t("MarketplaceItemScreen_DeleteErrorMsg"), text2: err.message });
+                setIsLoading(false);
+             }
+          }
+        }
+      ]
+    );
   };
 
   const handleContactPress = (type) => {
@@ -371,6 +461,19 @@ export default function MarketplaceItemScreen() {
                 {t("MarketplaceItemScreen_NoContactInfo")}
               </Text>
             )}
+
+{isOwner && (
+             <View style={styles.ownerActionsContainer}>
+               <FlipButton onPress={handleEditListing} style={[styles.ownerButton, styles.editButton]} bgColor="#28a745" textColor="#fff">
+                  <Ionicons name="create-outline" size={20} color="#fff" style={styles.ownerIcon}/>
+                  <Text style={styles.ownerButtonText}>{t("MarketplaceItemScreen_EditButton")}</Text>
+               </FlipButton>
+               <FlipButton onPress={handleDeleteListing} style={[styles.ownerButton, styles.deleteButton]} bgColor="#dc3545" textColor="#fff">
+                  <Ionicons name="trash-outline" size={20} color="#fff" style={styles.ownerIcon}/>
+                  <Text style={styles.ownerButtonText}>{t("MarketplaceItemScreen_DeleteButton")}</Text>
+               </FlipButton>
+             </View>
+           )}
           </View>
 
           {/* Refactored Back Button */}
@@ -541,5 +644,40 @@ const styles = StyleSheet.create({
     fontSize: 17,
     textAlign: "center",
     marginBottom: 20,
+  },
+  ownerActionsContainer: {
+    flexDirection: 'row', // Arrange buttons side-by-side
+    justifyContent: 'space-evenly', // Space them out
+    marginTop: 20, // Space above the buttons
+    marginBottom: 20, // Space below before the back button
+    paddingVertical: 10,
+    // backgroundColor: '#f0f0f0', // Optional subtle background
+    // borderRadius: 8,
+  },
+  ownerButton: {
+      flexDirection: 'row', // Icon and text side-by-side
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 18,
+      borderRadius: 8,
+      width: '45%', // Make buttons take up available space
+      borderWidth: 1,
+  },
+  editButton: {
+      backgroundColor: '#28a745', // Green
+      borderColor: '#1c7430',
+  },
+  deleteButton: {
+      backgroundColor: '#dc3545', // Red
+      borderColor: '#b02a37',
+  },
+  ownerButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+  },
+  ownerIcon: {
+      marginRight: 8,
   },
 });

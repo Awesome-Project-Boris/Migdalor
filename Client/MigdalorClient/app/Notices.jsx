@@ -350,14 +350,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f7f7f7",
-    width: "100%",
+    width: SCREEN_WIDTH,
     alignItems: "center",
   },
   controlsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    width: "100%",
+    width: SCREEN_WIDTH,
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderBottomWidth: 1,

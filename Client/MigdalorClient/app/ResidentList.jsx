@@ -18,13 +18,15 @@ import {
   Keyboard,
 } from "react-native";
 
-import Accordion from 'react-native-collapsible/Accordion'; // Import Accordion
-import * as Animatable from 'react-native-animatable'; // Import Animatable
+import Accordion from 'react-native-collapsible/Accordion'; 
+import * as Animatable from 'react-native-animatable'; 
 
 import UserProfileCard from "../components/UserProfileCard";
 import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import FloatingLabelInput from "../components/FloatingLabelInput";
+import SearchAccordion from "@/components/SearchAccordion";
+
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { Globals } from "./constants/Globals";
@@ -95,12 +97,6 @@ export default function UserProfilesScreen() {
   const [activeSections, setActiveSections] = useState([]); // accordion
 
   const flatListRef = useRef(null);
-
-  const SECTIONS = [ // for accordion
-    {
-      id: 'search',
-    },
-  ];
 
   const executeSearch = useCallback(
     async (page = 1, query = activeSearchQuery, type = activeSearchType) => {
@@ -202,112 +198,45 @@ export default function UserProfilesScreen() {
   // Render item function
   const renderItem = ({ item }) => <UserProfileCard data={item} />;
 
-  const renderAccordionHeader = (section, index, isActive) => { // Accordion header
-    return (
-      <Animatable.View
-        duration={300}
-        transition="backgroundColor"
-        style={[styles.accordionHeader, isActive ? styles.active : styles.inactive]}
-      >
-        <Text style={styles.accordionHeaderText}>
-          {isActive
-            ? t("ResidentSearchScreen_accordionOpen")
-             // e.g., "Click to close search"
-            : t("ResidentSearchScreen_accordionClose")}{" "}
-          {/* e.g., "Open for search" */}
-        </Text>
-        <Ionicons
-           name={isActive ? 'chevron-up' : 'chevron-down'}
-           size={20}
-           color="#333"
-        />
-      </Animatable.View>
-    );
-  };
-
-  const renderAccordionContent = (section, index, isActive) => { // Accordion contents
-    // The content is the original search controls view
-    return (
-      <Animatable.View
-         duration={300}
-         transition="opacity" // Or "fadeInDown", etc.
-         style={styles.accordionContent} // Apply specific styles for content padding etc.
-      >
-          {/* Search Type Toggle Button */}
-          <TouchableOpacity
-            onPress={toggleSearchType}
-            style={styles.searchTypeButton} // Keep original styles
-          >
-            <Text style={styles.searchTypeText}>
-              {t("ResidentSearchScreen_searchByLabel")}
-              <Text style={{ fontWeight: "bold" }}>
-                {searchType === "name"
-                  ? t("ResidentSearchScreen_searchByName")
-                  : t("ResidentSearchScreen_searchByHobby")}
-              </Text>
-            </Text>
-          </TouchableOpacity>
-
-          {/* Search Input */}
-          <FloatingLabelInput
-            label={
-              searchType === "name"
-                ? t("ResidentSearchScreen_enterNamePlaceholder")
-                : t("ResidentSearchScreen_enterHobbyPlaceholder")
-            }
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            onSubmitEditing={handleSearchPress}
-            style={styles.searchInputContainer} // Keep original styles
-            inputStyle={styles.searchInput} // Keep original styles
-            alignRight={Globals.userSelectedDirection === "rtl"}
-          />
-
-          {/* Search Button */}
-          <FlipButton
-            onPress={handleSearchPress}
-            style={styles.searchSubmitButton} // Keep original styles
-            bgColor="#007bff"
-            textColor="#fff"
-            disabled={isLoading}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons
-                name="search"
-                size={20}
-                color="white"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.searchButtonText}>
-                {t("MarketplaceScreen_SearchButton")}
-              </Text>
-            </View>
-          </FlipButton>
-      </Animatable.View>
-    );
-  };
-
-  const updateSections = (activeSectionsIndexes) => { // Accordion state
-    setActiveSections(activeSectionsIndexes);
-  };
 
   return (
     <View style={styles.container}>
        <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
       <Header title="User Profiles" />
-        <View style={styles.accordionContainer}>
-        <Accordion
-         sections={SECTIONS}
-          activeSections={activeSections}
-          renderHeader={renderAccordionHeader}
-          renderContent={renderAccordionContent}
-          onChange={updateSections}
-          touchableComponent={TouchableOpacity} // Use TouchableOpacity for the header
-          expandMultiple={false} // Only allow one section open (we only have one anyway)
-          underlayColor="transparent" // Prevent color flash on header press
-        />
-        </View>
+        <SearchAccordion
+          headerOpenTextKey= "ResidentSearchScreen_accordionOpen"// Pass appropriate keys
+          headerClosedTextKey= "ResidentSearchScreen_accordionClose"
+          containerStyle={styles.accordionContainer} // Pass screen-specific container styles
+      >
+          {/* Content for Resident Search */}
+          <TouchableOpacity onPress={toggleSearchType} style={styles.searchTypeButton} >
+            <Text style={styles.searchTypeText}>
+              {t("ResidentSearchScreen_searchByLabel")}
+              <Text style={{ fontWeight: "bold" }}>
+                {searchType === "name" ? t("ResidentSearchScreen_searchByName") : t("ResidentSearchScreen_searchByHobby")}
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
+          <FloatingLabelInput
+            label={searchType === "name" ? t("ResidentSearchScreen_enterNamePlaceholder") : t("ResidentSearchScreen_enterHobbyPlaceholder")}
+            value={searchQuery}
+            onChangeText={setSearchQuery} // Use the state setter from this screen
+            returnKeyType="search"
+            onSubmitEditing={handleSearchPress}
+            style={styles.searchInputContainer}
+            inputStyle={styles.searchInput}
+            alignRight={Globals.userSelectedDirection === "rtl"}
+          />
+
+          <FlipButton onPress={handleSearchPress} style={styles.searchSubmitButton} bgColor="#007bff" textColor="#fff" disabled={isLoading} >
+            <View style={styles.buttonContent}>
+              <Ionicons name="search" size={20} color="white" style={styles.buttonIcon} />
+              <Text style={styles.searchButtonText}>{t("MarketplaceScreen_SearchButton")}</Text>
+            </View>
+          </FlipButton>
+          {/* End Content for Resident Search */}
+      </SearchAccordion>
 
       {isLoading && displayedUsers.length === 0 && (
         <ActivityIndicator

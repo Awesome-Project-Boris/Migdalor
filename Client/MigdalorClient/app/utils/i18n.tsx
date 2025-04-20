@@ -101,6 +101,7 @@ const resources = {
       MarketplaceItemScreen_PublishedDate: "Published on:",
       MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp", 
       MarketplaceItemScreen_Loading: "Loading item...",
+      
 
 
       MarketplaceNewItemScreen_Header: "New Item Listing",
@@ -152,6 +153,9 @@ const resources = {
       ImagePicker_selectSourceTitle: "Select Image Source", ImagePicker_selectSourceMessage: "Choose how to select the image", ImagePicker_takePhotoButton: "Take Photo", ImagePicker_chooseFromLibraryButton: "Choose From Library", ImagePicker_cancelButton: "Cancel", ImagePicker_permissionDeniedTitle: "Permission Denied", ImagePicker_libraryPermissionDeniedMessage: "Permission to access photos is required!", ImagePicker_cameraPermissionDeniedMessage: "Camera permission is required!", ImagePicker_errorTitle: "Error", ImagePicker_saveCameraImageFailure: "Could not save camera image.", ImagePicker_saveLibraryImageFailure: "Could not save library image.", ImagePicker_openLibraryFailure: "Could not open image library.",
       ImageViewScreen_ErrorNoImage: "No image available",
       MarketplaceScreen_NoItems: "No items found",
+      MarketplaceScreen_accordionClose: "Press to close search",
+      MarketplaceScreen_accordionOpen: "Press to open search options",
+      MarketplaceScreen_title: "Marketplace",
 
 
       NoticeDetailsScreen_loadingDetails: "Loading notice details...",
@@ -282,6 +286,9 @@ const resources = {
       MarketplaceSearchItem_SearchButton: "חפש",  
       MarketplaceSearchItem_CancelButton: "ביטול",
       MarketplaceSearchItem_SubmitButton: "שלח",
+      MarketplaceScreen_accordionClose:"לחיצה לסגירת החיפוש",
+      MarketplaceScreen_accordionOpen: "לחיצה לחיפוש פריטים",
+      MarketplaceScreen_title: "שוק",
       
       
 
