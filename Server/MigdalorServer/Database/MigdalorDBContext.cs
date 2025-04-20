@@ -150,7 +150,7 @@ public partial class MigdalorDBContext : DbContext
 
         modelBuilder.Entity<OhResident>(entity =>
         {
-            entity.HasKey(e => e.ResidentId).HasName("PK__OH_Resid__9AD7185604AE4D61");
+            entity.HasKey(e => e.ResidentId).HasName("PK__OH_Resid__9AD7185616AE2A4A");
 
             entity.Property(e => e.ResidentId).ValueGeneratedNever();
             entity.Property(e => e.DateOfArrival).HasDefaultValueSql("(getdate())");
@@ -166,8 +166,6 @@ public partial class MigdalorDBContext : DbContext
                 .HasConstraintName("FK_Residents_People");
 
             entity.HasOne(d => d.Spouse).WithMany(p => p.InverseSpouse).HasConstraintName("FK_Residents_Spouse");
-
-            entity.HasOne(d => d.OhRoom).WithMany(p => p.OhResidents).HasConstraintName("FK_Residents_Room");
         });
 
         modelBuilder.Entity<OhRoom>(entity =>

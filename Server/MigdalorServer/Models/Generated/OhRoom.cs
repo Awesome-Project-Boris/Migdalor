@@ -24,7 +24,4 @@ public partial class OhRoom
 
     [Column("capacity")]
     public int Capacity { get; set; }
-
-    [InverseProperty("OhRoom")]
-    public virtual ICollection<OhResident> OhResidents { get; set; } = new List<OhResident>();
 }

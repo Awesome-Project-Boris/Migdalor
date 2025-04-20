@@ -14,8 +14,7 @@ CREATE TABLE OH_Residents (
     residentDescription NVARCHAR(MAX),
     additionalPic1ID INT,
     additionalPic2ID INT,
-    residentRoomNumber INT,
-    residentBuildingNumber INT,
+    residentApartmentNumber INT,
     CONSTRAINT FK_Residents_People FOREIGN KEY (residentID)
         REFERENCES OH_People(personID),
     CONSTRAINT FK_Residents_Spouse FOREIGN KEY (spouseID)
@@ -24,6 +23,4 @@ CREATE TABLE OH_Residents (
         REFERENCES OH_Pictures(PicID),
     CONSTRAINT FK_Residents_AdditionalPic2 FOREIGN KEY (additionalPic2ID)
         REFERENCES OH_Pictures(PicID),
-    CONSTRAINT FK_Residents_Room FOREIGN KEY (residentRoomNumber, residentBuildingNumber)
-        REFERENCES OH_Rooms(roomNumber, buildingNumber)
 );
