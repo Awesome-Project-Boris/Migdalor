@@ -8,8 +8,6 @@ import SettingsLayout from '../(settings)/_layout';
 const resources = {
   en: { // English translations
     translation: {
-      namespace1: 'hello from namespace 1',
-
       SettingsLayoutTabs_FontSettings: 'Font Settings',
       SettingsLayoutTabs_notificationSettings: 'Notification Settings',
       SettingsLayoutTabs_languageSettings: 'Language Settings',
@@ -101,6 +99,8 @@ const resources = {
       MarketplaceItemScreen_MessageButton: "Message on WhatsApp",
       MarketplaceItemScreen_EmailButton: "Email",
       MarketplaceItemScreen_PublishedDate: "Published on:",
+      MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp", 
+      MarketplaceItemScreen_Loading: "Loading item...",
 
 
       MarketplaceNewItemScreen_Header: "New Item Listing",
@@ -117,6 +117,14 @@ const resources = {
       MarketplaceNewItemScreen_missingInfoTitle: "Missing Info", MarketplaceNewItemScreen_missingInfoMessage: "Please enter an item name.", MarketplaceNewItemScreen_authErrorTitle: "Authentication Error", MarketplaceNewItemScreen_authErrorMessage: "User not identified. Please log in again.", MarketplaceNewItemScreen_errorTitle: "Error", MarketplaceNewItemScreen_userInfoRetrievalError: "Could not retrieve user information.",
       MarketplaceNewItemScreen_imageUploadFailedTitle: "Image Upload Failed",
       MarketplaceNewItemScreen_listingCreationFailedTitle: "Listing Creation Failed",
+      MarketplaceNewItemScreen_listingCreatedTitle: "Listing Created!",
+      MarketplaceNewItemScreen_listingCreatedSuccessMsg: "Your listing has been created successfully!",
+      MarketplaceNewItemScreen_errorTitleRequired: "Item name is required.",
+      MarketplaceNewItemScreen_errorTitleTooLong: "Item name is too long.",
+      MarketplaceNewItemScreen_errorDescriptionTooLong: "Item description is too long.",
+      MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars: "Description contains too many special characters.",
+
+
 
       MainMenuNameplate_greetingGoodMorning: "Good Morning",
       MainMenuNameplate_greetingGoodAfternoon: "Good Afternoon",
@@ -142,12 +150,15 @@ const resources = {
     
     
       ImagePicker_selectSourceTitle: "Select Image Source", ImagePicker_selectSourceMessage: "Choose how to select the image", ImagePicker_takePhotoButton: "Take Photo", ImagePicker_chooseFromLibraryButton: "Choose From Library", ImagePicker_cancelButton: "Cancel", ImagePicker_permissionDeniedTitle: "Permission Denied", ImagePicker_libraryPermissionDeniedMessage: "Permission to access photos is required!", ImagePicker_cameraPermissionDeniedMessage: "Camera permission is required!", ImagePicker_errorTitle: "Error", ImagePicker_saveCameraImageFailure: "Could not save camera image.", ImagePicker_saveLibraryImageFailure: "Could not save library image.", ImagePicker_openLibraryFailure: "Could not open image library.",
+      ImageViewScreen_ErrorNoImage: "No image available",
+      MarketplaceScreen_NoItems: "No items found",
 
 
       NoticeDetailsScreen_loadingDetails: "Loading notice details...",
       NoticeDetailsScreen_categoryLabel: "Category:",
       NoticeDetailsScreen_dateLabel: "Date:",
       Common_backButton: "Go back",
+      Common_BackButtonShort: "Back",
       NoticeBoardScreen_boardTitle: "Notice Board", 
       NoticeBoardScreen_filterButton: "Filter", NoticeBoardScreen_all: "All",
 
@@ -170,6 +181,10 @@ const resources = {
       
       
       ResidentsCommitte_nameUnavailable: "Name Unavailable", ResidentsCommitte_titleUnavailable: "Title Unavailable",
+      ResidentsCommittePage_title: "The Committee",
+      ResidentsCommittePage_contact: "Contact the Committee",
+      ResidentsCommittePage_committeeNotFound: "No committee members found.",
+
       
 
       UserProfileCard_unnamedUser: "Unnamed User",
@@ -180,12 +195,12 @@ const resources = {
       Common_clearAllDataButton: "Clear All Data",
 
 
+      LoginScreen_rememberMe: "Remember Me", 
+
     },
   },
   he: { // Hebrew translations
     translation: {
-      namespace1: 'שלום ממרחב השמות 1',
-
       SettingsLayoutTabs_FontSettings: 'הגדרות גופן',
       SettingsLayoutTabs_notificationSettings: 'הגדרות התראות',
       SettingsLayoutTabs_languageSettings: 'הגדרות שפה',
@@ -274,6 +289,8 @@ const resources = {
       MarketplaceItemScreen_MessageButton: "שלח הודעה בוואטסאפ",
       MarketplaceItemScreen_EmailButton: "שלח מייל",
       MarketplaceItemScreen_PublishedDate: "פורסם בתאריך:",
+      MarketplaceItemScreen_ExtraImage: "תמונה נוספת", MarketplaceItemScreen_DescriptionTitle: "תיאור", MarketplaceItemScreen_SellerTitle: "מוכר", MarketplaceItemScreen_ContactEmail: "דוא״ל", MarketplaceItemScreen_ContactPhone: "טלפון", MarketplaceItemScreen_ContactWhatsApp: "וואטסאפ",
+      MarketplaceItemScreen_Loading: "טוען פריט...",
 
 
       MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
@@ -289,7 +306,14 @@ const resources = {
       MarketplaceNewItemScreen_ImageTapToChoose: "לחץ לבחירה",
       MarketplaceNewItemScreen_missingInfoTitle: "מידע חסר", MarketplaceNewItemScreen_missingInfoMessage: "אנא הזן שם פריט.", MarketplaceNewItemScreen_authErrorTitle: "שגיאת אימות", MarketplaceNewItemScreen_authErrorMessage: "המשתמש לא זוהה. אנא התחבר מחדש.", MarketplaceNewItemScreen_errorTitle: "שגיאה", MarketplaceNewItemScreen_userInfoRetrievalError: "לא ניתן לאחזר פרטי משתמש.",
       MarketplaceNewItemScreen_imageUploadFailedTitle: "העלאת התמונה נכשלה",
-      MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת הרישום נכשלה",
+      MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת ההצעה נכשלה",
+      MarketplaceNewItemScreen_listingCreatedTitle: "ההצעה נוצרה!",
+
+      MarketplaceNewItemScreen_listingCreatedSuccessMsg: "ההצעה שלך נוצרה בהצלחה!",
+      MarketplaceNewItemScreen_errorTitleRequired: "חובה להזין שם הפריט.",
+      MarketplaceNewItemScreen_errorTitleTooLong: "שם הפריט ארוך מדי.",
+      MarketplaceNewItemScreen_errorDescriptionTooLong: "תיאור הפריט ארוך מדי.",
+      MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars: "התיאור מכיל יותר מדי תווים מיוחדים.",
 
 
       MainMenuNameplate_greetingGoodMorning: "בוקר טוב",
@@ -318,7 +342,14 @@ const resources = {
     
     
       ImagePicker_selectSourceTitle: "בחר מקור תמונה", ImagePicker_selectSourceMessage: "בחר כיצד לבחור את התמונה", ImagePicker_takePhotoButton: "צלם תמונה", ImagePicker_chooseFromLibraryButton: "בחר מהספרייה", ImagePicker_cancelButton: "ביטול", ImagePicker_permissionDeniedTitle: "ההרשאה נדחתה", ImagePicker_libraryPermissionDeniedMessage: "נדרשת הרשאה לגישה לתמונות!", ImagePicker_cameraPermissionDeniedMessage: "נדרשת הרשאת מצלמה!", ImagePicker_errorTitle: "שגיאה", ImagePicker_saveCameraImageFailure: "לא ניתן לשמור את תמונת המצלמה.", ImagePicker_saveLibraryImageFailure: "לא ניתן לשמור את תמונת הספרייה.", ImagePicker_openLibraryFailure: "לא ניתן לפתוח את ספריית התמונות.",
-      
+      ImageViewScreen_ErrorNoImage: "אין תמונה זמינה",
+
+
+
+      MarketplaceScreen_NoItems: "לא נמצאו פריטים",
+
+
+
     
     
       NoticeDetailsScreen_loadingDetails: "טוען פרטי הודעה...",
@@ -341,6 +372,9 @@ const resources = {
 
 
       ResidentsCommitte_nameUnavailable: "שם לא זמין", ResidentsCommitte_titleUnavailable: "תואר לא זמין",
+      ResidentsCommittePage_title: "וועד דיירים",
+      ResidentsCommittePage_contact: "צור קשר עם הוועד",
+      ResidentsCommittePage_committeeNotFound: "לא נמצאו חברי ועד.",
 
 
 
@@ -351,7 +385,10 @@ const resources = {
 
       Common_viewAllDataButton: "הצג את כל הנתונים",
       Common_clearAllDataButton: "נקה את כל הנתונים",
+      Common_BackButtonShort: "חזרה",
 
+
+      LoginScreen_rememberMe: "זכור אותי",
 
 
     },

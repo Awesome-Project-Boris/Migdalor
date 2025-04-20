@@ -243,7 +243,10 @@ export default function EditProfile() {
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+      >
         <Header />
 
         {/* !! Add changing profile picture */}
@@ -509,7 +512,7 @@ const styles = StyleSheet.create({
   scroll: {
     alignItems: "center",
     paddingBottom: 60,
-    paddingTop: 100,
+    paddingTop: 80,
   },
   title: {
     fontSize: 24,
@@ -652,6 +655,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   editableContainer: {
+    pointerEvents: "box-none",
     alignItems: "center",
     width: "100%",
     marginTop: 30,

@@ -7,6 +7,7 @@ import {
 import Header from '@/components/Header';
 import FlipButton from '../components/FlipButton';
 import CommitteeMemberCard from '../components/CommitteeMemberCard';
+import { useTranslation } from 'react-i18next';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -29,6 +30,7 @@ const fetchCommitteeMembersAPI = async () => {
 const Separator = () => <View style={styles.separator} />;
 
 export default function CommitteePage() {
+  const { t } = useTranslation();
   const [committeeMembers, setCommitteeMembers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -66,7 +68,7 @@ export default function CommitteePage() {
       <FlatList
           ListHeaderComponent={
               <>
-                  <Text style={styles.mainTitle}>The Committee</Text>
+                  <Text style={styles.mainTitle}>{t("ResidentsCommittePage_title")}</Text>
 
                   <Text style={styles.introParagraph}>{introText}</Text>
 
@@ -77,7 +79,7 @@ export default function CommitteePage() {
                           bgColor="#ffffff"
                           textColor="#000000"
                       >
-                         <Text style={styles.contactButtonText}>Contact the Committee</Text>
+                         <Text style={styles.contactButtonText}>{t("ResidentsCommittePage_contact")}</Text>
                       </FlipButton>
                   </View>
 
@@ -94,7 +96,7 @@ export default function CommitteePage() {
           contentContainerStyle={styles.listContentContainer}
           ItemSeparatorComponent={Separator} // Add separator between cards
           ListEmptyComponent={
-            !isLoading ? ( <Text style={styles.emptyListText}>No committee members found.</Text> ) : null
+            !isLoading ? ( <Text style={styles.emptyListText}>{t("ResidentsCommittePage_committeeNotFound")}</Text> ) : null
           }
       />
     </View>
@@ -145,6 +147,7 @@ const styles = StyleSheet.create({
       fontSize: 18,
       fontWeight: 'bold',
       color: '#fff',
+      textAlign: 'center',
   },
   loadingIndicator: {
       marginTop: 30, 

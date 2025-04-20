@@ -34,7 +34,7 @@ export default function ImageViewScreen() {
       <SafeAreaView style={styles.errorContainer}>
         <Text style={styles.errorText}>{t('ImageViewScreen_ErrorNoImage')}</Text>
         <FlipButton onPress={handleReturn} style={styles.backButtonError} >
-          <Text>{t('Common_BackButton')}</Text> 
+          <Text>{t('Common_backButton')}</Text> 
         </FlipButton>
       </SafeAreaView>
     );
@@ -47,7 +47,7 @@ export default function ImageViewScreen() {
       <View style={styles.container}>
         <View style={[styles.topButtonContainer, { top: insets.top }]}>
            <FlipButton onPress={handleReturn} style={styles.topButton} bgColor='white' textColor='black'>
-                <Text style= {styles.buttonText}>{t('Common_BackButton')}</Text>
+                <Text style= {styles.buttonText}>{t('Common_backButton')}</Text>
                <Ionicons name="arrow-back" size={28} color="black" />
            </FlipButton>
 

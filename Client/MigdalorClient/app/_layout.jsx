@@ -134,6 +134,13 @@ export default function Layout() {
                         headerShown: false
                       }}
                     />
+                    <Stack.Screen
+                      name="NoticeFocus"
+                      options={{
+                        title: "Notice Page",
+                        headerShown: false
+                      }}
+                    />
                   </Stack>
                 </MarketplaceProvider>
               </BottomSheetProvider>
