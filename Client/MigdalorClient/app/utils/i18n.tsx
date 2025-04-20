@@ -101,6 +101,14 @@ const resources = {
       MarketplaceItemScreen_PublishedDate: "Published on:",
       MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp", 
       MarketplaceItemScreen_Loading: "Loading item...",
+      MarketplaceItemScreen_EditButton: "Edit Listing",
+      MarketplaceItemScreen_DeleteButton: "Delete Listing",
+      MarketplaceItemScreen_DeleteConfirmTitle: "Confirm Deletion",
+      MarketplaceItemScreen_DeleteConfirmMsg: "Are you sure you want to delete this listing? This cannot be undone.",
+      MarketplaceItemScreen_DeleteSuccessMsg: "Listing deleted successfully!",
+      MarketplaceItemScreen_DeleteErrorMsg: "Failed to delete listing.",
+      MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
+      
 
 
       MarketplaceNewItemScreen_Header: "New Item Listing",
@@ -123,6 +131,10 @@ const resources = {
       MarketplaceNewItemScreen_errorTitleTooLong: "Item name is too long.",
       MarketplaceNewItemScreen_errorDescriptionTooLong: "Item description is too long.",
       MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars: "Description contains too many special characters.",
+      MarketplaceEditItemScreen_Header: "Edit an existing item",
+
+      MarketplaceEditItemScreen_UpdateSuccess: "Listing updated successfully!",
+      MarketplaceEditItemScreen_UpdateFailedTitle: "Update Failed",
 
 
 
@@ -152,11 +164,14 @@ const resources = {
       ImagePicker_selectSourceTitle: "Select Image Source", ImagePicker_selectSourceMessage: "Choose how to select the image", ImagePicker_takePhotoButton: "Take Photo", ImagePicker_chooseFromLibraryButton: "Choose From Library", ImagePicker_cancelButton: "Cancel", ImagePicker_permissionDeniedTitle: "Permission Denied", ImagePicker_libraryPermissionDeniedMessage: "Permission to access photos is required!", ImagePicker_cameraPermissionDeniedMessage: "Camera permission is required!", ImagePicker_errorTitle: "Error", ImagePicker_saveCameraImageFailure: "Could not save camera image.", ImagePicker_saveLibraryImageFailure: "Could not save library image.", ImagePicker_openLibraryFailure: "Could not open image library.",
       ImageViewScreen_ErrorNoImage: "No image available",
       MarketplaceScreen_NoItems: "No items found",
+      MarketplaceScreen_accordionClose: "Press to close search",
+      MarketplaceScreen_accordionOpen: "Press to open search options",
+      MarketplaceScreen_title: "Marketplace",
 
 
       NoticeDetailsScreen_loadingDetails: "Loading notice details...",
       NoticeDetailsScreen_categoryLabel: "Category:",
-      NoticeDetailsScreen_dateLabel: "Date:",
+      NoticeDetailsScreen_dateLabel: "Date: ",
       Common_backButton: "Go back",
       Common_BackButtonShort: "Back",
       NoticeBoardScreen_boardTitle: "Notice Board", 
@@ -168,14 +183,17 @@ const resources = {
       NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
 
 
+      NoticeCard_dateLabel: "Notice date: ",
+      NoticeCard_categoryLabel: "Category: ",
 
 
 
-
-
+      ResidentsSearchScreen_title: "Resident list",
       ResidentSearchScreen_searchByLabel: "Search by:", ResidentSearchScreen_searchByName: "Name", ResidentSearchScreen_searchByHobby: "Hobby",
       ResidentSearchScreen_enterNamePlaceholder: "Enter name...", ResidentSearchScreen_enterHobbyPlaceholder: "Enter hobby...",
       ResidentSearchScreen_noMatchMessage: "No users match your search.", ResidentSearchScreen_noUsersMessage: "No users found.",
+      ResidentSearchScreen_accordionClose: "Press to open search options",
+      ResidentSearchScreen_accordionOpen: "Press to close search field",
 
 
       
@@ -194,6 +212,10 @@ const resources = {
       Common_viewAllDataButton: "View All Data",
       Common_clearAllDataButton: "Clear All Data",
 
+      Common_UpdateButton: "Update", 
+      Common_DeleteButton: "Delete", 
+      Common_CancelButton: "Cancel", 
+      Common_Error: "Error",
 
       LoginScreen_rememberMe: "Remember Me", 
 
@@ -258,7 +280,7 @@ const resources = {
       MainMenuScreen_ActivityHoursButton: 'שעות פעילות',
       MainMenuScreen_MapButton: 'מפה',
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
-       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
+      MainMenuScreen_ResidentListButton: "רשימת הדיירים",
 
 
 
@@ -279,6 +301,9 @@ const resources = {
       MarketplaceSearchItem_SearchButton: "חפש",  
       MarketplaceSearchItem_CancelButton: "ביטול",
       MarketplaceSearchItem_SubmitButton: "שלח",
+      MarketplaceScreen_accordionClose:"לחיצה לסגירת החיפוש",
+      MarketplaceScreen_accordionOpen: "לחיצה לחיפוש פריטים",
+      MarketplaceScreen_title: "שוק",
       
       
 
@@ -291,6 +316,14 @@ const resources = {
       MarketplaceItemScreen_PublishedDate: "פורסם בתאריך:",
       MarketplaceItemScreen_ExtraImage: "תמונה נוספת", MarketplaceItemScreen_DescriptionTitle: "תיאור", MarketplaceItemScreen_SellerTitle: "מוכר", MarketplaceItemScreen_ContactEmail: "דוא״ל", MarketplaceItemScreen_ContactPhone: "טלפון", MarketplaceItemScreen_ContactWhatsApp: "וואטסאפ",
       MarketplaceItemScreen_Loading: "טוען פריט...",
+      MarketplaceItemScreen_EditButton: "ערוך מודעה",
+      MarketplaceItemScreen_DeleteButton: "מחק מודעה",
+      MarketplaceItemScreen_DeleteConfirmTitle: "אישור מחיקה",
+      MarketplaceItemScreen_DeleteConfirmMsg: "האם אתה בטוח שברצונך למחוק מודעה זו? לא ניתן לשחזר פעולה זו.",
+      MarketplaceItemScreen_DeleteSuccessMsg: "המודעה נמחקה בהצלחה!",
+      MarketplaceItemScreen_DeleteErrorMsg: "מחיקת המודעה נכשלה.",
+      MarketplaceItemScreen_PicDeleteErrorTitle: "בעיה במחיקת תמונה",
+
 
 
       MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
@@ -308,6 +341,11 @@ const resources = {
       MarketplaceNewItemScreen_imageUploadFailedTitle: "העלאת התמונה נכשלה",
       MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת ההצעה נכשלה",
       MarketplaceNewItemScreen_listingCreatedTitle: "ההצעה נוצרה!",
+      MarketplaceEditItemScreen_Header: "עריכת פריט קיים",
+      MarketplaceEditItemScreen_UpdateSuccess: "ההצעה עודכנה בהצלחה!",
+      MarketplaceEditItemScreen_UpdateFailedTitle: "העדכון נכשל", // אם תוסיף חזרה את הודעת השגיאה
+
+      
 
       MarketplaceNewItemScreen_listingCreatedSuccessMsg: "ההצעה שלך נוצרה בהצלחה!",
       MarketplaceNewItemScreen_errorTitleRequired: "חובה להזין שם הפריט.",
@@ -363,11 +401,15 @@ const resources = {
       NoticeBoardScreen_sortNewest: "החדש ביותר",
       NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
 
+      NoticeCard_dateLabel: "תאריך המודעה: ",
+      NoticeCard_categoryLabel: "קטגוריה: ",
 
-
+      ResidentsSearchScreen_title: "רשימת הדיירים",
       ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
       ResidentSearchScreen_enterNamePlaceholder: "הכנס שם...", ResidentSearchScreen_enterHobbyPlaceholder: "הכנס תחביב...",
       ResidentSearchScreen_noMatchMessage: "אין משתמשים התואמים לחיפוש שלך.", ResidentSearchScreen_noUsersMessage: "לא נמצאו משתמשים.",
+      ResidentSearchScreen_accordionClose: "לחיצה לחיפוש",
+      ResidentSearchScreen_accordionOpen: "לחיצה לסגירת החיפוש",
 
 
 
@@ -386,6 +428,10 @@ const resources = {
       Common_viewAllDataButton: "הצג את כל הנתונים",
       Common_clearAllDataButton: "נקה את כל הנתונים",
       Common_BackButtonShort: "חזרה",
+      Common_UpdateButton: "עדכן", 
+      Common_DeleteButton: "מחק", 
+      Common_CancelButton: "ביטול", 
+      Common_Error: "שגיאה", 
 
 
       LoginScreen_rememberMe: "זכור אותי",

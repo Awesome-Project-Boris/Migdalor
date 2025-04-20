@@ -4,6 +4,8 @@ using MigdalorServer.Database;
 using MigdalorServer.Models;
 using System.ComponentModel.DataAnnotations;
 using MigdalorServer.Models.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -18,10 +20,12 @@ namespace MigdalorServer.Controllers
     {
 
         private readonly MigdalorDBContext _context;
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
-        public ListingsController(MigdalorDBContext context)
+        public ListingsController(MigdalorDBContext context, IWebHostEnvironment hostingEnvironment)
         {
             _context = context;
+            _hostingEnvironment = hostingEnvironment;
         }
 
 
@@ -78,16 +82,16 @@ namespace MigdalorServer.Controllers
             try
             {
                 var listings = await _context.OhListings
-                    .Where(l => l.IsActive) // Filter for active listings [cite: 8]
-                    .Include(l => l.Seller) // Include Seller navigation property [cite: 8, 15]
+                    .Where(l => l.IsActive) // Filter for active listings 
+                    .Include(l => l.Seller) // Include Seller navigation property 
                     .Select(l => new
                     {
                         Listing = l,
-                        SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName, // Combine seller names [cite: 10]
+                        SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName, // Combine seller names 
                         // Get the main picture (role 'marketplace') or the first one if 'marketplace' role doesn't exist or fallback to null
                         MainPicture = _context.OhPictures
-                                        .Where(p => p.ListingId == l.ListingId) // Filter pictures for this listing [cite: 12]
-                                        .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1) // Prioritize 'marketplace' role [cite: 12, 18]
+                                        .Where(p => p.ListingId == l.ListingId) // Filter pictures for this listing 
+                                        .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1) // Prioritize 'marketplace' role 
                                         .ThenBy(p => p.DateTime) // Then by date as a fallback ordering
                                         .FirstOrDefault() // Take the first one matching the criteria
                     })
@@ -100,7 +104,7 @@ namespace MigdalorServer.Controllers
                         Date = l_info.Listing.Date,
                         SellerId = l_info.Listing.SellerId,
                         SellerName = l_info.SellerName,
-                        MainImagePath = l_info.MainPicture != null ? l_info.MainPicture.PicPath : null // Select the path or null [cite: 12]
+                        MainImagePath = l_info.MainPicture != null ? l_info.MainPicture.PicPath : null // Select the path or null 
                     })
                     .ToListAsync(); // Execute the query
 
@@ -142,16 +146,63 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        // PUT api/<ListingsController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<IActionResult> UpdateListing([FromRoute] int id, [FromBody] ListingUpdateDto updateDto)
         {
+            // WARNING: Ownership check is assumed to happen *before* this action is called.
+            try
+            {
+                // Call BL method without currentUserId
+                var updatedListing = await OhListing.UpdateListingAsync(id, updateDto, _context);
+
+                // Note: The BL method now throws FileNotFoundException if not found
+                // if (updatedListing == null) return NotFound(...); // This check is now redundant if BL throws
+
+                return Ok(new { message = "Listing updated successfully.", listingId = updatedListing.ListingId }); // Or return NoContent()
+            }
+            catch (ValidationException vex)
+            {
+                return BadRequest(new { message = "Validation failed.", error = vex.Message });
+            }
+            catch (FileNotFoundException fnfex) // Catch specific exception from BL
+            {
+                return NotFound(fnfex.Message);
+            }
+            // Removed UnauthorizedAccessException catch block
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in UpdateListing (ID: {id}): {ex.Message} | Inner: {ex.InnerException?.Message}");
+                return StatusCode(500, new { message = "An error occurred while updating the listing.", error = ex.Message });
+            }
         }
 
-        // DELETE api/<ListingsController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        // [Authorize] // Removed
+        public async Task<IActionResult> DeleteListing([FromRoute] int id)
         {
+            // WARNING: Ownership check is assumed to happen *before* this action is called.
+            try
+            {
+                // Call BL method without currentUserId
+                bool deleted = await OhListing.DeleteListingAsync(id, _context, _hostingEnvironment.ContentRootPath);
+
+                if (!deleted)
+                {
+                    // If BL returns false instead of throwing FileNotFoundException
+                    return NotFound($"Listing with ID {id} not found.");
+                }
+                return Ok(new { message = "Listing deleted successfully." }); // Or return NoContent()
+            }
+            catch (FileNotFoundException fnfex) // Catch specific exception from BL if it throws
+            {
+                return NotFound(fnfex.Message);
+            }
+            // Removed UnauthorizedAccessException catch block
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in DeleteListing (ID: {id}): {ex.Message} | Inner: {ex.InnerException?.Message}");
+                return StatusCode(500, new { message = "An error occurred while deleting the listing.", error = ex.Message });
+            }
         }
     }
 }

@@ -15,13 +15,13 @@ namespace MigdalorServer.Controllers
     [ApiController]
     public class PictureController : ControllerBase
     {
-        private readonly IWebHostEnvironment _environment;
-        private readonly MigdalorDBContext _context; // Context is still needed to pass to the model method
+        private readonly MigdalorDBContext _context;
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
-        public PictureController(IWebHostEnvironment environment, MigdalorDBContext context)
+        public PictureController(MigdalorDBContext context, IWebHostEnvironment hostingEnvironment)
         {
-            _environment = environment;
             _context = context;
+            _hostingEnvironment = hostingEnvironment;
         }
 
         // Response structure for the client
@@ -181,7 +181,51 @@ namespace MigdalorServer.Controllers
         public string Get(int id) { return "value"; }
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value) { }
-        [HttpDelete("{id}")]
-        public void Delete(int id) { }
+        
+
+
+        [HttpDelete("{pictureId}")] // Use the standard route parameter name
+        public async Task<IActionResult> DeletePicture([FromRoute] int pictureId)
+        { 
+            Console.WriteLine($"CONTROLLER: DeletePicture ID={pictureId}, ContentRootPath='{_hostingEnvironment?.ContentRootPath}'");
+
+            try
+            {
+                // Call the correct BL method that handles file + DB record deletion
+                // Pass ContentRootPath from the injected environment service
+                bool deleted = await OhPicture.DeleteSinglePictureAndRecordAsync(
+                    pictureId,
+                    _context,
+                    _hostingEnvironment.ContentRootPath // Pass ContentRootPath
+                );
+
+                if (!deleted)
+                {
+                    // This likely means the picture wasn't found in the database
+                    return NotFound(new { message = $"Picture with ID {pictureId} not found." });
+                }
+
+                // Success
+                return Ok(new { message = "Picture deleted successfully." }); // Or return NoContent()
+            }
+            // Removed UnauthorizedAccessException catch block
+            catch (FileNotFoundException fnfex) // Catch specific exceptions if BL throws them
+            {
+                // This might occur if DeleteSinglePictureAndRecordAsync re-throws file system errors
+                Console.WriteLine($"ERROR in DeletePicture Controller (ID: {pictureId}): File system issue - {fnfex.Message}");
+                return StatusCode(500, new { message = "An error occurred deleting the picture file.", error = fnfex.Message });
+            }
+            catch (InvalidOperationException ioex) // Catch DB save errors from BL
+            {
+                Console.WriteLine($"ERROR in DeletePicture Controller (ID: {pictureId}): Database update issue - {ioex.Message}");
+                return StatusCode(500, new { message = "An error occurred updating the database after picture deletion.", error = ioex.Message });
+            }
+            catch (Exception ex) // General catch
+            {
+                Console.WriteLine($"ERROR in DeletePicture Controller (ID: {pictureId}): {ex.Message}");
+                return StatusCode(500, new { message = "An unexpected error occurred while deleting the picture.", error = ex.Message });
+            }
+        }
     }
+
 }

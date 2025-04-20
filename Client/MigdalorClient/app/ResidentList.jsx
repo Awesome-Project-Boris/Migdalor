@@ -18,10 +18,15 @@ import {
   Keyboard,
 } from "react-native";
 
+import Accordion from 'react-native-collapsible/Accordion'; 
+import * as Animatable from 'react-native-animatable'; 
+
 import UserProfileCard from "../components/UserProfileCard";
 import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import FloatingLabelInput from "../components/FloatingLabelInput";
+import SearchAccordion from "@/components/SearchAccordion";
+
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { Globals } from "./constants/Globals";
@@ -89,6 +94,7 @@ export default function UserProfilesScreen() {
   const [searchType, setSearchType] = useState("name");
   const [activeSearchQuery, setActiveSearchQuery] = useState("");
   const [activeSearchType, setActiveSearchType] = useState("name");
+  const [activeSections, setActiveSections] = useState([]); // accordion
 
   const flatListRef = useRef(null);
 
@@ -133,7 +139,7 @@ export default function UserProfilesScreen() {
   // Initial Load
   useEffect(() => {
     executeSearch(1, "", "name");
-  }, [executeSearch]);
+  }, []);
 
   // Fetch more data when currentPage changes - maybe not needed
   useEffect(() => {
@@ -192,67 +198,46 @@ export default function UserProfilesScreen() {
   // Render item function
   const renderItem = ({ item }) => <UserProfileCard data={item} />;
 
+
   return (
     <View style={styles.container}>
+       <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
       <Header title="User Profiles" />
-
-      {/* --- Search Controls --- */}
-      <View style={styles.searchControlsContainer}>
-        {/* Search Type Toggle Button */}
-        <TouchableOpacity
-          onPress={toggleSearchType}
-          style={styles.searchTypeButton}
-        >
-          <Text style={styles.searchTypeText}>
-            {t("ResidentSearchScreen_searchByLabel")}
-            <Text style={{ fontWeight: "bold" }}>
-              {searchType === "name"
-                ? t("ResidentSearchScreen_searchByName")
-                : t("ResidentSearchScreen_searchByHobby")}
+        <SearchAccordion
+          headerOpenTextKey= "ResidentSearchScreen_accordionOpen"// Pass appropriate keys
+          headerClosedTextKey= "ResidentSearchScreen_accordionClose"
+          containerStyle={styles.accordionContainer} // Pass screen-specific container styles
+      >
+          {/* Content for Resident Search */}
+          <TouchableOpacity onPress={toggleSearchType} style={styles.searchTypeButton} >
+            <Text style={styles.searchTypeText}>
+              {t("ResidentSearchScreen_searchByLabel")}
+              <Text style={{ fontWeight: "bold" }}>
+                {searchType === "name" ? t("ResidentSearchScreen_searchByName") : t("ResidentSearchScreen_searchByHobby")}
+              </Text>
             </Text>
-          </Text>
-        </TouchableOpacity>
+          </TouchableOpacity>
 
-        <FloatingLabelInput
-          label={
-            searchType === "name"
-              ? t("ResidentSearchScreen_enterNamePlaceholder")
-              : t("ResidentSearchScreen_enterHobbyPlaceholder")
-          }
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-          onSubmitEditing={handleSearchPress}
-          style={styles.searchInputContainer}
-          inputStyle={styles.searchInput}
-          alignRight={Globals.userSelectedDirection === "rtl"}
-          // Adjust size/alignment if needed (defaults: size=30, alignRight=true)
-          // size={25}
-          // alignRight={false}
-        />
+          <FloatingLabelInput
+            label={searchType === "name" ? t("ResidentSearchScreen_enterNamePlaceholder") : t("ResidentSearchScreen_enterHobbyPlaceholder")}
+            value={searchQuery}
+            onChangeText={setSearchQuery} // Use the state setter from this screen
+            returnKeyType="search"
+            onSubmitEditing={handleSearchPress}
+            style={styles.searchInputContainer}
+            inputStyle={styles.searchInput}
+            alignRight={Globals.userSelectedDirection === "rtl"}
+          />
 
-        <FlipButton
-          onPress={handleSearchPress}
-          style={styles.searchSubmitButton}
-          bgColor="#007bff"
-          textColor="#fff"
-          disabled={isLoading}
-        >
-          <View style={styles.buttonContent}>
-            <Ionicons
-              name="search"
-              size={20}
-              color="white"
-              style={styles.buttonIcon}
-            />
-            <Text style={styles.searchButtonText}>
-              {t("MarketplaceScreen_SearchButton")}
-            </Text>
-          </View>
-        </FlipButton>
-      </View>
+          <FlipButton onPress={handleSearchPress} style={styles.searchSubmitButton} bgColor="#007bff" textColor="#fff" disabled={isLoading} >
+            <View style={styles.buttonContent}>
+              <Ionicons name="search" size={20} color="white" style={styles.buttonIcon} />
+              <Text style={styles.searchButtonText}>{t("MarketplaceScreen_SearchButton")}</Text>
+            </View>
+          </FlipButton>
+          {/* End Content for Resident Search */}
+      </SearchAccordion>
 
-      {/* --- Loading / No Results / List / Pagination --- */}
       {isLoading && displayedUsers.length === 0 && (
         <ActivityIndicator
           size="large"
@@ -421,4 +406,46 @@ const styles = StyleSheet.create({
   activePaginationButton: { backgroundColor: "#007bff" },
   activePaginationButtonText: { color: "#fff", fontWeight: "bold" },
   disabledButton: { opacity: 0.5, backgroundColor: "#e9ecef" },
+  accordionContainer: {
+    width: SCREEN_WIDTH * 0.9, // Match original container width
+    marginVertical: 10,
+    backgroundColor: '#fff', // Optional: background for the whole accordion block
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    overflow: 'hidden', // Ensures content stays within rounded corners
+    minHeight: 70,
+    marginTop: 15
+ },
+ accordionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    // backgroundColor: '#f9f9f9', // Slightly different bg for header
+ },
+ active: {
+   // backgroundColor: '#e7e7e7', // Slightly darker when open
+ },
+ inactive: {
+   // backgroundColor: '#f9f9f9',
+ },
+ accordionHeaderText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+ },
+ accordionContent: {
+    padding: 15, // Padding for the content area
+    backgroundColor: '#fff', // Background for content area
+ },
+ mainTitle: {
+  fontSize: 32,
+  fontWeight: 'bold',
+  textAlign: 'center',
+  marginTop: 70, 
+  marginBottom: 15, 
+  color: '#111',
+},
 });
