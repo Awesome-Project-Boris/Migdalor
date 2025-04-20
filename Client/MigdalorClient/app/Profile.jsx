@@ -24,7 +24,6 @@ import LabeledTextInput from "@/components/LabeledTextInput";
 import { Globals } from "@/app/constants/Globals";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 export default function Profile() {
   const { t } = useTranslation();
   const navigation = useNavigation();
@@ -32,6 +31,7 @@ export default function Profile() {
   // !! Switch these with the values from the database
 
   const [form, setForm] = useState({
+    name: "",
     partner: "",
     apartmentNumber: "",
     mobilePhone: "",
@@ -41,7 +41,46 @@ export default function Profile() {
     profession: "",
     interests: "",
     aboutMe: "",
+    // profilePicID: "",
+    // additionalPic1ID: "",
+    // additionalPic2ID: "",
+    residentApartmentNumber: "",
   });
+
+  const [profilePic, setProfilePic] = useState({
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+    //UploaderID: "",
+    //PicRole: "",
+    //ListingID: "",
+    //DateTime: "",
+  });
+
+  const [additionalPic1, setAdditionalPic1] = useState({
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+    //UploaderID: "",
+    //PicRole: "",
+    //ListingID: "",
+    //DateTime: "",
+  });
+
+  const [additionalPic2, setAdditionalPic2] = useState({
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+    //UploaderID: "",
+    //PicRole: "",
+    //ListingID: "",
+    //DateTime: "",
+  });
+
+
 
   const params = useLocalSearchParams();
   useEffect(() => {
@@ -84,16 +123,52 @@ export default function Profile() {
 
           // !! now to load the data into the form
           setForm({
-            partner: userData.partner,
             apartmentNumber: userData.apartmentNumber,
-            mobilePhone: userData.mobilePhone,
+            mobilePhone: userData.phoneNumber,
             email: userData.email,
-            arrivalYear: userData.arrivalYear,
-            origin: userData.origin,
+            arrivalYear: new Date(userData.dateOfArrival).getFullYear(),
+            origin: userData.homePlace,
             profession: userData.profession,
             interests: userData.interests,
-            aboutMe: userData.aboutMe,
+            aboutMe: userData.residentDescription,
+            //profilePicID: userData.profilePicID,
+            //additionalPic1ID: userData.additionalPic1ID,
+            //additionalPic2ID: userData.additionalPic2ID,
+            residentApartmentNumber: userData.residentApartmentNumber,
           });
+
+          setProfilePic({
+            PicID: userData.profilePicID,
+            PicName: userData.profilePicName,
+            PicPath: userData.profilePicPath,
+            PicAlt: userData.profilePicAlt,
+          });
+          setAdditionalPic1({
+            PicID: userData.additionalPic1ID,
+            PicName: userData.additionalPic1Name,
+            PicPath: userData.additionalPic1Path,
+            PicAlt: userData.additionalPic1Alt,
+          });
+          setAdditionalPic2({
+            PicID: userData.additionalPic2ID,
+            PicName: userData.additionalPic2Name,
+            PicPath: userData.additionalPic2Path,
+            PicAlt: userData.additionalPic2Alt,
+          });
+
+          if (Globals.userSelectedLanguage === "he") {
+            setForm((prev) => ({
+              ...prev,
+              name: userData.hebName,
+              partner: userData.spouseHebName,
+            }));
+          } else if (Globals.userSelectedLanguage === "en") {
+            setForm((prev) => ({
+              ...prev,
+              name: userData.engName,
+              partner: userData.spouseEngName,
+            }));
+          }
         }
       } catch (error) {
         console.error("Error loading user data from storage", error);
@@ -130,9 +205,13 @@ export default function Profile() {
 
         <View style={styles.profileImageContainer}>
           {/* !! Change this to users profile picture */}
+
           <Image
+            alt = {profilePic.PicAlt}
             source={{
-              uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+              uri: profilePic.PicPath?.trim()
+                ? API_BASE_URL + profilePic.PicPath
+                : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
             }}
             style={styles.profileImage}
           />
@@ -142,7 +221,7 @@ export default function Profile() {
           {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
 
           {/* !! Change this to full name  */}
-          <Text style={styles.profileName}>Israel Israeli</Text>
+          <Text style={styles.profileName}>{form.name || t("ProfileScreen_emptyDataField")}</Text>
         </View>
 
         <Text
@@ -188,7 +267,7 @@ export default function Profile() {
             },
           ]}
         >
-          {form.apartmentNumber || t("ProfileScreen_emptyDataField")}
+          {form.residentApartmentNumber || t("ProfileScreen_emptyDataField")}
         </Text>
 
         <Text
@@ -366,13 +445,17 @@ export default function Profile() {
         <View style={styles.profileExtraImageContainer}>
           <Image
             source={{
-              uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+              uri: form.additionalPic1ID?.trim()
+                ? form.additionalPic1ID
+                : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
             }}
             style={styles.extraImage}
           />
           <Image
             source={{
-              uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+              uri: form.additionalPic2ID?.trim()
+                ? form.additionalPic2ID
+                : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
             }}
             style={styles.extraImage}
           />

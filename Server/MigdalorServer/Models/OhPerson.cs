@@ -56,6 +56,22 @@ namespace MigdalorServer.Models
                 // 3) filter to the one you want
                 where person.PersonId == ID
 
+                // join into profile picture (left)
+                join profPic in db.OhPictures
+                    on person.ProfilePicId equals profPic.PicId into profPicGroup
+                from pp in profPicGroup.DefaultIfEmpty()
+
+                // join into additional picture 1 (left)
+                join add1 in db.OhPictures
+                    on resident.AdditionalPic1Id equals add1.PicId into add1Group
+                from p1 in add1Group.DefaultIfEmpty()
+
+                // join into additional picture 2 (left)
+                join add2 in db.OhPictures
+                    on resident.AdditionalPic2Id equals add2.PicId into add2Group
+                from p2 in add2Group.DefaultIfEmpty()
+
+
                 // 4) project everything you need, including spouse names
                 select new
                 {
@@ -63,8 +79,8 @@ namespace MigdalorServer.Models
                     id = person.PersonId,
                     phoneNumber = person.PhoneNumber,
                     hebName = person.HebFirstName + " " + person.HebLastName,
-                    engFirstName = person.EngFirstName + " " + person.EngLastName,
-                    profilePicID = person.ProfilePicId,
+                    engName = person.EngFirstName + " " + person.EngLastName,
+                    //profilePicID = person.ProfilePicId,
                     email = person.Email,
 
                     // --- from OH_Residents ---
@@ -72,13 +88,54 @@ namespace MigdalorServer.Models
                     homePlace = resident.HomePlace,
                     profession = resident.Profession,
                     residentDescription = resident.ResidentDescription,
-                    additionalPic1ID = resident.AdditionalPic1Id,
-                    additionalPic2ID = resident.AdditionalPic2Id,
+                    //additionalPic1ID = resident.AdditionalPic1Id,
+                    //additionalPic2ID = resident.AdditionalPic2Id,
+                    residentApartmentNumber = resident.ResidentApartmentNumber,
 
                     // --- spouse info (may be null) ---
                     spouseId = resident.SpouseId,
-                    spouseHebName = s == null ? null : s.HebFirstName + " " + s.HebLastName,
-                    spouseEngName = s == null ? null : s.EngFirstName + " " + s.EngLastName
+                    spouseHebName = resident.SpouseHebName,
+                    spouseEngName = resident.SpouseEngName,
+
+
+                    // profile‑picture data (or null)
+                    profilePicture = pp == null ? null : new
+                    {
+                        pp.PicId,
+                        pp.PicName,
+                        pp.PicPath,
+                        pp.PicAlt,
+                        pp.UploaderId,
+                        pp.PicRole,
+                        pp.ListingId,
+                        pp.DateTime
+                    },
+
+                    // additional pic #1 (or null)
+                    additionalPicture1 = p1 == null ? null : new
+                    {
+                        p1.PicId,
+                        p1.PicName,
+                        p1.PicPath,
+                        p1.PicAlt,
+                        p1.UploaderId,
+                        p1.PicRole,
+                        p1.ListingId,
+                        p1.DateTime
+                    },
+
+                    // additional pic #2 (or null)
+                    additionalPicture2 = p2 == null ? null : new
+                    {
+                        p2.PicId,
+                        p2.PicName,
+                        p2.PicPath,
+                        p2.PicAlt,
+                        p2.UploaderId,
+                        p2.PicRole,
+                        p2.ListingId,
+                        p2.DateTime
+                    }
                 }
             ).FirstOrDefault();
 
