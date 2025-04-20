@@ -55,7 +55,11 @@ const fetchNoticesAPI = async () => {
   //   noticeSubCategory: n.noticeSubCategory || null,
   // }));
 
-  const availableCategories = rawCategories.map((c) => c.categoryName);
+  const availableCategories = rawCategories.map((c) =>
+    Globals.userSelectedLanguage === "he"
+      ? c.categoryHebName
+      : c.categoryEngName
+  );
 
   return { notices, totalCount: notices.length, availableCategories };
 };
@@ -388,7 +392,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: SCREEN_WIDTH,
     maxWidth: SCREEN_WIDTH * 0.95,
-    alignItems: "center"
+    alignItems: "center",
   },
   loadingIndicator: { marginTop: 50 },
   centeredMessage: {

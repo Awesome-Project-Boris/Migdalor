@@ -6,51 +6,28 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Switch,
 } from "react-native";
-import FlipButton from "./FlipButton"; // Assuming FlipButton is in the same folder or adjust path
-import { Ionicons } from "@expo/vector-icons"; // For Checkbox alternative
-import { useTranslation } from "react-i18next"; // For translation
-
-const SimpleCheckbox = ({ label, value, onValueChange }) => (
-  <TouchableOpacity
-    style={styles.checkboxContainer}
-    onPress={() => onValueChange(!value)}
-  >
-    <View style={[styles.checkboxBase, value && styles.checkboxChecked]}>
-      {value && <Ionicons name="checkmark" size={16} color="white" />}
-    </View>
-    <Text style={styles.checkboxLabel}>{label}</Text>
-  </TouchableOpacity>
-);
-
-// Props:
-// - visible: boolean
-// - onClose: function
-// - allCategories: array of strings
-// - initialSelectedCategories: array of strings (currently selected)
-// - onApply: function(newSelectedCategories)
+import FlipButton from "./FlipButton";
+import Checkbox from "./CheckBox";
+import { useTranslation } from "react-i18next";
+import { Globals } from "@/app/constants/Globals";
 
 export default function FilterModal({
-   
   visible,
   onClose,
   allCategories,
   initialSelectedCategories,
   onApply,
 }) {
+  const { t } = useTranslation();
 
-   const {t } = useTranslation(); // Initialize translation hook
-
-  // Local state to manage selections within the modal before applying
   const [tempSelectedCategories, setTempSelectedCategories] = useState(
     initialSelectedCategories || []
   );
 
-  // Update local state if initial selections change when modal re-opens
   useEffect(() => {
     setTempSelectedCategories(initialSelectedCategories || []);
-  }, [initialSelectedCategories, visible]); // Re-sync when modal becomes visible or initial props change
+  }, [initialSelectedCategories, visible]);
 
   const handleToggleCategory = (category) => {
     setTempSelectedCategories((prev) => {
@@ -60,36 +37,39 @@ export default function FilterModal({
       } else {
         newSelection.add(category);
       }
-      return Array.from(newSelection); // Convert back to array for state/prop usage
+      return Array.from(newSelection);
     });
   };
 
   const handleSelectAll = () => {
-    setTempSelectedCategories([...allCategories]); // Select all available categories
+    setTempSelectedCategories([...allCategories]);
   };
 
   const handleDeselectAll = () => {
-    setTempSelectedCategories([]); // Clear selection
+    setTempSelectedCategories([]);
   };
 
   const handleApply = () => {
-    onApply(tempSelectedCategories); // Pass the confirmed selection back
+    onApply(tempSelectedCategories);
   };
 
   const renderCategoryItem = ({ item: category }) => (
-    <SimpleCheckbox
-      label={category}
-      value={tempSelectedCategories.includes(category)}
-      onValueChange={() => handleToggleCategory(category)}
+    <Checkbox
+      text={category}
+      isChecked={tempSelectedCategories.includes(category)}
+      onPress={() => handleToggleCategory(category)}
+      alignRight={Globals.userSelectedDirection === "rtl"}
+      fillColor="#007bff"
+      unFillColor="transparent"
     />
   );
 
   return (
     <Modal
-      animationType="slide" // Or 'fade'
-      transparent={true}
+      animationType="slide"
+      transparent
       visible={visible}
-      onRequestClose={onClose} // For Android back button
+      onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
@@ -114,7 +94,6 @@ export default function FilterModal({
               </Text>
             </TouchableOpacity>
           </View>
-
           <FlatList
             data={allCategories}
             renderItem={renderCategoryItem}
@@ -122,7 +101,6 @@ export default function FilterModal({
             style={styles.list}
             contentContainerStyle={styles.listContent}
           />
-
           <View style={styles.modalActions}>
             <FlipButton
               onPress={onClose}
@@ -149,18 +127,17 @@ export default function FilterModal({
   );
 }
 
-// --- Styles for Modal ---
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Dim background
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
   modalContainer: {
     width: "90%",
     maxWidth: 400,
-    maxHeight: "80%", // Limit height
+    maxHeight: "80%",
     backgroundColor: "white",
     borderRadius: 15,
     padding: 20,
@@ -197,34 +174,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   listContent: {
-    paddingBottom: 10, // Ensure last item isn't cut off
-  },
-  checkboxContainer: {
-    // Style for the category row
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    width: "100%",
-  },
-  checkboxBase: {
-    width: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 15,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: "#007bff", // Use a clear color
-    backgroundColor: "transparent",
-  },
-  checkboxChecked: {
-    backgroundColor: "#007bff", // Fill when checked
-  },
-  checkboxLabel: {
-    fontSize: 18, // Larger text for readability
-    flex: 1, // Allow text to wrap if needed
+    paddingBottom: 10,
   },
   modalActions: {
     flexDirection: "row",
@@ -233,9 +183,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   actionButton: {
-    flex: 1, // Make buttons share space
+    flex: 1,
     marginHorizontal: 10,
-    paddingVertical: 12, // Adjust padding as needed
+    paddingVertical: 12,
   },
   actionButtonText: {
     fontSize: 16,
