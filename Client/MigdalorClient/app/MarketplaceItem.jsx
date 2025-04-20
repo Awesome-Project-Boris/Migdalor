@@ -1,6 +1,6 @@
 // frontend/MarketplaceItem.jsx
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback  } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
   Linking,
   Alert,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals";
 import Header from "@/components/Header";
@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons"; // Import icons if you want for b
 import { SCREEN_WIDTH } from "@gorhom/bottom-sheet";
 import BouncyButton from "@/components/BouncyButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Toast } from "toastify-react-native";
 
 const placeholderImage = require("../assets/images/tempItem.jpg");
 
@@ -54,46 +55,48 @@ export default function MarketplaceItemScreen() {
   const [currentUserId, setCurrentUserId] = useState(null);
 
 
-  useEffect(() => {
-    // --- Fetching logic remains the same ---
-    if (!listingId) {
-      setError("Listing ID is missing.");
-      setIsLoading(false);
-      return;
-    }
-    const fetchDetails = async () => {
-      setIsLoading(true);
-      setError(null);
-      console.log(`Fetching details for listing ID: ${listingId}...`);
-      try {
-        const response = await fetch(
-          `${Globals.API_BASE_URL}/api/Listings/Details/${listingId}`
-        );
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error(
-              t("MarketplaceItemScreen_ErrorNotFound", { id: listingId })
-            );
-          }
-          throw new Error(
-            t("MarketplaceItemScreen_ErrorGenericFetch", {
-              status: response.status,
-            })
-          );
-        }
-        const data = await response.json();
-        console.log("Fetched details:", data);
-        setListingDetails(data);
-      } catch (err) {
-        console.error("Failed to fetch listing details:", err);
-        setError(err.message);
-        setListingDetails(null);
-      } finally {
-        setIsLoading(false);
+  const fetchDetails = useCallback(async () => {
+    // No need to set loading true here, useFocusEffect will handle it
+    setError(null); // Clear previous errors on new fetch attempt
+    console.log(`Fetching details for listing ID: ${listingId}...`);
+    try {
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/Listings/Details/${listingId}`
+      );
+      if (!response.ok) {
+        if (response.status === 404) { throw new Error( t("MarketplaceItemScreen_ErrorNotFound", { id: listingId }) ); }
+        throw new Error( t("MarketplaceItemScreen_ErrorGenericFetch", { status: response.status }) );
       }
-    };
-    fetchDetails();
-  }, [listingId, t]);
+      const data = await response.json();
+      console.log("Fetched details:", data);
+      setListingDetails(data);
+    } catch (err) {
+      console.error("Failed to fetch listing details:", err);
+      setError(err.message);
+      setListingDetails(null);
+    } finally {
+      // Set loading false here after fetch completes or fails
+      setIsLoading(false);
+    }
+  }, [listingId, t]); // Dependencies for fetchDetails
+  
+  
+  // --- Use useFocusEffect to call fetchDetails ---
+  useFocusEffect(
+    useCallback(() => {
+      console.log("MarketplaceItemScreen focused, fetching details...");
+      // Set loading true when the screen focuses and starts fetching
+      setIsLoading(true);
+      if (listingId) { // Only fetch if listingId is available
+          fetchDetails();
+      } else {
+          setError("Listing ID is missing.");
+          setIsLoading(false); // Stop loading if no ID
+      }
+      // Optional cleanup function (usually not needed for simple fetches)
+      // return () => console.log("MarketplaceItemScreen unfocused");
+    }, [listingId, fetchDetails]) // Depend on listingId and the stable fetchDetails callback
+  );
 
   useEffect(() => {
     const fetchUserId = async () => {

@@ -184,32 +184,48 @@ namespace MigdalorServer.Controllers
         
 
 
-        [HttpDelete("/api/Picture/{pictureId}")] // Example explicit route
-                                                 // [Authorize] // Removed
+        [HttpDelete("{pictureId}")] // Use the standard route parameter name
         public async Task<IActionResult> DeletePicture([FromRoute] int pictureId)
-        {
-            // WARNING: Ownership/Authorization check is assumed to happen *before* this action is called.
+        { 
+            Console.WriteLine($"CONTROLLER: DeletePicture ID={pictureId}, ContentRootPath='{_hostingEnvironment?.ContentRootPath}'");
+
             try
             {
-                // Call BL method without currentUserId
-                bool deleted = await OhPicture.DeletePictureAsync(pictureId, _context, _hostingEnvironment.WebRootPath);
+                // Call the correct BL method that handles file + DB record deletion
+                // Pass ContentRootPath from the injected environment service
+                bool deleted = await OhPicture.DeleteSinglePictureAndRecordAsync(
+                    pictureId,
+                    _context,
+                    _hostingEnvironment.ContentRootPath // Pass ContentRootPath
+                );
 
                 if (!deleted)
                 {
-                    return NotFound($"Picture with ID {pictureId} not found.");
+                    // This likely means the picture wasn't found in the database
+                    return NotFound(new { message = $"Picture with ID {pictureId} not found." });
                 }
-                return Ok(new { message = "Picture deleted successfully." }); // Or NoContent()
-            }
-            catch (FileNotFoundException fnfex) // Catch specific exception from BL
-            {
-                return NotFound(fnfex.Message);
+
+                // Success
+                return Ok(new { message = "Picture deleted successfully." }); // Or return NoContent()
             }
             // Removed UnauthorizedAccessException catch block
-            catch (Exception ex)
+            catch (FileNotFoundException fnfex) // Catch specific exceptions if BL throws them
             {
-                Console.WriteLine($"ERROR in DeletePicture (ID: {pictureId}): {ex.Message}");
-                return StatusCode(500, new { message = "An error occurred while deleting the picture.", error = ex.Message });
+                // This might occur if DeleteSinglePictureAndRecordAsync re-throws file system errors
+                Console.WriteLine($"ERROR in DeletePicture Controller (ID: {pictureId}): File system issue - {fnfex.Message}");
+                return StatusCode(500, new { message = "An error occurred deleting the picture file.", error = fnfex.Message });
+            }
+            catch (InvalidOperationException ioex) // Catch DB save errors from BL
+            {
+                Console.WriteLine($"ERROR in DeletePicture Controller (ID: {pictureId}): Database update issue - {ioex.Message}");
+                return StatusCode(500, new { message = "An error occurred updating the database after picture deletion.", error = ioex.Message });
+            }
+            catch (Exception ex) // General catch
+            {
+                Console.WriteLine($"ERROR in DeletePicture Controller (ID: {pictureId}): {ex.Message}");
+                return StatusCode(500, new { message = "An unexpected error occurred while deleting the picture.", error = ex.Message });
             }
         }
     }
+
 }

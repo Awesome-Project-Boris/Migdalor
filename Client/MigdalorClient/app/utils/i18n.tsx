@@ -101,6 +101,13 @@ const resources = {
       MarketplaceItemScreen_PublishedDate: "Published on:",
       MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp", 
       MarketplaceItemScreen_Loading: "Loading item...",
+      MarketplaceItemScreen_EditButton: "Edit Listing",
+      MarketplaceItemScreen_DeleteButton: "Delete Listing",
+      MarketplaceItemScreen_DeleteConfirmTitle: "Confirm Deletion",
+      MarketplaceItemScreen_DeleteConfirmMsg: "Are you sure you want to delete this listing? This cannot be undone.",
+      MarketplaceItemScreen_DeleteSuccessMsg: "Listing deleted successfully!",
+      MarketplaceItemScreen_DeleteErrorMsg: "Failed to delete listing.",
+      MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
       
 
 
@@ -124,6 +131,10 @@ const resources = {
       MarketplaceNewItemScreen_errorTitleTooLong: "Item name is too long.",
       MarketplaceNewItemScreen_errorDescriptionTooLong: "Item description is too long.",
       MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars: "Description contains too many special characters.",
+      MarketplaceEditItemScreen_Header: "Edit an existing item",
+
+      MarketplaceEditItemScreen_UpdateSuccess: "Listing updated successfully!",
+      MarketplaceEditItemScreen_UpdateFailedTitle: "Update Failed",
 
 
 
@@ -201,6 +212,10 @@ const resources = {
       Common_viewAllDataButton: "View All Data",
       Common_clearAllDataButton: "Clear All Data",
 
+      Common_UpdateButton: "Update", 
+      Common_DeleteButton: "Delete", 
+      Common_CancelButton: "Cancel", 
+      Common_Error: "Error",
 
       LoginScreen_rememberMe: "Remember Me", 
 
@@ -301,6 +316,14 @@ const resources = {
       MarketplaceItemScreen_PublishedDate: "פורסם בתאריך:",
       MarketplaceItemScreen_ExtraImage: "תמונה נוספת", MarketplaceItemScreen_DescriptionTitle: "תיאור", MarketplaceItemScreen_SellerTitle: "מוכר", MarketplaceItemScreen_ContactEmail: "דוא״ל", MarketplaceItemScreen_ContactPhone: "טלפון", MarketplaceItemScreen_ContactWhatsApp: "וואטסאפ",
       MarketplaceItemScreen_Loading: "טוען פריט...",
+      MarketplaceItemScreen_EditButton: "ערוך מודעה",
+      MarketplaceItemScreen_DeleteButton: "מחק מודעה",
+      MarketplaceItemScreen_DeleteConfirmTitle: "אישור מחיקה",
+      MarketplaceItemScreen_DeleteConfirmMsg: "האם אתה בטוח שברצונך למחוק מודעה זו? לא ניתן לשחזר פעולה זו.",
+      MarketplaceItemScreen_DeleteSuccessMsg: "המודעה נמחקה בהצלחה!",
+      MarketplaceItemScreen_DeleteErrorMsg: "מחיקת המודעה נכשלה.",
+      MarketplaceItemScreen_PicDeleteErrorTitle: "בעיה במחיקת תמונה",
+
 
 
       MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
@@ -318,6 +341,11 @@ const resources = {
       MarketplaceNewItemScreen_imageUploadFailedTitle: "העלאת התמונה נכשלה",
       MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת ההצעה נכשלה",
       MarketplaceNewItemScreen_listingCreatedTitle: "ההצעה נוצרה!",
+      MarketplaceEditItemScreen_Header: "עריכת פריט קיים",
+      MarketplaceEditItemScreen_UpdateSuccess: "ההצעה עודכנה בהצלחה!",
+      MarketplaceEditItemScreen_UpdateFailedTitle: "העדכון נכשל", // אם תוסיף חזרה את הודעת השגיאה
+
+      
 
       MarketplaceNewItemScreen_listingCreatedSuccessMsg: "ההצעה שלך נוצרה בהצלחה!",
       MarketplaceNewItemScreen_errorTitleRequired: "חובה להזין שם הפריט.",
@@ -400,6 +428,10 @@ const resources = {
       Common_viewAllDataButton: "הצג את כל הנתונים",
       Common_clearAllDataButton: "נקה את כל הנתונים",
       Common_BackButtonShort: "חזרה",
+      Common_UpdateButton: "עדכן", 
+      Common_DeleteButton: "מחק", 
+      Common_CancelButton: "ביטול", 
+      Common_Error: "שגיאה", 
 
 
       LoginScreen_rememberMe: "זכור אותי",

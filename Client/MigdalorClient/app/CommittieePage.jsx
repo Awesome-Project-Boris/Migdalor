@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
-  ActivityIndicator, Dimensions
+  ActivityIndicator, Dimensions, Linking
 } from 'react-native';
 import Header from '@/components/Header';
 import FlipButton from '../components/FlipButton';
@@ -51,8 +51,36 @@ export default function CommitteePage() {
   }, []);
 
   const handleContactPress = () => {
-    console.log("Contact the Committee button pressed - TEMP");
-  };
+     
+      let url = "";
+
+      let contactValue = "VaadNordiya34234@gmail.com"
+        url = `mailto:${contactValue}`;
+      
+  
+      Linking.canOpenURL(url)
+        .then((supported) => {
+          if (!supported) {
+            console.warn(`Cannot handle URL type MAIL with URL: ${url}`);
+            Alert.alert(
+              t("MarketplaceItemScreen_CannotHandleContactTitle"),
+              t("MarketplaceItemScreen_CannotHandleContactMsg", { type: type })
+            );
+          } else {
+            return Linking.openURL(url);
+          }
+        })
+        .catch((err) => {
+          console.error(
+            `An error occurred trying to open ${type} link: ${url}`,
+            err
+          );
+          Alert.alert(
+            t("Common_Error"),
+            t("MarketplaceItemScreen_ErrorOpeningLink")
+          ); // Generic error for linking
+        });
+    };
 
   const renderMemberCard = ({ item }) => (
     <CommitteeMemberCard data={item} />

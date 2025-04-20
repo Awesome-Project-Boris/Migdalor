@@ -184,7 +184,7 @@ namespace MigdalorServer.Controllers
             try
             {
                 // Call BL method without currentUserId
-                bool deleted = await OhListing.DeleteListingAsync(id, _context, _hostingEnvironment.WebRootPath);
+                bool deleted = await OhListing.DeleteListingAsync(id, _context, _hostingEnvironment.ContentRootPath);
 
                 if (!deleted)
                 {

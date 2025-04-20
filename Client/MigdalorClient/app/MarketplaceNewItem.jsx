@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef, useCallback } from "react";
+import React, { useState, useContext, useEffect, useRef, useCallback, useMemo } from "react";
 import {
   Modal,
   View,
@@ -51,8 +51,18 @@ export default function AddNewItem() {
   const API = Globals.API_BASE_URL;
 
   const isEditMode = params.mode === 'edit';
-  const initialData = params.listingData ? JSON.parse(params.listingData) : null;
-  const listingIdToEdit = initialData?.listingId;
+
+  const initialData = useMemo(() => {
+    if (!params.listingData) {
+        return null;
+    }
+    try {
+        return JSON.parse(params.listingData);
+    } catch (e) {
+        console.error("Failed to parse listingData param:", e);
+        return null; 
+    }
+}, [params.listingData]);
 
   const itemNameRef = useRef(null);
   const itemDescriptionRef = useRef(null);
@@ -477,7 +487,7 @@ const deletePicture = async (pictureId) => {
 
       // --- Step 3: Create or Update Listing ---
       if (isEditMode) {
-           // --- UPDATE ---
+           const currentListingId = initialData?.listingId;
            const updateDto = {
                // ListingId is needed for the URL, not usually the body
                Title: trimmedItemName,
@@ -487,11 +497,11 @@ const deletePicture = async (pictureId) => {
                ExtraPicId: finalExtraPicId,
                // Add any other fields your Update DTO needs (like IsActive?)
            };
-           console.log(`Attempting to update listing ID: ${listingIdToEdit} with data:`, updateDto);
+           console.log(`Attempting to update listing ID: ${currentListingId} with data:`, updateDto);
 
            // ** TODO: Implement Backend Call **
            // Requires: PUT /api/Listings/{id} endpoint
-           const updateResponse = await fetch(`${API}/api/Listings/${listingIdToEdit}`, {
+           const updateResponse = await fetch(`${API}/api/Listings/${currentListingId}`, {
                method: 'PUT',
                headers: { 'Content-Type': 'application/json' /* Add Auth */ },
                body: JSON.stringify(updateDto)

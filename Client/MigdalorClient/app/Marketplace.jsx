@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useMemo } from "react";
+import React, { useContext, useState, useEffect, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import SearchAccordion from "@/components/SearchAccordion";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import { Ionicons } from "@expo/vector-icons";
 
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals"; 
 
@@ -46,39 +46,36 @@ export default function MarketplaceScreen() {
   const router = useRouter();
 
   // --- Fetch Data ---
-  useEffect(() => {
-    const fetchListings = async () => {
-      setIsLoading(true);
-      setError(null);
-      setCurrentPage(1);
-      console.log("Fetching active listings summary...");
-      try {
-        const response = await fetch(
-          `${Globals.API_BASE_URL}/api/Listings/ActiveSummaries`
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log("Fetched listings:", data);
-        setListings(data || []);
-      } catch (err) {
-        console.error("Failed to fetch listings:", err);
-        setError(err.message || "Failed to load listings.");
-        setListings([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchListings = useCallback(async () => {
+    // setIsLoading(true); // Loading is set in useFocusEffect now
+    setError(null);
+    console.log("Fetching active listings summary..."); // Log fetch start
+    try {
+      const response = await fetch(`${Globals.API_BASE_URL}/api/Listings/ActiveSummaries`);
+      if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+      const data = await response.json();
+      console.log("Refreshed listings:", data ? data.length : 0); // Log count or data
+      setListings(data || []); // Update the state with fresh data
+    } catch (err) {
+      console.error("Failed to fetch listings:", err);
+      setError(err.message || "Failed to load listings.");
+      setListings([]);
+    } finally {
+      setIsLoading(false); // Set loading false after fetch attempt
+    }
+  }, []);
 
-    fetchListings();
+  useFocusEffect(
+    useCallback(() => {
+      console.log("MarketplaceScreen focused, fetching listings and resetting page...");
+      setIsLoading(true); // Set loading true when focusing
+      setCurrentPage(1); // Reset to page 1 when returning to the list
+      fetchListings(); // Call the function to fetch data
 
-    // Clear search when navigating away (optional)
-    // return () => {
-    //  if (setSearchQuery) setSearchQuery("");
-    // };
-  }, []); // Fetch only on mount
-
+      // You generally don't need a cleanup function just for fetching data
+      // return () => console.log("MarketplaceScreen unfocused");
+    }, [fetchListings]) // Dependency array includes the stable fetchListings callback
+  );
 
   const handleMarketplaceSearch = () => {
     Keyboard.dismiss();

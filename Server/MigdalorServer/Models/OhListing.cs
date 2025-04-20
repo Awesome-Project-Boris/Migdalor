@@ -213,7 +213,6 @@ namespace MigdalorServer.Models
 
         public static async Task<OhListing> UpdateListingAsync(
             int listingId,
-            // Guid currentUserId, // Removed
             ListingUpdateDto updateDto,
             MigdalorDBContext dbContext)
         {
@@ -228,8 +227,6 @@ namespace MigdalorServer.Models
                 throw new FileNotFoundException($"Listing with ID {listingId} not found.");
             }
 
-            // --- Ownership Check REMOVED ---
-            // if (existingListing.SellerId != currentUserId) { /* Removed */ }
 
             // --- Validation & Sanitization ---
             if (string.IsNullOrWhiteSpace(updateDto.Title)) { throw new ValidationException("Listing title cannot be empty."); }
@@ -238,63 +235,117 @@ namespace MigdalorServer.Models
 
             string sanitizedDescription = updateDto.Description?.Trim();
             if (sanitizedDescription != null && sanitizedDescription.Length > 300) { throw new ValidationException("Listing description cannot exceed 300 characters."); }
-            // Optional: XSS sanitization
 
-            // --- Update Entity ---
+            // --- Update Listing Entity Fields ---
             existingListing.Title = sanitizedTitle;
             existingListing.Description = sanitizedDescription;
-            // Picture links are NOT updated here based on previous frontend logic
+            // Potentially update other direct listing fields like IsActive if included in DTO
+            // if (updateDto.IsActive.HasValue) existingListing.IsActive = updateDto.IsActive.Value;
 
-            // --- Save Changes ---
-            try { await dbContext.SaveChangesAsync(); return existingListing; }
-            catch (DbUpdateException ex) { /* ... error handling ... */ throw; }
+            // --- ** NEW: Link Newly Uploaded Pictures ** ---
+            var newPictureIdsToLink = new List<int>();
+            if (updateDto.MainPicId.HasValue) newPictureIdsToLink.Add(updateDto.MainPicId.Value);
+            if (updateDto.ExtraPicId.HasValue) newPictureIdsToLink.Add(updateDto.ExtraPicId.Value);
+
+            if (newPictureIdsToLink.Any())
+            {
+                // Find the corresponding picture records that were *just* uploaded
+                // (They should exist and have ListingId = null)
+                var picturesToLink = await dbContext.OhPictures
+                     .Where(p => newPictureIdsToLink.Contains(p.PicId) && p.ListingId == null) // Ensure we only link unlinked pics
+                     .ToListAsync();
+
+                if (picturesToLink.Count != newPictureIdsToLink.Count)
+                {
+                    // This could happen if an invalid PicId was sent, or if a picture was somehow linked elsewhere already.
+                    Console.WriteLine($"WARNING: Could not find all expected unlinked pictures to link for Listing {listingId}. Provided IDs: {string.Join(",", newPictureIdsToLink)}");
+                    // Decide if this is a critical error or just a warning. We'll proceed for now.
+                }
+
+                foreach (var pic in picturesToLink)
+                {
+                    Console.WriteLine($"Linking Picture ID {pic.PicId} to Listing ID {listingId}");
+                    pic.ListingId = listingId; // Set the foreign key
+                                               // EF Core will track this change
+                }
+            }
+            // --- ** End of Picture Linking Logic ** ---
+
+
+            // --- Save Changes (Includes Listing updates AND Picture FK updates) ---
+            try
+            {
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine($"Successfully updated Listing ID: {listingId} and linked pictures.");
+                return existingListing;
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"ERROR saving updated listing (ID: {listingId}) or linking pictures: {ex.Message} | Inner: {ex.InnerException?.Message}");
+                throw new InvalidOperationException("Failed to save listing updates to the database.", ex);
+            }
         }
 
 
         // --- Updated: DeleteListingAsync (Simplified) ---
         public static async Task<bool> DeleteListingAsync(
             int listingId,
-            // Guid currentUserId, // Removed
             MigdalorDBContext dbContext,
-            string webRootPath)
+            string contentRootPath) // Use contentRootPath from IWebHostEnvironment
         {
             if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+            if (string.IsNullOrEmpty(contentRootPath)) throw new ArgumentNullException(nameof(contentRootPath), "Content root path must be provided for file deletion.");
 
+            // Step 1: Fetch the listing itself (WITHOUT including pictures here)
             var listingToDelete = await dbContext.OhListings
-               .Include(l => l.OhPictures)
-               .FirstOrDefaultAsync(l => l.ListingId == listingId);
+                .FirstOrDefaultAsync(l => l.ListingId == listingId);
 
             if (listingToDelete == null)
             {
                 Console.WriteLine($"Attempted to delete non-existent listing (ID: {listingId}).");
-                // throw new FileNotFoundException($"Listing with ID {listingId} not found."); // Optionally throw
                 return false; // Indicate not found
             }
 
-            // --- Ownership Check REMOVED ---
-            // if (listingToDelete.SellerId != currentUserId) { /* Removed */ }
+            // --- Ownership Check REMOVED (Per user request - Add back if needed!) ---
 
-            // --- Delete Associated Picture Files & Records ---
-            if (listingToDelete.OhPictures != null && listingToDelete.OhPictures.Any())
+            // Step 2: Fetch associated pictures separately using the ListingID
+            var picturesToDelete = await dbContext.OhPictures
+                .Where(p => p.ListingId == listingId)
+                .ToListAsync();
+
+            // Step 3: Delete Associated Picture Files & Records
+            if (picturesToDelete.Any()) // Check if the list has items
             {
-                var picturesToDelete = listingToDelete.OhPictures.ToList();
                 Console.WriteLine($"Found {picturesToDelete.Count} pictures associated with listing {listingId} to delete.");
                 foreach (var pic in picturesToDelete)
                 {
-                    // Call picture deletion logic (file system + DB record)
-                    // Assuming DeletePictureAsync no longer needs userId for auth check here
-                    bool picDeleted = await OhPicture.DeletePictureAsync(pic.PicId, dbContext, webRootPath);
-                    if (!picDeleted) { Console.WriteLine($"Warning: Failed to delete picture ID {pic.PicId} associated with listing {listingId}."); }
+                    bool picFileDeleted = await OhPicture.DeletePictureFileAsync(pic, contentRootPath);
+                    if (!picFileDeleted)
+                    {
+                        Console.WriteLine($"Warning: Failed to delete picture FILE for ID {pic.PicId} associated with listing {listingId}. Continuing to remove DB record.");
+                    }
+                    // Remove the picture record from the context
+                    dbContext.OhPictures.Remove(pic);
                 }
             }
 
-            // --- Delete Listing Record ---
+            // Step 4: Delete the Listing Record itself
             dbContext.OhListings.Remove(listingToDelete);
 
-            // --- Save Changes ---
-            try { await dbContext.SaveChangesAsync(); return true; }
-            catch (DbUpdateException ex) { /* ... error handling ... */ throw; }
+            // Step 5: Save all changes (listing deletion and picture deletions)
+            try
+            {
+                await dbContext.SaveChangesAsync();
+                Console.WriteLine($"Successfully deleted listing ID: {listingId} and associated picture records.");
+                return true; // Indicate successful deletion
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"ERROR deleting listing (ID: {listingId}) during SaveChanges: {ex.Message} | Inner: {ex.InnerException?.Message}");
+                // Consider specific error handling/logging
+                throw new InvalidOperationException("Failed to save deletions to the database.", ex);
+            }
         }
-
     }
+
 }
