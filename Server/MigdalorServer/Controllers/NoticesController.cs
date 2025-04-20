@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Google;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
 
@@ -6,6 +9,9 @@ using MigdalorServer.Models.DTOs;
 
 namespace MigdalorServer.Controllers
 {
+
+
+
     [Route("api/[controller]")]
     [ApiController]
     public class NoticesController : ControllerBase
@@ -27,6 +33,13 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        private readonly MigdalorDBContext _context;
+
+        public NoticesController(MigdalorDBContext context)
+        {
+            _context = context;
+        }
+
         // GET api/<NoticeController>/5
         [HttpGet("{category}")]
         public IActionResult Get(string category)
@@ -44,6 +57,36 @@ namespace MigdalorServer.Controllers
                         StatusCodes.Status500InternalServerError,
                         e.InnerException?.Message ?? e.Message
                     );
+            }
+        }
+
+        [HttpGet("{id}")] // Route accepts an 'id' parameter
+        public async Task<ActionResult<OhNotice>> GetNoticeById(int id) // id matches the route parameter
+        {
+            if (id <= 0) // Basic validation
+            {
+                return BadRequest("Invalid Notice ID provided.");
+            }
+
+            try
+            {
+                // Find the notice by its primary key (noticeID in the DB)
+                // Ensure your NoticeModel has the correct primary key property mapped (e.g., NoticeId)
+                var notice = await _context.OhNotices.FindAsync(id);
+
+                if (notice == null)
+                {
+                    return NotFound($"Notice with ID {id} not found."); // Return 404 if not found
+                }
+
+                return Ok(notice); // Return 200 OK with the notice data
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (replace Console.WriteLine with your actual logger)
+                Console.WriteLine($"Error fetching notice with ID {id}: {ex.Message}");
+                // Return a generic 500 error to the client
+                return StatusCode(500, "An internal server error occurred.");
             }
         }
 

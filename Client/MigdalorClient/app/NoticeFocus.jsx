@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Button,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import FlipButton from "@/components/FlipButton";
 // Assume you have or will create a NoticesContext similar to MarketplaceContext
 // import { NoticesContext } from '../context/NoticesProvider'; // Example context import
@@ -37,87 +37,82 @@ export default function NoticeFocusScreen() {
   const { noticeId } = useLocalSearchParams(); // Use string directly if not typed
   const router = useRouter();
 
-  // --- Data Fetching using Context (Similar to MarketplaceItem.jsx) ---
-  // IMPORTANT: Replace with your actual context logic
-  // const { getNoticeById } = useContext(NoticesContext); // Assuming this context exists
+  const fetchNoticeDetails = useCallback(async () => {
+    if (!noticeId) {
+      setError(t("NoticeDetailsScreen_errorNoId")); // Use translation
+      setIsLoading(false);
+      return;
+    }
 
-  useEffect(() => {
-    const loadNoticeDetails = () => {
-      if (!noticeId) {
-        setError("Notice ID not provided");
-        setIsLoading(false);
-        return;
-      }
-      // if (!getNoticeById) { // Check if context function is available
-      //    setError("Notice context not available");
-      //    setIsLoading(false);
-      //    console.error("Error: getNoticeById function is missing from NoticesContext.");
-      //    return;
-      // }
+    setError(null); // Clear previous errors
 
-      setIsLoading(true);
-      setError(null);
-      try {
-        // --- Mock call ---
-        console.log(
-          `Attempting to get notice by ID from context (mock): ${noticeId}`
-        );
-        // const foundNotice = getNoticeById(noticeId); // Replace with actual context call
+    try {
+      // Construct the API URL using Globals and the noticeId
+      const apiUrl = `${Globals.API_BASE_URL}/api/Notices/${noticeId}`; // Assumes endpoint structure
+      console.log(`Workspaceing notice details from: ${apiUrl}`); // Log the URL
 
-        // --- Mock logic START ---
-        const allMockNotices = Array.from({ length: 35 }, (_, i) => ({
-          /* ... same mock data as before ... */ noticeId: i + 1,
-          senderId: `guid_${i}`,
-          creationDate: `2025-04-${String(14 + (i % 5)).padStart(2, "0")}`,
-          noticeTitle: `Important Notice #${i + 1}`,
-          noticeMessage: `This is the FULL notice message...`,
-          noticeCategory:
-            i % 3 === 0 ? "Urgent" : i % 3 === 1 ? "General" : "Events",
-          noticeSubCategory: i % 5 === 0 ? "Sub Cat A" : null,
-        }));
-        const foundNotice = allMockNotices.find(
-          (n) => n.noticeId.toString() === noticeId.toString()
-        );
-        // --- Mock logic END ---
+      const response = await fetch(apiUrl);
 
-        if (foundNotice) {
-          setNoticeData(foundNotice);
+      if (!response.ok) {
+        // Handle specific HTTP errors
+        if (response.status === 404) {
+          throw new Error(t("NoticeDetailsScreen_errorNotFound", { id: noticeId }));
         } else {
-          setError("Notice not found");
-          setNoticeData(null);
+          throw new Error(t("NoticeDetailsScreen_errorGenericFetch", { status: response.status }));
         }
-      } catch (err) {
-        console.error("Error loading notice from context:", err);
-        setError("An error occurred while loading the notice.");
-        setNoticeData(null);
-      } finally {
-        setIsLoading(false);
       }
-    };
 
-    loadNoticeDetails();
-    // Add getNoticeById to dependencies if using real context
-  }, [noticeId /*, getNoticeById */]);
+      const data = await response.json();
+      setNoticeData(data); // Set the fetched data
 
-  if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{t("NoticeDetailsScreen_loadingDetails")}</Text>
-      </View>
-    );
-  }
+    } catch (err) {
+      console.error("Error fetching notice details:", err);
+      setError(err.message || t("NoticeDetailsScreen_errorDefault")); // Use translated default error
+      setNoticeData(null);
+    } finally {
+      setIsLoading(false); // Ensure loading is set to false after fetch completes or fails
+    }
+  }, [noticeId, t]);
 
-  if (error || !noticeData) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error || "Notice not found."}</Text>
-        <Button title="Go Back" onPress={() => router.back()} />
-      </View>
-    );
-  }
+  useFocusEffect(
+    useCallback(() => {
+      console.log("NoticeFocusScreen focused, fetching details...");
+      setIsLoading(true); // Set loading true when screen focuses
+      fetchNoticeDetails();
+
+      // Optional cleanup function (if needed, e.g., to cancel fetch)
+      // return () => { /* cleanup logic */ };
+    }, [fetchNoticeDetails]) // Depend on the stable fetchNoticeDetails callback
+  );
+
 
   const displayDate = formatDate(noticeData.creationDate);
+
+
+  if (error) { // Display error message if fetch failed
+    return (
+      <>
+      <Header/>
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title={t("Common_backButton")} onPress={() => router.back()} />
+      </View>
+      </>
+    );
+  }
+
+  if (!noticeData) { // Display if no data could be loaded (e.g., 404 or other issues)
+     return (
+       <>
+       <Header/>
+       <View style={styles.centered}>
+         <Text style={styles.errorText}>{t("NoticeDetailsScreen_noDetailsFound")}</Text>
+         <Button title={t("Common_backButton")} onPress={() => router.back()} />
+       </View>
+       </>
+     );
+   }
+
 
   return (
     <>
@@ -126,6 +121,7 @@ export default function NoticeFocusScreen() {
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
       >
+        {/* Use fields from noticeData, matching DB structure */}
         <Text style={styles.title}>{noticeData.noticeTitle}</Text>
 
         <View style={styles.metaContainer}>
@@ -157,18 +153,11 @@ export default function NoticeFocusScreen() {
           >
             {t("NoticeDetailsScreen_dateLabel")} {displayDate}
           </Text>
-          {/* Optional: Display Sender Info if available in noticeData */}
+          {/* Optional: Display Sender Info if you fetch/join it */}
           {/* noticeData.senderName && <Text style={styles.metaText}>From: {noticeData.senderName}</Text> */}
         </View>
 
         <Text style={styles.message}>{noticeData.noticeMessage}</Text>
-
-        {/* Contact buttons if we want to direct to an activity/whatever
-          <YStack width="90%" space="$3" marginTop="$4" alignItems="center">
-             <Text> ... </Text>
-             <FlipButton ... />
-          </YStack>
-       */}
 
         <View style={styles.backButtonContainer}>
           <FlipButton style={styles.backButton} onPress={() => router.back()}>
