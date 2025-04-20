@@ -14,7 +14,7 @@ namespace MigdalorServer.Models
         public static OhCategory? GetCategoryByName(string name)
         {
             using MigdalorDBContext db = new MigdalorDBContext();
-            return db.OhCategories.FirstOrDefault(c => c.CategoryName == name);
+            return db.OhCategories.FirstOrDefault(c => c.CategoryHebName == name);
         }
     }
 }
