@@ -68,74 +68,78 @@ const FloatingLabelInput = forwardRef(
       zIndex: 2,
     };
 
-    // Compute offsets
+    // Offsets
+    const clearOffset = 10 * scale;
+    const eyeSize = 24 * scale;
     const buttonSide = alignRight ? "left" : "right";
-    const eyeSize = 16 * scale;
-    const eyeOutsideOffset = -(eyeSize + 8 * scale); // place outside left/right edge
-    const clearInsideOffset = 10 * scale; // stick to input edge
 
     return (
       <TouchableWithoutFeedback onPress={() => inputRef.current?.focus()}>
-        <View style={[styles.container, { marginVertical: 12 * scale }, style]}>
-          <TextInput
-            ref={inputRef}
-            {...props}
-            secureTextEntry={secureTextEntry && !showPassword}
-            style={[
-              styles.textInput,
-              {
-                height: 40 * scale,
-                fontSize: 16 * scale,
-                paddingHorizontal: 10 * scale,
-                borderRadius: 4 * scale,
-                textAlign: alignRight ? "right" : "left",
-              },
-              props.inputStyle,
-            ]}
-            value={value}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            onChangeText={onChangeText}
-          />
+        <View
+          style={[styles.containerRow, { marginVertical: 12 * scale }, style]}
+        >
+          <View style={styles.innerContainer}>
+            <TextInput
+              ref={inputRef}
+              {...props}
+              secureTextEntry={secureTextEntry && !showPassword}
+              style={[
+                styles.textInput,
+                {
+                  width: "100%",
+                  height: 2 * size,
+                  fontSize: 16 * scale,
+                  paddingHorizontal: 10 * scale,
+                  borderRadius: 4 * scale,
+                  textAlign: alignRight ? "right" : "left",
+                },
+                props.inputStyle,
+              ]}
+              value={value}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onChangeText={onChangeText}
+            />
 
-          {secureTextEntry && (
-            <TouchableOpacity
-              onPress={() => setShowPassword((prev) => !prev)}
-              style={{
-                position: "absolute",
-                [buttonSide]: eyeOutsideOffset,
-                top: 10 * scale,
-                zIndex: 3,
-              }}
-            >
-              <Ionicons
-                name={showPassword ? "eye" : "eye-off"}
-                size={eyeSize}
-                color="grey"
-              />
-            </TouchableOpacity>
-          )}
+            {secureTextEntry ? (
+              <TouchableOpacity
+                onPress={() => setShowPassword((v) => !v)}
+                style={{
+                  position: "absolute",
+                  [buttonSide]: clearOffset,
+                  top: (2 * size - eyeSize) / 2,
+                  zIndex: 3,
+                }}
+              >
+                <Ionicons
+                  name={showPassword ? "eye" : "eye-off"}
+                  size={eyeSize}
+                  color="grey"
+                />
+              </TouchableOpacity>
+            ) : (
+              value?.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => {
+                    onChangeText("");
+                    inputRef.current?.focus();
+                  }}
+                  style={{
+                    position: "absolute",
+                    [buttonSide]: clearOffset,
+                    top: (2 * size - eyeSize) / 2,
+                    zIndex: 3,
+                  }}
+                >
+                  <Text style={{ fontSize: eyeSize, color: "grey" }}>×</Text>
+                </TouchableOpacity>
+              )
+            )}
 
-          {value?.length > 0 && (
-            <TouchableOpacity
-              onPress={() => {
-                onChangeText("");
-                inputRef.current?.focus();
-              }}
-              style={{
-                position: "absolute",
-                [buttonSide]: clearInsideOffset,
-                top: 10 * scale,
-                zIndex: 3,
-              }}
-            >
-              <Text style={{ fontSize: 16 * scale, color: "grey" }}>×</Text>
-            </TouchableOpacity>
-          )}
-
-          <Animated.Text style={labelStyle} pointerEvents="none">
-            {label}
-          </Animated.Text>
+            <Animated.Text style={labelStyle} pointerEvents="none">
+              {label}
+            </Animated.Text>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     );
@@ -143,7 +147,14 @@ const FloatingLabelInput = forwardRef(
 );
 
 const styles = StyleSheet.create({
-  container: {
+  containerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    position: "relative",
+    alignSelf: "stretch",
+  },
+  innerContainer: {
+    width: "100%",
     position: "relative",
   },
   textInput: {
