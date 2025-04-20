@@ -156,7 +156,7 @@ const resources = {
 
       NoticeDetailsScreen_loadingDetails: "Loading notice details...",
       NoticeDetailsScreen_categoryLabel: "Category:",
-      NoticeDetailsScreen_dateLabel: "Date:",
+      NoticeDetailsScreen_dateLabel: "Date: ",
       Common_backButton: "Go back",
       Common_BackButtonShort: "Back",
       NoticeBoardScreen_boardTitle: "Notice Board", 
@@ -168,7 +168,8 @@ const resources = {
       NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
 
 
-
+      NoticeCard_dateLabel: "Notice date: ",
+      NoticeCard_categoryLabel: "Category: ",
 
 
 
@@ -260,7 +261,7 @@ const resources = {
       MainMenuScreen_ActivityHoursButton: 'שעות פעילות',
       MainMenuScreen_MapButton: 'מפה',
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
-       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
+      MainMenuScreen_ResidentListButton: "רשימת הדיירים",
 
 
 
@@ -365,6 +366,8 @@ const resources = {
       NoticeBoardScreen_sortNewest: "החדש ביותר",
       NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
 
+      NoticeCard_dateLabel: "תאריך המודעה: ",
+      NoticeCard_categoryLabel: "קטגוריה: ",
 
       ResidentsSearchScreen_title: "רשימת הדיירים",
       ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
