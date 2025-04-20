@@ -12,11 +12,14 @@ public partial class OhCategory
 {
     [Key]
     [StringLength(100)]
-    public string CategoryName { get; set; } = null!;
+    public string CategoryHebName { get; set; } = null!;
 
     [StringLength(7)]
     [Unicode(false)]
     public string? CategoryColor { get; set; }
+
+    [StringLength(100)]
+    public string? CategoryEngName { get; set; }
 
     [InverseProperty("NoticeCategoryNavigation")]
     public virtual ICollection<OhNotice> OhNotices { get; set; } = new List<OhNotice>();

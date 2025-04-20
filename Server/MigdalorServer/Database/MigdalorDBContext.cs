@@ -47,7 +47,7 @@ public partial class MigdalorDBContext : DbContext
 
         modelBuilder.Entity<OhCategory>(entity =>
         {
-            entity.HasKey(e => e.CategoryName).HasName("PK__OH_Categ__8517B2E13E0D2B85");
+            entity.HasKey(e => e.CategoryHebName).HasName("PK__OH_Categ__8517B2E13E0D2B85");
 
             entity.Property(e => e.CategoryColor).HasDefaultValue("#FFFFFF");
         });
