@@ -60,7 +60,7 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        [HttpGet("{id}")] // Route accepts an 'id' parameter
+        [HttpGet("{id:int}")] // Route accepts an 'id' parameter
         public async Task<ActionResult<OhNotice>> GetNoticeById(int id) // id matches the route parameter
         {
             if (id <= 0) // Basic validation
