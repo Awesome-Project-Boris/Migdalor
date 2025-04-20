@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,23 +11,15 @@ import {
   Image,
   StyleSheet,
   I18nManager,
-  Alert,
 } from "react-native";
 import { XStack } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-// import auth from "@react-native-firebase/auth";
-// import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { Toast } from "toastify-react-native";
-
 import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
-import Checkbox from "@/components/CheckBox";
-
 import { Globals } from "./constants/Globals";
-import { router } from "expo-router";
+import { router, Stack } from "expo-router";
 import { useAuth } from "@/context/AuthProvider";
-import { Stack } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 I18nManager.allowRTL(true);
@@ -37,17 +29,13 @@ const LoginScreen = () => {
   const { t } = useTranslation();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [loginLoading, setloginLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const { login } = useAuth();
 
   const handleLogin = async () => {
     try {
-      setloginLoading(true);
-      console.log("Login button pressed");
-
-      // Call the provider's login function
+      setLoginLoading(true);
       const data = await login(phoneNumber, password);
-
       Toast.show({
         type: "success",
         text1: t("LoginScreen_loginSuccess"),
@@ -65,7 +53,7 @@ const LoginScreen = () => {
       });
       console.error("Login failed:", error);
     } finally {
-      setloginLoading(false);
+      setLoginLoading(false);
     }
   };
 
@@ -73,10 +61,14 @@ const LoginScreen = () => {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.page}>
-        <ScrollView>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <KeyboardAvoidingView
               behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={styles.flex}
             >
               <View style={styles.container}>
                 <View style={styles.logoContainer}>
@@ -86,6 +78,7 @@ const LoginScreen = () => {
                     style={styles.logo}
                   />
                 </View>
+
                 <View style={styles.formContainer}>
                   <FloatingLabelInput
                     label={t("LoginScreen_phoneNumberLabel")}
@@ -107,6 +100,7 @@ const LoginScreen = () => {
                     secureTextEntry
                     size={35}
                   />
+
                   <FlipButton
                     onPress={handleLogin}
                     bgColor="#60a5fa"
@@ -117,7 +111,7 @@ const LoginScreen = () => {
                     <XStack gap={5} style={{ paddingStart: 15 }}>
                       <Text style={styles.loginButtonText}>
                         {t("LoginScreen_loginButton")}
-                      </Text>{" "}
+                      </Text>
                       {loginLoading ? (
                         <ActivityIndicator size="large" />
                       ) : (
@@ -136,32 +130,14 @@ const LoginScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   page: {
     flex: 1,
     backgroundColor: "#c5d8d1",
   },
   container: {
     flex: 1,
-
-    ...(Platform.OS === "web" && {
-      alignItems: "center",
-    }),
-  },
-  backgroundImage: {
-    flex: 1,
-    justifyContent: "flex-start",
-  },
-  topBar: {
-    flexDirection: "row-reverse",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 40,
-    marginHorizontal: 20,
-  },
-  icon: {
-    width: 30,
-    height: 30,
-    marginLeft: 15,
+    ...(Platform.OS === "web" && { alignItems: "center" }),
   },
   logoContainer: {
     alignItems: "center",
@@ -179,32 +155,8 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 15,
   },
-  input: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    textAlign: "right",
-    fontSize: 20,
-    borderColor: "#bfbdbd",
-    borderWidth: 1,
-  },
-  rememberMeContainer: {
-    writingDirection: "rtl",
-  },
-  rememberMeText: {
-    marginRight: 8,
-    fontSize: 16,
-  },
-  loginButton: {
-    borderRadius: 8,
-    paddingVertical: 18,
-    alignItems: "center",
-  },
   loginButtonText: {
     fontSize: 26,
-
     fontWeight: "bold",
     pointerEvents: "none",
   },
