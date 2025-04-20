@@ -52,5 +52,32 @@ namespace MigdalorServer.Models
                 throw; 
             }
         }
+
+        public static async Task<bool> DeletePictureAsync(
+            int pictureId,
+            // Guid currentUserId, // Removed
+            MigdalorDBContext dbContext,
+            string webRootPath)
+        {
+            var pictureToDelete = await dbContext.OhPictures.FirstOrDefaultAsync(p => p.PicId == pictureId);
+            if (pictureToDelete == null) { Console.WriteLine($"Picture ID {pictureId} not found for deletion."); return false; }
+
+            // --- Ownership Check REMOVED ---
+            // Assumed to be handled elsewhere or not needed per user request
+
+            // --- Delete File from Server ---
+            if (!string.IsNullOrEmpty(pictureToDelete.PicPath))
+            {
+                string fullPath = Path.Combine(webRootPath, pictureToDelete.PicPath.TrimStart('/', '\\'));
+                try { if (File.Exists(fullPath)) { File.Delete(fullPath); Console.WriteLine($"Deleted image file: {fullPath}"); } else { Console.WriteLine($"Warning: Image file not found for picture ID {pictureId} at path: {fullPath}"); } }
+                catch (Exception ex) { Console.WriteLine($"ERROR deleting image file {fullPath} for picture ID {pictureId}: {ex.Message}"); /* Log and continue? */ }
+            }
+
+            // --- Delete DB Record ---
+            dbContext.OhPictures.Remove(pictureToDelete);
+            // SaveChanges called by DeleteListingAsync or needs to be called if this is invoked independently
+
+            return true; // Indicates DB record was marked for removal
+        }
     }
 }

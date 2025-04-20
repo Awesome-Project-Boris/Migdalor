@@ -211,5 +211,90 @@ namespace MigdalorServer.Models
             return dto;
         }
 
+        public static async Task<OhListing> UpdateListingAsync(
+            int listingId,
+            // Guid currentUserId, // Removed
+            ListingUpdateDto updateDto,
+            MigdalorDBContext dbContext)
+        {
+            if (updateDto == null) throw new ArgumentNullException(nameof(updateDto));
+            if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+
+            var existingListing = await dbContext.OhListings
+                .FirstOrDefaultAsync(l => l.ListingId == listingId);
+
+            if (existingListing == null)
+            {
+                throw new FileNotFoundException($"Listing with ID {listingId} not found.");
+            }
+
+            // --- Ownership Check REMOVED ---
+            // if (existingListing.SellerId != currentUserId) { /* Removed */ }
+
+            // --- Validation & Sanitization ---
+            if (string.IsNullOrWhiteSpace(updateDto.Title)) { throw new ValidationException("Listing title cannot be empty."); }
+            string sanitizedTitle = updateDto.Title.Trim();
+            if (sanitizedTitle.Length > 100) { throw new ValidationException("Listing title cannot exceed 100 characters."); }
+
+            string sanitizedDescription = updateDto.Description?.Trim();
+            if (sanitizedDescription != null && sanitizedDescription.Length > 300) { throw new ValidationException("Listing description cannot exceed 300 characters."); }
+            // Optional: XSS sanitization
+
+            // --- Update Entity ---
+            existingListing.Title = sanitizedTitle;
+            existingListing.Description = sanitizedDescription;
+            // Picture links are NOT updated here based on previous frontend logic
+
+            // --- Save Changes ---
+            try { await dbContext.SaveChangesAsync(); return existingListing; }
+            catch (DbUpdateException ex) { /* ... error handling ... */ throw; }
+        }
+
+
+        // --- Updated: DeleteListingAsync (Simplified) ---
+        public static async Task<bool> DeleteListingAsync(
+            int listingId,
+            // Guid currentUserId, // Removed
+            MigdalorDBContext dbContext,
+            string webRootPath)
+        {
+            if (dbContext == null) throw new ArgumentNullException(nameof(dbContext));
+
+            var listingToDelete = await dbContext.OhListings
+               .Include(l => l.OhPictures)
+               .FirstOrDefaultAsync(l => l.ListingId == listingId);
+
+            if (listingToDelete == null)
+            {
+                Console.WriteLine($"Attempted to delete non-existent listing (ID: {listingId}).");
+                // throw new FileNotFoundException($"Listing with ID {listingId} not found."); // Optionally throw
+                return false; // Indicate not found
+            }
+
+            // --- Ownership Check REMOVED ---
+            // if (listingToDelete.SellerId != currentUserId) { /* Removed */ }
+
+            // --- Delete Associated Picture Files & Records ---
+            if (listingToDelete.OhPictures != null && listingToDelete.OhPictures.Any())
+            {
+                var picturesToDelete = listingToDelete.OhPictures.ToList();
+                Console.WriteLine($"Found {picturesToDelete.Count} pictures associated with listing {listingId} to delete.");
+                foreach (var pic in picturesToDelete)
+                {
+                    // Call picture deletion logic (file system + DB record)
+                    // Assuming DeletePictureAsync no longer needs userId for auth check here
+                    bool picDeleted = await OhPicture.DeletePictureAsync(pic.PicId, dbContext, webRootPath);
+                    if (!picDeleted) { Console.WriteLine($"Warning: Failed to delete picture ID {pic.PicId} associated with listing {listingId}."); }
+                }
+            }
+
+            // --- Delete Listing Record ---
+            dbContext.OhListings.Remove(listingToDelete);
+
+            // --- Save Changes ---
+            try { await dbContext.SaveChangesAsync(); return true; }
+            catch (DbUpdateException ex) { /* ... error handling ... */ throw; }
+        }
+
     }
 }

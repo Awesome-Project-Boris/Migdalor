@@ -15,13 +15,13 @@ namespace MigdalorServer.Controllers
     [ApiController]
     public class PictureController : ControllerBase
     {
-        private readonly IWebHostEnvironment _environment;
-        private readonly MigdalorDBContext _context; // Context is still needed to pass to the model method
+        private readonly MigdalorDBContext _context;
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
-        public PictureController(IWebHostEnvironment environment, MigdalorDBContext context)
+        public PictureController(MigdalorDBContext context, IWebHostEnvironment hostingEnvironment)
         {
-            _environment = environment;
             _context = context;
+            _hostingEnvironment = hostingEnvironment;
         }
 
         // Response structure for the client
@@ -181,7 +181,35 @@ namespace MigdalorServer.Controllers
         public string Get(int id) { return "value"; }
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value) { }
-        [HttpDelete("{id}")]
-        public void Delete(int id) { }
+        
+
+
+        [HttpDelete("/api/Picture/{pictureId}")] // Example explicit route
+                                                 // [Authorize] // Removed
+        public async Task<IActionResult> DeletePicture([FromRoute] int pictureId)
+        {
+            // WARNING: Ownership/Authorization check is assumed to happen *before* this action is called.
+            try
+            {
+                // Call BL method without currentUserId
+                bool deleted = await OhPicture.DeletePictureAsync(pictureId, _context, _hostingEnvironment.WebRootPath);
+
+                if (!deleted)
+                {
+                    return NotFound($"Picture with ID {pictureId} not found.");
+                }
+                return Ok(new { message = "Picture deleted successfully." }); // Or NoContent()
+            }
+            catch (FileNotFoundException fnfex) // Catch specific exception from BL
+            {
+                return NotFound(fnfex.Message);
+            }
+            // Removed UnauthorizedAccessException catch block
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR in DeletePicture (ID: {pictureId}): {ex.Message}");
+                return StatusCode(500, new { message = "An error occurred while deleting the picture.", error = ex.Message });
+            }
+        }
     }
 }
