@@ -60,11 +60,8 @@ public partial class OhResident
     [Column("additionalPic2ID")]
     public int? AdditionalPic2Id { get; set; }
 
-    [Column("residentRoomNumber")]
-    public int? ResidentRoomNumber { get; set; }
-
-    [Column("residentBuildingNumber")]
-    public int? ResidentBuildingNumber { get; set; }
+    [Column("residentApartmentNumber")]
+    public int? ResidentApartmentNumber { get; set; }
 
     [ForeignKey("AdditionalPic1Id")]
     [InverseProperty("OhResidentAdditionalPic1s")]
@@ -76,10 +73,6 @@ public partial class OhResident
 
     [InverseProperty("Spouse")]
     public virtual ICollection<OhResident> InverseSpouse { get; set; } = new List<OhResident>();
-
-    [ForeignKey("ResidentRoomNumber, ResidentBuildingNumber")]
-    [InverseProperty("OhResidents")]
-    public virtual OhRoom? OhRoom { get; set; }
 
     [ForeignKey("ResidentId")]
     [InverseProperty("OhResident")]
