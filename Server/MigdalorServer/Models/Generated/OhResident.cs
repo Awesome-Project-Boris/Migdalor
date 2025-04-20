@@ -30,7 +30,15 @@ public partial class OhResident
     public bool CanInitActivity { get; set; }
 
     [Column("spouseID")]
-    public Guid SpouseId { get; set; }
+    public Guid? SpouseId { get; set; }
+
+    [Column("spouseHebName")]
+    [StringLength(100)]
+    public string? SpouseHebName { get; set; }
+
+    [Column("spouseEngName")]
+    [StringLength(100)]
+    public string? SpouseEngName { get; set; }
 
     [Column("dateOfArrival")]
     public DateOnly DateOfArrival { get; set; }
@@ -52,6 +60,12 @@ public partial class OhResident
     [Column("additionalPic2ID")]
     public int? AdditionalPic2Id { get; set; }
 
+    [Column("residentRoomNumber")]
+    public int? ResidentRoomNumber { get; set; }
+
+    [Column("residentBuildingNumber")]
+    public int? ResidentBuildingNumber { get; set; }
+
     [ForeignKey("AdditionalPic1Id")]
     [InverseProperty("OhResidentAdditionalPic1s")]
     public virtual OhPicture? AdditionalPic1 { get; set; }
@@ -63,11 +77,15 @@ public partial class OhResident
     [InverseProperty("Spouse")]
     public virtual ICollection<OhResident> InverseSpouse { get; set; } = new List<OhResident>();
 
+    [ForeignKey("ResidentRoomNumber, ResidentBuildingNumber")]
+    [InverseProperty("OhResidents")]
+    public virtual OhRoom? OhRoom { get; set; }
+
     [ForeignKey("ResidentId")]
     [InverseProperty("OhResident")]
     public virtual OhPerson Resident { get; set; } = null!;
 
     [ForeignKey("SpouseId")]
     [InverseProperty("InverseSpouse")]
-    public virtual OhResident Spouse { get; set; } = null!;
+    public virtual OhResident? Spouse { get; set; }
 }

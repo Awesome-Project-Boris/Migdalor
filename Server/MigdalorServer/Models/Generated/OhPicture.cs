@@ -40,6 +40,10 @@ public partial class OhPicture
     [Column("dateTime", TypeName = "datetime")]
     public DateTime DateTime { get; set; }
 
+    [ForeignKey("ListingId")]
+    [InverseProperty("OhPictures")]
+    public virtual OhListing? Listing { get; set; }
+
     [InverseProperty("Pic")]
     public virtual ICollection<OhActivity> OhActivities { get; set; } = new List<OhActivity>();
 

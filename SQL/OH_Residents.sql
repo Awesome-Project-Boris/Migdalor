@@ -5,13 +5,17 @@ CREATE TABLE OH_Residents (
     branchName NVARCHAR(100) NOT NULL,
     isBokerTov BIT NOT NULL DEFAULT 1,
     canInitActivity BIT NOT NULL DEFAULT 0,
-    spouseID UNIQUEIDENTIFIER NOT NULL,
+    spouseID UNIQUEIDENTIFIER NULL,
+    spouseHebName NVARCHAR(100) NULL,
+    spouseEngName NVARCHAR(100) NULL,
     dateOfArrival DATE NOT NULL DEFAULT GETDATE(),
     homePlace NVARCHAR(100),
     profession NVARCHAR(100),
     residentDescription NVARCHAR(MAX),
     additionalPic1ID INT,
     additionalPic2ID INT,
+    residentRoomNumber INT,
+    residentBuildingNumber INT,
     CONSTRAINT FK_Residents_People FOREIGN KEY (residentID)
         REFERENCES OH_People(personID),
     CONSTRAINT FK_Residents_Spouse FOREIGN KEY (spouseID)
@@ -19,5 +23,7 @@ CREATE TABLE OH_Residents (
     CONSTRAINT FK_Residents_AdditionalPic1 FOREIGN KEY (additionalPic1ID)
         REFERENCES OH_Pictures(PicID),
     CONSTRAINT FK_Residents_AdditionalPic2 FOREIGN KEY (additionalPic2ID)
-        REFERENCES OH_Pictures(PicID)
+        REFERENCES OH_Pictures(PicID),
+    CONSTRAINT FK_Residents_Room FOREIGN KEY (residentRoomNumber, residentBuildingNumber)
+        REFERENCES OH_Rooms(roomNumber, buildingNumber)
 );
