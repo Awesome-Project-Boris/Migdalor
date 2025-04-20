@@ -27,6 +27,9 @@ public partial class OhListing
     [Column(TypeName = "datetime")]
     public DateTime Date { get; set; }
 
+    [InverseProperty("Listing")]
+    public virtual ICollection<OhPicture> OhPictures { get; set; } = new List<OhPicture>();
+
     [ForeignKey("SellerId")]
     [InverseProperty("OhListings")]
     public virtual OhPerson Seller { get; set; } = null!;
