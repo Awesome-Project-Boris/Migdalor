@@ -3,20 +3,44 @@ import { StyleSheet, View, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Globals } from "../app/constants/Globals"; // Adjust the import path as necessary
 import BouncyButton from "./BouncyButton";
+import { SCREEN_WIDTH } from "@gorhom/bottom-sheet";
 
-// Format date helper
-const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
+const textAlignStyle = {
+  textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left",
+};
+
+const formatDate = (dateTimeString) => {
+  if (!dateTimeString) return "N/A";
+
   try {
-    const [year, month, day] = dateString.split("-");
-    return `${day}/${month}/${year}`;
+    const dateObj = new Date(dateTimeString);
+
+    // Check if the date object is valid
+    if (isNaN(dateObj.getTime())) {
+      console.error("Error parsing date:", dateTimeString);
+      return dateTimeString; // Return original string if parsing failed
+    }
+
+    // Get date parts
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = dateObj.getFullYear();
+
+    // Get time parts
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+
+    // Construct the desired format
+    return `${hours}:${minutes}:${seconds} - ${day}/${month}/${year}`;
+
   } catch (e) {
-    console.error("Error formatting date:", dateString, e);
-    return dateString;
+    console.error("Error formatting date-time:", dateTimeString, e);
+    return dateTimeString; // Return original string on error
   }
 };
 
-// Create snippet helper
+// // Creates snippet for message if we need it 
 const createSnippet = (message, maxLength = 100) => {
   if (!message) return "";
   return message.length <= maxLength
@@ -24,11 +48,7 @@ const createSnippet = (message, maxLength = 100) => {
     : message.substring(0, maxLength) + "...";
 };
 
-/**
- * NoticeCard displays a notice with a bouncy press animation.
- * Expects data with noticeTitle, noticeCategory, noticeSubCategory,
- * creationDate, noticeMessage, and categoryColor fields.
- */
+
 export default function NoticeCard({ data, onPress }) {
   if (!data) return null;
   const { t } = useTranslation();
@@ -39,62 +59,27 @@ export default function NoticeCard({ data, onPress }) {
   return (
     <BouncyButton
       onPress={onPress}
-      style={[styles.container, { borderColor }]}
+      style={[styles.container, { borderColor }]} // Apply border color
       springConfig={{ speed: 20, bounciness: 10 }}
     >
       <View style={styles.infoContainer}>
-        <Text
-          style={[
-            styles.noticeCategory,
-            {
-              /* flip alignment based on the app’s direction setting */
-              // textAlign:
-              //   Globals.userSelectedDirection === "rtl" ? "right" : "left",
-              textAlign: "center",
-            },
-          ]}
-        >
-          {data.noticeTitle}
+        <Text style={styles.noticeTitle}>
+           {data.noticeTitle}
         </Text>
 
         {data.noticeCategory && (
-          <Text
-            style={[
-              styles.noticeCategory,
-              {
-                /* flip alignment based on the app’s direction setting */
-                textAlign:
-                  Globals.userSelectedDirection === "rtl" ? "right" : "left",
-              },
-            ]}
-          >
-            {t("NoticeDetailsScreen_categoryLabel")} {data.noticeCategory}
+          <Text style={[styles.noticeCategory, textAlignStyle]}>
+            {t("NoticeCard_categoryLabel")} {data.noticeCategory}
             {data.noticeSubCategory ? ` (${data.noticeSubCategory})` : ""}
           </Text>
         )}
 
-        <Text
-          style={[
-            styles.noticeDate,
-            {
-              /* flip alignment based on the app’s direction setting */
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("NoticeDetailsScreen_dateLabel")} {displayDate}
+        <Text style={[styles.noticeDate, textAlignStyle]}>
+          {t("NoticeCard_dateLabel")} {displayDate}
         </Text>
 
-        {displaySnippet && (
-          <Text style={styles.noticeSnippet}>{displaySnippet}</Text>
-        )}
-      </View>
+        {displaySnippet && ( <Text style={styles.noticeSnippet}>{displaySnippet}</Text> )}
 
-      <View style={styles.moreInfoContainer}>
-        <Text style={styles.moreInfoText}>
-          {t("MarketplaceScreen_MoreDetailsButton")}
-        </Text>
       </View>
     </BouncyButton>
   );
@@ -102,43 +87,49 @@ export default function NoticeCard({ data, onPress }) {
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-    minHeight: 120,
+    width: SCREEN_WIDTH * 0.90,
+    minHeight: 150, // Adjusted minHeight slightly if needed
     borderRadius: 10,
     backgroundColor: "#fff",
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
+    flexDirection: "row", // Keep as row
+    alignItems: "center", // Vertically center content in the row
+    paddingVertical: 15, // Vertical padding
+    paddingHorizontal: 15, // Horizontal padding
     marginVertical: 8,
-    borderWidth: 5,
-    position: "relative",
-    paddingBottom: 30,
+    borderWidth: 5, 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
   },
   infoContainer: {
     flex: 1,
     justifyContent: "flex-start",
   },
   noticeTitle: {
-    fontSize: 18,
+    fontSize: 22, 
     fontWeight: "bold",
-    color: "#000",
-    marginBottom: 5,
+    color: "#111", 
+    marginBottom: 8, 
+    textAlign: "center", 
   },
   noticeCategory: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 3,
-    fontStyle: "italic",
+    fontSize: 16, 
+    color: "#444", 
+    marginBottom: 5,
+    fontWeight: "bold"
   },
   noticeDate: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 8,
+    fontSize: 16,
+    color: "#444",
+    marginBottom: 4,
   },
   noticeSnippet: {
-    fontSize: 14,
+    fontSize: 20,
     color: "#333",
-    lineHeight: 18,
+    lineHeight: 20,
+    marginTop: 10
   },
   moreInfoContainer: {
     position: "absolute",

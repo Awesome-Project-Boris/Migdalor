@@ -388,6 +388,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: SCREEN_WIDTH,
     maxWidth: SCREEN_WIDTH * 0.95,
+    alignItems: "center"
   },
   loadingIndicator: { marginTop: 50 },
   centeredMessage: {

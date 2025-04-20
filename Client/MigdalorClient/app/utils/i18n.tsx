@@ -158,7 +158,7 @@ const resources = {
 
       NoticeDetailsScreen_loadingDetails: "Loading notice details...",
       NoticeDetailsScreen_categoryLabel: "Category:",
-      NoticeDetailsScreen_dateLabel: "Date:",
+      NoticeDetailsScreen_dateLabel: "Date: ",
       Common_backButton: "Go back",
       Common_BackButtonShort: "Back",
       NoticeBoardScreen_boardTitle: "Notice Board", 
@@ -171,6 +171,8 @@ const resources = {
 
 
       NoticeFilterModal_modalTitle: "Filter by categories", NoticeFilterModal_selectAll: "Select All", NoticeFilterModal_deselectAll: "Deselect All", NoticeFilterModal_cancelButton: "Cancel", NoticeFilterModal_applyFilter: "Apply Filter",
+      NoticeCard_dateLabel: "Notice date: ",
+      NoticeCard_categoryLabel: "Category: ",
 
 
 
@@ -263,7 +265,7 @@ const resources = {
       MainMenuScreen_ActivityHoursButton: 'שעות פעילות',
       MainMenuScreen_MapButton: 'מפה',
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
-       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
+      MainMenuScreen_ResidentListButton: "רשימת הדיירים",
 
 
 
@@ -372,6 +374,8 @@ const resources = {
       NoticeBoardScreen_sortNewest: "החדש ביותר",
       NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
 
+      NoticeCard_dateLabel: "תאריך המודעה: ",
+      NoticeCard_categoryLabel: "קטגוריה: ",
 
       NoticeFilterModal_modalTitle: "סנן לפי קטגוריות", NoticeFilterModal_selectAll: "בחר הכל", NoticeFilterModal_deselectAll: "בטל את כל הבחירות", NoticeFilterModal_cancelButton: "ביטול", NoticeFilterModal_applyFilter: "בצע סינון",
 
