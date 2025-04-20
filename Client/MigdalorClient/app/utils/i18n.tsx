@@ -378,7 +378,7 @@ const resources = {
 
       ResidentsSearchScreen_title: "רשימת הדיירים",
       ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
-      ResidentSearchScreen_enterNamePlaceholder: "הכנס שם...", ResidentSearchScreen_enterHobbyPlaceholder: "הכנס תחביב...",
+      ResidentSearchScreen_enterNamePlaceholder: "רשום שם...", ResidentSearchScreen_enterHobbyPlaceholder: "רשום תחביב...",
       ResidentSearchScreen_noMatchMessage: "אין משתמשים התואמים לחיפוש שלך.", ResidentSearchScreen_noUsersMessage: "לא נמצאו משתמשים.",
       ResidentSearchScreen_accordionClose: "לחיצה לחיפוש",
       ResidentSearchScreen_accordionOpen: "לחיצה לסגירת החיפוש",

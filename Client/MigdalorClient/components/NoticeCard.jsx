@@ -32,7 +32,7 @@ const createSnippet = (message, maxLength = 100) => {
 export default function NoticeCard({ data, onPress }) {
   if (!data) return null;
   const { t } = useTranslation();
-  const displayDate = formatDate(data.creationDate);
+  const displayDate = new Date(data.creationDate).toLocaleDateString("en-GB");
   const displaySnippet = createSnippet(data.noticeMessage);
   const borderColor = data.categoryColor || "#ccc";
 
