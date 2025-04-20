@@ -141,12 +141,16 @@ public partial class MigdalorDBContext : DbContext
             entity.Property(e => e.DateTime).HasDefaultValueSql("(getdate())");
             entity.Property(e => e.PicRole).HasDefaultValue("unassigned");
 
+            entity.HasOne(d => d.Listing).WithMany(p => p.OhPictures)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_OH_Pictures_OH_Listings");
+
             entity.HasOne(d => d.Uploader).WithMany(p => p.OhPictures).HasConstraintName("FK_Pictures_Uploader");
         });
 
         modelBuilder.Entity<OhResident>(entity =>
         {
-            entity.HasKey(e => e.ResidentId).HasName("PK__OH_Resid__9AD7185694C025C4");
+            entity.HasKey(e => e.ResidentId).HasName("PK__OH_Resid__9AD7185604AE4D61");
 
             entity.Property(e => e.ResidentId).ValueGeneratedNever();
             entity.Property(e => e.DateOfArrival).HasDefaultValueSql("(getdate())");
@@ -161,9 +165,9 @@ public partial class MigdalorDBContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Residents_People");
 
-            entity.HasOne(d => d.Spouse).WithMany(p => p.InverseSpouse)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Residents_Spouse");
+            entity.HasOne(d => d.Spouse).WithMany(p => p.InverseSpouse).HasConstraintName("FK_Residents_Spouse");
+
+            entity.HasOne(d => d.OhRoom).WithMany(p => p.OhResidents).HasConstraintName("FK_Residents_Room");
         });
 
         modelBuilder.Entity<OhRoom>(entity =>
