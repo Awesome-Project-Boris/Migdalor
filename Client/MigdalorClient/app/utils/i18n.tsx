@@ -110,6 +110,8 @@ const resources = {
       MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
       
 
+      MarketplaceItemCard_Untitled: "Untitled",
+      MarketplaceItemCard_UnknownSeller: "Unknown Seller",
 
       MarketplaceNewItemScreen_Header: "New Item Listing",
       MarketplaceNewItemScreen_NewItem: "New Item",
@@ -183,6 +185,7 @@ const resources = {
       NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
 
 
+      NoticeFilterModal_modalTitle: "Filter by categories", NoticeFilterModal_selectAll: "Select All", NoticeFilterModal_deselectAll: "Deselect All", NoticeFilterModal_cancelButton: "Cancel", NoticeFilterModal_applyFilter: "Apply Filter",
       NoticeCard_dateLabel: "Notice date: ",
       NoticeCard_categoryLabel: "Category: ",
 
@@ -211,6 +214,7 @@ const resources = {
 
       Common_viewAllDataButton: "View All Data",
       Common_clearAllDataButton: "Clear All Data",
+      Common_noResultsFound: "No results found",
 
       Common_UpdateButton: "Update", 
       Common_DeleteButton: "Delete", 
@@ -326,6 +330,10 @@ const resources = {
 
 
 
+      MarketplaceItemCard_Untitled: "ללא כותרת",
+      MarketplaceItemCard_UnknownSeller: "מוכר לא ידוע",
+
+
       MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
       MarketplaceNewItemScreen_NewItem: "פריט חדש",
       MarketplaceNewItemScreen_ItemName: "שם הפריט",
@@ -404,9 +412,12 @@ const resources = {
       NoticeCard_dateLabel: "תאריך המודעה: ",
       NoticeCard_categoryLabel: "קטגוריה: ",
 
+      NoticeFilterModal_modalTitle: "סנן לפי קטגוריות", NoticeFilterModal_selectAll: "בחר הכל", NoticeFilterModal_deselectAll: "בטל את כל הבחירות", NoticeFilterModal_cancelButton: "ביטול", NoticeFilterModal_applyFilter: "בצע סינון",
+
+
       ResidentsSearchScreen_title: "רשימת הדיירים",
       ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
-      ResidentSearchScreen_enterNamePlaceholder: "הכנס שם...", ResidentSearchScreen_enterHobbyPlaceholder: "הכנס תחביב...",
+      ResidentSearchScreen_enterNamePlaceholder: "רשום שם...", ResidentSearchScreen_enterHobbyPlaceholder: "רשום תחביב...",
       ResidentSearchScreen_noMatchMessage: "אין משתמשים התואמים לחיפוש שלך.", ResidentSearchScreen_noUsersMessage: "לא נמצאו משתמשים.",
       ResidentSearchScreen_accordionClose: "לחיצה לחיפוש",
       ResidentSearchScreen_accordionOpen: "לחיצה לסגירת החיפוש",
@@ -432,6 +443,7 @@ const resources = {
       Common_DeleteButton: "מחק", 
       Common_CancelButton: "ביטול", 
       Common_Error: "שגיאה", 
+      Common_noResultsFound: "לא נמצאו תוצאות",
 
 
       LoginScreen_rememberMe: "זכור אותי",

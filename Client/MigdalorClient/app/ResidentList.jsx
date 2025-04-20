@@ -201,7 +201,7 @@ export default function UserProfilesScreen() {
 
   return (
     <View style={styles.container}>
-       <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
+      <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
       <Header title="User Profiles" />
         <SearchAccordion
           headerOpenTextKey= "ResidentSearchScreen_accordionOpen"// Pass appropriate keys
@@ -409,43 +409,43 @@ const styles = StyleSheet.create({
   accordionContainer: {
     width: SCREEN_WIDTH * 0.9, // Match original container width
     marginVertical: 10,
-    backgroundColor: '#fff', // Optional: background for the whole accordion block
+    backgroundColor: "#fff", // Optional: background for the whole accordion block
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
-    overflow: 'hidden', // Ensures content stays within rounded corners
+    borderColor: "#ddd",
+    overflow: "hidden", // Ensures content stays within rounded corners
     minHeight: 70,
-    marginTop: 15
- },
- accordionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginTop: 15,
+  },
+  accordionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 15,
     // backgroundColor: '#f9f9f9', // Slightly different bg for header
- },
- active: {
-   // backgroundColor: '#e7e7e7', // Slightly darker when open
- },
- inactive: {
-   // backgroundColor: '#f9f9f9',
- },
- accordionHeaderText: {
+  },
+  active: {
+    // backgroundColor: '#e7e7e7', // Slightly darker when open
+  },
+  inactive: {
+    // backgroundColor: '#f9f9f9',
+  },
+  accordionHeaderText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
- },
- accordionContent: {
+    fontWeight: "500",
+    color: "#333",
+  },
+  accordionContent: {
     padding: 15, // Padding for the content area
-    backgroundColor: '#fff', // Background for content area
- },
- mainTitle: {
-  fontSize: 32,
-  fontWeight: 'bold',
-  textAlign: 'center',
-  marginTop: 70, 
-  marginBottom: 15, 
-  color: '#111',
-},
+    backgroundColor: "#fff", // Background for content area
+  },
+  mainTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 70,
+    marginBottom: 15,
+    color: "#111",
+  },
 });

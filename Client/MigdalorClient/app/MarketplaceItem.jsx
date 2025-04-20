@@ -331,7 +331,7 @@ export default function MarketplaceItemScreen() {
           {/* Title, Date ... */}
           <Text style={styles.title}>{listingDetails.title}</Text>
           <Text style={styles.dateText}>
-            {t("MarketplaceItemScreen_PublishedDate")}{" "}
+            {t("MarketplaceItemScreen_PublishedDate")}
             {new Date(listingDetails.date).toLocaleDateString("en-GB")}
           </Text>
 

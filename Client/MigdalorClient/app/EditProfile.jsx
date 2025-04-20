@@ -41,23 +41,58 @@ export default function EditProfile() {
 
   // !! Switch these with the values from the database
   const [form, setForm] = useState({
+    name: "",
     partner: "",
-    apartmentNumber: "",
     mobilePhone: "",
     email: "",
-    arrivalYear: "",
     origin: "",
     profession: "",
     interests: "",
     aboutMe: "",
+    // profilePicID: "",
+    // additionalPic1ID: "",
+    // additionalPic2ID: "",
+    residentApartmentNumber: "",
   });
+
+  const [profilePic, setProfilePic] = useState({
+      PicID: "",
+      PicName: "",
+      PicPath: "",
+      PicAlt: "",
+      //UploaderID: "",
+      //PicRole: "",
+      //ListingID: "",
+      //DateTime: "",
+    });
+  
+    const [additionalPic1, setAdditionalPic1] = useState({
+      PicID: "",
+      PicName: "",
+      PicPath: "",
+      PicAlt: "",
+      //UploaderID: "",
+      //PicRole: "",
+      //ListingID: "",
+      //DateTime: "",
+    });
+  
+    const [additionalPic2, setAdditionalPic2] = useState({
+      PicID: "",
+      PicName: "",
+      PicPath: "",
+      PicAlt: "",
+      //UploaderID: "",
+      //PicRole: "",
+      //ListingID: "",
+      //DateTime: "",
+    });
 
   const maxLengths = {
     partner: 100,
-    apartmentNumber: 10,
+    residentApartmentNumber: 10,
     mobilePhone: 20,
     email: 100,
-    arrivalYear: 4,
     origin: 100,
     profession: 100,
     interests: 200,
@@ -68,10 +103,9 @@ export default function EditProfile() {
 
   const inputRefs = {
     partner: useRef(null),
-    apartmentNumber: useRef(null),
+    residentApartmentNumber: useRef(null),
     mobilePhone: useRef(null),
     email: useRef(null),
-    arrivalYear: useRef(null),
     origin: useRef(null),
     profession: useRef(null),
     interests: useRef(null),
@@ -101,7 +135,7 @@ export default function EditProfile() {
           ? null
           : t("EditProfileScreen_errorMessagePartner");
 
-      case "apartmentNumber":
+      case "residentApartmentNumber":
         return value.trim() === "" || /^[0-9]+$/.test(value)
           ? null
           : t("EditProfileScreen_errorMessageApartmentNumber");
@@ -115,11 +149,6 @@ export default function EditProfile() {
         return value.trim() === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
           ? null
           : t("EditProfileScreen_errorMessageEmail");
-
-      case "arrivalYear":
-        return value.trim() === "" || /^\d{4}$/.test(value)
-          ? null
-          : t("EditProfileScreen_errorMessageArrivalYear");
 
       case "origin":
         return value.trim() === "" || regexHebrewEnglishNumbers.test(value)
@@ -261,7 +290,7 @@ export default function EditProfile() {
 
         <View style={styles.profileNameContainer}>
           {/* !! Change this to full name  */}
-          <Text style={styles.profileName}>Israel Israeli</Text>
+          <Text style={styles.profileName}>{form.name || t("ProfileScreen_emptyDataField")}</Text>
         </View>
 
         <View style={styles.editableContainer}>
@@ -280,17 +309,17 @@ export default function EditProfile() {
           )}
 
           <FloatingLabelInput
-            maxLength={maxLengths.apartmentNumber}
+            maxLength={maxLengths.residentApartmentNumber}
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
-            value={form.apartmentNumber}
-            onChangeText={(text) => handleFormChange("apartmentNumber", text)}
+            value={form.residentApartmentNumber}
+            onChangeText={(text) => handleFormChange("residentApartmentNumber", text)}
             keyboardType="numeric"
-            ref={inputRefs.apartmentNumber}
+            ref={inputRefs.residentApartmentNumber}
           />
-          {formErrors.apartmentNumber && (
-            <Text style={styles.errorText}>{formErrors.apartmentNumber}</Text>
+          {formErrors.residentApartmentNumber && (
+            <Text style={styles.errorText}>{formErrors.residentApartmentNumber}</Text>
           )}
 
           <FloatingLabelInput
@@ -321,19 +350,6 @@ export default function EditProfile() {
             <Text style={styles.errorText}>{formErrors.email}</Text>
           )}
 
-          <FloatingLabelInput
-            maxLength={maxLengths.arrivalYear}
-            style={styles.inputContainer}
-            alignRight={Globals.userSelectedDirection === "rtl"}
-            label={t("ProfileScreen_arrivalYear")}
-            value={form.arrivalYear}
-            onChangeText={(text) => handleFormChange("arrivalYear", text)}
-            keyboardType="numeric"
-            ref={inputRefs.arrivalYear}
-          />
-          {formErrors.arrivalYear && (
-            <Text style={styles.errorText}>{formErrors.arrivalYear}</Text>
-          )}
 
           <FloatingLabelInput
             maxLength={maxLengths.origin}
