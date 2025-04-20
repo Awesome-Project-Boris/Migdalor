@@ -19,8 +19,28 @@ namespace MigdalorServer.Controllers
         public void GetAllPeople() { }
 
         // GET api/<PeopleController>/5
-        [HttpGet("{id}")]
-        public void GetPersonByID(Guid id) { }
+        [HttpGet("GetPersonByIDForProfile/{id}")]
+        public IActionResult GetPersonByIDForProfile(Guid id) 
+        {
+            try
+            {
+                var data = OhPerson.GetPersonByIDForProfile(id);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                switch (e.Message)
+                {
+                    case "User not found":
+                        return StatusCode(StatusCodes.Status404NotFound, "User Not Found");
+                    default:
+                        return StatusCode(
+                            StatusCodes.Status500InternalServerError,
+                            $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
+                        );
+                }
+            }
+        }
 
         // POST api/<PeopleController>
         [HttpPost("register")]
