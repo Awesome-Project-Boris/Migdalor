@@ -194,7 +194,7 @@ export default function EditProfile() {
     });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     //form.arrivalYear = String(form.arrivalYear);
 
     // console.log("interests" , typeof form.interests);
@@ -209,15 +209,13 @@ export default function EditProfile() {
 
     // console.log("form" , form);
 
-
-
     const newErrors = {};
     let firstErrorField = null;
 
     const cleanedForm = {};
 
     Object.entries(form).forEach(([key, value]) => {
-      if(key === "arrivalYear") {
+      if (key === "arrivalYear") {
         return;
       }
       const cleanedValue = value.trim().length === 0 ? "" : value.trim();
@@ -256,12 +254,33 @@ export default function EditProfile() {
       position: "top", // Example: 'top' or 'bottom'
     });
 
+    //console.log(cleanedForm.residentApartmentNumber)
+
     // !! Add API call to save the data here
+    const apiurl = `${Globals.API_BASE_URL}/api/People/UpdatePersonByIDForProfile/${storedUserID}`; // !! check this is the  correct endpoint
+    const response = await fetch(apiurl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      //body: JSON.stringify({ phoneNumber, password }),
+    });
+
+    if (!response.ok) {
+      // You can throw an error or handle it with an error message.
+      throw new Error(`Login failed: HTTP ${response.status}`);
+    }
 
     router.replace({
       pathname: "./Profile",
       params: {
-        updatedData: JSON.stringify(form),
+        //updatedData: JSON.stringify(form),
+        updatedData: JSON.stringify(cleanedForm),
+        updatedPics: JSON.stringify({
+          profilePic,
+          additionalPic1,
+          additionalPic2,
+        }),
       },
     });
   };
@@ -271,7 +290,12 @@ export default function EditProfile() {
 
     try {
       const parsedInitialData = JSON.parse(initialData);
+      const parsedInitialPics = JSON.parse(initialPics);
+
       setForm(parsedInitialData);
+      setProfilePic(parsedInitialPics.profilePic);
+      setAdditionalPic1(parsedInitialPics.additionalPic1);
+      setAdditionalPic2(parsedInitialPics.additionalPic2);
 
       //alert(t("EditProfileScreen_ProfileUpdateCancelled"));
       Toast.show({
@@ -287,6 +311,11 @@ export default function EditProfile() {
         pathname: "./Profile",
         params: {
           updatedData: JSON.stringify(parsedInitialData),
+          updatedPics: JSON.stringify({
+            profilePic: parsedInitialPics.profilePic,
+            additionalPic1: parsedInitialPics.additionalPic1,
+            additionalPic2: parsedInitialPics.additionalPic2,
+          }),
         },
       });
     } catch (err) {
@@ -309,7 +338,6 @@ export default function EditProfile() {
       setAdditionalPic2(pics.additionalPic2);
     }
   }, [initialData, initialPics]);
-
 
   return (
     <View style={styles.wrapper}>

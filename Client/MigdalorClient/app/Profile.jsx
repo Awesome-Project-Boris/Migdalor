@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/components/Header";
 
@@ -111,22 +113,24 @@ export default function Profile() {
     });
   };
 
-  const params = useLocalSearchParams();
+  //const params = useLocalSearchParams();
   // this is the data passed from the previous screen
-  useEffect(() => {
-    const updated = params.updatedData;
-    if (typeof updated === "string") {
-      try {
-        const parsed = JSON.parse(updated);
-        setForm(parsed);
-      } catch (err) {
-        console.warn("Failed to parse updatedData:", err);
-      }
-    }
-  }, [params.updatedData]);
+  // useEffect(() => {
+  //   const updated = params.updatedData;
+  //   if (typeof updated === "string") {
+  //     try {
+  //       const parsed = JSON.parse(updated);
+  //       setForm(parsed);
+  //     } catch (err) {
+  //       console.warn("Failed to parse updatedData:", err);
+  //     }
+  //   }
+  // }, [params.updatedData]);
 
   // On mount, try to load the user data from AsyncStorage.
   useEffect(() => {
+    if (params.updatedData) return; // skip fetch if coming back from EditProfile
+
     const loadUserProfileData = async () => {
       try {
         const storedUserID = await AsyncStorage.getItem("userID");
@@ -211,8 +215,21 @@ export default function Profile() {
     loadUserProfileData(); // Call the function to load user data
   }, []);
 
+  // when screen comes into focus (or you can use useEffect on params)
+  const params = useLocalSearchParams();
+  useEffect(() => {
+    if (params.updatedData) {
+      const d = JSON.parse(params.updatedData);
+      setForm(d);
+    }
+    if (params.updatedPics) {
+      const pics = JSON.parse(params.updatedPics);
+      setProfilePic(pics.profilePic);
+      setAdditionalPic1(pics.additionalPic1);
+      setAdditionalPic2(pics.additionalPic2);
+    }
+  }, [params.updatedData, params.updatedPics]);
 
-  
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
