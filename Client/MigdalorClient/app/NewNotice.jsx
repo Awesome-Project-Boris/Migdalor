@@ -23,6 +23,8 @@ import { useTranslation } from 'react-i18next';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
+const isUserAdmin = await fetch(`${Globals.API_BASE_URL}/api/People/isadmin/${currentUserId}`)
+
 // Hardcoded categories for now - replace with DB fetch later
 // Match these strings with your OH_Categories table names
 const noticeCategories = ["General", "Events", "Urgent", "Maintenance", "הנהלה"]; // temp categories
@@ -56,17 +58,6 @@ export default function NewNotice() {
   const [selectedCategory, setSelectedCategory] = useState(noticeCategories[0]); // Default to first category
   const [isLoading, setIsLoading] = useState(false);
 
-  // --- TODO: Implement Admin Check ---
-  // useEffect(() => {
-  //   // Check if user.role is 'admin' or similar
-  //   // If not admin, redirect or disable the form
-  //   // Example:
-  //   // if (user?.role !== 'admin') {
-  //   //   Alert.alert("Access Denied", "You do not have permission to publish notices.");
-  //   //   router.back();
-  //   // }
-  // }, [user, router]);
-  // --- End Admin Check Placeholder ---
 
   const resetForm = () => {
       setTitle('');
@@ -87,54 +78,103 @@ export default function NewNotice() {
 
     setIsLoading(true);
 
+    // --- Step 1: Create the Notice ---
     const noticePayload = {
-      // Match backend DTO/Model for POST /api/Notices
-      // Based on OH_Notices structure
-      senderID: user.userID, // Get sender ID from logged-in user context
+      senderID: user.userID,
       noticeTitle: title.trim(),
       noticeMessage: message.trim(),
       noticeCategory: selectedCategory,
-      // noticeSubCategory: null, // Add if you implement subcategories
-      // creationDate is likely handled by the server/DB default
+      // noticeSubCategory: null, // Add if implemented
     };
 
-    console.log("Submitting Notice Payload:", noticePayload);
+    let noticeCreationResult = null; // To store the result of notice creation
 
     try {
-      const apiUrl = `${Globals.API_BASE_URL}/api/Notices`; // POST endpoint
-      const response = await fetch(apiUrl, {
+      console.log("Submitting Notice Payload:", noticePayload);
+      const noticeApiUrl = `${Globals.API_BASE_URL}/api/Notices`; // POST endpoint for notices
+      const noticeResponse = await fetch(noticeApiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${user.token}`, // Add if needed
         },
         body: JSON.stringify(noticePayload),
       });
 
-      if (!response.ok) {
-        // Try to get more specific error from response body
-        let errorMsg = `HTTP Error ${response.status}`;
+      if (!noticeResponse.ok) {
+        let errorMsg = `Notice Creation Failed: HTTP Error ${noticeResponse.status}`;
         try {
-            const errData = await response.json(); // Or response.text()
-            errorMsg = errData.message || errData.title || errorMsg; // Adapt based on backend error structure
+            const errData = await noticeResponse.json();
+            errorMsg = errData.message || errData.title || errorMsg;
         } catch (e) {}
         throw new Error(errorMsg);
       }
 
-      // Handle success
-      const result = await response.json(); // Assuming backend returns the created notice or success message
-      console.log("Notice Submission Result:", result);
+      noticeCreationResult = await noticeResponse.json(); // Get the created notice (should include noticeId)
+      console.log("Notice Creation Result:", noticeCreationResult);
 
       Toast.show({
           type: 'success',
           text1: t("NewNoticeScreen_successTitle"),
-          text2: t("NewNoticeScreen_successMessage")
+          text2: t("NewNoticeScreen_successMessage"),
+          visibilityTime: 1500 // Shorter duration before showing broadcast status
       });
 
-      resetForm(); // Clear form on success
-      // Optional: Navigate back or elsewhere
-      // router.back();
+      // --- Step 2: Trigger Broadcast (only if notice creation succeeded) ---
+      if (noticeCreationResult && noticeCreationResult.noticeId) { // Check if we have the new notice ID
+          const broadcastPayload = {
+              // Match ExpoPushMessage structure
+              // `to` is not needed for broadcast via SendBulkAsync
+              title: noticePayload.noticeTitle, // Use the notice title
+              body: noticePayload.noticeMessage.substring(0, 100) + (noticePayload.noticeMessage.length > 100 ? '...' : ''), // Use truncated message as body
+              sound: "default", // Or your preferred sound
+              // badge: 1, // Optional: to increment badge count
+              data: JSON.stringify({ // Pass noticeId so app can navigate if notification is tapped
+                  noticeId: noticeCreationResult.noticeId
+              })
+          };
 
-    } catch (error) {
+          console.log("Sending Broadcast Payload:", broadcastPayload);
+          const broadcastApiUrl = `${Globals.API_BASE_URL}/api/Notifications/broadcast`;
+
+          try { // Nested try specifically for the broadcast part
+              const broadcastResponse = await fetch(broadcastApiUrl, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      // 'Authorization': `Bearer ${user.token}`, // Add if needed
+                  },
+                  body: JSON.stringify(broadcastPayload),
+              });
+
+              if (!broadcastResponse.ok) {
+                  let broadcastErrorMsg = `Broadcast Failed: HTTP Error ${broadcastResponse.status}`;
+                  try {
+                      const errData = await broadcastResponse.json();
+                      broadcastErrorMsg = errData.message || errData.error || broadcastErrorMsg;
+                  } catch(e) {}
+                  // Don't throw here, just show a warning toast
+                   console.error(broadcastErrorMsg);
+                   Toast.show({ type: 'warn', text1: t("NewNoticeScreen_broadcastWarnTitle"), text2: broadcastErrorMsg });
+              } else {
+                  const broadcastResult = await broadcastResponse.json();
+                  console.log("Broadcast Result:", broadcastResult);
+                  Toast.show({ type: 'info', text1: t("NewNoticeScreen_broadcastSuccessTitle"), text2: t("NewNoticeScreen_broadcastSuccessMessage", {count: broadcastResult.recipients}) , visibilityTime: 3000 });
+              }
+          } catch (broadcastError) {
+               console.error("Failed to send broadcast:", broadcastError);
+               Toast.show({ type: 'error', text1: t("NewNoticeScreen_broadcastErrorTitle"), text2: broadcastError.message });
+          }
+
+      } else {
+           console.warn("Notice created, but noticeId missing in response. Cannot send targeted broadcast data.");
+           // Maybe still send a generic broadcast without the noticeId in data?
+      }
+
+      resetForm(); // Clear form after successful notice creation (regardless of broadcast status)
+      // router.back(); // Optional: navigate back
+
+    } catch (error) { // Catch errors from Notice Creation primarily
       console.error("Failed to submit notice:", error);
       Toast.show({
           type: 'error',
@@ -144,7 +184,8 @@ export default function NewNotice() {
     } finally {
       setIsLoading(false);
     }
-  }, [title, message, selectedCategory, user, router, t]);
+  }, [title, message, selectedCategory, user, router, t, resetForm]); // Added resetForm to dependencies
+
 
   return (
     <>
