@@ -112,6 +112,7 @@ export default function Profile() {
   };
 
   const params = useLocalSearchParams();
+  // this is the data passed from the previous screen
   useEffect(() => {
     const updated = params.updatedData;
     if (typeof updated === "string") {
@@ -152,7 +153,7 @@ export default function Profile() {
 
           // !! now to load the data into the form
           setForm({
-            apartmentNumber: userData.apartmentNumber,
+            //apartmentNumber: userData.apartmentNumber,
             mobilePhone: userData.phoneNumber,
             email: userData.email,
             arrivalYear: new Date(userData.dateOfArrival).getFullYear(),
@@ -163,7 +164,8 @@ export default function Profile() {
             //profilePicID: userData.profilePicID,
             //additionalPic1ID: userData.additionalPic1ID,
             //additionalPic2ID: userData.additionalPic2ID,
-            residentApartmentNumber: userData.residentApartmentNumber,
+            //residentApartmentNumber: userData.residentApartmentNumber,
+            residentApartmentNumber: String(userData.residentApartmentNumber),
           });
 
           setProfilePic({
@@ -209,6 +211,8 @@ export default function Profile() {
     loadUserProfileData(); // Call the function to load user data
   }, []);
 
+
+  
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -220,6 +224,11 @@ export default function Profile() {
               pathname: "./EditProfile",
               params: {
                 initialData: JSON.stringify(form),
+                initialPics: JSON.stringify({
+                  profilePic,
+                  additionalPic1,
+                  additionalPic2,
+                }),
               },
             })
           }

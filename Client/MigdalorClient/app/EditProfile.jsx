@@ -35,7 +35,7 @@ export default function EditProfile() {
   const navigation = useNavigation();
   const route = useRoute();
 
-  const { initialData } = route.params;
+  const { initialData, initialPics } = route.params;
 
   const router = useRouter();
 
@@ -56,37 +56,37 @@ export default function EditProfile() {
   });
 
   const [profilePic, setProfilePic] = useState({
-      PicID: "",
-      PicName: "",
-      PicPath: "",
-      PicAlt: "",
-      //UploaderID: "",
-      //PicRole: "",
-      //ListingID: "",
-      //DateTime: "",
-    });
-  
-    const [additionalPic1, setAdditionalPic1] = useState({
-      PicID: "",
-      PicName: "",
-      PicPath: "",
-      PicAlt: "",
-      //UploaderID: "",
-      //PicRole: "",
-      //ListingID: "",
-      //DateTime: "",
-    });
-  
-    const [additionalPic2, setAdditionalPic2] = useState({
-      PicID: "",
-      PicName: "",
-      PicPath: "",
-      PicAlt: "",
-      //UploaderID: "",
-      //PicRole: "",
-      //ListingID: "",
-      //DateTime: "",
-    });
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+    //UploaderID: "",
+    //PicRole: "",
+    //ListingID: "",
+    //DateTime: "",
+  });
+
+  const [additionalPic1, setAdditionalPic1] = useState({
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+    //UploaderID: "",
+    //PicRole: "",
+    //ListingID: "",
+    //DateTime: "",
+  });
+
+  const [additionalPic2, setAdditionalPic2] = useState({
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+    //UploaderID: "",
+    //PicRole: "",
+    //ListingID: "",
+    //DateTime: "",
+  });
 
   const maxLengths = {
     partner: 100,
@@ -175,13 +175,51 @@ export default function EditProfile() {
     }
   };
 
+  const handleImagePress = (imageUriToView, altText = "") => {
+    if (!imageUriToView) {
+      console.log("handleImagePress: No valid imageUri provided.");
+      return;
+    }
+
+    const paramsToPass = {
+      imageUri: imageUriToView,
+      altText: altText,
+    };
+
+    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
+
+    router.push({
+      pathname: "/ImageViewScreen",
+      params: paramsToPass,
+    });
+  };
+
   const handleSave = () => {
+    //form.arrivalYear = String(form.arrivalYear);
+
+    // console.log("interests" , typeof form.interests);
+    // console.log("aboutMe" , typeof form.aboutMe);
+    // console.log("partner" , typeof form.partner);
+    // console.log("residentApartmentNumber" , typeof form.residentApartmentNumber);
+    // console.log("mobilePhone" , typeof form.mobilePhone);
+    // console.log("email" , typeof form.email);
+    // console.log("origin" , typeof form.origin);
+    // console.log("profession" , typeof form.profession);
+    // console.log("arrivalYear" , typeof form.arrivalYear);
+
+    // console.log("form" , form);
+
+
+
     const newErrors = {};
     let firstErrorField = null;
 
     const cleanedForm = {};
 
     Object.entries(form).forEach(([key, value]) => {
+      if(key === "arrivalYear") {
+        return;
+      }
       const cleanedValue = value.trim().length === 0 ? "" : value.trim();
       cleanedForm[key] = cleanedValue;
 
@@ -261,14 +299,17 @@ export default function EditProfile() {
   useEffect(() => {
     // Update the form with initialData
     if (initialData) {
-      try {
-        const parsedData = JSON.parse(initialData);
-        setForm(parsedData);
-      } catch (err) {
-        console.warn("Failed to parse initialData:", err);
-      }
+      const parsedData = JSON.parse(initialData);
+      setForm(parsedData);
     }
-  }, [initialData]);
+    if (initialPics) {
+      const pics = JSON.parse(initialPics);
+      setProfilePic(pics.profilePic);
+      setAdditionalPic1(pics.additionalPic1);
+      setAdditionalPic2(pics.additionalPic2);
+    }
+  }, [initialData, initialPics]);
+
 
   return (
     <View style={styles.wrapper}>
@@ -280,17 +321,38 @@ export default function EditProfile() {
 
         {/* !! Add changing profile picture */}
         <View style={styles.profileImageContainer}>
-          <Image
+          {/* <Image
             source={{
               uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
             }}
             style={styles.profileImage}
-          />
+          /> */}
+          <TouchableOpacity
+            onPress={() =>
+              handleImagePress(
+                Globals.API_BASE_URL + profilePic.PicPath,
+                profilePic.PicAlt
+              )
+            }
+            disabled={!(Globals.API_BASE_URL + profilePic.PicPath)}
+          >
+            <Image
+              alt={profilePic.PicAlt}
+              source={{
+                uri: profilePic.PicPath?.trim()
+                  ? Globals.API_BASE_URL + profilePic.PicPath
+                  : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
+              }}
+              style={styles.profileImage}
+            />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.profileNameContainer}>
           {/* !! Change this to full name  */}
-          <Text style={styles.profileName}>{form.name || t("ProfileScreen_emptyDataField")}</Text>
+          <Text style={styles.profileName}>
+            {form.name || t("ProfileScreen_emptyDataField")}
+          </Text>
         </View>
 
         <View style={styles.editableContainer}>
@@ -313,13 +375,17 @@ export default function EditProfile() {
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
-            value={form.residentApartmentNumber}
-            onChangeText={(text) => handleFormChange("residentApartmentNumber", text)}
+            value={String(form.residentApartmentNumber)}
+            onChangeText={(text) =>
+              handleFormChange("residentApartmentNumber", text)
+            }
             keyboardType="numeric"
             ref={inputRefs.residentApartmentNumber}
           />
           {formErrors.residentApartmentNumber && (
-            <Text style={styles.errorText}>{formErrors.residentApartmentNumber}</Text>
+            <Text style={styles.errorText}>
+              {formErrors.residentApartmentNumber}
+            </Text>
           )}
 
           <FloatingLabelInput
@@ -349,7 +415,6 @@ export default function EditProfile() {
           {formErrors.email && (
             <Text style={styles.errorText}>{formErrors.email}</Text>
           )}
-
 
           <FloatingLabelInput
             maxLength={maxLengths.origin}
@@ -420,71 +485,47 @@ export default function EditProfile() {
             {t("ProfileScreen_extraImages")}
           </Text>
 
-          {/* !! Add extra images here */}
-
-          {/* <XStack space="$3" justifyContent="center" alignItems="center" marginVertical="$4">
-              <Card
-                elevate width={150} height={150} borderRadius="$4" overflow="hidden"
-                onPress={() => {
-                  if (mainImage) {
-                    console.log("clicking main.. setting type 'main'");
-                    setImageToViewUri(mainImage);
-                    // --- Set the identifier string ---
-                    setImageTypeToClear('main');
-                    setShowImageViewModal(true);
-                  } else {
-                    pickImage(setMainImage);
-                  }
+          <View style={styles.profileExtraImageContainer}>
+            <TouchableOpacity
+              onPress={() =>
+                handleImagePress(
+                  Globals.API_BASE_URL + additionalPic1.PicPath,
+                  additionalPic1.PicAlt
+                )
+              }
+              disabled={!(Globals.API_BASE_URL + additionalPic1.PicPath)}
+            >
+              <Image
+                alt={additionalPic1.PicAlt}
+                source={{
+                  uri: additionalPic1.PicPath?.trim()
+                    ? Globals.API_BASE_URL + additionalPic1.PicPath
+                    : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
                 }}
-              >
+                style={styles.profileImage}
+              />
+            </TouchableOpacity>
 
-                {mainImage ? ( 
-                    <>
-                    <Card.Background>
-                      <Image source={{ uri: mainImage }} position="absolute" top={0} left={0} right={0} bottom={0} contentFit="cover"/>
-                    </Card.Background>
-                    <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)">
-                      <Paragraph theme="alt2">Main image chosen</Paragraph>
-                    </YStack>
-                    </>
-                  ) : (
-                  <YStack f={1} jc="center" ai="center" p="$2">
-                    <H2 size="$5">No Main Image</H2>
-                    <Paragraph theme="alt2">Tap to choose</Paragraph>
-                  </YStack>
-                )}
-              </Card>
-
-              <Card
-                elevate width={150} height={150} borderRadius="$4" overflow="hidden"
-                onPress={() => {
-                  if (extraImage) {
-                    console.log("clicking extra.. setting type 'extra'");
-                    setImageToViewUri(extraImage);
-                    setImageTypeToClear('extra');
-                    setShowImageViewModal(true);
-                  } else {
-                    pickImage(setExtraImage);
-                  }
+            <TouchableOpacity
+              onPress={() =>
+                handleImagePress(
+                  Globals.API_BASE_URL + additionalPic2.PicPath,
+                  additionalPic2.PicAlt
+                )
+              }
+              disabled={!(Globals.API_BASE_URL + additionalPic2.PicPath)}
+            >
+              <Image
+                alt={additionalPic2.PicAlt}
+                source={{
+                  uri: additionalPic2.PicPath?.trim()
+                    ? Globals.API_BASE_URL + additionalPic2.PicPath
+                    : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
                 }}
-              >
-                {extraImage ? ( 
-                    <>
-                    <Card.Background>
-                      <Image source={{ uri: extraImage }} position="absolute" top={0} left={0} right={0} bottom={0} contentFit="cover"/>
-                    </Card.Background>
-                    <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)">
-                      <Paragraph theme="alt2" color="$color">Extra image chosen</Paragraph>
-                    </YStack>
-                    </>
-                  ) : ( 
-                  <YStack f={1} jc="center" ai="center" p="$2">
-                    <H2 size="$5">No Extra Image</H2>
-                    <Paragraph theme="alt2">Tap to choose</Paragraph>
-                  </YStack>
-                )}
-              </Card>
-            </XStack> */}
+                style={styles.profileImage}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.buttonRow}>
           <FlipButton
@@ -576,6 +617,7 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     width: "85%",
+    alignSelf: "center",
     marginVertical: 5,
   },
   // label: {
@@ -668,11 +710,13 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     width: "75%",
-    marginTop: 10,
+    marginTop: 20,
+    gap: 30,
   },
   editableContainer: {
     pointerEvents: "box-none",
     alignItems: "center",
+    //alignSelf: "center",
     width: "100%",
     marginTop: 30,
     gap: 30,
