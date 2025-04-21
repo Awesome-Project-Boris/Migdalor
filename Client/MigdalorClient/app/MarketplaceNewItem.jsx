@@ -1,4 +1,11 @@
-import React, { useState, useContext, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   Modal,
   View,
@@ -12,16 +19,15 @@ import {
 import { Image as ExpoImage } from "expo-image"; // Use Expo Image
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter, useLocalSearchParams } from "expo-router"
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Toast } from "toastify-react-native";
 import FlipButton from "../components/FlipButton";
 import ImageViewModal from "../components/ImageViewModal";
 import FloatingLabelInput from "../components/FloatingLabelInput";
-import { useTranslation } from "react-i18next"; 
+import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "@/app/constants/Globals";
-import { Keyboard } from 'react-native';
-
+import { Keyboard } from "react-native";
 
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
 
@@ -49,19 +55,19 @@ export default function AddNewItem() {
   const params = useLocalSearchParams();
   const API = Globals.API_BASE_URL;
 
-  const isEditMode = params.mode === 'edit';
+  const isEditMode = params.mode === "edit";
 
   const initialData = useMemo(() => {
     if (!params.listingData) {
-        return null;
+      return null;
     }
     try {
-        return JSON.parse(params.listingData);
+      return JSON.parse(params.listingData);
     } catch (e) {
-        console.error("Failed to parse listingData param:", e);
-        return null; 
+      console.error("Failed to parse listingData param:", e);
+      return null;
     }
-}, [params.listingData]);
+  }, [params.listingData]);
 
   const itemNameRef = useRef(null);
   const itemDescriptionRef = useRef(null);
@@ -98,11 +104,11 @@ export default function AddNewItem() {
 
       // Set image URIs for display (these are full URLs from server)
       const initialMainUrl = initialData.mainPicture?.picPath
-          ? `${Globals.API_BASE_URL}${initialData.mainPicture.picPath}`
-          : null;
+        ? `${Globals.API_BASE_URL}${initialData.mainPicture.picPath}`
+        : null;
       const initialExtraUrl = initialData.extraPicture?.picPath
-          ? `${Globals.API_BASE_URL}${initialData.extraPicture.picPath}`
-          : null;
+        ? `${Globals.API_BASE_URL}${initialData.extraPicture.picPath}`
+        : null;
 
       setMainImage(initialMainUrl);
       setExtraImage(initialExtraUrl);
@@ -283,26 +289,44 @@ export default function AddNewItem() {
 
   // Resetting the form
   const resetState = async () => {
-    setItemName(''); setItemDescription('');
+    setItemName("");
+    setItemDescription("");
     // Only delete file URIs, not HTTP URIs
-    await safeDeleteFile(mainImage); await safeDeleteFile(extraImage);
-    setMainImage(null); setExtraImage(null);
+    await safeDeleteFile(mainImage);
+    await safeDeleteFile(extraImage);
+    setMainImage(null);
+    setExtraImage(null);
     setFormErrors({});
-    setOriginalMainPicId(null); setOriginalExtraPicId(null); // Reset original IDs too
+    setOriginalMainPicId(null);
+    setOriginalExtraPicId(null); // Reset original IDs too
   };
 
   // --- Cancel Logic ---
   const handleCancel = async () => {
     // In edit mode, simply go back without confirmation for now, or add confirmation if needed
     if (isEditMode) {
-        router.back();
-        return;
+      router.back();
+      return;
     }
-   if (hasUnsavedChanges()) { setShowConfirm(true); }
-   else { await resetState(); router.back(); }
- };
- const confirmCancel = async () => { setShowConfirm(false); await resetState(); router.back(); };
- const hasUnsavedChanges = () => itemName.trim() !== (initialData?.title || "") || itemDescription.trim() !== (initialData?.description || "") || (mainImage && mainImage.startsWith('file://')) || (extraImage && extraImage.startsWith('file://')) || (isEditMode && mainImage === null && originalMainPicId !== null) || (isEditMode && extraImage === null && originalExtraPicId !== null);
+    if (hasUnsavedChanges()) {
+      setShowConfirm(true);
+    } else {
+      await resetState();
+      router.back();
+    }
+  };
+  const confirmCancel = async () => {
+    setShowConfirm(false);
+    await resetState();
+    router.back();
+  };
+  const hasUnsavedChanges = () =>
+    itemName.trim() !== (initialData?.title || "") ||
+    itemDescription.trim() !== (initialData?.description || "") ||
+    (mainImage && mainImage.startsWith("file://")) ||
+    (extraImage && extraImage.startsWith("file://")) ||
+    (isEditMode && mainImage === null && originalMainPicId !== null) ||
+    (isEditMode && extraImage === null && originalExtraPicId !== null);
 
   // --- Image Viewing/Removal Logic ---
   const [showImageViewModal, setShowImageViewModal] = useState(false);
@@ -322,7 +346,6 @@ export default function AddNewItem() {
     }
   };
 
-
   const handleRemoveImage = async () => {
     const uriToDelete = imageToViewUri; // The URI currently being viewed
 
@@ -341,9 +364,11 @@ export default function AddNewItem() {
   };
 
   const uploadImage = async (imageUri, role, altText, uploaderId) => {
-    if (!imageUri || !imageUri.startsWith('file://')) {
-        console.log(`Skipping upload for non-local file or null URI: ${imageUri}`);
-        return null; // Not a local file to upload
+    if (!imageUri || !imageUri.startsWith("file://")) {
+      console.log(
+        `Skipping upload for non-local file or null URI: ${imageUri}`
+      );
+      return null; // Not a local file to upload
     }
 
     console.log(`Uploading image: ${role}`);
@@ -351,61 +376,85 @@ export default function AddNewItem() {
     const fileType = imageUri.substring(imageUri.lastIndexOf(".") + 1);
     const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
 
-    formData.append("files", { uri: imageUri, name: `${role}.${fileType}`, type: mimeType });
+    formData.append("files", {
+      uri: imageUri,
+      name: `${role}.${fileType}`,
+      type: mimeType,
+    });
     formData.append("picRoles", role);
     formData.append("picAlts", altText);
     formData.append("uploaderId", uploaderId);
 
     try {
-        const uploadResponse = await fetch(`${API}/api/Picture`, { method: "POST", body: formData });
-        const uploadResults = await uploadResponse.json(); // Assume server always returns JSON
+      const uploadResponse = await fetch(`${API}/api/Picture`, {
+        method: "POST",
+        body: formData,
+      });
+      const uploadResults = await uploadResponse.json(); // Assume server always returns JSON
 
-        if (!uploadResponse.ok || !Array.isArray(uploadResults) || uploadResults.length === 0 || !uploadResults[0].success) {
-            const errorMsg = uploadResults?.[0]?.errorMessage || `Image upload failed (HTTP ${uploadResponse.status})`;
-            throw new Error(errorMsg);
-        }
-        console.log(`Upload successful for ${role}:`, uploadResults[0]);
-        await safeDeleteFile(imageUri); // Clean up local copy after successful upload
-        return uploadResults[0].picId; // Return the new PicID
-
+      if (
+        !uploadResponse.ok ||
+        !Array.isArray(uploadResults) ||
+        uploadResults.length === 0 ||
+        !uploadResults[0].success
+      ) {
+        const errorMsg =
+          uploadResults?.[0]?.errorMessage ||
+          `Image upload failed (HTTP ${uploadResponse.status})`;
+        throw new Error(errorMsg);
+      }
+      console.log(`Upload successful for ${role}:`, uploadResults[0]);
+      await safeDeleteFile(imageUri); // Clean up local copy after successful upload
+      return uploadResults[0].picId; // Return the new PicID
     } catch (error) {
-        console.error(`Image upload failed for ${role}:`, error);
-        Toast.show({ type: 'error', text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"), text2: error.message, position: "top" });
-        // Decide if failure is critical. Maybe throw error to stop handleSubmit?
-        throw error; // Re-throw to stop the submission process
+      console.error(`Image upload failed for ${role}:`, error);
+      Toast.show({
+        type: "error",
+        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
+        text2: error.message,
+        position: "top",
+      });
+      // Decide if failure is critical. Maybe throw error to stop handleSubmit?
+      throw error; // Re-throw to stop the submission process
     }
-};
+  };
 
-const deletePicture = async (pictureId) => {
-  if (!pictureId) return; // No ID to delete
-  console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
-  try {
+  const deletePicture = async (pictureId) => {
+    if (!pictureId) return; // No ID to delete
+    console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
+    try {
       // ** TODO: Implement Backend Call **
       // Requires: DELETE /api/Picture/{pictureId} endpoint
       const response = await fetch(`${API}/api/Picture/${pictureId}`, {
-          method: 'DELETE',
-          // Add Auth headers if needed
+        method: "DELETE",
+        // Add Auth headers if needed
       });
 
       if (!response.ok) {
-           let errorMsg = `Failed to delete picture ${pictureId} (HTTP ${response.status})`;
-           try { const errData = await response.json(); errorMsg = errData.message || errorMsg; } catch {}
-           throw new Error(errorMsg);
+        let errorMsg = `Failed to delete picture ${pictureId} (HTTP ${response.status})`;
+        try {
+          const errData = await response.json();
+          errorMsg = errData.message || errorMsg;
+        } catch {}
+        throw new Error(errorMsg);
       }
       console.log(`Successfully deleted picture ID: ${pictureId} via API.`);
       // No need to delete local file here, as it's an existing server file
-
-  } catch (err) {
+    } catch (err) {
       console.error(`Failed to delete picture ID ${pictureId}:`, err);
       // Log error, maybe show a non-blocking warning to user?
-      Toast.show({ type: 'warning', text1: t("MarketplaceItemScreen_PicDeleteErrorTitle"), text2: err.message });
+      Toast.show({
+        type: "warning",
+        text1: t("MarketplaceItemScreen_PicDeleteErrorTitle"),
+        text2: err.message,
+      });
       // Don't necessarily stop the whole edit process if old pic deletion fails
-  }
-};
+    }
+  };
 
   // --- Main Submission Handler ---
   const handleSubmit = async () => {
-    Keyboard.dismiss(); 
+    Keyboard.dismiss();
 
     // --- Perform Full Validation ---
     const titleError = validateField("itemName", itemName);
@@ -464,82 +513,139 @@ const deletePicture = async (pictureId) => {
     // --- Step 1: Upload Pictures (unchanged logic, but ensure itemName used for alt text is trimmed) ---
     try {
       // --- Step 1: Handle Main Image ---
-      if (mainImage && mainImage.startsWith('file://')) { // New image selected
-          if (isEditMode && originalMainPicId) picsToDeleteOnSuccess.push(originalMainPicId); // Mark old one for deletion
-          const altText = `Main photo for ${trimmedItemName}`; // Generate Alt Text
-          finalMainPicId = await uploadImage(mainImage, 'marketplace', altText, currentUserId);
-      } else if (mainImage === null && isEditMode && originalMainPicId) { // Image explicitly removed
-          picsToDeleteOnSuccess.push(originalMainPicId);
-          finalMainPicId = null;
-      } 
+      if (mainImage && mainImage.startsWith("file://")) {
+        // New image selected
+        if (isEditMode && originalMainPicId)
+          picsToDeleteOnSuccess.push(originalMainPicId); // Mark old one for deletion
+        const altText = `Main photo for ${trimmedItemName}`; // Generate Alt Text
+        finalMainPicId = await uploadImage(
+          mainImage,
+          "marketplace",
+          altText,
+          currentUserId
+        );
+      } else if (mainImage === null && isEditMode && originalMainPicId) {
+        // Image explicitly removed
+        picsToDeleteOnSuccess.push(originalMainPicId);
+        finalMainPicId = null;
+      }
 
       // --- Step 2: Handle Extra Image ---
-       if (extraImage && extraImage.startsWith('file://')) { // New image selected
-          if (isEditMode && originalExtraPicId) picsToDeleteOnSuccess.push(originalExtraPicId); // Mark old one for deletion
-          const altText = `Extra photo for ${trimmedItemName}`; // Generate Alt Text
-          finalExtraPicId = await uploadImage(extraImage, 'marketplace_extra', altText, currentUserId);
-      } else if (extraImage === null && isEditMode && originalExtraPicId) { // Image explicitly removed
-          picsToDeleteOnSuccess.push(originalExtraPicId);
-          finalExtraPicId = null;
-      } 
-
+      if (extraImage && extraImage.startsWith("file://")) {
+        // New image selected
+        if (isEditMode && originalExtraPicId)
+          picsToDeleteOnSuccess.push(originalExtraPicId); // Mark old one for deletion
+        const altText = `Extra photo for ${trimmedItemName}`; // Generate Alt Text
+        finalExtraPicId = await uploadImage(
+          extraImage,
+          "marketplace_extra",
+          altText,
+          currentUserId
+        );
+      } else if (extraImage === null && isEditMode && originalExtraPicId) {
+        // Image explicitly removed
+        picsToDeleteOnSuccess.push(originalExtraPicId);
+        finalExtraPicId = null;
+      }
 
       // --- Step 3: Create or Update Listing ---
       if (isEditMode) {
-           const currentListingId = initialData?.listingId;
-           const updateDto = {
-               // ListingId is needed for the URL, not usually the body
-               Title: trimmedItemName,
-               Description: trimmedItemDescription,
-               // SellerId typically shouldn't change, but include if API allows/requires
-               MainPicId: finalMainPicId,
-               ExtraPicId: finalExtraPicId,
-               // Add any other fields your Update DTO needs (like IsActive?)
-           };
-           console.log(`Attempting to update listing ID: ${currentListingId} with data:`, updateDto);
+        const currentListingId = initialData?.listingId;
+        const updateDto = {
+          // ListingId is needed for the URL, not usually the body
+          Title: trimmedItemName,
+          Description: trimmedItemDescription,
+          // SellerId typically shouldn't change, but include if API allows/requires
+          MainPicId: finalMainPicId,
+          ExtraPicId: finalExtraPicId,
+          // Add any other fields your Update DTO needs (like IsActive?)
+        };
+        console.log(
+          `Attempting to update listing ID: ${currentListingId} with data:`,
+          updateDto
+        );
 
-           // ** TODO: Implement Backend Call **
-           // Requires: PUT /api/Listings/{id} endpoint
-           const updateResponse = await fetch(`${API}/api/Listings/${currentListingId}`, {
-               method: 'PUT',
-               headers: { 'Content-Type': 'application/json' /* Add Auth */ },
-               body: JSON.stringify(updateDto)
-           });
+        // ** TODO: Implement Backend Call **
+        // Requires: PUT /api/Listings/{id} endpoint
+        const updateResponse = await fetch(
+          `${API}/api/Listings/${currentListingId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" /* Add Auth */ },
+            body: JSON.stringify(updateDto),
+          }
+        );
 
-           if (!updateResponse.ok) {
-               let errorData = {}; try { errorData = await updateResponse.json(); } catch {}
-               throw new Error(errorData?.message || `Failed to update listing (HTTP ${updateResponse.status})`);
-           }
+        if (!updateResponse.ok) {
+          let errorData = {};
+          try {
+            errorData = await updateResponse.json();
+          } catch {}
+          throw new Error(
+            errorData?.message ||
+              `Failed to update listing (HTTP ${updateResponse.status})`
+          );
+        }
 
-          //  const updateResult = await updateResponse.json(); // Or handle 204 No Content if API returns that
+        //  const updateResult = await updateResponse.json(); // Or handle 204 No Content if API returns that
 
-           Toast.show({ type: 'success', title: "",  text1: t("MarketplaceEditItemScreen_UpdateSuccess") });
-           // Now delete old pictures *after* successful update
-           for (const picId of picsToDeleteOnSuccess) {
-               await deletePicture(picId); // Await deletion, but maybe don't stop if one fails
-           }
-           router.back(); // Go back after successful update and attempted deletions
-
+        Toast.show({
+          type: "success",
+          text1: t("MarketplaceEditItemScreen_UpdateSuccess"),
+          duration: 3500, // Custom duration
+          position: "top", // Example: 'top' or 'bottom'
+        });
+        // Now delete old pictures *after* successful update
+        for (const picId of picsToDeleteOnSuccess) {
+          await deletePicture(picId); // Await deletion, but maybe don't stop if one fails
+        }
+        router.back(); // Go back after successful update and attempted deletions
       } else {
-           // --- CREATE --- (Original Logic)
-           const listingData = { Title: trimmedItemName, Description: trimmedItemDescription, SellerId: currentUserId, MainPicId: finalMainPicId, ExtraPicId: finalExtraPicId };
-           console.log("Attempting to create listing with data:", listingData);
-           const listingResponse = await fetch(`${API}/api/Listings/Create`, { method: "POST", headers: { "Content-Type": "application/json" /* Add Auth */ }, body: JSON.stringify(listingData) });
-           if (!listingResponse.ok) { let errorData = {}; try { errorData = await listingResponse.json(); } catch (e) {} throw new Error(errorData?.message || `Failed to create listing (HTTP ${listingResponse.status})`); }
-           const finalResult = await listingResponse.json();
-           Toast.show({ type: "success", text1: t("MarketplaceNewItemScreen_listingCreatedSuccessTitle"), text2: t("MarketplaceNewItemScreen_listingCreatedSuccessMsg", {id: finalResult.listingId}), position: "top" });
-           await resetState(); // Reset state only after successful creation
-           router.back();
+        // --- CREATE --- (Original Logic)
+        const listingData = {
+          Title: trimmedItemName,
+          Description: trimmedItemDescription,
+          SellerId: currentUserId,
+          MainPicId: finalMainPicId,
+          ExtraPicId: finalExtraPicId,
+        };
+        console.log("Attempting to create listing with data:", listingData);
+        const listingResponse = await fetch(`${API}/api/Listings/Create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" /* Add Auth */ },
+          body: JSON.stringify(listingData),
+        });
+        if (!listingResponse.ok) {
+          let errorData = {};
+          try {
+            errorData = await listingResponse.json();
+          } catch (e) {}
+          throw new Error(
+            errorData?.message ||
+              `Failed to create listing (HTTP ${listingResponse.status})`
+          );
+        }
+        const finalResult = await listingResponse.json();
+        Toast.show({
+          type: "success",
+          text1: t("MarketplaceNewItemScreen_listingCreatedSuccessTitle"),
+          // text2: t("MarketplaceNewItemScreen_listingCreatedSuccessMsg", {
+          //   id: finalResult.listingId,
+          // }),
+          position: "top",
+        });
+        await resetState(); // Reset state only after successful creation
+        router.back();
       }
-
-  } catch (error) { // Catch errors from upload, update, or create steps
+    } catch (error) {
+      // Catch errors from upload, update, or create steps
       console.error("Listing submission step failed:", error);
       // Toast was likely already shown in uploadImage or deletePicture, or show generic one here
       // Toast.show({ type: "error", text1: t(isEditMode ? "MarketplaceEditItemScreen_UpdateFailedTitle" : "MarketplaceNewItemScreen_listingCreationFailedTitle"), text2: error.message, position: "top" });
-  } finally {
+    } finally {
       setIsSubmitting(false);
-  }
-};
+    }
+  };
 
   return (
     <>
@@ -550,7 +656,11 @@ const deletePicture = async (pictureId) => {
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>
-            {t(isEditMode ? "MarketplaceEditItemScreen_Header" : "MarketplaceNewItemScreen_NewItem")}
+              {t(
+                isEditMode
+                  ? "MarketplaceEditItemScreen_Header"
+                  : "MarketplaceNewItemScreen_NewItem"
+              )}
             </Text>
           </View>
 
@@ -606,9 +716,7 @@ const deletePicture = async (pictureId) => {
             >
               {mainImage ? (
                 <>
-                  
                   <Card.Background>
-                    
                     <ExpoImage
                       source={{ uri: mainImage }}
                       style={StyleSheet.absoluteFill}
@@ -621,7 +729,6 @@ const deletePicture = async (pictureId) => {
                     ai="center"
                     backgroundColor="rgba(0,0,0,0.4)"
                   >
-                    
                     <Paragraph theme="alt2">
                       {t("MarketplaceNewItemScreen_MainImage")}
                     </Paragraph>
@@ -635,10 +742,7 @@ const deletePicture = async (pictureId) => {
                   p="$2"
                   style={{ direction: Globals.userSelectedDirection }}
                 >
-                  
-                  <H2 size="$5">
-                    {t("MarketplaceNewItemScreen_MainImage")}
-                  </H2>
+                  <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
                   <Paragraph theme="alt2">
                     {t("MarketplaceNewItemScreen_ImageOptional")}
                   </Paragraph>
@@ -658,9 +762,7 @@ const deletePicture = async (pictureId) => {
             >
               {extraImage ? (
                 <>
-                  
                   <Card.Background>
-                    
                     <ExpoImage
                       source={{ uri: extraImage }}
                       style={StyleSheet.absoluteFill}
@@ -673,7 +775,6 @@ const deletePicture = async (pictureId) => {
                     ai="center"
                     backgroundColor="rgba(0,0,0,0.4)"
                   >
-                    
                     <Paragraph theme="alt2" color="$color">
                       {t("MarketplaceNewItemScreen_ExtraImage")}
                     </Paragraph>
@@ -687,10 +788,7 @@ const deletePicture = async (pictureId) => {
                   p="$2"
                   style={{ direction: Globals.userSelectedDirection }}
                 >
-                  
-                  <H2 size="$5">
-                    {t("MarketplaceNewItemScreen_ExtraImage")}
-                  </H2>
+                  <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2>
                   <Paragraph theme="alt2">
                     {t("MarketplaceNewItemScreen_ImageOptional")}
                   </Paragraph>
@@ -714,7 +812,6 @@ const deletePicture = async (pictureId) => {
                 <Spinner size="small" color="black" />
               ) : (
                 <Text style={styles.buttonLabel}>
-                  
                   {t("MarketplaceSearchItem_SubmitButton")}
                 </Text>
               )}
@@ -727,35 +824,41 @@ const deletePicture = async (pictureId) => {
               disabled={isSubmitting}
             >
               <Text style={styles.buttonLabel}>
-                
                 {t("MarketplaceSearchItem_CancelButton")}
               </Text>
             </FlipButton>
           </View>
         </View>
-        {!isEditMode && showConfirm && ( <Modal visible={true} transparent={true} animationType="fade"> {/* ... */} </Modal> )}
-      <ImageViewModal visible={showImageViewModal} imageUri={imageToViewUri} onClose={() => { /* ... */ }} onRemove={handleRemoveImage} />
+        {!isEditMode && showConfirm && (
+          <Modal visible={true} transparent={true} animationType="fade">
+            
+            {/* ... */}
+          </Modal>
+        )}
+        <ImageViewModal
+          visible={showImageViewModal}
+          imageUri={imageToViewUri}
+          onClose={() => {
+            /* ... */
+          }}
+          onRemove={handleRemoveImage}
+        />
       </ScrollView>
 
       {showConfirm && (
         <Modal visible={true} transparent={true} animationType="fade">
-          
           <View style={styles.confirmOverlay}>
-            
             <View style={styles.confirmContainer}>
-              
               <Text style={styles.confirmText}>
                 {t("MarketplaceNewItemScreen_CancelDiscardHeader")}
               </Text>
               <View style={styles.confirmButtonRow}>
-                
                 <FlipButton
                   onPress={confirmCancel}
                   bgColor="#e0e0e0"
                   textColor="black"
                   style={styles.confirmButton}
                 >
-                  
                   <Text style={styles.buttonLabel}>
                     {t("MarketplaceNewItemScreen_CancelConfirmation")}
                   </Text>
@@ -766,7 +869,6 @@ const deletePicture = async (pictureId) => {
                   textColor="white"
                   style={styles.confirmButton}
                 >
-                  
                   <Text style={[styles.buttonLabel, { color: "white" }]}>
                     {t("MarketplaceNewItemScreen_CancelDiscard")}
                   </Text>

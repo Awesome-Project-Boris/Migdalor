@@ -137,6 +137,7 @@ const resources = {
 
       MarketplaceEditItemScreen_UpdateSuccess: "Listing updated successfully!",
       MarketplaceEditItemScreen_UpdateFailedTitle: "Update Failed",
+      MarketplaceNewItemScreen_listingCreatedSuccessTitle: "Listing Created Successfully",
 
 
 
@@ -354,6 +355,7 @@ const resources = {
       MarketplaceEditItemScreen_Header: "עריכת פריט קיים",
       MarketplaceEditItemScreen_UpdateSuccess: "ההצעה עודכנה בהצלחה!",
       MarketplaceEditItemScreen_UpdateFailedTitle: "העדכון נכשל", // אם תוסיף חזרה את הודעת השגיאה
+      MarketplaceNewItemScreen_listingCreatedSuccessTitle: "ההצעה נוצרה בהצלחה",
 
       
 
