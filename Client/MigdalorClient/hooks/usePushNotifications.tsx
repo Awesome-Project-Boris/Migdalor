@@ -15,12 +15,15 @@ export interface PushNotificationState {
 
 async function postPushToken(expoPushToken: string) {
   const userID  = await AsyncStorage.getItem("userID");
+  if (!userID) {
+    return;
+  }
   const payload = {
     personId: userID,
     pushToken: expoPushToken,
   };
 
-  console.log("payload", payload);
+  // console.log("payload", payload);
   const resp = await fetch(`${Globals.API_BASE_URL}/api/Notifications/registerToken`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

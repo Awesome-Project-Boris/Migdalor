@@ -1,7 +1,7 @@
-﻿using MigdalorServer.BL;
+﻿using System.Text.Json;
+using MigdalorServer.BL;
 using MigdalorServer.Database;
 using MigdalorServer.Models.DTOs;
-using System.Text.Json;
 
 namespace MigdalorServer.Models
 {
@@ -14,6 +14,8 @@ namespace MigdalorServer.Models
             PasswordHash = PasswordServices.CreatePasswordHash(user.Password);
             HebFirstName = user.HebFirstName;
             HebLastName = user.HebLastName;
+            EngFirstName = user.EngFirstName;
+            EngLastName = user.EngLastName;
             PhoneNumber = user.PhoneNumber;
             Gender = user.Gender;
         }
@@ -36,43 +38,44 @@ namespace MigdalorServer.Models
 
             Console.WriteLine($"[DEBUG] Incoming ID: {ID}");
             var directPerson = db.OhPeople.Find(ID);
-            Console.WriteLine(directPerson == null
-                ? "[DEBUG] OhPeople.Find returned null"
-                : $"[DEBUG] OhPeople.Find succeeded: {directPerson.HebFirstName} {directPerson.HebLastName}");
-
+            Console.WriteLine(
+                directPerson == null
+                    ? "[DEBUG] OhPeople.Find returned null"
+                    : $"[DEBUG] OhPeople.Find succeeded: {directPerson.HebFirstName} {directPerson.HebLastName}"
+            );
 
             var result = (
                 from person in db.OhPeople
 
-                // 1) find their resident record
-                join resident in db.OhResidents
-                    on person.PersonId equals resident.ResidentId
+                    // 1) find their resident record
+                join resident in db.OhResidents on person.PersonId equals resident.ResidentId
 
                 // 2) left‑join into OhPeople again for the spouse
-                join spouse in db.OhPeople
-                    on resident.SpouseId equals spouse.PersonId into spGroup
+                join spouse in db.OhPeople on resident.SpouseId equals spouse.PersonId into spGroup
                 from s in spGroup.DefaultIfEmpty()
 
-                // 3) filter to the one you want
+                    // 3) filter to the one you want
                 where person.PersonId == ID
 
                 // join into profile picture (left)
                 join profPic in db.OhPictures
-                    on person.ProfilePicId equals profPic.PicId into profPicGroup
+                    on person.ProfilePicId equals profPic.PicId
+                    into profPicGroup
                 from pp in profPicGroup.DefaultIfEmpty()
 
-                // join into additional picture 1 (left)
+                    // join into additional picture 1 (left)
                 join add1 in db.OhPictures
-                    on resident.AdditionalPic1Id equals add1.PicId into add1Group
+                    on resident.AdditionalPic1Id equals add1.PicId
+                    into add1Group
                 from p1 in add1Group.DefaultIfEmpty()
 
-                // join into additional picture 2 (left)
+                    // join into additional picture 2 (left)
                 join add2 in db.OhPictures
-                    on resident.AdditionalPic2Id equals add2.PicId into add2Group
+                    on resident.AdditionalPic2Id equals add2.PicId
+                    into add2Group
                 from p2 in add2Group.DefaultIfEmpty()
 
-
-                // 4) project everything you need, including spouse names
+                    // 4) project everything you need, including spouse names
                 select new
                 {
                     // --- from OH_People ---
@@ -97,49 +100,57 @@ namespace MigdalorServer.Models
                     spouseHebName = resident.SpouseHebName,
                     spouseEngName = resident.SpouseEngName,
 
-
                     // profile‑picture data (or null)
-                    profilePicture = pp == null ? null : new
-                    {
-                        pp.PicId,
-                        pp.PicName,
-                        pp.PicPath,
-                        pp.PicAlt,
-                        //pp.UploaderId,
-                        //pp.PicRole,
-                        //pp.ListingId,
-                        //pp.DateTime
-                    },
+                    profilePicture = pp == null
+                        ? null
+                        : new
+                        {
+                            pp.PicId,
+                            pp.PicName,
+                            pp.PicPath,
+                            pp.PicAlt,
+                            //pp.UploaderId,
+                            //pp.PicRole,
+                            //pp.ListingId,
+                            //pp.DateTime
+                        },
 
                     // additional pic #1 (or null)
-                    additionalPicture1 = p1 == null ? null : new
-                    {
-                        p1.PicId,
-                        p1.PicName,
-                        p1.PicPath,
-                        p1.PicAlt,
-                        //p1.UploaderId,
-                        //p1.PicRole,
-                        //p1.ListingId,
-                        //p1.DateTime
-                    },
+                    additionalPicture1 = p1 == null
+                        ? null
+                        : new
+                        {
+                            p1.PicId,
+                            p1.PicName,
+                            p1.PicPath,
+                            p1.PicAlt,
+                            //p1.UploaderId,
+                            //p1.PicRole,
+                            //p1.ListingId,
+                            //p1.DateTime
+                        },
 
                     // additional pic #2 (or null)
-                    additionalPicture2 = p2 == null ? null : new
-                    {
-                        p2.PicId,
-                        p2.PicName,
-                        p2.PicPath,
-                        p2.PicAlt,
-                        //p2.UploaderId,
-                        //p2.PicRole,
-                        //p2.ListingId,
-                        //p2.DateTime
-                    }
+                    additionalPicture2 = p2 == null
+                        ? null
+                        : new
+                        {
+                            p2.PicId,
+                            p2.PicName,
+                            p2.PicPath,
+                            p2.PicAlt,
+                            //p2.UploaderId,
+                            //p2.PicRole,
+                            //p2.ListingId,
+                            //p2.DateTime
+                        },
                 }
             ).FirstOrDefault();
 
-            var json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(
+                result,
+                new JsonSerializerOptions { WriteIndented = true }
+            );
             Console.WriteLine(json);
 
             if (result == null)
@@ -175,6 +186,14 @@ namespace MigdalorServer.Models
         {
             using MigdalorDBContext db = new MigdalorDBContext();
             return db.OhPeople.Find(username)?.PasswordHash ?? "";
+        }
+
+        public static Guid[] GetAllUserIds()
+        {
+            using MigdalorDBContext db = new MigdalorDBContext();
+            return db.OhPeople
+                     .Select(u => u.PersonId)
+                     .ToArray();
         }
     }
 }

@@ -49,5 +49,30 @@ namespace MigdalorServer.Controllers
 
             return Ok(new { status = "token registered" });
         }
+
+        // POST api/notifications/broadcast
+        [HttpPost("broadcast")]
+        public async Task<IActionResult> Broadcast([FromBody] ExpoPushMessage template)
+        {
+            try
+            {
+                // 1) fetch all user GUIDs
+                Guid[] allUserIds = OhPerson.GetAllUserIds();
+
+                // 2) use your existing bulk send method
+                await _pushService.SendBulkAsync(allUserIds, template);
+
+                return Ok(new
+                {
+                    status = "broadcast sent",
+                    recipients = allUserIds.Length
+                });
+            }
+            catch (Exception ex)
+            {
+                // log ex if desired…
+                return StatusCode(500, new { error = ex.Message });
+            }
+        }
     }
 }
