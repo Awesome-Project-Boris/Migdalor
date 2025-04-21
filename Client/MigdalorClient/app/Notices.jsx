@@ -130,6 +130,50 @@ export default function NoticesScreen() {
     return filtered;
   }, [allNotices, selectedCategories, sortOrder]);
 
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user?.userID) {
+        console.log("Admin Check: No user ID found.");
+        setIsAdmin(false);
+        setIsAdminLoading(false);
+        return;
+      }
+
+      console.log(`Admin Check: Checking status for user ID: ${user.userID}`);
+      setIsAdminLoading(true); // Start loading check
+      try {
+        const response = await fetch(`${Globals.API_BASE_URL}/api/People/isadmin/${user.userID}`);
+        if (!response.ok) {
+          // Log specific error but treat as non-admin for safety
+          console.error(`Admin Check Failed: HTTP ${response.status}`);
+          throw new Error('Failed to verify admin status');
+        }
+        // Assuming the API returns true/false directly or { isAdmin: true/false }
+        const isAdminResult = await response.json();
+        console.log("Admin Check Result:", isAdminResult);
+
+        // Adjust based on actual API response structure:
+        if (typeof isAdminResult === 'boolean') {
+             setIsAdmin(isAdminResult);
+        } else if (typeof isAdminResult === 'object' && typeof isAdminResult.isAdmin === 'boolean') {
+             setIsAdmin(isAdminResult.isAdmin);
+        } else {
+             console.warn("Admin Check: Unexpected response format.");
+             setIsAdmin(false); // Default to false if response is weird
+        }
+
+      } catch (err) {
+        console.error("Error during admin check:", err);
+        setIsAdmin(false); // Assume not admin if check fails
+      } finally {
+        setIsAdminLoading(false); // Finish loading check
+      }
+    };
+
+    checkAdminStatus();
+  }, [user?.userID]);
+
+
   // --- Pagination Calculations ---
   const totalItems = processedNotices.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -228,6 +272,19 @@ export default function NoticesScreen() {
                 </View>
             </FlipButton>
         </View>
+        {isAdmin && (
+                <FlipButton
+                    onPress={() => router.push('/NewNotice')} // Navigate to NewNotice page
+                    style={styles.newNoticeButton} // Use a new style
+                    bgColor="#198754" // Example: Green background
+                    textColor="#ffffff"
+                >
+                    <View style={styles.buttonContent}>
+                        <Ionicons name="add-circle-outline" size={20} color="white" style={styles.buttonIcon}/>
+                        <Text style={[styles.buttonText, styles.newNoticeButtonText]}>{t("NoticesScreen_NewNoticeButton")}</Text> {/* Add translation */}
+                    </View>
+                </FlipButton>
+            )}
 
         <PaginatedListDisplay
           items={itemsForCurrentPage}
