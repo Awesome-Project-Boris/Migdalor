@@ -9,9 +9,9 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { useCallback } from "react";
-
+import { useFocusEffect } from "expo-router" 
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/components/Header";
 
@@ -128,8 +128,9 @@ export default function Profile() {
   // }, [params.updatedData]);
 
   // On mount, try to load the user data from AsyncStorage.
-  useEffect(() => {
-    if (params.updatedData) return; // skip fetch if coming back from EditProfile
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true
 
     const loadUserProfileData = async () => {
       try {
@@ -154,6 +155,9 @@ export default function Profile() {
           const userData = await response.json();
 
           console.log("User data:", userData);
+
+          if (!isActive) return
+          // populate form & pics exactly as before…
 
           // !! now to load the data into the form
           setForm({
@@ -213,22 +217,24 @@ export default function Profile() {
     };
 
     loadUserProfileData(); // Call the function to load user data
-  }, []);
+    return () => { isActive = false }
+    }, [])
+  );
 
-  // when screen comes into focus (or you can use useEffect on params)
-  const params = useLocalSearchParams();
-  useEffect(() => {
-    if (params.updatedData) {
-      const d = JSON.parse(params.updatedData);
-      setForm(d);
-    }
-    if (params.updatedPics) {
-      const pics = JSON.parse(params.updatedPics);
-      setProfilePic(pics.profilePic);
-      setAdditionalPic1(pics.additionalPic1);
-      setAdditionalPic2(pics.additionalPic2);
-    }
-  }, [params.updatedData, params.updatedPics]);
+  // // when screen comes into focus (or you can use useEffect on params)
+  // const params = useLocalSearchParams();
+  // useEffect(() => {
+  //   if (params.updatedData) {
+  //     const d = JSON.parse(params.updatedData);
+  //     setForm(d);
+  //   }
+  //   if (params.updatedPics) {
+  //     const pics = JSON.parse(params.updatedPics);
+  //     setProfilePic(pics.profilePic);
+  //     setAdditionalPic1(pics.additionalPic1);
+  //     setAdditionalPic2(pics.additionalPic2);
+  //   }
+  // }, [params.updatedData, params.updatedPics]);
 
   return (
     <View style={styles.wrapper}>

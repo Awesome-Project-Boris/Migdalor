@@ -257,32 +257,35 @@ export default function EditProfile() {
     //console.log(cleanedForm.residentApartmentNumber)
 
     // !! Add API call to save the data here
-    const apiurl = `${Globals.API_BASE_URL}/api/People/UpdatePersonByIDForProfile/${storedUserID}`; // !! check this is the  correct endpoint
-    const response = await fetch(apiurl, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      //body: JSON.stringify({ phoneNumber, password }),
-    });
 
-    if (!response.ok) {
-      // You can throw an error or handle it with an error message.
-      throw new Error(`Login failed: HTTP ${response.status}`);
-    }
+    // const apiurl = `${Globals.API_BASE_URL}/api/People/UpdatePersonByIDForProfile/${storedUserID}`; // !! check this is the  correct endpoint
+    // const response = await fetch(apiurl, {
+    //   method: "PUT",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   //body: JSON.stringify({ phoneNumber, password }),
+    // });
 
-    router.replace({
-      pathname: "./Profile",
-      params: {
-        //updatedData: JSON.stringify(form),
-        updatedData: JSON.stringify(cleanedForm),
-        updatedPics: JSON.stringify({
-          profilePic,
-          additionalPic1,
-          additionalPic2,
-        }),
-      },
-    });
+    // if (!response.ok) {
+    //   // You can throw an error or handle it with an error message.
+    //   throw new Error(`Login failed: HTTP ${response.status}`);
+    // }
+
+    //router.back({
+    //router.replace({
+    //   pathname: "./Profile",
+    //   params: {
+    //     //updatedData: JSON.stringify(form),
+    //     updatedData: JSON.stringify(cleanedForm),
+    //     updatedPics: JSON.stringify({
+    //       profilePic,
+    //       additionalPic1,
+    //       additionalPic2,
+    //     }),
+    //   },
+    // });
+    router.back();
   };
 
   const handleCancel = () => {
@@ -307,21 +310,25 @@ export default function EditProfile() {
         position: "top", // Example: 'top' or 'bottom'
       });
 
-      router.replace({
-        pathname: "./Profile",
-        params: {
-          updatedData: JSON.stringify(parsedInitialData),
-          updatedPics: JSON.stringify({
-            profilePic: parsedInitialPics.profilePic,
-            additionalPic1: parsedInitialPics.additionalPic1,
-            additionalPic2: parsedInitialPics.additionalPic2,
-          }),
-        },
-      });
+      //router.back({
+      //router.replace({
+      //   pathname: "./Profile",
+      //   params: {
+      //     updatedData: JSON.stringify(parsedInitialData),
+      //     updatedPics: JSON.stringify({
+      //       profilePic: parsedInitialPics.profilePic,
+      //       additionalPic1: parsedInitialPics.additionalPic1,
+      //       additionalPic2: parsedInitialPics.additionalPic2,
+      //     }),
+      //   },
+      // });
+      router.back();
     } catch (err) {
       console.warn("Failed to parse initialData during cancel:", err);
       // You can fallback to just navigating without data
-      router.replace("./Profile");
+
+      //router.replace("./Profile");
+      router.back();
     }
   };
 
