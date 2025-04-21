@@ -28,6 +28,8 @@ namespace MigdalorServer.Models
 
         public static OhNotice AddOhNotice(NewNotice notice)
         {
+            // --- !! Add Logging !! ---
+            Console.WriteLine("[AddOhNotice] Method Entry. Received Title: " + notice?.Title);
             var ohNotice = new OhNotice
             {
                 NoticeTitle = notice.Title,
@@ -35,13 +37,34 @@ namespace MigdalorServer.Models
                 SenderId = notice.SenderId,
                 NoticeCategory = notice.Category,
                 NoticeSubCategory = notice.SubCategory,
+                CreationDate = DateTime.UtcNow // Explicitly set date
             };
+            Console.WriteLine("[AddOhNotice] Mapped DTO to OhNotice entity.");
 
-            using MigdalorDBContext db = new();
-            db.OhNotices.Add(ohNotice);
-            db.SaveChanges();
+            try
+            {
+                using MigdalorDBContext db = new();
+                Console.WriteLine("[AddOhNotice] Created new DbContext instance.");
 
-            return ohNotice;
+                db.OhNotices.Add(ohNotice);
+                Console.WriteLine("[AddOhNotice] Added entity to DbContext.");
+
+                Console.WriteLine("[AddOhNotice] Calling SaveChanges...");
+                db.SaveChanges(); // --- The likely point of failure ---
+                Console.WriteLine($"[AddOhNotice] SaveChanges SUCCEEDED. New NoticeID: {ohNotice.NoticeId}");
+
+                return ohNotice;
+            }
+            catch (Exception dbEx)
+            {
+                // --- !! Log the specific DB/SaveChanges exception !! ---
+                Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                Console.WriteLine("[AddOhNotice] EXCEPTION during Add/SaveChanges:");
+                Console.WriteLine(dbEx.ToString()); // Log the FULL exception details + stack trace
+                Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                // --- End Logging ---
+                throw; // Re-throw so the controller's catch block (and logger) can see it
+            }
         }
 
         public static List<dynamic> GetOhNoticesByCategory(string category)

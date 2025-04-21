@@ -4,71 +4,76 @@ import React, {
   useMemo,
   useRef,
   useCallback,
+  // useContext, // No longer needed if not using useAuth
 } from "react";
 import {
   View,
   Text,
   StyleSheet,
+  Dimensions,
   ActivityIndicator,
+  TouchableOpacity, // Keep for buttons inside modal? Check FilterModal usage if errors persist there
 } from "react-native";
 import { useRouter } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
 
-import NoticeCard from "../components/NoticeCard"; //
-import Header from "@/components/Header"; //
-import FlipButton from "../components/FlipButton"; //
-import FilterModal from "../components/NoticeFilterModal"; //
-import PaginatedListDisplay from "@/components/PaginatedListDisplay"; // The reusable component
+import NoticeCard from "../components/NoticeCard";
+import Header from "@/components/Header";
+import FlipButton from "../components/FlipButton";
+import FilterModal from "../components/NoticeFilterModal";
+import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import { Globals } from "../app/constants/Globals"; //
+import { Globals } from "../app/constants/Globals";
 
-const ITEMS_PER_PAGE = 10; // Consistent items per page
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const ITEMS_PER_PAGE = 10;
 
-// Fetches notices
+// --- Fetch Functions (remain the same) ---
 const fetchNotices = async () => {
-  console.log("Fetching notices from API...");
+  // console.log("Fetching notices from API...");
   const response = await fetch(`${Globals.API_BASE_URL}/api/Notices`);
   if (!response.ok) { throw new Error(`Failed to load notices: HTTP ${response.status}`); }
   const notices = await response.json();
   return notices || [];
 };
 
-// Fetches categories
 const fetchCategories = async () => {
-  console.log("Fetching categories from API...");
+  // console.log("Fetching categories from API...");
   const response = await fetch(`${Globals.API_BASE_URL}/api/Categories`);
   if (!response.ok) { throw new Error(`Failed to load categories: HTTP ${response.status}`); }
   const rawCategories = await response.json();
-  // WILL NEED TO CHANGE WHEN WE SORT LANGUAGES
   const availableCategories = rawCategories.map(c =>
       Globals.userSelectedLanguage === 'he'
-        ? (c.categoryHebName || c.categoryName) 
-        : (c.categoryEngName || c.categoryName) // Fallbacks
+        ? (c.categoryHebName || c.categoryName)
+        : (c.categoryEngName || c.categoryName)
   );
   return availableCategories || [];
 };
-
 // --- End Fetch Functions ---
 
 export default function NoticesScreen() {
   const { t } = useTranslation();
 
-
+  // --- State ---
   const [allNotices, setAllNotices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true); 
-  const [error, setError] = useState(null);      
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [allCategories, setAllCategories] = useState([]);
-  const [isCategoryLoading, setIsCategoryLoading] = useState(true); 
-  const [categoryError, setCategoryError] = useState(null); 
+  const [isCategoryLoading, setIsCategoryLoading] = useState(true);
+  const [categoryError, setCategoryError] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [sortOrder, setSortOrder] = useState("recent");
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+  // !! Added missing state variables !!
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(true);
 
   const router = useRouter();
   const flatListRef = useRef(null);
 
-  // --- Data Fetching Callbacks ---
+  // --- Data Fetching Callbacks (remain the same) ---
   const fetchNoticesCallback = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -78,7 +83,7 @@ export default function NoticesScreen() {
     } catch (err) {
       console.error("Failed to fetch notices:", err);
       setError(err.message || "Failed to load notices.");
-      setAllNotices([]); // Ensure empty array on error
+      setAllNotices([]);
     } finally {
       setIsLoading(false);
     }
@@ -99,24 +104,77 @@ export default function NoticesScreen() {
     }
   }, []);
 
-  // --- Initial Data Load Effect ---
+  // --- Initial Data Load Effect (remain the same) ---
   useEffect(() => {
-    setCurrentPage(1); // Reset page on initial load
+    setCurrentPage(1);
     fetchNoticesCallback();
     fetchCategoriesCallback();
-  }, [fetchNoticesCallback, fetchCategoriesCallback]); // Run once on mount
+  }, [fetchNoticesCallback, fetchCategoriesCallback]);
+
+  // --- Effect to Check Admin Status ---
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      let currentUserId = null; // Define inside effect
+      try {
+        currentUserId = await AsyncStorage.getItem("userID"); // Get ID here
+        if (!currentUserId) {
+          console.log("Admin Check: No user ID found in storage.");
+          setIsAdmin(false);
+          setIsAdminLoading(false);
+          return;
+        }
+      } catch (storageError) {
+          console.error("Admin Check: Error reading userID from AsyncStorage", storageError);
+          setIsAdmin(false);
+          setIsAdminLoading(false);
+          return;
+      }
+
+
+      console.log(`Admin Check: Checking status for user ID: ${currentUserId}`);
+      setIsAdminLoading(true);
+      try {
+        const response = await fetch(`${Globals.API_BASE_URL}/api/People/isadmin/?userId=${currentUserId}`); // Use fetched ID
+        if (!response.ok) {
+          console.error(`Admin Check Failed: HTTP ${response.status}`);
+          throw new Error('Failed to verify admin status');
+        }
+        const isAdminResult = await response.json();
+        console.log("Admin Check Result:", isAdminResult);
+
+        if (typeof isAdminResult === 'boolean') {
+             setIsAdmin(isAdminResult);
+        } else if (typeof isAdminResult === 'object' && typeof isAdminResult.isAdmin === 'boolean') {
+             setIsAdmin(isAdminResult.isAdmin);
+        } else {
+             console.warn("Admin Check: Unexpected response format.");
+             setIsAdmin(false);
+        }
+      } catch (err) {
+        console.error("Error during admin check API call:", err);
+        setIsAdmin(false);
+      } finally {
+        setIsAdminLoading(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, []); // Run ONCE on mount - relies on AsyncStorage having the correct ID at load time
 
   // --- Filtering and Sorting ---
   const processedNotices = useMemo(() => {
-    console.log(`Processing ${allNotices.length} notices. Filter: [${selectedCategories.join(', ')}], Sort: ${sortOrder}`);
-    let filtered = [...allNotices];
+    // !! Added safeguard for allNotices !!
+    if (!Array.isArray(allNotices)) {
+        console.warn("processedNotices: allNotices is not an array!", allNotices);
+        return []; // Return empty array if allNotices is not an array
+    }
+    // console.log(`Processing ${allNotices.length} notices. Filter: [${selectedCategories.join(', ')}], Sort: ${sortOrder}`);
+    let filtered = [...allNotices]; // Safe spread syntax now
 
-    // Apply category filter
     if (selectedCategories.length > 0) {
       filtered = filtered.filter((n) => n.noticeCategory && selectedCategories.includes(n.noticeCategory));
     }
 
-    // Apply sorting
     filtered.sort((a, b) => {
       const dateA = new Date(a.creationDate);
       const dateB = new Date(b.creationDate);
@@ -126,55 +184,11 @@ export default function NoticesScreen() {
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
 
-    console.log(`Processed down to ${filtered.length} notices.`);
+    // console.log(`Processed down to ${filtered.length} notices.`);
     return filtered;
   }, [allNotices, selectedCategories, sortOrder]);
 
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      if (!user?.userID) {
-        console.log("Admin Check: No user ID found.");
-        setIsAdmin(false);
-        setIsAdminLoading(false);
-        return;
-      }
-
-      console.log(`Admin Check: Checking status for user ID: ${user.userID}`);
-      setIsAdminLoading(true); // Start loading check
-      try {
-        const response = await fetch(`${Globals.API_BASE_URL}/api/People/isadmin/${user.userID}`);
-        if (!response.ok) {
-          // Log specific error but treat as non-admin for safety
-          console.error(`Admin Check Failed: HTTP ${response.status}`);
-          throw new Error('Failed to verify admin status');
-        }
-        // Assuming the API returns true/false directly or { isAdmin: true/false }
-        const isAdminResult = await response.json();
-        console.log("Admin Check Result:", isAdminResult);
-
-        // Adjust based on actual API response structure:
-        if (typeof isAdminResult === 'boolean') {
-             setIsAdmin(isAdminResult);
-        } else if (typeof isAdminResult === 'object' && typeof isAdminResult.isAdmin === 'boolean') {
-             setIsAdmin(isAdminResult.isAdmin);
-        } else {
-             console.warn("Admin Check: Unexpected response format.");
-             setIsAdmin(false); // Default to false if response is weird
-        }
-
-      } catch (err) {
-        console.error("Error during admin check:", err);
-        setIsAdmin(false); // Assume not admin if check fails
-      } finally {
-        setIsAdminLoading(false); // Finish loading check
-      }
-    };
-
-    checkAdminStatus();
-  }, [user?.userID]);
-
-
-  // --- Pagination Calculations ---
+  // --- Pagination Calculations (remain the same) ---
   const totalItems = processedNotices.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
@@ -184,44 +198,36 @@ export default function NoticesScreen() {
     return processedNotices.slice(startIndex, endIndex);
   }, [processedNotices, currentPage]);
 
-  // --- Effect to Reset Page When Filters/Sort Change Make Current Page Invalid ---
+  // --- Effect to Reset Page (remain the same) ---
   useEffect(() => {
-    const newTotalPages = Math.ceil(processedNotices.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
+    const newTotalPages = Math.max(1, Math.ceil(processedNotices.length / ITEMS_PER_PAGE)); // Ensure at least 1 page
+    if (currentPage > newTotalPages) { // Only adjust if current page is > new total
       setCurrentPage(newTotalPages);
     }
-     // Reset to 1 if current page is 0 or less (can happen if list becomes empty)
-     else if (currentPage <= 0 && newTotalPages > 0) {
-        console.log(`Filter/Sort caused page reset from ${currentPage} to 1`);
-        setCurrentPage(1);
-     }
-     // If newTotalPages becomes 0, currentPage should ideally be 1 or 0
-     else if (newTotalPages === 0 && currentPage !== 1) {
-         // setCurrentPage(1); // Or keep current page, PaginatedListDisplay will show empty
-     }
-  }, [processedNotices, currentPage]); // Runs when filtered/sorted data changes
+    // No need for <= 0 check if state initializes to 1 and this logic runs correctly
+  }, [processedNotices, currentPage]);
 
-  // --- Event Handlers ---
+  // --- Event Handlers (remain the same) ---
   const handlePageChange = useCallback((newPage) => {
       const safeTotalPages = Math.max(1, totalPages);
-      if (newPage >= 1 && newPage <= safeTotalPages) {;
+      if (newPage >= 1 && newPage <= safeTotalPages) {
           setCurrentPage(newPage);
-          flatListRef.current?.scrollToOffset({ animated: true, offset: 0 }); // Scroll to top
+          flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
       }
-  }, [totalPages]); // Dependency on totalPages
+  }, [totalPages]);
 
   const toggleSortOrder = useCallback(() => {
-    setCurrentPage(1); // Reset page 
+    setCurrentPage(1);
     setSortOrder((prev) => (prev === "recent" ? "oldest" : "recent"));
   }, []);
 
   const handleApplyFilter = useCallback((cats) => {
-    setCurrentPage(1); // Reset page
+    setCurrentPage(1);
     setSelectedCategories(cats);
     setIsFilterModalVisible(false);
   }, []);
 
-  // --- Render Item Function ---
+  // --- Render Item Function (remain the same) ---
   const renderNoticeItem = useCallback(({ item }) => (
     <NoticeCard
       data={item}
@@ -234,22 +240,25 @@ export default function NoticesScreen() {
     />
   ), [router]);
 
-  // --- Key Extractor ---
+  // --- Key Extractor (remain the same) ---
   const keyExtractor = useCallback((item) => item.noticeId.toString(), []);
 
-  // --- Custom Empty Component Logic ---
+  // --- Custom Empty Component Logic (remain the same) ---
    const CustomEmptyComponent = useMemo(() => {
     if(isLoading && allNotices.length === 0) return <ActivityIndicator size="large" color="#0000ff" style={{marginTop: 50}}/>;
-    if(error) return <Text style={styles.errorText}>{`Error loading notices: ${error}`}</Text>; // Show notice error
-    // No matching results *after* filtering (and not loading/error)
+    if(error) return <Text style={styles.errorText}>{`Error loading notices: ${error}`}</Text>;
     if (selectedCategories.length > 0 && processedNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noMatchMessage")}</Text>;
-    if (allNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noNoticesMessage")}</Text>;
+    // Use allNotices.length === 0 check only if not loading and no error
+    if (!isLoading && !error && allNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noNoticesMessage")}</Text>;
+    // If filters applied but results are empty, the specific message above handles it.
+    // If no filters and processed is empty, but allNotices wasn't empty initially, this means something unexpected.
+    // Maybe simplify: if processed is empty after loading/error checks, show a generic no items message?
     if (processedNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noNoticesMessage")}</Text>;
 
-    return null; // List has items
+    return null;
    }, [isLoading, error, selectedCategories, allNotices, processedNotices, t]);
 
-
+  // --- Main Render ---
   return (
     <>
       <Header />
@@ -257,7 +266,20 @@ export default function NoticesScreen() {
         <View style={styles.headerContainer}>
           <Text style={styles.pageTitle}>{t("NoticeBoardScreen_boardTitle")}</Text>
         </View>
-
+        {!isAdminLoading && isAdmin && (
+            <View style={styles.newNoticeButtonContainer}>
+                <FlipButton
+                    onPress={() => router.push('/NewNotice')}
+                    style={styles.newNoticeButton}
+                    bgColor="#ffffff"
+                    textColor="#000000"
+                >
+                        <Ionicons name="add-circle-outline" size={20} color="white" style={styles.buttonIcon}/>
+                        <Text style={[styles.buttonText, styles.newNoticeButtonText]}>{t("NoticesScreen_NewNoticeButton")}</Text>
+                </FlipButton>
+              </View>
+            )}
+        {/* Controls Container - Admin Button Moved Inside */}
         <View style={styles.controlsContainer}>
             <FlipButton onPress={() => setIsFilterModalVisible(true)} style={styles.controlButton} disabled={isCategoryLoading}>
                 <View style={styles.buttonContent}>
@@ -271,38 +293,32 @@ export default function NoticesScreen() {
                     <Text style={styles.buttonText}>{t("NoticeBoardScreen_filterLabel")} {sortOrder === "recent" ? t("NoticeBoardScreen_sortOldest") : t("NoticeBoardScreen_sortNewest")}</Text>
                 </View>
             </FlipButton>
+            {/* Admin Button - Render conditionally */}
+             {/* Show placeholder if admin but loading status */}
+             {isAdminLoading && <View style={styles.adminButtonPlaceholder} />}
+             {/* Show placeholder if not admin to maintain layout balance? Optional */}
+             {/* {!isAdminLoading && !isAdmin && <View style={styles.adminButtonPlaceholder} />} */}
         </View>
-        {isAdmin && (
-                <FlipButton
-                    onPress={() => router.push('/NewNotice')} // Navigate to NewNotice page
-                    style={styles.newNoticeButton} // Use a new style
-                    bgColor="#198754" // Example: Green background
-                    textColor="#ffffff"
-                >
-                    <View style={styles.buttonContent}>
-                        <Ionicons name="add-circle-outline" size={20} color="white" style={styles.buttonIcon}/>
-                        <Text style={[styles.buttonText, styles.newNoticeButtonText]}>{t("NoticesScreen_NewNoticeButton")}</Text> {/* Add translation */}
-                    </View>
-                </FlipButton>
-            )}
 
+        {/* Paginated List Display */}
         <PaginatedListDisplay
           items={itemsForCurrentPage}
           renderItem={renderNoticeItem}
           itemKeyExtractor={keyExtractor}
-          isLoading={isLoading && allNotices.length === 0}
+          isLoading={isLoading && allNotices.length === 0} // Indicate loading on initial fetch
           ListEmptyComponent={CustomEmptyComponent}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
-          flatListRef={flatListRef} // Passing ref
+          flatListRef={flatListRef}
           listContainerStyle={styles.listContainerStyle}
         />
 
+        {/* Filter Modal */}
         <FilterModal
           visible={isFilterModalVisible}
           onClose={() => setIsFilterModalVisible(false)}
-          allCategories={allCategories} 
+          allCategories={allCategories}
           initialSelectedCategories={selectedCategories}
           onApply={handleApplyFilter}
         />
@@ -311,78 +327,28 @@ export default function NoticesScreen() {
   );
 }
 
-
+// --- Styles --- (Added placeholder style)
 const styles = StyleSheet.create({
-    pageContainer: {
-        flex: 1, 
-        backgroundColor: "#f7f7f7",
-    },
-    headerContainer: {
-        alignItems: 'center',
-        marginTop: 70,
-    },
-    pageTitle: {
-        width: "80%",
-        fontSize: 26,
-        fontWeight: "bold",
-        color: "#333",
-        textAlign: "center",
-        marginBottom: 20,
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 25,
-        paddingVertical: 12,
-        backgroundColor: '#fff',
-    },
-    controlsContainer: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        alignItems: "center",
-        width: '100%',
-        paddingVertical: 10,
-        paddingHorizontal: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: "#eee",
-        backgroundColor: "#fff",
-        marginBottom: 5,
-    },
-    controlButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        flexDirection: "row",
-        alignItems: "center",
-        borderRadius: 6,
-    },
-    buttonContent: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-    },
-    buttonIcon: {
-        marginRight: 8,
-    },
-    buttonText: {
-        fontSize: 15,
-        fontWeight: "600",
-    },
-    listContainerStyle: {
-        paddingHorizontal: 16,
-        paddingBottom: 16, // Padding at the bottom of the list content
-        width: '100%', // List takes full width
-        alignItems: 'center', // Center cards within the list area
-    },
-    errorText: {
-      textAlign: "center",
-      fontSize: 16,
-      marginVertical: 20,
-      color: "red",
-      paddingHorizontal: 20,
-    },
-    infoText: {
-      textAlign: "center",
-      fontSize: 16,
-      marginVertical: 20,
-      color: "#666",
-      paddingHorizontal: 20,
-    },
+    pageContainer: { flex: 1, backgroundColor: "#f7f7f7" },
+    headerContainer: { alignItems: 'center', marginTop: 70 }, // Adjusted marginTop
+    pageTitle: { width: "80%", fontSize: 26, fontWeight: "bold", color: "#333", textAlign: "center", marginBottom: 20, borderWidth: 1, borderColor: '#ddd', borderRadius: 25, paddingVertical: 12, backgroundColor: '#fff' },
+    controlsContainer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: '100%', paddingVertical: 10, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: "#eee", backgroundColor: "#fff", marginBottom: 5 },
+    controlButton: { paddingVertical: 8, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderRadius: 6, flexShrink: 1 },
+    newNoticeButton: { paddingVertical: 16, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderRadius: 6, flexShrink: 1, width: 300, marginBottom: 15 },
+    newNoticeButtonText: { color: '#ffffff' },
+    newNoticeButtonContainer: {width: "100%", alignItems: 'center'},
+    buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
+    buttonIcon: { marginRight: 5 },
+    buttonText: { fontSize: 14, fontWeight: "600", textAlign: 'center' },
+    listContainerStyle: { paddingHorizontal: 16, paddingBottom: 16, width: '100%', alignItems: 'center' },
+    errorText: { textAlign: "center", fontSize: 16, marginVertical: 20, color: "red", paddingHorizontal: 20 },
+    infoText: { textAlign: "center", fontSize: 16, marginVertical: 20, color: "#666", paddingHorizontal: 20 },
+    // Placeholder to help balance layout when admin button isn't shown
+    adminButtonPlaceholder: {
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      // Match dimensions/padding of other buttons roughly, but make it invisible
+      opacity: 0,
+      // You might need to adjust this based on the exact size of the other buttons
+    }
 });

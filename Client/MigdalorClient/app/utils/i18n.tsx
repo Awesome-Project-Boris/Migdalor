@@ -189,6 +189,23 @@ const resources = {
       NoticeCard_dateLabel: "Notice date: ",
       NoticeCard_categoryLabel: "Category: ",
 
+      NewNoticeScreen_errorAllFieldsRequired: "Please fill in title, message, and category.",
+      NewNoticeScreen_errorUserInfoMissing: "User information could not be found. Cannot post notice.",
+      NewNoticeScreen_successTitle: "Notice Published!",
+      NewNoticeScreen_successMessage: "Your notice has been successfully published.",
+      NewNoticeScreen_broadcastWarnTitle: "Broadcast Warning",
+      NewNoticeScreen_broadcastSuccessTitle: "Broadcast Sent",
+      NewNoticeScreen_broadcastSuccessMessage: "Notification sent to {{count}} recipients.", // Note the interpolation
+      NewNoticeScreen_broadcastErrorTitle: "Broadcast Error",
+      NewNoticeScreen_errorSubmitFailed: "Failed to submit the notice.",
+      NewNoticeScreen_title: "Publish New Notice",
+      NewNoticeScreen_noticeTitleLabel: "Notice Title",
+      NewNoticeScreen_noticeMessageLabel: "Notice Message",
+      NewNoticeScreen_categoryLabel: "Category",
+      NewNoticeScreen_publishButton: "Publish Notice",
+
+      NoticesScreen_NewNoticeButton: "New Notice",
+
 
 
       ResidentsSearchScreen_title: "Resident list",
@@ -416,6 +433,23 @@ const resources = {
 
       NoticeFilterModal_modalTitle: "סנן לפי קטגוריות", NoticeFilterModal_selectAll: "בחר הכל", NoticeFilterModal_deselectAll: "בטל את כל הבחירות", NoticeFilterModal_cancelButton: "ביטול", NoticeFilterModal_applyFilter: "בצע סינון",
 
+
+      NewNoticeScreen_errorAllFieldsRequired: "אנא מלא כותרת, הודעה וקטגוריה.",
+      NewNoticeScreen_errorUserInfoMissing: "לא ניתן למצוא פרטי משתמש. לא ניתן לפרסם הודעה.",
+      NewNoticeScreen_successTitle: "הודעה פורסמה!",
+      NewNoticeScreen_successMessage: "ההודעה שלך פורסמה בהצלחה.",
+      NewNoticeScreen_broadcastWarnTitle: "אזהרת שידור",
+      NewNoticeScreen_broadcastSuccessTitle: "שידור נשלח",
+      NewNoticeScreen_broadcastSuccessMessage: "התראה נשלחה ל-{{count}} נמענים.",
+      NewNoticeScreen_broadcastErrorTitle: "שגיאת שידור",
+      NewNoticeScreen_errorSubmitFailed: "שליחת ההודעה נכשלה.",
+      NewNoticeScreen_title: "פרסם הודעה חדשה",
+      NewNoticeScreen_noticeTitleLabel: "כותרת ההודעה",
+      NewNoticeScreen_noticeMessageLabel: "תוכן ההודעה",
+      NewNoticeScreen_categoryLabel: "קטגוריה",
+      NewNoticeScreen_publishButton: "פרסם הודעה",
+ 
+      NoticesScreen_NewNoticeButton: "הודעה חדשה",
 
       ResidentsSearchScreen_title: "רשימת הדיירים",
       ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",

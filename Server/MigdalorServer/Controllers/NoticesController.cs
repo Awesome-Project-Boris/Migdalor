@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
+using Microsoft.Extensions.Logging;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -34,10 +35,12 @@ namespace MigdalorServer.Controllers
         }
 
         private readonly MigdalorDBContext _context;
+        private readonly ILogger<NoticesController> _logger; 
 
-        public NoticesController(MigdalorDBContext context)
+        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger) 
         {
             _context = context;
+            _logger = logger; 
         }
 
         // GET api/<NoticeController>/5
@@ -94,15 +97,27 @@ namespace MigdalorServer.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] NewNotice notice)
         {
+            _logger.LogInformation("POST /api/Notices called with title: {NoticeTitle}", notice?.Title); // Log entry point
             try
             {
-                return Ok(OhNotice.AddOhNotice(notice));
+                var createdNotice = OhNotice.AddOhNotice(notice); // Pass logger down if needed
+                _logger.LogInformation("Notice created successfully with ID: {NoticeId}", createdNotice.NoticeId);
+                return Ok(createdNotice);
             }
             catch (Exception e)
             {
+                // --- !! Log the full exception !! ---
+                _logger.LogError(e, "Error occurred in POST /api/Notices. Message: {ErrorMessage}", e.Message);
+                // Log inner exception if it exists
+                if (e.InnerException != null)
+                {
+                    _logger.LogError(e.InnerException, "Inner Exception details.");
+                }
+                // --- End Logging ---
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    e.InnerException?.Message ?? e.Message
+                    // Return a generic error message to client, but log details above
+                    "An internal error occurred while creating the notice."
                 );
             }
         }
