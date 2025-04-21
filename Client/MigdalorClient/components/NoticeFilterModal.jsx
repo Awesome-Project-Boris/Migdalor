@@ -10,6 +10,7 @@ import {
 import FlipButton from "./FlipButton";
 import Checkbox from "./CheckBox";
 import { useTranslation } from "react-i18next";
+import { Globals } from "@/app/constants/Globals";
 
 export default function FilterModal({
   visible,
@@ -57,7 +58,7 @@ export default function FilterModal({
       text={category}
       isChecked={tempSelectedCategories.includes(category)}
       onPress={() => handleToggleCategory(category)}
-      alignRight={false}
+      alignRight={Globals.userSelectedDirection === "rtl"}
       fillColor="#007bff"
       unFillColor="transparent"
     />
