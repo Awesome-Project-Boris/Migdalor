@@ -28,6 +28,7 @@ import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "@/app/constants/Globals";
 import { Keyboard } from "react-native";
+import Header from "@/components/Header";
 
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
 
@@ -649,6 +650,7 @@ export default function AddNewItem() {
 
   return (
     <>
+      <Header />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled" // Helps dismiss keyboard when tapping outside inputs

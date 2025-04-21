@@ -18,7 +18,6 @@ import Header from "@/components/Header";
 import { Toast } from "toastify-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-
 import ImageViewModal from "../components/ImageViewModal";
 
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -31,6 +30,7 @@ import Checkbox from "../components/CheckBox";
 import { useTranslation } from "react-i18next";
 import LabeledTextInput from "@/components/LabeledTextInput";
 import { Globals } from "@/app/constants/Globals";
+const defaultUserImage = require("../assets/images/defaultUser.png");
 
 export default function EditProfile() {
   const { t } = useTranslation();
@@ -177,25 +177,6 @@ export default function EditProfile() {
     }
   };
 
-  const handleImagePress = (imageUriToView, altText = "") => {
-    if (!imageUriToView) {
-      console.log("handleImagePress: No valid imageUri provided.");
-      return;
-    }
-
-    const paramsToPass = {
-      imageUri: imageUriToView,
-      altText: altText,
-    };
-
-    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
-
-    router.push({
-      pathname: "/ImageViewScreen",
-      params: paramsToPass,
-    });
-  };
-
   const handleSave = async () => {
     //form.arrivalYear = String(form.arrivalYear);
 
@@ -209,7 +190,7 @@ export default function EditProfile() {
     // console.log("profession" , typeof form.profession);
     // console.log("arrivalYear" , typeof form.arrivalYear);
 
-    // console.log("form" , form);
+    //console.log("form", form);
 
     const newErrors = {};
     let firstErrorField = null;
@@ -220,7 +201,9 @@ export default function EditProfile() {
       if (key === "arrivalYear") {
         return;
       }
-      const cleanedValue = value.trim().length === 0 ? "" : value.trim();
+
+      const str = value == null ? "" : String(value);
+      const cleanedValue = str.trim(); // safe now
       cleanedForm[key] = cleanedValue;
 
       const error = validateField(key, cleanedValue);
@@ -269,6 +252,14 @@ export default function EditProfile() {
       }
 
       console.log("user:", storedUserID);
+      cleanedForm.residentApartmentNumber = parseInt(
+        cleanedForm.residentApartmentNumber
+      );
+      form.residentApartmentNumber = parseInt(form.residentApartmentNumber);
+      console.log(typeof cleanedForm.residentApartmentNumber);
+      console.log(typeof form.residentApartmentNumber);
+
+      console.log(cleanedForm);
       const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
       const response = await fetch(apiurl, {
         method: "PUT",
@@ -278,18 +269,21 @@ export default function EditProfile() {
         //body: JSON.stringify({ phoneNumber, password }),
         body: JSON.stringify({
           ...cleanedForm,
-          profilePic,
-          additionalPic1,
-          additionalPic2,
+          //profilePic,
+          //additionalPic1,
+          //additionalPic2,
         }),
       });
 
-      console.log("body:", {
+      console.log("body:");
+      console.log({
         ...cleanedForm,
         profilePic,
         additionalPic1,
         additionalPic2,
       });
+
+      console.log("response:", response);
 
       if (!response.ok) {
         // You can throw an error or handle it with an error message.
@@ -373,6 +367,44 @@ export default function EditProfile() {
     }
   }, [initialData, initialPics]);
 
+  // Construct the full image URL if mainImagePath exists, otherwise use placeholder
+  const imageUrl = profilePic.PicPath?.trim()
+    ? { uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` }
+    : defaultUserImage;
+
+  const additionalImage1 = additionalPic1.PicPath?.trim()
+    ? { uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` }
+    : defaultUserImage;
+
+  const additionalImage2 = additionalPic2.PicPath?.trim()
+    ? { uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` }
+    : defaultUserImage;
+
+  const handleImagePress = (imageUriToView, altText = "") => {
+    if (!imageUriToView) {
+      console.log("handleImagePress: No valid imageUri provided.");
+      return;
+    }
+    console.log("handleImagePress: imageUriToView:", imageUriToView);
+
+    if (imageUriToView === Globals.API_BASE_URL) {
+      console.log("handleImagePress: No valid imageUri provided.");
+      return;
+    }
+
+    const paramsToPass = {
+      imageUri: imageUriToView,
+      altText: altText,
+    };
+
+    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
+
+    router.push({
+      pathname: "/ImageViewScreen",
+      params: paramsToPass,
+    });
+  };
+
   return (
     <View style={styles.wrapper}>
       <ScrollView
@@ -400,11 +432,7 @@ export default function EditProfile() {
           >
             <Image
               alt={profilePic.PicAlt}
-              source={{
-                uri: profilePic.PicPath?.trim()
-                  ? Globals.API_BASE_URL + profilePic.PicPath
-                  : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-              }}
+              source={imageUrl}
               style={styles.profileImage}
             />
           </TouchableOpacity>
@@ -497,6 +525,8 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_profession")}
             value={form.profession}
+            multiline={true}
+            inputStyle={{ height: 100, textAlignVertical: "top" }}
             onChangeText={(text) => handleFormChange("profession", text)}
             ref={inputRefs.profession}
           />
@@ -512,7 +542,9 @@ export default function EditProfile() {
             value={form.interests}
             onChangeText={(text) => handleFormChange("interests", text)}
             ref={inputRefs.interests}
-            multiline
+            //multiline
+            multiline={true}
+            inputStyle={{ height: 100, textAlignVertical: "top" }}
             numberOfLines={4}
           />
           {formErrors.interests && (
@@ -527,7 +559,8 @@ export default function EditProfile() {
             value={form.aboutMe}
             onChangeText={(text) => handleFormChange("aboutMe", text)}
             ref={inputRefs.aboutMe}
-            multiline
+            multiline={true}
+            inputStyle={{ height: 100, textAlignVertical: "top" }}
             numberOfLines={6}
             textAlignVertical="top"
           />
@@ -559,11 +592,7 @@ export default function EditProfile() {
             >
               <Image
                 alt={additionalPic1.PicAlt}
-                source={{
-                  uri: additionalPic1.PicPath?.trim()
-                    ? Globals.API_BASE_URL + additionalPic1.PicPath
-                    : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-                }}
+                source={additionalImage1}
                 style={styles.profileImage}
               />
             </TouchableOpacity>
@@ -579,11 +608,7 @@ export default function EditProfile() {
             >
               <Image
                 alt={additionalPic2.PicAlt}
-                source={{
-                  uri: additionalPic2.PicPath?.trim()
-                    ? Globals.API_BASE_URL + additionalPic2.PicPath
-                    : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-                }}
+                source={additionalImage2}
                 style={styles.profileImage}
               />
             </TouchableOpacity>

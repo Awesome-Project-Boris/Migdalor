@@ -213,7 +213,7 @@ export default function ResidentList() {
           style={styles.searchTypeButton}
         >
           <Text style={styles.searchTypeText}>
-            {t("ResidentSearchScreen_searchByLabel")}{" "}
+            {t("ResidentSearchScreen_searchByLabel")}
             <Text style={{ fontWeight: "bold" }}>
               {searchType === "name"
                 ? t("ResidentSearchScreen_searchByName")
