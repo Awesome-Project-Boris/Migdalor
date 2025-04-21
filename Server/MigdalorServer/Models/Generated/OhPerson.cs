@@ -61,6 +61,11 @@ public partial class OhPerson
     [Unicode(false)]
     public string? PersonRole { get; set; }
 
+    [Column("pushToken")]
+    [StringLength(100)]
+    [Unicode(false)]
+    public string? PushToken { get; set; }
+
     [InverseProperty("Host")]
     public virtual ICollection<OhActivity> OhActivities { get; set; } = new List<OhActivity>();
 
