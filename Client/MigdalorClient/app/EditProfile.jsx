@@ -39,7 +39,6 @@ export default function EditProfile() {
 
   const router = useRouter();
 
-  // !! Switch these with the values from the database
   const [form, setForm] = useState({
     name: "",
     partner: "",
@@ -49,44 +48,30 @@ export default function EditProfile() {
     profession: "",
     interests: "",
     aboutMe: "",
-    // profilePicID: "",
-    // additionalPic1ID: "",
-    // additionalPic2ID: "",
+
     residentApartmentNumber: "",
   });
 
   const [profilePic, setProfilePic] = useState({
-      PicID: "",
-      PicName: "",
-      PicPath: "",
-      PicAlt: "",
-      //UploaderID: "",
-      //PicRole: "",
-      //ListingID: "",
-      //DateTime: "",
-    });
-  
-    const [additionalPic1, setAdditionalPic1] = useState({
-      PicID: "",
-      PicName: "",
-      PicPath: "",
-      PicAlt: "",
-      //UploaderID: "",
-      //PicRole: "",
-      //ListingID: "",
-      //DateTime: "",
-    });
-  
-    const [additionalPic2, setAdditionalPic2] = useState({
-      PicID: "",
-      PicName: "",
-      PicPath: "",
-      PicAlt: "",
-      //UploaderID: "",
-      //PicRole: "",
-      //ListingID: "",
-      //DateTime: "",
-    });
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+  });
+
+  const [additionalPic1, setAdditionalPic1] = useState({
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+  });
+
+  const [additionalPic2, setAdditionalPic2] = useState({
+    PicID: "",
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+  });
 
   const maxLengths = {
     partner: 100,
@@ -197,7 +182,6 @@ export default function EditProfile() {
     if (firstErrorField) {
       const ref = inputRefs[firstErrorField];
       if (ref?.current) {
-        // Blur first to make sure that even if the input is focused, it will auto scroll to it
         ref.current.blur();
         setTimeout(() => {
           ref.current?.focus();
@@ -208,17 +192,14 @@ export default function EditProfile() {
 
     setForm(cleanedForm);
     console.log("Updated Data:", cleanedForm);
-    //alert(t("EditProfileScreen_ProfileUpdated"));
-    Toast.show({
-      type: "success", // Type for styling (if themes are set up)
-      text1: t("EditProfileScreen_ProfileUpdated"),
-      //text1: 'Submitted!', // Main text
-      //text2: t("EditProfileScreen_ProfileUpdated"), // Sub text
-      duration: 3500, // Custom duration
-      position: "top", // Example: 'top' or 'bottom'
-    });
 
-    // !! Add API call to save the data here
+    Toast.show({
+      type: "success",
+      text1: t("EditProfileScreen_ProfileUpdated"),
+
+      duration: 3500,
+      position: "top",
+    });
 
     router.replace({
       pathname: "./Profile",
@@ -235,14 +216,12 @@ export default function EditProfile() {
       const parsedInitialData = JSON.parse(initialData);
       setForm(parsedInitialData);
 
-      //alert(t("EditProfileScreen_ProfileUpdateCancelled"));
       Toast.show({
-        type: "info", // Type for styling (if themes are set up)
+        type: "info",
         text1: t("EditProfileScreen_ProfileUpdateCancelled"),
-        //text1: 'Submitted!', // Main text
-        //text2: t("EditProfileScreen_ProfileUpdated"), // Sub text
-        duration: 3500, // Custom duration
-        position: "top", // Example: 'top' or 'bottom'
+
+        duration: 3500,
+        position: "top",
       });
 
       router.replace({
@@ -253,13 +232,12 @@ export default function EditProfile() {
       });
     } catch (err) {
       console.warn("Failed to parse initialData during cancel:", err);
-      // You can fallback to just navigating without data
+
       router.replace("./Profile");
     }
   };
 
   useEffect(() => {
-    // Update the form with initialData
     if (initialData) {
       try {
         const parsedData = JSON.parse(initialData);
@@ -278,7 +256,6 @@ export default function EditProfile() {
       >
         <Header />
 
-        {/* !! Add changing profile picture */}
         <View style={styles.profileImageContainer}>
           <Image
             source={{
@@ -289,8 +266,9 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.profileNameContainer}>
-          {/* !! Change this to full name  */}
-          <Text style={styles.profileName}>{form.name || t("ProfileScreen_emptyDataField")}</Text>
+          <Text style={styles.profileName}>
+            {form.name || t("ProfileScreen_emptyDataField")}
+          </Text>
         </View>
 
         <View style={styles.editableContainer}>
@@ -314,12 +292,16 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
             value={form.residentApartmentNumber}
-            onChangeText={(text) => handleFormChange("residentApartmentNumber", text)}
+            onChangeText={(text) =>
+              handleFormChange("residentApartmentNumber", text)
+            }
             keyboardType="numeric"
             ref={inputRefs.residentApartmentNumber}
           />
           {formErrors.residentApartmentNumber && (
-            <Text style={styles.errorText}>{formErrors.residentApartmentNumber}</Text>
+            <Text style={styles.errorText}>
+              {formErrors.residentApartmentNumber}
+            </Text>
           )}
 
           <FloatingLabelInput
@@ -349,7 +331,6 @@ export default function EditProfile() {
           {formErrors.email && (
             <Text style={styles.errorText}>{formErrors.email}</Text>
           )}
-
 
           <FloatingLabelInput
             maxLength={maxLengths.origin}
@@ -419,72 +400,6 @@ export default function EditProfile() {
           >
             {t("ProfileScreen_extraImages")}
           </Text>
-
-          {/* !! Add extra images here */}
-
-          {/* <XStack space="$3" justifyContent="center" alignItems="center" marginVertical="$4">
-              <Card
-                elevate width={150} height={150} borderRadius="$4" overflow="hidden"
-                onPress={() => {
-                  if (mainImage) {
-                    console.log("clicking main.. setting type 'main'");
-                    setImageToViewUri(mainImage);
-                    // --- Set the identifier string ---
-                    setImageTypeToClear('main');
-                    setShowImageViewModal(true);
-                  } else {
-                    pickImage(setMainImage);
-                  }
-                }}
-              >
-
-                {mainImage ? ( 
-                    <>
-                    <Card.Background>
-                      <Image source={{ uri: mainImage }} position="absolute" top={0} left={0} right={0} bottom={0} contentFit="cover"/>
-                    </Card.Background>
-                    <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)">
-                      <Paragraph theme="alt2">Main image chosen</Paragraph>
-                    </YStack>
-                    </>
-                  ) : (
-                  <YStack f={1} jc="center" ai="center" p="$2">
-                    <H2 size="$5">No Main Image</H2>
-                    <Paragraph theme="alt2">Tap to choose</Paragraph>
-                  </YStack>
-                )}
-              </Card>
-
-              <Card
-                elevate width={150} height={150} borderRadius="$4" overflow="hidden"
-                onPress={() => {
-                  if (extraImage) {
-                    console.log("clicking extra.. setting type 'extra'");
-                    setImageToViewUri(extraImage);
-                    setImageTypeToClear('extra');
-                    setShowImageViewModal(true);
-                  } else {
-                    pickImage(setExtraImage);
-                  }
-                }}
-              >
-                {extraImage ? ( 
-                    <>
-                    <Card.Background>
-                      <Image source={{ uri: extraImage }} position="absolute" top={0} left={0} right={0} bottom={0} contentFit="cover"/>
-                    </Card.Background>
-                    <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)">
-                      <Paragraph theme="alt2" color="$color">Extra image chosen</Paragraph>
-                    </YStack>
-                    </>
-                  ) : ( 
-                  <YStack f={1} jc="center" ai="center" p="$2">
-                    <H2 size="$5">No Extra Image</H2>
-                    <Paragraph theme="alt2">Tap to choose</Paragraph>
-                  </YStack>
-                )}
-              </Card>
-            </XStack> */}
         </View>
         <View style={styles.buttonRow}>
           <FlipButton
@@ -569,8 +484,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    // maxWidth: "90%", // 💡 prevent overflow
-    // flexWrap: "wrap", // allow long names to wrap
+
     width: "100%",
     textAlign: "center",
   },
@@ -578,11 +492,7 @@ const styles = StyleSheet.create({
     width: "85%",
     marginVertical: 5,
   },
-  // label: {
-  //   fontSize: 14,
-  //   marginBottom: 5,
-  //   textAlign: "right",
-  // },
+
   input: {
     backgroundColor: "#fff",
     borderRadius: 8,
@@ -635,8 +545,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 20,
     width: "80%",
-    // marginLeft: 50,
-    // marginRight: 50,
   },
   box: {
     width: "85%",
@@ -677,21 +585,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
     gap: 30,
   },
-  // extraImage: {
-  //   width: 300,
-  //   height: 300,
-  //   borderRadius: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#ddd",
-  //   marginHorizontal: 5,
-  //   backgroundColor: "#fff",
-  //   shadowColor: "#000",
-  //   shadowOffset: { width: 0, height: 1 },
-  //   shadowOpacity: 0.1,
-  //   shadowRadius: 2,
-  //   elevation: 3, // for Android shadow
-  //   marginBottom: 30,
-  // },
 
   buttonLabel: { fontSize: 20, fontWeight: "bold" },
   errorText: {

@@ -15,14 +15,14 @@ import FlipButton from "../components/FlipButton";
 import Greeting from "../components/MainMenuHelloNameplate";
 import Header from "../components/Header";
 import { EditToggleButton } from "../components/MainMenuFinishEditButton";
-// import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
 import { useTranslation } from "react-i18next";
 
 const ASYNC_STORAGE_KEY = "mainMenuOrder";
 
-const showDevButton = true; // Set to true to show dev buttons for testing
+const showDevButton = false;
 
 const viewAllData = async () => {
   try {
@@ -57,8 +57,8 @@ export default function Index() {
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const { editing, setEditing } = useMainMenuEdit();
 
-  const latestButtonDataRef = useRef(initialDataStructure); // ref for latest buttons order
-  const prevEditingRef = useRef(editing); // prev ref for DEBUG
+  const latestButtonDataRef = useRef(initialDataStructure);
+  const prevEditingRef = useRef(editing);
 
   const initialDataStructure = [
     {
@@ -97,12 +97,11 @@ export default function Index() {
       name: t("MainMenuScreen_ResidentListButton"),
       destination: "ResidentList",
     },
-    // { key: "menu9", name: "Menu 9", destination: "" },
   ];
 
   useEffect(() => {
     const loadOrder = async () => {
-      console.log("Loading menu order..."); // Keep simple log
+      console.log("Loading menu order...");
       setIsLoadingOrder(true);
       let finalData = initialDataStructure;
       try {
@@ -124,15 +123,14 @@ export default function Index() {
         console.error("Failed to load menu order:", error);
       } finally {
         setButtonData(finalData);
-        latestButtonDataRef.current = finalData; // Ensure ref is initialized correctly
+        latestButtonDataRef.current = finalData;
         setIsLoadingOrder(false);
-        console.log("Finished loading menu order."); // Keep simple log
+        console.log("Finished loading menu order.");
       }
     };
     loadOrder();
-  }, []); // Load only on mount
+  }, []);
 
-  // --- Turn off editing on unmount ---
   useEffect(() => {
     return () => {
       setEditing(false);
@@ -140,17 +138,15 @@ export default function Index() {
   }, [setEditing]);
 
   const handleDragEnd = useCallback(({ data: reorderedData }) => {
-    // console.log("Order changed via drag."); // Optional: remove if too noisy
     setButtonData(reorderedData);
-    latestButtonDataRef.current = reorderedData; // Keep ref update immediate
+    latestButtonDataRef.current = reorderedData;
   }, []);
 
-  // --- Function to Save Order ---
   const saveOrder = async () => {
-    if (isLoadingOrder) return; // Prevent saving while loading
-    const currentOrderToSave = latestButtonDataRef.current; // Read from ref
+    if (isLoadingOrder) return;
+    const currentOrderToSave = latestButtonDataRef.current;
     const orderKeysToSave = currentOrderToSave.map((item) => item.key);
-    console.log("Saving menu order keys:", orderKeysToSave); // Keep simple log
+    console.log("Saving menu order keys:", orderKeysToSave);
     try {
       await AsyncStorage.setItem(
         ASYNC_STORAGE_KEY,

@@ -180,6 +180,7 @@ const resources = {
       NoticeBoardScreen_filterButton: "Filter", NoticeBoardScreen_all: "All",
 
       NoticeBoardScreen_filterLabel: "Filter:",
+      NoticeBoardScreen_filterCategories: "categoryEngName",
       NoticeBoardScreen_sortOldest: "Oldest",
       NoticeBoardScreen_sortNewest: "Newest",
       NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
@@ -394,12 +395,9 @@ const resources = {
 
 
 
-      MarketplaceScreen_NoItems: "לא נמצאו פריטים",
+      MarketplaceScreen_NoItems: "לא נמצאו פריטים",   
 
-
-
-    
-    
+      
       NoticeDetailsScreen_loadingDetails: "טוען פרטי הודעה...",
       NoticeDetailsScreen_categoryLabel: "קטגוריה:",
       NoticeDetailsScreen_dateLabel: "תאריך:",
@@ -407,6 +405,7 @@ const resources = {
       NoticeBoardScreen_boardTitle: "לוח המודעות",
       NoticeBoardScreen_filterButton: "סינון", NoticeBoardScreen_all: "הכל",
       NoticeBoardScreen_filterLabel: "סינון:",
+      NoticeBoardScreen_filterCategories: "categoryHebName",
       NoticeBoardScreen_sortOldest: "הישן ביותר",
       NoticeBoardScreen_sortNewest: "החדש ביותר",
       NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",

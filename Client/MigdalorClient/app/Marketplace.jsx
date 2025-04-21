@@ -1,11 +1,18 @@
-import React, { useContext, useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
   StyleSheet,
-  ActivityIndicator, Keyboard 
-} from "react-native"; 
-import { MarketplaceContext } from "../context/MarketplaceProvider"; 
+  ActivityIndicator,
+  Keyboard,
+} from "react-native";
+import { MarketplaceContext } from "../context/MarketplaceProvider";
 import MarketplaceItemCard from "../components/MarketplaceItemCard";
 import FlipButton from "../components/FlipButton";
 import Header from "@/components/Header";
@@ -18,14 +25,13 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useRouter, useFocusEffect } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Globals } from "@/app/constants/Globals"; 
+import { Globals } from "@/app/constants/Globals";
 
 const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
 const ITEMS_PER_PAGE = 10;
 
 export default function MarketplaceScreen() {
   const { t } = useTranslation();
-
 
   const { searchQuery, setSearchQuery } = useContext(MarketplaceContext) || {
     searchQuery: "",
@@ -34,69 +40,69 @@ export default function MarketplaceScreen() {
 
   console.log("MarketplaceScreen Render - Context searchQuery:", searchQuery);
 
-
-  const [listings, setListings] = useState([]); // Holds raw data from API
+  const [listings, setListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1); // Local pagination state
+  const [currentPage, setCurrentPage] = useState(1);
   const [marketplaceQuery, setMarketplaceQuery] = useState(searchQuery);
-
 
   const router = useRouter();
 
   const fetchListings = useCallback(async () => {
     setError(null);
-    console.log("Fetching active listings summary..."); 
+    console.log("Fetching active listings summary...");
     try {
-      const response = await fetch(`${Globals.API_BASE_URL}/api/Listings/ActiveSummaries`);
-      if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/Listings/ActiveSummaries`
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
-      console.log("Refreshed listings:", data ? data.length : 0); 
-      setListings(data || []); 
+      console.log("Refreshed listings:", data ? data.length : 0);
+      setListings(data || []);
     } catch (err) {
       console.error("Failed to fetch listings:", err);
       setError(err.message || "Failed to load listings.");
       setListings([]);
     } finally {
-      setIsLoading(false); 
+      setIsLoading(false);
     }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      console.log("MarketplaceScreen focused, fetching listings and resetting page...");
-      setIsLoading(true); 
-      setCurrentPage(1); 
-      fetchListings(); 
-    }, [fetchListings]) 
+      console.log(
+        "MarketplaceScreen focused, fetching listings and resetting page..."
+      );
+      setIsLoading(true);
+      setCurrentPage(1);
+      fetchListings();
+    }, [fetchListings])
   );
 
   const handleMarketplaceSearch = () => {
     Keyboard.dismiss();
-    setCurrentPage(1); 
+    setCurrentPage(1);
     setSearchQuery(marketplaceQuery);
   };
 
-// Modified clear search handler
-const handleClearSearch = () => {
-  setCurrentPage(1); // Reset page
-  setSearchQuery("");
-  setMarketplaceQuery("");
-};
+  const handleClearSearch = () => {
+    setCurrentPage(1);
+    setSearchQuery("");
+    setMarketplaceQuery("");
+  };
 
-  // --- Filtering Logic ---
   const filteredListings = useMemo(() => {
     if (!searchQuery) {
       return listings;
     }
     const lowerCaseQuery = searchQuery.toLowerCase();
-    return listings.filter(
-      (listing) =>
-        listing.title?.toLowerCase().includes(lowerCaseQuery)
+    return listings.filter((listing) =>
+      listing.title?.toLowerCase().includes(lowerCaseQuery)
     );
   }, [listings, searchQuery]);
 
-  // --- Pagination Logic ---
   const totalItems = filteredListings.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
@@ -106,41 +112,47 @@ const handleClearSearch = () => {
     return filteredListings.slice(startIndex, endIndex);
   }, [filteredListings, currentPage]);
 
-  const handlePageChange = useCallback((newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
+  const handlePageChange = useCallback(
+    (newPage) => {
+      if (newPage >= 1 && newPage <= totalPages) {
         setCurrentPage(newPage);
-        // Optional: scroll to top
-    }
-}, [totalPages]);
+      }
+    },
+    [totalPages]
+  );
 
-const renderMarketplaceItem = useCallback(({ item }) => (
-  <MarketplaceItemCard
-    data={item}
-    onPress={() => {
-      router.push({
-        pathname: "./MarketplaceItem",
-        params: { listingId: item.listingId },
-      });
-    }}
-  />
-), [router]);
+  const renderMarketplaceItem = useCallback(
+    ({ item }) => (
+      <MarketplaceItemCard
+        data={item}
+        onPress={() => {
+          router.push({
+            pathname: "./MarketplaceItem",
+            params: { listingId: item.listingId },
+          });
+        }}
+      />
+    ),
+    [router]
+  );
 
-const keyExtractor = useCallback((item) => item.listingId.toString(), []);
-
+  const keyExtractor = useCallback((item) => item.listingId.toString(), []);
 
   const handleListYourItem = () => {
     router.push("/MarketplaceNewItem");
   };
 
-  // --- Render Logic ---
   const CustomEmptyComponent = useMemo(() => {
-    if(isLoading) return <ActivityIndicator size="large" color="#0000ff" />; // Show loader if loading
-    if(error) return <Text style={styles.errorText}>Error: {error}</Text>; // Show error
-    if (searchQuery && filteredListings.length === 0) return <NoSearchMatchCard />; // No search results
-    if (!searchQuery && listings.length === 0) return <Text style={styles.infoText}>{t("MarketplaceScreen_NoItems")}</Text>; // No items at all
-    return null; // Default case
-}, [isLoading, error, searchQuery, listings, filteredListings, t]);
-
+    if (isLoading) return <ActivityIndicator size="large" color="#0000ff" />;
+    if (error) return <Text style={styles.errorText}>Error: {error}</Text>;
+    if (searchQuery && filteredListings.length === 0)
+      return <NoSearchMatchCard />;
+    if (!searchQuery && listings.length === 0)
+      return (
+        <Text style={styles.infoText}>{t("MarketplaceScreen_NoItems")}</Text>
+      );
+    return null;
+  }, [isLoading, error, searchQuery, listings, filteredListings, t]);
 
   return (
     <View style={styles.container}>
@@ -154,65 +166,68 @@ const keyExtractor = useCallback((item) => item.listingId.toString(), []);
           disabled={isLoading}
         />
         <SearchAccordion
-          headerOpenTextKey="MarketplaceScreen_accordionClose" // Need new translation keys
+          headerOpenTextKey="MarketplaceScreen_accordionClose"
           headerClosedTextKey="MarketplaceScreen_accordionOpen"
-          containerStyle={styles.accordionContainer} // Apply specific styles
-       >
+          containerStyle={styles.accordionContainer}
+        >
           {/* Content for Marketplace Search */}
-           <FloatingLabelInput
-              label={t("MarketplaceSearchItem_Header")} // Placeholder/Label text
-              value={marketplaceQuery}
-              onChangeText={setMarketplaceQuery}
-              returnKeyType="search"
-              onSubmitEditing={handleMarketplaceSearch}
-              style={styles.searchInputContainer}
-              inputStyle={styles.searchInput}
-              // alignRight={Globals.userSelectedDirection === "rtl"} // Add if needed
-            />
-            <FlipButton
-              onPress={handleMarketplaceSearch}
-              style={styles.searchSubmitButton}
-              bgColor="#007bff"
-              textColor="#fff"
-              disabled={isLoading}
-            >
-              <View style={styles.buttonContent}>
-                <Ionicons name="search" size={25} color="white" />
-                <Text style={styles.searchButtonText}>{t("MarketplaceScreen_SearchButton")}</Text>
-              </View>
+          <FloatingLabelInput
+            label={t("MarketplaceSearchItem_Header")}
+            value={marketplaceQuery}
+            onChangeText={setMarketplaceQuery}
+            returnKeyType="search"
+            onSubmitEditing={handleMarketplaceSearch}
+            style={styles.searchInputContainer}
+            inputStyle={styles.searchInput}
+          />
+          <FlipButton
+            onPress={handleMarketplaceSearch}
+            style={styles.searchSubmitButton}
+            bgColor="#007bff"
+            textColor="#fff"
+            disabled={isLoading}
+          >
+            <View style={styles.buttonContent}>
+              <Ionicons name="search" size={25} color="white" />
+              <Text style={styles.searchButtonText}>
+                {t("MarketplaceScreen_SearchButton")}
+              </Text>
+            </View>
           </FlipButton>
-           {/* End Content for Marketplace Search */}
-       </SearchAccordion>
+          {/* End Content for Marketplace Search */}
+        </SearchAccordion>
 
-       {searchQuery !== "" && !isLoading && (
-         <View style={styles.inSearch}>
-             {/* Ensure styles.searchFocus exists and is appropriate */}
-             <Text style={styles.searchFocus} numberOfLines={1} ellipsizeMode='tail'>
-                {t("MarketplaceScreen_ShowingResultsFor")} "{searchQuery}"
-             </Text>
-             {/* Ensure styles.clearSearchButton exists and is appropriate */}
-             <FlipButton
-                text={t("MarketplaceScreen_ClearSearchButton")}
-                onPress={handleClearSearch} // Correct handler attached
-                style={styles.clearSearchButton} // Use specific style
-                // Optional: Add specific styling via bgColor, textColor if needed
-                bgColor="#e0e0e0"
-                textColor="#333"
-                flipborderwidth={1} // Example: subtle border
-             />
-         </View>
-       )}
-
+        {searchQuery !== "" && !isLoading && (
+          <View style={styles.inSearch}>
+            {/* Ensure styles.searchFocus exists and is appropriate */}
+            <Text
+              style={styles.searchFocus}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {t("MarketplaceScreen_ShowingResultsFor")} "{searchQuery}"
+            </Text>
+            {/* Ensure styles.clearSearchButton exists and is appropriate */}
+            <FlipButton
+              text={t("MarketplaceScreen_ClearSearchButton")}
+              onPress={handleClearSearch}
+              style={styles.clearSearchButton}
+              bgColor="#e0e0e0"
+              textColor="#333"
+              flipborderwidth={1}
+            />
+          </View>
+        )}
       </View>
       <PaginatedListDisplay
-        items={itemsForCurrentPage} // Pass only items for the current page
+        items={itemsForCurrentPage}
         renderItem={renderMarketplaceItem}
         itemKeyExtractor={keyExtractor}
-        isLoading={isLoading && itemsForCurrentPage.length === 0} // Pass loading only if list is empty? Or pass isLoading directly
+        isLoading={isLoading && itemsForCurrentPage.length === 0}
         ListEmptyComponent={CustomEmptyComponent}
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={handlePageChange} // Pass the handler function
+        onPageChange={handlePageChange}
         listContainerStyle={styles.listContainerStyle}
       />
     </View>
@@ -249,7 +264,7 @@ const styles = StyleSheet.create({
   loadingText: {
     textAlign: "center",
     fontSize: 20,
-    marginVertical: 30, // More spacing for loader
+    marginVertical: 30,
     color: "#555",
   },
   errorText: {
@@ -282,10 +297,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
   },
   inSearch: {
-    width: SCREEN_WIDTH * 0.90,
+    width: SCREEN_WIDTH * 0.9,
     minHeight: 130,
     padding: 15,
-    marginBottom: 15, // Added margin below
+    marginBottom: 15,
     alignItems: "center",
     backgroundColor: "#fff",
     borderRadius: 8,
@@ -295,34 +310,33 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     zIndex: 5,
-    flexDirection: "column", // Arrange items horizontally
-    justifyContent: "space-between", // Space out text and button
+    flexDirection: "column",
+    justifyContent: "space-between",
   },
   searchFocus: {
-    fontSize: 18, // Slightly smaller font
-    textAlign: "right", // Align text to the right (for RTL)
-    flex: 1, 
-    marginRight: 10, 
+    fontSize: 18,
+    textAlign: "right",
+    flex: 1,
+    marginRight: 10,
   },
   button: {
-    width: SCREEN_WIDTH * 0.8
+    width: SCREEN_WIDTH * 0.8,
   },
   mainTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 60, 
-    color: '#111',
+    fontWeight: "bold",
+    textAlign: "center",
+    marginTop: 60,
+    color: "#111",
   },
-  buttonContent:
-  {
-    flexDirection: "row"
+  buttonContent: {
+    flexDirection: "row",
   },
   inSearch: {
     width: SCREEN_WIDTH * 0.9,
     paddingVertical: 10,
     paddingHorizontal: 15,
-    marginBottom: 15, // Space below this section
+    marginBottom: 15,
     alignItems: "center",
     backgroundColor: "#fff",
     borderRadius: 8,
@@ -331,19 +345,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    flexDirection: "row", // Text and button side-by-side
-    justifyContent: "space-between", // Push them apart
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   searchFocus: {
-    fontSize: 16, // Adjusted font size
-    color: '#555',
-    flex: 1, // Allow text to take available space but shrink if needed
-    marginRight: 10, // Space between text and button
+    fontSize: 16,
+    color: "#555",
+    flex: 1,
+    marginRight: 10,
   },
-  clearSearchButton: { // Specific style for the clear button
-      paddingVertical: 6, // Reduced padding for a smaller button
-      paddingHorizontal: 12,
-      borderRadius: 6,
-      // Background/text colors set via props on FlipButton now
-  }
+  clearSearchButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
 });
