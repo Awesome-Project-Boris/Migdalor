@@ -22,7 +22,7 @@ import { useTranslation } from "react-i18next";
 
 const ASYNC_STORAGE_KEY = "mainMenuOrder";
 
-const showDevButton = false; // Set to true to show dev buttons for testing
+const showDevButton = true; // Set to true to show dev buttons for testing
 
 const viewAllData = async () => {
   try {

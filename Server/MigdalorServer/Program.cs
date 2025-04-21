@@ -9,6 +9,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using MigdalorServer.BL;
 using MigdalorServer.Database;
+using YourApp.PushNotifications.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MigdalorDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("myProjDB"))
 );
+
+// Add Expo Push Notification Service
+builder.Services
+.AddHttpClient<ExpoPushService>() // HttpClient injected into ExpoPushService
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler());
+
+
 
 // ---- JWT Setup ----
 //var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");

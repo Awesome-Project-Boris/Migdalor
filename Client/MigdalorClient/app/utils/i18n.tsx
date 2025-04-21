@@ -220,6 +220,8 @@ const resources = {
       Common_DeleteButton: "Delete", 
       Common_CancelButton: "Cancel", 
       Common_Error: "Error",
+      PaginatedList_PreviousButton: "Previous",
+      PaginatedList_NextButton: "Next",
 
       LoginScreen_rememberMe: "Remember Me", 
 
@@ -445,6 +447,8 @@ const resources = {
       Common_Error: "שגיאה", 
       Common_noResultsFound: "לא נמצאו תוצאות",
 
+      PaginatedList_PreviousButton: "הקודם",
+      PaginatedList_NextButton: "הבא",
 
       LoginScreen_rememberMe: "זכור אותי",
 

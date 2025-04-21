@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useContext } from "react"; // Added useContext
+import React, { useState, useEffect, useContext, useCallback } from "react"; // Added useContext
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
   Button,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import { Card, Paragraph, YStack, XStack, H2, Text } from 'tamagui';
 import FlipButton from "@/components/FlipButton";
+import { Ionicons } from "@expo/vector-icons";
 // Assume you have or will create a NoticesContext similar to MarketplaceContext
 // import { NoticesContext } from '../context/NoticesProvider'; // Example context import
 
@@ -16,18 +17,36 @@ import Header from "@/components/Header";
 import { useTranslation } from "react-i18next";
 import { Globals } from "./constants/Globals"; // Adjust the import path as necessary
 
-// Helper function to format date string (reuse or define here)
-const formatDate = (dateString) => {
-  if (!dateString) return "N/A";
+
+const formatDate = (dateTimeString) => {
+  if (!dateTimeString) return "N/A"; // Handle null or empty string
   try {
-    const [year, month, day] = dateString.split("-");
-    return `${day}/${month}/${year}`;
+    const dateObj = new Date(dateTimeString);
+    // Check if the date object is valid
+    if (isNaN(dateObj.getTime())) {
+      console.warn("Invalid date format received:", dateTimeString);
+      return "Invalid Date";
+    }
+
+    // --- Get Date Parts ---
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const year = dateObj.getFullYear();
+
+    // --- Get Time Parts ---
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+
+    // --- Combine Date and Time ---
+    return `${day}/${month}/${year} ${hours}:${minutes}`; // Format: DD/MM/YYYY HH:MM
+
   } catch (e) {
-    return dateString;
+    console.error("Error formatting date:", e);
+    return dateTimeString; // Return original string on error
   }
 };
 
-export default function NoticeFocusScreen() {
+export default function NoticeFocus() {
   const { t } = useTranslation();
   const [noticeData, setNoticeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,142 +56,134 @@ export default function NoticeFocusScreen() {
   const { noticeId } = useLocalSearchParams(); // Use string directly if not typed
   const router = useRouter();
 
-  // --- Data Fetching using Context (Similar to MarketplaceItem.jsx) ---
-  // IMPORTANT: Replace with your actual context logic
-  // const { getNoticeById } = useContext(NoticesContext); // Assuming this context exists
-
-  useEffect(() => {
-    const loadNoticeDetails = () => {
-      if (!noticeId) {
-        setError("Notice ID not provided");
-        setIsLoading(false);
-        return;
-      }
-      // if (!getNoticeById) { // Check if context function is available
-      //    setError("Notice context not available");
-      //    setIsLoading(false);
-      //    console.error("Error: getNoticeById function is missing from NoticesContext.");
-      //    return;
-      // }
-
-      setIsLoading(true);
-      setError(null);
-      try {
-        // --- Mock call ---
-        console.log(
-          `Attempting to get notice by ID from context (mock): ${noticeId}`
-        );
-        // const foundNotice = getNoticeById(noticeId); // Replace with actual context call
-
-        // --- Mock logic START ---
-        const allMockNotices = Array.from({ length: 35 }, (_, i) => ({
-          /* ... same mock data as before ... */ noticeId: i + 1,
-          senderId: `guid_${i}`,
-          creationDate: `2025-04-${String(14 + (i % 5)).padStart(2, "0")}`,
-          noticeTitle: `Important Notice #${i + 1}`,
-          noticeMessage: `This is the FULL notice message...`,
-          noticeCategory:
-            i % 3 === 0 ? "Urgent" : i % 3 === 1 ? "General" : "Events",
-          noticeSubCategory: i % 5 === 0 ? "Sub Cat A" : null,
-        }));
-        const foundNotice = allMockNotices.find(
-          (n) => n.noticeId.toString() === noticeId.toString()
-        );
-        // --- Mock logic END ---
-
-        if (foundNotice) {
-          setNoticeData(foundNotice);
+  const fetchNoticeDetails = useCallback(async () => {
+    if (!noticeId) {
+      setError(t("NoticeDetailsScreen_errorNoId"));
+      setIsLoading(false);
+      return;
+    }
+    setError(null);
+    try {
+      const apiUrl = `${Globals.API_BASE_URL}/api/Notices/${noticeId}`;
+      console.log(`Fetching notice details from: ${apiUrl}`);
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        const status = response.status;
+        let errorPayload = `HTTP Error ${status}`;
+        try {
+          const errorText = await response.text();
+          errorPayload += `: ${errorText}`;
+        } catch (e) {}
+        console.error(`API Error: ${errorPayload}`);
+        if (status === 404) {
+          throw new Error(t("NoticeDetailsScreen_errorNotFound", { id: noticeId }));
         } else {
-          setError("Notice not found");
-          setNoticeData(null);
+          throw new Error(t("NoticeDetailsScreen_errorGenericFetch", { status: status }));
         }
-      } catch (err) {
-        console.error("Error loading notice from context:", err);
-        setError("An error occurred while loading the notice.");
-        setNoticeData(null);
-      } finally {
-        setIsLoading(false);
       }
-    };
+      const data = await response.json();
+      console.log("Fetched Data:", data);
+      setNoticeData(data);
+    } catch (err) {
+      console.error("Error fetching notice details:", err);
+      setError(err.message || t("NoticeDetailsScreen_errorDefault"));
+      setNoticeData(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [noticeId, t]);
 
-    loadNoticeDetails();
-    // Add getNoticeById to dependencies if using real context
-  }, [noticeId /*, getNoticeById */]);
+  useFocusEffect(
+    useCallback(() => {
+      console.log("NoticeFocusScreen focused, fetching details...");
+      setIsLoading(true);
+      setNoticeData(null); // Reset data on focus to ensure loading state is clean
+      setError(null); // Reset error on focus
+      fetchNoticeDetails();
+    }, [fetchNoticeDetails])
+  );
 
-  if (isLoading) {
+
+
+
+  if (error) { // Display error message if fetch failed
     return (
+      <>
+      <Header/>
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{t("NoticeDetailsScreen_loadingDetails")}</Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title={t("Common_backButton")} onPress={() => router.back()} />
       </View>
+      </>
     );
   }
 
-  if (error || !noticeData) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error || "Notice not found."}</Text>
-        <Button title="Go Back" onPress={() => router.back()} />
-      </View>
-    );
-  }
+  if (!noticeData) { // Display if no data could be loaded (e.g., 404 or other issues)
+     return (
+       <>
+       <Header/>
+       <View style={styles.centered}>
+         <Text style={styles.errorText}>{t("NoticeDetailsScreen_noDetailsFound")}</Text>
+         <Button title={t("Common_backButton")} onPress={() => router.back()} />
+       </View>
+       </>
+     );
+   }
 
-  const displayDate = formatDate(noticeData.creationDate);
 
-  return (
+   return (
     <>
       <Header />
+      {/* Use ScrollView to ensure content scrolls if it exceeds screen height */}
       <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        style={styles.screenContainer} // Use screenContainer for overall background/flex
+        contentContainerStyle={styles.scrollContentContainer} // Use for padding inside scroll
       >
-        <Text style={styles.title}>{noticeData.noticeTitle}</Text>
+        {/* Card Component for main content */}
+        <Card elevate bordered padding="$4" borderRadius="$4" backgroundColor="$background">
+          <YStack gap="$4">
+            {/* Title using Tamagui H2 */}
+            <H2 textAlign="center" fontSize={28} color="$color11">
+              {noticeData.noticeTitle ?? 'No Title'}
+            </H2>
 
-        <View style={styles.metaContainer}>
-          {noticeData.noticeCategory && (
-            <Text
-              style={[
-                styles.metaText,
-                {
-                  textAlign:
-                    Globals.userSelectedDirection === "rtl" ? "right" : "left",
-                },
-              ]}
-            >
-              {t("NoticeDetailsScreen_categoryLabel")}
-              {noticeData.noticeCategory}
-              {noticeData.noticeSubCategory
-                ? ` (${noticeData.noticeSubCategory})`
-                : ""}
-            </Text>
-          )}
-          <Text
-            style={[
-              styles.metaText,
-              {
-                textAlign:
-                  Globals.userSelectedDirection === "rtl" ? "right" : "left",
-              },
-            ]}
-          >
-            {t("NoticeDetailsScreen_dateLabel")} {displayDate}
-          </Text>
-          {/* Optional: Display Sender Info if available in noticeData */}
-          {/* noticeData.senderName && <Text style={styles.metaText}>From: {noticeData.senderName}</Text> */}
-        </View>
+            {/* Meta Info Section */}
+            <YStack gap="$2" paddingVertical="$3" borderBottomWidth={1} borderColor="$borderColor">
+              {/* Category with Icon */}
+              {noticeData.noticeCategory && (
+                <XStack alignItems="center" gap="$2">
+                  <Ionicons name="pricetag-outline" size={24} color="$color10" />
+                  <Paragraph fontSize={16} color="$color10">
+                    {t("NoticeDetailsScreen_categoryLabel")}
+                    {noticeData.noticeCategory}
+                    {noticeData.noticeSubCategory ? ` (${noticeData.noticeSubCategory})` : ""}
+                  </Paragraph>
+                </XStack>
+              )}
+              {/* Date/Time with Icon */}
+              <XStack alignItems="center" gap="$2">
+                 <Ionicons name="calendar-outline" size={24} color="$color10" />
+                 <Paragraph fontSize={16} color="$color10">
+                    {t("NoticeDetailsScreen_dateLabel")}
+                    {noticeData.creationDate ? formatDate(noticeData.creationDate) : "N/A"}
+                 </Paragraph>
+              </XStack>
+            </YStack>
 
-        <Text style={styles.message}>{noticeData.noticeMessage}</Text>
-
-        {/* Contact buttons if we want to direct to an activity/whatever
-          <YStack width="90%" space="$3" marginTop="$4" alignItems="center">
-             <Text> ... </Text>
-             <FlipButton ... />
+            {/* Message using Tamagui Paragraph */}
+            <Paragraph fontSize={32} lineHeight={34} color="$color12">
+              {noticeData.noticeMessage ?? 'No Message'}
+            </Paragraph>
           </YStack>
-       */}
+        </Card>
 
+        {/* Back Button outside the Card */}
         <View style={styles.backButtonContainer}>
           <FlipButton style={styles.backButton} onPress={() => router.back()}>
-            <Text style={{ fontSize: 20 }}>{t("Common_backButton")}</Text>
+            {/* Use Tamagui Text for consistency inside button */}
+            <Text style={styles.backButtonText} color="$color12" fontWeight="bold">
+                {t("Common_backButton")}
+            </Text>
           </FlipButton>
         </View>
       </ScrollView>
@@ -183,59 +194,90 @@ export default function NoticeFocusScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    marginTop: 60,
+    backgroundColor: "#fcfcfc", // Slightly off-white can be easier on the eyes
+    marginTop: 60, // Keep header spacing consistent
   },
   contentContainer: {
-    padding: 20,
+    padding: 25, // Increased padding
+    paddingBottom: 50, // More gap at the bottom
   },
-  centered: {
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#f0f2f5", // Lighter grey background
+    marginTop: 60,
+  },
+  scrollContentContainer: {
+    padding: 15, // Padding for the scroll view
+    paddingBottom: 40,
+  },
+  ccentered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+    backgroundColor: "#f0f2f5", // Match screen background
   },
-  errorText: {
-    color: "red",
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
-    marginBottom: 15,
-    textAlign: "center",
-  },
+    color: "#555"
+},
+errorText: {
+  color: "#B00020",
+  fontSize: 32,
+  marginBottom: 20,
+  textAlign: "center",
+},
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 15,
-    color: "#333",
+    fontSize: 32, // Significantly larger title
+    fontWeight: "bold", // Keep bold
+    marginBottom: 25, // More gap below title
+    color: "#1C1C1E", // Darker color for strong contrast
     textAlign: "center",
   },
   metaContainer: {
-    marginBottom: 20,
-    paddingBottom: 10,
+    marginBottom: 25, // More gap below meta info
+    paddingBottom: 15, // Increased padding
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#e0e0e0", // Lighter border
   },
   metaText: {
-    fontSize: 14,
-    color: "#555",
-    marginBottom: 5,
+    fontSize: 32, // Larger meta text
+    color: "#4A4A4A", // Slightly softer dark gray
+    marginBottom: 8,  // Increased gap between meta lines
+    lineHeight: 32, // Added line height for meta text
   },
   message: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: "#333",
-    marginBottom: 30,
+    fontSize: 26, // Larger message text
+    lineHeight: 28, // Increased line height for readability
+    color: "#2C2C2E", // Dark gray for main text
+    marginBottom: 40, // More gap after message
+    // textAlign logic can remain if needed based on Globals.userSelectedDirection
   },
   backButtonContainer: {
-    marginTop: 20,
+    marginTop: 30, // Increased top margin
     alignItems: "center",
   },
-  backButton: {
+  backButton: { // Style the FlipButton container
     minWidth: "50%",
     maxWidth: "90%",
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
-    elevation: 2,
+    backgroundColor: "#ffffff", // White background for button
+    borderWidth: 1,
+    borderColor: "#d1d5db", // Light border
+    elevation: 1, // Subtle shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
   },
+  backButtonText: { // Style the Text inside FlipButton
+    fontSize: 16, // Consistent font size
+    // Color and fontWeight are set via Tamagui props in JSX now
+}
+ 
 });

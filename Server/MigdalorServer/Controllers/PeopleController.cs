@@ -93,6 +93,22 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        [HttpGet("isadmin")]
+        public IActionResult IsAdmin(Guid userId)
+        {
+            try
+            {
+                return Ok(OhPerson.IsAdmin(userId));
+            }
+            catch (Exception e)
+            {
+                return StatusCode(
+                    500,
+                    $"Error Checking Admin Status: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
+        }
+
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value) { }
 
