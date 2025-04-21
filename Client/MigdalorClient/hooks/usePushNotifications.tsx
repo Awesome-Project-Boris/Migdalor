@@ -4,12 +4,34 @@ import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Globals } from "@/app/constants/Globals";
 
 
 
 export interface PushNotificationState {
   expoPushToken?: Notifications.ExpoPushToken;
   notification?: Notifications.Notification;
+}
+
+async function postPushToken(expoPushToken: string) {
+  const userID  = await AsyncStorage.getItem("userID");
+  const payload = {
+    personId: userID,
+    pushToken: expoPushToken,
+  };
+
+  console.log("payload", payload);
+  const resp = await fetch(`${Globals.API_BASE_URL}/api/Notifications/registerToken`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!resp.ok) {
+    console.error('Failed to register push token', await resp.text());
+  }
+  else {
+    console.log("token registered");
+  }
 }
 
 export const usePushNotifications = (): PushNotificationState => {
@@ -75,7 +97,7 @@ export const usePushNotifications = (): PushNotificationState => {
   useEffect(() => {
     registerForPushNotificationsAsync().then((token) => {
       setExpoPushToken(token);
-      console.log("expo push token:", token);
+      postPushToken(token?.data!);
     });
 
     notificationListener.current =

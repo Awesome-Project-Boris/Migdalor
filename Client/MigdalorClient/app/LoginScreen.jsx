@@ -22,9 +22,6 @@ import { router, Stack } from "expo-router";
 import { useAuth } from "@/context/AuthProvider";
 import { useTranslation } from "react-i18next";
 
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
-
 const LoginScreen = () => {
   const { t } = useTranslation();
   const [phoneNumber, setPhoneNumber] = useState("");
