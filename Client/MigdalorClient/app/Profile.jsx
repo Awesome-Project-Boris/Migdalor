@@ -26,6 +26,7 @@ import LabeledTextInput from "@/components/LabeledTextInput";
 import { Globals } from "@/app/constants/Globals";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { G } from "react-native-svg";
+import BouncyButton from "@/components/BouncyButton";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -311,7 +312,8 @@ export default function Profile() {
             style={styles.profileImage}
           /> */}
 
-          <TouchableOpacity
+          <BouncyButton
+            shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
                 Globals.API_BASE_URL + profilePic.PicPath,
@@ -332,7 +334,7 @@ export default function Profile() {
               source={imageUrl}
               style={styles.profileImage}
             />
-          </TouchableOpacity>
+          </BouncyButton>
         </View>
 
         <View style={styles.profileNameContainer}>
@@ -571,7 +573,8 @@ export default function Profile() {
             }}
             style={styles.extraImage}
           /> */}
-          <TouchableOpacity
+          <BouncyButton
+           shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
                 Globals.API_BASE_URL + additionalPic1.PicPath,
@@ -585,7 +588,7 @@ export default function Profile() {
               source={additionalImage1}
               style={styles.profileImage}
             />
-          </TouchableOpacity>
+          </BouncyButton>
           {/* <Image
             source={{
               uri: form.additionalPic2ID?.trim()
@@ -595,7 +598,8 @@ export default function Profile() {
             style={styles.extraImage}
           /> */}
 
-          <TouchableOpacity
+          <BouncyButton
+            shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
                 Globals.API_BASE_URL + additionalPic2.PicPath,
@@ -609,7 +613,7 @@ export default function Profile() {
               source={additionalImage2}
               style={styles.profileImage}
             />
-          </TouchableOpacity>
+          </BouncyButton>
         </View>
       </ScrollView>
     </View>

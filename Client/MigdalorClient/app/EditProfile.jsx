@@ -17,6 +17,8 @@ import { useRouter } from "expo-router";
 import Header from "@/components/Header";
 import { Toast } from "toastify-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import BouncyButton from "@/components/BouncyButton";
+
 
 import ImageViewModal from "../components/ImageViewModal";
 
@@ -387,10 +389,10 @@ export default function EditProfile() {
     }
     console.log("handleImagePress: imageUriToView:", imageUriToView);
 
-    if (imageUriToView === Globals.API_BASE_URL) {
-      console.log("handleImagePress: No valid imageUri provided.");
-      return;
-    }
+    // if (imageUriToView === Globals.API_BASE_URL) {
+    //   console.log("handleImagePress: No valid imageUri provided.");
+    //   return;
+    // }
 
     const paramsToPass = {
       imageUri: imageUriToView,
@@ -421,7 +423,8 @@ export default function EditProfile() {
             }}
             style={styles.profileImage}
           /> */}
-          <TouchableOpacity
+          <BouncyButton
+            shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
                 Globals.API_BASE_URL + profilePic.PicPath,
@@ -435,7 +438,7 @@ export default function EditProfile() {
               source={imageUrl}
               style={styles.profileImage}
             />
-          </TouchableOpacity>
+          </BouncyButton>
         </View>
 
         <View style={styles.profileNameContainer}>
@@ -581,7 +584,8 @@ export default function EditProfile() {
           </Text>
 
           <View style={styles.profileExtraImageContainer}>
-            <TouchableOpacity
+            <BouncyButton
+              shrinkScale={0.95}
               onPress={() =>
                 handleImagePress(
                   Globals.API_BASE_URL + additionalPic1.PicPath,
@@ -595,9 +599,10 @@ export default function EditProfile() {
                 source={additionalImage1}
                 style={styles.profileImage}
               />
-            </TouchableOpacity>
+            </BouncyButton>
 
-            <TouchableOpacity
+            <BouncyButton
+              shrinkScale={0.95}
               onPress={() =>
                 handleImagePress(
                   Globals.API_BASE_URL + additionalPic2.PicPath,
@@ -611,7 +616,7 @@ export default function EditProfile() {
                 source={additionalImage2}
                 style={styles.profileImage}
               />
-            </TouchableOpacity>
+            </BouncyButton>
           </View>
         </View>
         <View style={styles.buttonRow}>
