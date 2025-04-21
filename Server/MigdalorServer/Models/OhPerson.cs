@@ -165,6 +165,8 @@ namespace MigdalorServer.Models
             OhPerson newUser = new OhPerson(user);
             db.OhPeople.Add(newUser);
             db.SaveChanges();
+            db.OhResidents.Add(new OhResident(newUser));
+            db.SaveChanges();
             return newUser;
         }
 
