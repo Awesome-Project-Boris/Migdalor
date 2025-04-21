@@ -513,7 +513,7 @@ const deletePicture = async (pictureId) => {
 
           //  const updateResult = await updateResponse.json(); // Or handle 204 No Content if API returns that
 
-           Toast.show({ type: 'success', text1: t("MarketplaceEditItemScreen_UpdateSuccess") });
+           Toast.show({ type: 'success', title: "",  text1: t("MarketplaceEditItemScreen_UpdateSuccess") });
            // Now delete old pictures *after* successful update
            for (const picId of picsToDeleteOnSuccess) {
                await deletePicture(picId); // Await deletion, but maybe don't stop if one fails

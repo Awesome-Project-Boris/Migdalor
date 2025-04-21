@@ -112,6 +112,43 @@ namespace MigdalorServer.Controllers
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value) { }
 
+
+        [HttpPut("UpdateProfile/{id}")]
+        public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
+        {
+            using var db = new MigdalorDBContext();
+
+            var person = db.OhPeople.Find(id);
+
+            var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
+                          //?? new OhResident { ResidentId = id, person.PersonId = id };
+
+            // patch scalar fields...
+            person.PhoneNumber = dto.MobilePhone;
+            person.Email = dto.Email;
+            resident.HomePlace = dto.Origin;
+            resident.Profession = dto.Profession;
+            resident.ResidentDescription = dto.AboutMe;
+            resident.ResidentApartmentNumber = dto.ResidentApartmentNumber;
+
+
+            //resident.SpouseId = dto.SpouseId;
+
+            // patch pictures if provided
+            if (dto.ProfilePicture != null)
+                person.ProfilePicId = dto.ProfilePicture.PicId;
+            if (dto.AdditionalPicture1 != null)
+                resident.AdditionalPic1Id = dto.AdditionalPicture1.PicId;
+            if (dto.AdditionalPicture2 != null)
+                resident.AdditionalPic2Id = dto.AdditionalPicture2.PicId;
+
+            //if (resident.Id == 0)
+            //    db.OhResidents.Add(resident);
+
+            db.SaveChanges();
+            return NoContent();
+        }
+
         // DELETE api/<PeopleController>/5
         [HttpDelete("{id}")]
         public void Delete(int id) { }

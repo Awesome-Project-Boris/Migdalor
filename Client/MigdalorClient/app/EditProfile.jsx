@@ -16,6 +16,8 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import Header from "@/components/Header";
 import { Toast } from "toastify-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 import ImageViewModal from "../components/ImageViewModal";
 
@@ -257,35 +259,60 @@ export default function EditProfile() {
     //console.log(cleanedForm.residentApartmentNumber)
 
     // !! Add API call to save the data here
+    console.log("Saving data to API...");
+    try {
+      const storedUserID = await AsyncStorage.getItem("userID");
+      console.log("Stored user ID:", storedUserID); // Debugging line
+      if (!storedUserID) {
+        console.error("No user ID found in AsyncStorage.");
+        return;
+      }
 
-    // const apiurl = `${Globals.API_BASE_URL}/api/People/UpdatePersonByIDForProfile/${storedUserID}`; // !! check this is the  correct endpoint
-    // const response = await fetch(apiurl, {
-    //   method: "PUT",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   //body: JSON.stringify({ phoneNumber, password }),
-    // });
+      console.log("user:", storedUserID);
+      const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
+      const response = await fetch(apiurl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        //body: JSON.stringify({ phoneNumber, password }),
+        body: JSON.stringify({
+          ...cleanedForm,
+          profilePic,
+          additionalPic1,
+          additionalPic2,
+        }),
+      });
 
-    // if (!response.ok) {
-    //   // You can throw an error or handle it with an error message.
-    //   throw new Error(`Login failed: HTTP ${response.status}`);
-    // }
+      console.log("body:", {
+        ...cleanedForm,
+        profilePic,
+        additionalPic1,
+        additionalPic2,
+      });
 
-    //router.back({
-    //router.replace({
-    //   pathname: "./Profile",
-    //   params: {
-    //     //updatedData: JSON.stringify(form),
-    //     updatedData: JSON.stringify(cleanedForm),
-    //     updatedPics: JSON.stringify({
-    //       profilePic,
-    //       additionalPic1,
-    //       additionalPic2,
-    //     }),
-    //   },
-    // });
-    router.back();
+      if (!response.ok) {
+        // You can throw an error or handle it with an error message.
+        throw new Error(`Login failed: HTTP ${response.status}`);
+      }
+
+      //router.back({
+      //router.replace({
+      //   pathname: "./Profile",
+      //   params: {
+      //     //updatedData: JSON.stringify(form),
+      //     updatedData: JSON.stringify(cleanedForm),
+      //     updatedPics: JSON.stringify({
+      //       profilePic,
+      //       additionalPic1,
+      //       additionalPic2,
+      //     }),
+      //   },
+      // });
+      router.back();
+    } catch (error) {
+      console.error("Error getting userID", error);
+    }
   };
 
   const handleCancel = () => {
@@ -391,7 +418,7 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.editableContainer}>
-          <FloatingLabelInput
+          {/* <FloatingLabelInput
             maxLength={maxLengths.partner}
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
@@ -403,7 +430,7 @@ export default function EditProfile() {
           />
           {formErrors.partner && (
             <Text style={styles.errorText}>{formErrors.partner}</Text>
-          )}
+          )} */}
 
           <FloatingLabelInput
             maxLength={maxLengths.residentApartmentNumber}
@@ -589,7 +616,6 @@ export default function EditProfile() {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
