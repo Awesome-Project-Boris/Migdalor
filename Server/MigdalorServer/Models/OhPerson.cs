@@ -195,5 +195,14 @@ namespace MigdalorServer.Models
                      .Select(u => u.PersonId)
                      .ToArray();
         }
+
+        public static bool IsAdmin(Guid userId)
+        {
+            using MigdalorDBContext db = new MigdalorDBContext();
+            var user = db.OhPeople.Find(userId);
+            if (user == null)
+                throw new Exception("User not found");
+            return user?.PersonRole?.ToLower() == "admin";
+        }
     }
 }
