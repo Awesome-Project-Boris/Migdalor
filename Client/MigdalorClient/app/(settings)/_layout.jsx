@@ -64,6 +64,7 @@ export default function SettingsLayout() {
           bgColor={styles.saveButton.backgroundColor}
           textColor={styles.saveText.color}
           style={styles.saveButton}
+          flipborderwidth={3}
           onPress={handleSave}
         >
           <Text style={styles.saveText}>
