@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
+using System.Text.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -117,6 +118,11 @@ namespace MigdalorServer.Controllers
         public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
         {
             using var db = new MigdalorDBContext();
+
+            Console.WriteLine("printing dto:");
+            Console.WriteLine("dto: " + JsonSerializer.Serialize(dto));
+            Console.WriteLine("dto.ProfilePicture: " + JsonSerializer.Serialize(dto.ProfilePicture));
+            Console.WriteLine("dto.ProfilePicture.PicId: " + dto.ProfilePicture?.PicId);
 
             var person = db.OhPeople.Find(id);
 

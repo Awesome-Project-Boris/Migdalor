@@ -259,10 +259,113 @@ export default function EditProfile() {
         cleanedForm.residentApartmentNumber
       );
       form.residentApartmentNumber = parseInt(form.residentApartmentNumber);
+      console.log(
+        "cleanedForm.residentApartmentNumber ",
+        cleanedForm.residentApartmentNumber
+      );
       console.log(typeof cleanedForm.residentApartmentNumber);
       console.log(typeof form.residentApartmentNumber);
+      console.log("form.residentApartmentNumber", form.residentApartmentNumber);
+      // !! for testing, change later
+      form.residentApartmentNumber = parseInt(11111);
 
-      console.log(cleanedForm);
+      console.log("cleanedform ", cleanedForm);
+
+      // const uploadedProfilePic = profilePic.PicPath.startsWith("file://")
+      //   ? await uploadImage(
+      //       profilePic.PicPath,
+      //       "profile_picture",
+      //       "Profile picture",
+      //       storedUserID
+      //     )
+      //   : profilePic.PicID
+      //   ? profilePic
+      //   : null;
+
+      const uploadedProfilePic = profilePic.PicPath.startsWith("file://")
+        ? await (async () => {
+            const newPicId = await uploadImage(
+              profilePic.PicPath,
+              "profile_picture",
+              "Profile picture",
+              storedUserID
+            );
+            return {
+              PicID: newPicId,
+              PicName: "", // optional: you can extract the file name from path if needed
+              PicPath: profilePic.PicPath, // local URI
+              PicAlt: "Profile picture",
+            };
+          })()
+        : profilePic.PicID
+        ? profilePic
+        : null;
+
+      console.log("uploadedProfilePic: ", uploadedProfilePic);
+      //console.log("profilePic: ", profilePic);
+      setProfilePic((prev) => ({ ...prev, PicID: uploadedProfilePic }));
+      //console.log("profilePic: ", profilePic);
+
+      // const uploadedAdd1Pic = additionalPic1.PicPath.startsWith("file://")
+      //   ? await uploadImage(
+      //       additionalPic1.PicPath,
+      //       "secondary_profile",
+      //       "Extra picture 1",
+      //       storedUserID
+      //     )
+      //   : additionalPic1.PicID
+      //   ? additionalPic1
+      //   : null;
+
+      // const uploadedAdd2Pic = additionalPic2.PicPath.startsWith("file://")
+      //   ? await uploadImage(
+      //       additionalPic2.PicPath,
+      //       "secondary_profile",
+      //       "Extra picture 2",
+      //       storedUserID
+      //     )
+      //   : additionalPic2.PicID
+      //   ? additionalPic2
+      //   : null;
+
+      const uploadedAdd1Pic = additionalPic1.PicPath.startsWith("file://")
+        ? await (async () => {
+            const newPicId = await uploadImage(
+              additionalPic1.PicPath,
+              "secondary_profile",
+              "Extra picture 1",
+              storedUserID
+            );
+            return {
+              PicID: newPicId,
+              PicName: "", // optional
+              PicPath: additionalPic1.PicPath,
+              PicAlt: "Extra picture 1",
+            };
+          })()
+        : additionalPic1.PicID
+        ? additionalPic1
+        : null;
+
+      const uploadedAdd2Pic = additionalPic2.PicPath.startsWith("file://")
+        ? await (async () => {
+            const newPicId = await uploadImage(
+              additionalPic2.PicPath,
+              "secondary_profile",
+              "Extra picture 2",
+              storedUserID
+            );
+            return {
+              PicID: newPicId,
+              PicName: "", // optional
+              PicPath: additionalPic2.PicPath,
+              PicAlt: "Extra picture 2",
+            };
+          })()
+        : additionalPic2.PicID
+        ? additionalPic2
+        : null;
+
       const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
       const response = await fetch(apiurl, {
         method: "PUT",
@@ -275,6 +378,9 @@ export default function EditProfile() {
           //profilePic,
           //additionalPic1,
           //additionalPic2,
+          profilePicture: uploadedProfilePic,
+          additionalPicture1: uploadedAdd1Pic,
+          additionalPicture2: uploadedAdd2Pic,
         }),
       });
 
@@ -451,6 +557,18 @@ export default function EditProfile() {
   //     }
   //   }
   // };
+
+  // --- Helper: Safely Delete Local File ---
+  const safeDeleteFile = async (uri) => {
+    if (!uri || !uri.startsWith("file://")) return;
+    try {
+      console.log(`Attempting to delete local file: ${uri}`);
+      await FileSystem.deleteAsync(uri, { idempotent: true });
+      console.log(`Successfully deleted or file did not exist: ${uri}`);
+    } catch (error) {
+      console.error(`Error deleting local file ${uri}:`, error);
+    }
+  };
 
   // --- Image Picker ---
 
@@ -632,11 +750,23 @@ export default function EditProfile() {
     formData.append("picAlts", altText);
     formData.append("uploaderId", uploaderId);
 
+    console.log("imageUri:", imageUri); // Debugging line
+    console.log("role:", role); // Debugging line
+    console.log("fileType:", fileType); // Debugging line
+    console.log("picAlts:", altText); // Debugging line
+    console.log("uploaderId:", uploaderId); // Debugging line
+
+    console.log("FormData:", formData); // Debugging line
+    console.log("ProfilePic", imageUri); // Debugging line
+
     try {
-      const uploadResponse = await fetch(`${API}/api/Picture`, {
-        method: "POST",
-        body: formData,
-      });
+      const uploadResponse = await fetch(
+        `${Globals.API_BASE_URL}/api/Picture`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
       const uploadResults = await uploadResponse.json(); // Assume server always returns JSON
 
       if (
@@ -672,10 +802,13 @@ export default function EditProfile() {
     try {
       // ** TODO: Implement Backend Call **
       // Requires: DELETE /api/Picture/{pictureId} endpoint
-      const response = await fetch(`${API}/api/Picture/${pictureId}`, {
-        method: "DELETE",
-        // Add Auth headers if needed
-      });
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/Picture/${pictureId}`,
+        {
+          method: "DELETE",
+          // Add Auth headers if needed
+        }
+      );
 
       if (!response.ok) {
         let errorMsg = `Failed to delete picture ${pictureId} (HTTP ${response.status})`;
@@ -738,11 +871,12 @@ export default function EditProfile() {
             /> */}
             {profilePic.PicPath === "" ? (
               <>
-                  <Image
-                    alt={profilePic.PicAlt}
-                    source={imageUrl}
-                    style={styles.profileImage}
-                  />
+                <Image
+                  alt={profilePic.PicAlt}
+                  source={imageUrl}
+                  //source={imageUrl}
+                  style={styles.profileImage}
+                />
                 <Card.Background>
                   {/* <ExpoImage
                     alt={profilePic.PicAlt}
@@ -773,9 +907,21 @@ export default function EditProfile() {
               >
                 <Image
                   alt={profilePic.PicAlt}
-                  source={{ uri: profilePic.PicPath }}
+                  //source={{ uri: profilePic.PicPath }}
+                  source={imageUrl}
+                  //source={{ uri: imageUrl}}
                   style={styles.profileImage}
                 />
+                {/* <ExpoImage
+                  alt={profilePic.PicAlt}
+                  //source={defaultUserImage}
+                  source={imageUrl}
+                  //source={{ uri: profilePic.PicPath }}
+
+                  style={StyleSheet.absoluteFill}
+                  contentFit="cover"
+                /> */}
+
                 {/* <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
                 <Paragraph theme="alt2">
                   {t("MarketplaceNewItemScreen_ImageOptional")}
@@ -1063,11 +1209,8 @@ export default function EditProfile() {
 
         //imageUri={"../assets/images/defaultUser.png"}
 
-        //imageUri={imageToViewUri}
-        
-        imageUri={profilePic.Path === "" ? imageToViewUri : profilePic.Path}
-
-
+        imageUri={imageToViewUri}
+        //imageUri={profilePic.Path === "" ? imageToViewUri : profilePic.Path}
         onClose={() => setShowImageViewModal(false)}
         //onRemove={wasDefaultImage ? undefined : handleRemoveImage}
         //onRemove={imageToViewUri === "" ? undefined : handleRemoveImage}
