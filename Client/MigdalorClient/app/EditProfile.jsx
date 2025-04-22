@@ -217,6 +217,51 @@ export default function EditProfile() {
     setImageTypeToClear(null);
   };
 
+
+  const handleAddImage = async () => {
+    const uriToAdd = imageToViewUri;
+
+    // if (imageTypeToClear === "main") {
+    //   setClearedPics((prev) => ({ ...prev, profile: true }));
+    //   setProfilePic({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+    //   //setProfilePic(null);
+    // }
+    // if (imageTypeToClear === "add1") {
+    //   setClearedPics((prev) => ({ ...prev, add1: true }));
+    //   setAdditionalPic1({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+    //   //setAdditionalPic1(null);
+    // }
+    // if (imageTypeToClear === "add2") {
+    //   setClearedPics((prev) => ({ ...prev, add2: true }));
+    //   setAdditionalPic2({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+    //   //setAdditionalPic2(null);
+    // }
+
+    // if (uriToAdd.startsWith("file://")) {
+    //   await safeDeleteFile(uriToAdd);
+    // }
+
+    // setShowImageViewModal(false);
+    // //setImageToViewUri("");
+    // setImageToViewUri(null);
+    // setImageTypeToClear(null);
+
+    switch (imageTypeToClear) {
+      case "main":
+        pickImage("main", setProfilePic);
+        break;
+      case "add1":
+        pickImage("add1", setAdditionalPic1);
+        break;
+      case "add2":
+        pickImage("add2", setAdditionalPic2);
+        break;
+      default:
+        console.error("Invalid image type:", type);
+    }
+    setShowImageViewModal(false);
+  };
+
   const uploadImage = async (imageUri, role, altText, uploaderId) => {
     if (!imageUri || !imageUri.startsWith("file://")) {
       console.log(
@@ -577,10 +622,13 @@ export default function EditProfile() {
   };
 
   const viewOrPickImage = (type, currentUri) => {
-    console.log("viewOrPickImage: currentUri:", currentUri);
+    //console.log("viewOrPickImage: currentUri:", currentUri);
     console.log(currentUri === Globals.API_BASE_URL);
+    console.log("currentUri: ", currentUri);
+    console.log(currentUri == "");
     //
-    if (currentUri === Globals.API_BASE_URL) {
+    //if (currentUri === Globals.API_BASE_URL) {
+    if (currentUri == "") {
       // When no image is set
       // Show add-new option instead of remove
       setWasDefaultImage(true);
@@ -596,19 +644,19 @@ export default function EditProfile() {
       // pickImage(type === "main" ? setMainImage : setExtraImage);
       // pickImage(type === "add1" ? setMainImage : setExtraImage);
       // pickImage(type === "add2" ? setMainImage : setExtraImage);
-      switch (type) {
-        case "main":
-          pickImage("main", setProfilePic);
-          break;
-        case "add1":
-          pickImage("add1", setAdditionalPic1);
-          break;
-        case "add2":
-          pickImage("add2", setAdditionalPic2);
-          break;
-        default:
-          console.error("Invalid image type:", type);
-      }
+      // switch (type) {
+      //   case "main":
+      //     pickImage("main", setProfilePic);
+      //     break;
+      //   case "add1":
+      //     pickImage("add1", setAdditionalPic1);
+      //     break;
+      //   case "add2":
+      //     pickImage("add2", setAdditionalPic2);
+      //     break;
+      //   default:
+      //     console.error("Invalid image type:", type);
+      // }
     }
   };
 
@@ -1283,6 +1331,17 @@ export default function EditProfile() {
         imageUri={imageToViewUri}
         //imageUri={profilePic.Path === "" ? imageToViewUri : profilePic.Path}
         onClose={() => setShowImageViewModal(false)}
+
+        onAdd={() => {
+          //viewOrPickImage(imageTypeToClear, imageToViewUri); // your existing viewOrPickImage
+          //pickImage(imageTypeToClear);        // your existing pickImage
+          //setShowImageViewModal(false);
+
+          handleAddImage(); // Clear the image after picking a new one
+          //imageUri={imageToViewUri}
+        }}
+
+
         //onRemove={wasDefaultImage ? undefined : handleRemoveImage}
         //onRemove={imageToViewUri === "" ? undefined : handleRemoveImage}
 

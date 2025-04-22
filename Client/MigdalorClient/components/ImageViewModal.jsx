@@ -21,7 +21,7 @@ const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 
 // Use standard function declaration
-function ImageViewModal({ visible, imageUri, onClose, onRemove }) {
+function ImageViewModal({ visible, imageUri, onClose, onRemove, onAdd }) {
   const [noImage, setNoImage] = useState(false); // State to handle no image case
 
   useEffect(() => {
@@ -32,12 +32,12 @@ function ImageViewModal({ visible, imageUri, onClose, onRemove }) {
     }
   }, [imageUri]);
 
-  console.log("visible ", visible); // Debugging log
-  console.log("imageUri ", imageUri); // Debugging log
+  //console.log("visible ", visible); // Debugging log
+  //console.log("imageUri ", imageUri); // Debugging log
   if (!visible) return null;
 
-  console.log("Image URI:", imageUri); // Debugging log
-  console.log("typeof imageuri:", typeof imageUri); // Debugging log
+  //console.log("Image URI:", imageUri); // Debugging log
+  //console.log("typeof imageuri:", typeof imageUri); // Debugging log
 
   return (
     <Modal
@@ -68,7 +68,8 @@ function ImageViewModal({ visible, imageUri, onClose, onRemove }) {
           <View style={styles.buttonContainer}>
             {/* Clearer Buttons */}
             <FlipButton
-              onPress={onRemove}
+              //onPress={onRemove}
+              onPress={ noImage ? onAdd : onRemove }
               style={[styles.button, styles.removeButton]} // Apply base and specific style
               // Pass text/colors via props if FlipButton supports it,
               // otherwise, style the Text child directly if FlipButton accepts children
