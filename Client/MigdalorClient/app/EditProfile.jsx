@@ -18,7 +18,8 @@ import Header from "@/components/Header";
 import { Toast } from "toastify-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import BouncyButton from "@/components/BouncyButton";
-
+import * as FileSystem from "expo-file-system";
+import { Image as ExpoImage } from "expo-image"; // Use Expo Image
 
 import ImageViewModal from "../components/ImageViewModal";
 
@@ -407,6 +408,297 @@ export default function EditProfile() {
     });
   };
 
+  // Updating Pictures
+
+  // --- Image Viewing/Removal Logic ---
+  const [showImageViewModal, setShowImageViewModal] = useState(false);
+  const [imageToViewUri, setImageToViewUri] = useState(null);
+  const [imageTypeToClear, setImageTypeToClear] = useState(null); // 'main' | 'add1' | 'add2'
+
+  const [wasDefaultImage, setWasDefaultImage] = useState(false);
+
+  const copyImageToAppDir = async (sourceUri, prefix) => {
+    try {
+      const filename = `${prefix}-${Date.now()}-${sourceUri.split("/").pop()}`;
+      const destinationUri = FileSystem.documentDirectory + filename;
+      console.log(`Copying from ${sourceUri} to ${destinationUri}`);
+      await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
+      console.log(`Copy successful: ${destinationUri}`);
+      return destinationUri;
+    } catch (e) {
+      console.error("FileSystem.copyAsync Error:", e);
+      throw e;
+    }
+  };
+
+  // const pickImage = async (type) => {
+  //   //console.log("pickImage: type:", type); // Debugging line
+
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     quality: 0.8,
+  //   });
+
+  //   if (!result.canceled && result.assets.length > 0) {
+  //     const localUri = result.assets[0].uri;
+  //     if (type === "main") {
+  //       setProfilePic({ ...profilePic, PicPath: localUri }); // local
+  //     } else if (type === "add1") {
+  //       setAdditionalPic1({ ...additionalPic1, PicPath: localUri });
+  //     } else if (type === "add2") {
+  //       setAdditionalPic2({ ...additionalPic2, PicPath: localUri });
+  //     }
+  //   }
+  // };
+
+  // --- Image Picker ---
+
+  const pickImage = async (type, setFn) => {
+    const libraryPermission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (libraryPermission.status !== "granted") {
+      Alert.alert(
+        t("ImagePicker_permissionDeniedTitle"),
+        t("ImagePicker_libraryPermissionDeniedMessage"),
+        [{ text: t("ImagePicker_cancelButton") }]
+      );
+      return;
+    }
+
+    Alert.alert(
+      t("ImagePicker_selectSourceTitle"),
+      t("ImagePicker_selectSourceMessage"),
+      [
+        {
+          text: t("ImagePicker_takePhotoButton"),
+          onPress: async () => {
+            const cameraPermission =
+              await ImagePicker.requestCameraPermissionsAsync();
+            if (cameraPermission.status !== "granted") {
+              Alert.alert(
+                t("ImagePicker_permissionDeniedTitle"),
+                t("ImagePicker_cameraPermissionDeniedMessage"),
+                [{ text: t("ImagePicker_cancelButton") }]
+              );
+              return;
+            }
+            const result = await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              quality: 0.5,
+            });
+            if (!result.canceled && result.assets?.[0]?.uri) {
+              console.log("Camera result:", result);
+              console.log("Camera result.assets[0].uri:", result.assets[0].uri);
+              try {
+                const newUri = await copyImageToAppDir(
+                  result.assets[0].uri,
+                  "camera"
+                );
+                console.log("New URI (camera):", newUri);
+                setFn((prev) => ({ ...prev, PicPath: newUri }));
+                //console.log("New URI after copy in camera:", newUri);
+                //setImage(newUri);
+              } catch (copyError) {
+                Alert.alert(
+                  t("ImagePicker_errorTitle"),
+                  t("ImagePicker_saveCameraImageFailure"),
+                  [{ text: t("ImagePicker_cancelButton") }]
+                );
+                setImage(null);
+              }
+            }
+          },
+        },
+        {
+          text: t("ImagePicker_chooseFromLibraryButton"),
+          onPress: async () => {
+            try {
+              let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 0.7,
+              });
+              if (!result.canceled && result.assets?.[0]?.uri) {
+                try {
+                  const newUri = await copyImageToAppDir(
+                    result.assets[0].uri,
+                    "library"
+                  );
+
+                  //setImage(newUri);
+                  console.log("New URI (library):", newUri);
+                  setFn((prev) => ({ ...prev, PicPath: newUri }));
+                } catch (copyError) {
+                  Alert.alert(
+                    t("ImagePicker_errorTitle"),
+                    t("ImagePicker_saveLibraryImageFailure"),
+                    [{ text: t("ImagePicker_cancelButton") }]
+                  );
+                  setImage(null);
+                }
+              }
+            } catch (error) {
+              Alert.alert(
+                t("ImagePicker_errorTitle"),
+                t("ImagePicker_openLibraryFailure"),
+                [{ text: t("ImagePicker_cancelButton") }]
+              );
+            }
+          },
+        },
+        { text: t("ImagePicker_cancelButton"), style: "cancel" },
+      ]
+    );
+    console.log("pickImage: type:", type); // Debugging line
+    console.log("pickImage: profilePic:", profilePic); // Debugging line
+  };
+
+  const viewOrPickImage = (type, currentUri) => {
+    console.log("viewOrPickImage: currentUri:", currentUri);
+    console.log(currentUri === Globals.API_BASE_URL);
+    //
+    if (currentUri === Globals.API_BASE_URL) {
+      // When no image is set
+      // Show add-new option instead of remove
+      setWasDefaultImage(true);
+      setImageToViewUri(""); // no image to show
+      setImageTypeToClear(type);
+      setShowImageViewModal(true);
+    } else {
+      setWasDefaultImage(false);
+      setImageToViewUri(currentUri);
+      setImageTypeToClear(type);
+      setShowImageViewModal(true);
+
+      // pickImage(type === "main" ? setMainImage : setExtraImage);
+      // pickImage(type === "add1" ? setMainImage : setExtraImage);
+      // pickImage(type === "add2" ? setMainImage : setExtraImage);
+      switch (type) {
+        case "main":
+          pickImage("main", setProfilePic);
+          break;
+        case "add1":
+          pickImage("add1", setAdditionalPic1);
+          break;
+        case "add2":
+          pickImage("add2", setAdditionalPic2);
+          break;
+        default:
+          console.error("Invalid image type:", type);
+      }
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    const uriToDelete = imageToViewUri;
+
+    if (imageTypeToClear === "main") {
+      setProfilePic((prev) => ({ ...prev, PicPath: "" }));
+    } else if (imageTypeToClear === "add1") {
+      setAdditionalPic1((prev) => ({ ...prev, PicPath: "" }));
+    } else if (imageTypeToClear === "add2") {
+      setAdditionalPic2((prev) => ({ ...prev, PicPath: "" }));
+    }
+
+    if (uriToDelete.startsWith("file://")) {
+      await safeDeleteFile(uriToDelete);
+    }
+
+    setShowImageViewModal(false);
+    setImageToViewUri(null);
+    setImageTypeToClear(null);
+  };
+
+  const uploadImage = async (imageUri, role, altText, uploaderId) => {
+    if (!imageUri || !imageUri.startsWith("file://")) {
+      console.log(
+        `Skipping upload for non-local file or null URI: ${imageUri}`
+      );
+      return null; // Not a local file to upload
+    }
+
+    console.log(`Uploading image: ${role}`);
+    const formData = new FormData();
+    const fileType = imageUri.substring(imageUri.lastIndexOf(".") + 1);
+    const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
+
+    formData.append("files", {
+      uri: imageUri,
+      name: `${role}.${fileType}`,
+      type: mimeType,
+    });
+    formData.append("picRoles", role);
+    formData.append("picAlts", altText);
+    formData.append("uploaderId", uploaderId);
+
+    try {
+      const uploadResponse = await fetch(`${API}/api/Picture`, {
+        method: "POST",
+        body: formData,
+      });
+      const uploadResults = await uploadResponse.json(); // Assume server always returns JSON
+
+      if (
+        !uploadResponse.ok ||
+        !Array.isArray(uploadResults) ||
+        uploadResults.length === 0 ||
+        !uploadResults[0].success
+      ) {
+        const errorMsg =
+          uploadResults?.[0]?.errorMessage ||
+          `Image upload failed (HTTP ${uploadResponse.status})`;
+        throw new Error(errorMsg);
+      }
+      console.log(`Upload successful for ${role}:`, uploadResults[0]);
+      await safeDeleteFile(imageUri); // Clean up local copy after successful upload
+      return uploadResults[0].picId; // Return the new PicID
+    } catch (error) {
+      console.error(`Image upload failed for ${role}:`, error);
+      Toast.show({
+        type: "error",
+        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
+        text2: error.message,
+        position: "top",
+      });
+      // Decide if failure is critical. Maybe throw error to stop handleSubmit?
+      throw error; // Re-throw to stop the submission process
+    }
+  };
+
+  const deletePicture = async (pictureId) => {
+    if (!pictureId) return; // No ID to delete
+    console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
+    try {
+      // ** TODO: Implement Backend Call **
+      // Requires: DELETE /api/Picture/{pictureId} endpoint
+      const response = await fetch(`${API}/api/Picture/${pictureId}`, {
+        method: "DELETE",
+        // Add Auth headers if needed
+      });
+
+      if (!response.ok) {
+        let errorMsg = `Failed to delete picture ${pictureId} (HTTP ${response.status})`;
+        try {
+          const errData = await response.json();
+          errorMsg = errData.message || errorMsg;
+        } catch {}
+        throw new Error(errorMsg);
+      }
+      console.log(`Successfully deleted picture ID: ${pictureId} via API.`);
+      // No need to delete local file here, as it's an existing server file
+    } catch (err) {
+      console.error(`Failed to delete picture ID ${pictureId}:`, err);
+      // Log error, maybe show a non-blocking warning to user?
+      Toast.show({
+        type: "warning",
+        text1: t("MarketplaceItemScreen_PicDeleteErrorTitle"),
+        text2: err.message,
+      });
+      // Don't necessarily stop the whole edit process if old pic deletion fails
+    }
+  };
+
   return (
     <View style={styles.wrapper}>
       <ScrollView
@@ -414,30 +706,85 @@ export default function EditProfile() {
         keyboardShouldPersistTaps="handled"
       >
         <Header />
-
-        {/* !! Add changing profile picture */}
         <View style={styles.profileImageContainer}>
-          {/* <Image
-            source={{
-              uri: "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-            }}
-            style={styles.profileImage}
-          /> */}
           <BouncyButton
             shrinkScale={0.95}
+            // onPress={() =>
+            //   handleImagePress(
+            //     Globals.API_BASE_URL + profilePic.PicPath,
+            //     profilePic.PicAlt
+            //   )
+            // }
+            //onPress={() => viewOrPickImage("main", imageUrl.uri)}
+            // onPress={() =>
+            //   viewOrPickImage("main", Globals.API_BASE_URL + profilePic.PicPath)
+            // }
+
             onPress={() =>
-              handleImagePress(
-                Globals.API_BASE_URL + profilePic.PicPath,
-                profilePic.PicAlt
+              viewOrPickImage(
+                "main",
+                profilePic.PicPath?.trim()
+                  ? Globals.API_BASE_URL + profilePic.PicPath
+                  : "" // Triggers default
               )
             }
-            disabled={!(Globals.API_BASE_URL + profilePic.PicPath)}
+            //disabled={!(Globals.API_BASE_URL + profilePic.PicPath)}
+            disabled={!profilePic.PicPath?.trim()}
           >
-            <Image
+            {/* <Image
               alt={profilePic.PicAlt}
               source={imageUrl}
               style={styles.profileImage}
-            />
+            /> */}
+            {profilePic.PicPath === "" ? (
+              <>
+                  <Image
+                    alt={profilePic.PicAlt}
+                    source={imageUrl}
+                    style={styles.profileImage}
+                  />
+                <Card.Background>
+                  {/* <ExpoImage
+                    alt={profilePic.PicAlt}
+                    source={defaultUserImage}
+                    //source={imageUrl}
+                    style={StyleSheet.absoluteFill}
+                    contentFit="cover"
+                  /> */}
+                </Card.Background>
+                <YStack
+                  f={1}
+                  jc="center"
+                  ai="center"
+                  backgroundColor="rgba(0,0,0,0.4)"
+                >
+                  {/* <Paragraph theme="alt2">
+                    {t("MarketplaceNewItemScreen_MainImage")}
+                  </Paragraph> */}
+                </YStack>
+              </>
+            ) : (
+              <YStack
+                f={1}
+                jc="center"
+                ai="center"
+                p="$2"
+                style={{ direction: Globals.userSelectedDirection }}
+              >
+                <Image
+                  alt={profilePic.PicAlt}
+                  source={{ uri: profilePic.PicPath }}
+                  style={styles.profileImage}
+                />
+                {/* <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
+                <Paragraph theme="alt2">
+                  {t("MarketplaceNewItemScreen_ImageOptional")}
+                </Paragraph>
+                <Paragraph theme="alt2">
+                  {t("MarketplaceNewItemScreen_ImageTapToChoose")}
+                </Paragraph> */}
+              </YStack>
+            )}
           </BouncyButton>
         </View>
 
@@ -586,13 +933,31 @@ export default function EditProfile() {
           <View style={styles.profileExtraImageContainer}>
             <BouncyButton
               shrinkScale={0.95}
+              // onPress={() =>
+              //   handleImagePress(
+              //     Globals.API_BASE_URL + additionalPic1.PicPath,
+              //     additionalPic1.PicAlt
+              //   )
+              // }
+              //onPress={() => viewOrPickImage("add1", additionalImage1.uri)}
+
+              // onPress={() =>
+              //   viewOrPickImage(
+              //     "add1",
+              //     Globals.API_BASE_URL + additionalPic1.PicPath
+              //   )
+              // }
+
               onPress={() =>
-                handleImagePress(
-                  Globals.API_BASE_URL + additionalPic1.PicPath,
-                  additionalPic1.PicAlt
+                viewOrPickImage(
+                  "add1",
+                  additionalPic1.PicPath?.trim()
+                    ? Globals.API_BASE_URL + additionalPic1.PicPath
+                    : "" // Triggers default
                 )
               }
-              disabled={!(Globals.API_BASE_URL + additionalPic1.PicPath)}
+              //disabled={!(Globals.API_BASE_URL + additionalPic1.PicPath)}
+              disabled={!additionalPic1.PicPath?.trim()}
             >
               <Image
                 alt={additionalPic1.PicAlt}
@@ -603,13 +968,31 @@ export default function EditProfile() {
 
             <BouncyButton
               shrinkScale={0.95}
+              // onPress={() =>
+              //   handleImagePress(
+              //     Globals.API_BASE_URL + additionalPic2.PicPath,
+              //     additionalPic2.PicAlt
+              //   )
+              // }
+              //onPress={() => viewOrPickImage("add2", additionalImage2.uri)}
+
+              // onPress={() =>
+              //   viewOrPickImage(
+              //     "add2",
+              //     Globals.API_BASE_URL + additionalPic2.PicPath
+              //   )
+              // }
+
               onPress={() =>
-                handleImagePress(
-                  Globals.API_BASE_URL + additionalPic2.PicPath,
-                  additionalPic2.PicAlt
+                viewOrPickImage(
+                  "add2",
+                  additionalPic2.PicPath?.trim()
+                    ? Globals.API_BASE_URL + additionalPic2.PicPath
+                    : "" // Triggers default
                 )
               }
-              disabled={!(Globals.API_BASE_URL + additionalPic2.PicPath)}
+              //disabled={!(Globals.API_BASE_URL + additionalPic2.PicPath)}
+              disabled={!additionalPic2.PicPath?.trim()}
             >
               <Image
                 alt={additionalPic2.PicAlt}
@@ -643,6 +1026,64 @@ export default function EditProfile() {
           </FlipButton>
         </View>
       </ScrollView>
+
+      <ImageViewModal
+        visible={showImageViewModal}
+        //imageUri={imageToViewUri}
+        //imageUri={defaultUserImage}
+        // imageUri= {
+        //   typeof imageToViewUri === "string"
+        //     ? imageToViewUri
+        //     : defaultUserImage // likely a `require(...)` from defaultUserImage
+        // }
+
+        // imageUri= {
+        //   imageToViewUri === ""
+        //     ? defaultUserImage
+        //     : imageToViewUri // likely a `require(...)` from defaultUserImage
+        // }
+
+        // source={
+        //   imageToViewUri === ""
+        //     ? defaultUserImage
+        //     : { imageUri: imageToViewUri } // This handles require(...)
+        // }
+
+        // imageUri={
+        //   imageToViewUri === null
+        //     ? "../assets/images/defaultUser.png"
+        //     : { uri: imageToViewUri } // This handles require(...)
+        // }
+
+        // imageUri={
+        //   typeof imageToViewUri === "string" && imageToViewUri.trim() !== ""
+        //     ? { uri: imageToViewUri }
+        //     : require("../assets/images/defaultUser.png")
+        // }
+
+        //imageUri={"../assets/images/defaultUser.png"}
+
+        //imageUri={imageToViewUri}
+        
+        imageUri={profilePic.Path === "" ? imageToViewUri : profilePic.Path}
+
+
+        onClose={() => setShowImageViewModal(false)}
+        //onRemove={wasDefaultImage ? undefined : handleRemoveImage}
+        //onRemove={imageToViewUri === "" ? undefined : handleRemoveImage}
+
+        //onRemove={imageToViewUri === "" ?  pickImage : handleRemoveImage}
+
+        onRemove={handleRemoveImage}
+        // onAddNew={
+        //   wasDefaultImage
+        //     ? () => {
+        //         pickImage(imageTypeToClear);
+        //         setShowImageViewModal(false);
+        //       }
+        //     : undefined
+        // }
+      />
     </View>
   );
 }
