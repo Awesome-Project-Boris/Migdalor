@@ -22,7 +22,7 @@ namespace MigdalorServer.Controllers
         // Inject DbContext and Configuration
         public PeopleController(MigdalorDBContext context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _context = context;
         }
 
         // GET: api/<PeopleController>

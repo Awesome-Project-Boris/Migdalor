@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH * 0.42,
     height: 145,
     // backgroundColor: "#4CAF50",
-    backgroundColor: "goldenrod",
+    backgroundColor: "#00007a",
     color: "#fff",
     borderRadius: 8,
     justifyContent: "center",
