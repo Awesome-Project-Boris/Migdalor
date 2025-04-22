@@ -62,11 +62,11 @@ export default function NoticesScreen() {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [sortOrder, setSortOrder] = useState("recent");
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-  // !! Added missing state variables !!
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(true);
 
-  // --- Data Fetching Callbacks (remain the same) ---
+
   const fetchNoticesCallback = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -104,10 +104,10 @@ export default function NoticesScreen() {
     fetchCategoriesCallback();
   }, [fetchNoticesCallback, fetchCategoriesCallback]);
 
-  // --- Effect to Check Admin Status ---
+  // Effect to Check Admin Status ---
   useEffect(() => {
     const checkAdminStatus = async () => {
-      let currentUserId = null; // Define inside effect
+      let currentUserId = null; 
       try {
         currentUserId = await AsyncStorage.getItem("userID"); // Get ID here
         if (!currentUserId) {
@@ -152,7 +152,7 @@ export default function NoticesScreen() {
     };
 
     checkAdminStatus();
-  }, []); // Run ONCE on mount - relies on AsyncStorage having the correct ID at load time
+  }, []); 
 
   // Live refresh while screen is focused
   useFocusEffect(
@@ -166,13 +166,11 @@ export default function NoticesScreen() {
 
   // Filtering & sorting
   const processedNotices = useMemo(() => {
-    // !! Added safeguard for allNotices !!
     if (!Array.isArray(allNotices)) {
         console.warn("processedNotices: allNotices is not an array!", allNotices);
-        return []; // Return empty array if allNotices is not an array
+        return []; 
     }
-    // console.log(`Processing ${allNotices.length} notices. Filter: [${selectedCategories.join(', ')}], Sort: ${sortOrder}`);
-    let filtered = [...allNotices]; // Safe spread syntax now
+    let filtered = [...allNotices]; 
 
     if (selectedCategories.length > 0) {
       filtered = filtered.filter(
@@ -191,7 +189,7 @@ export default function NoticesScreen() {
     return filtered;
   }, [allNotices, selectedCategories, sortOrder]);
 
-  // Pagination
+
   const totalItems = processedNotices.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const itemsForCurrentPage = useMemo(() => {
@@ -199,16 +197,15 @@ export default function NoticesScreen() {
     return processedNotices.slice(start, start + ITEMS_PER_PAGE);
   }, [processedNotices, currentPage]);
 
-  // --- Effect to Reset Page (remain the same) ---
+
   useEffect(() => {
     const newTotalPages = Math.max(1, Math.ceil(processedNotices.length / ITEMS_PER_PAGE)); // Ensure at least 1 page
-    if (currentPage > newTotalPages) { // Only adjust if current page is > new total
+    if (currentPage > newTotalPages) { 
       setCurrentPage(newTotalPages);
     }
-    // No need for <= 0 check if state initializes to 1 and this logic runs correctly
   }, [processedNotices, currentPage]);
 
-  // --- Event Handlers (remain the same) ---
+
   const handlePageChange = useCallback((newPage) => {
       const safeTotalPages = Math.max(1, totalPages);
       if (newPage >= 1 && newPage <= safeTotalPages) {
@@ -228,7 +225,7 @@ export default function NoticesScreen() {
     setIsFilterModalVisible(false);
   }, []);
 
-  // --- Render Item Function (remain the same) ---
+  // Render Item Function
   const renderNoticeItem = useCallback(({ item }) => (
     <NoticeCard
       data={item}
@@ -241,25 +238,22 @@ export default function NoticesScreen() {
     />
   ), [router]);
 
-  // --- Key Extractor (remain the same) ---
+  // Key Extractor 
   const keyExtractor = useCallback((item) => item.noticeId.toString(), []);
 
-  // --- Custom Empty Component Logic (remain the same) ---
+  //  Custom Empty Component Logic 
    const CustomEmptyComponent = useMemo(() => {
     if(isLoading && allNotices.length === 0) return <ActivityIndicator size="large" color="#0000ff" style={{marginTop: 50}}/>;
     if(error) return <Text style={styles.errorText}>{`Error loading notices: ${error}`}</Text>;
     if (selectedCategories.length > 0 && processedNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noMatchMessage")}</Text>;
-    // Use allNotices.length === 0 check only if not loading and no error
     if (!isLoading && !error && allNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noNoticesMessage")}</Text>;
-    // If filters applied but results are empty, the specific message above handles it.
-    // If no filters and processed is empty, but allNotices wasn't empty initially, this means something unexpected.
-    // Maybe simplify: if processed is empty after loading/error checks, show a generic no items message?
+
     if (processedNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noNoticesMessage")}</Text>;
 
     return null;
    }, [isLoading, error, selectedCategories, allNotices, processedNotices, t]);
 
-  // --- Main Render ---
+
   return (
     <>
       <Header />
@@ -282,7 +276,6 @@ export default function NoticesScreen() {
                 </FlipButton>
               </View>
             )}
-        {/* Controls Container - Admin Button Moved Inside */}
         <View style={styles.controlsContainer}>
             <FlipButton onPress={() => setIsFilterModalVisible(true)} style={styles.controlButton} disabled={isCategoryLoading}>
                 <View style={styles.buttonContent}>
@@ -292,18 +285,13 @@ export default function NoticesScreen() {
             </FlipButton>
             <FlipButton onPress={toggleSortOrder} style={styles.controlButton}>
                 <View style={styles.buttonContent}>
-                    <Ionicons name={sortOrder === "recent" ? "arrow-down" : "arrow-up"} size={20} color="black" style={styles.buttonIcon}/>
-                    <Text style={styles.buttonText}>{t("NoticeBoardScreen_filterLabel")} {sortOrder === "recent" ? t("NoticeBoardScreen_sortOldest") : t("NoticeBoardScreen_sortNewest")}</Text>
+                    <Ionicons name={sortOrder === "recent" ? "arrow-down" : "arrow-up" } size={20} color="black" style={styles.buttonIcon}/>
+                    <Text style={styles.buttonText}>{t("NoticeBoardScreen_filterLabel")} { sortOrder === "recent" ?  t("NoticeBoardScreen_sortNewest") : t("NoticeBoardScreen_sortOldest") }</Text>
                 </View>
             </FlipButton>
-            {/* Admin Button - Render conditionally */}
-             {/* Show placeholder if admin but loading status */}
              {isAdminLoading && <View style={styles.adminButtonPlaceholder} />}
-             {/* Show placeholder if not admin to maintain layout balance? Optional */}
-             {/* {!isAdminLoading && !isAdmin && <View style={styles.adminButtonPlaceholder} />} */}
         </View>
 
-        {/* Paginated List Display */}
         <PaginatedListDisplay
           items={itemsForCurrentPage}
           renderItem={renderNoticeItem}
@@ -317,7 +305,6 @@ export default function NoticesScreen() {
           listContainerStyle={styles.listContainerStyle}
         />
 
-        {/* Filter Modal */}
         <FilterModal
           visible={isFilterModalVisible}
           onClose={() => setIsFilterModalVisible(false)}

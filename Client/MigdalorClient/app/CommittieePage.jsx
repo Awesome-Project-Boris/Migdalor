@@ -79,7 +79,7 @@ export default function CommitteePage() {
   const handleContactPress = () => {
     let url = "";
 
-    let contactValue = "VaadNordiya34234@gmail.com";
+    let contactValue = "awesomeprojectboris@gmail.com";
     url = `mailto:${contactValue}`;
 
     Linking.canOpenURL(url)
