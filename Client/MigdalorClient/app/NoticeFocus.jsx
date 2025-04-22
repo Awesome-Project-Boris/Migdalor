@@ -99,6 +99,18 @@ export default function NoticeFocus() {
     }, [fetchNoticeDetails])
   );
 
+  // Show large loading indicator while fetching
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" />
+        </View>
+      </>
+    );
+  }
+
   if (error) {
     return (
       <>
@@ -199,7 +211,6 @@ export default function NoticeFocus() {
         {/* Back Button outside the Card */}
         <View style={styles.backButtonContainer}>
           <FlipButton style={styles.backButton} onPress={() => router.back()}>
-            {/* Use Tamagui Text for consistency inside button */}
             <Text
               style={styles.backButtonText}
               color="$color12"
@@ -233,7 +244,7 @@ const styles = StyleSheet.create({
     padding: 15,
     paddingBottom: 40,
   },
-  ccentered: {
+  centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",

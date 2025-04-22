@@ -3,17 +3,18 @@ import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { useAuth } from "@/context/AuthProvider"; // Import useAuth
 import { useTranslation } from "react-i18next"; // Import useTranslation
 import i18n from "../app/utils/i18n"; // Assuming your i18n config is here
-import AsyncStorage from "@react-native-async-storage/async-storage"; 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 function Greeting() {
-  
   const [userHebFirstName, setUserHebFirstName] = useState("");
   const [userEngFirstName, setUserEngFirstName] = useState("");
 
-  const { t } = useTranslation(); 
-  const [greetingKey, setGreetingKey] = useState("MainMenuNameplate_greetingGoodMorning"); // Default greeting key
+  const { t } = useTranslation();
+  const [greetingKey, setGreetingKey] = useState(
+    "MainMenuNameplate_greetingGoodMorning"
+  ); // Default greeting key
 
   useEffect(() => {
     const fetchUserNames = async () => {
@@ -21,8 +22,8 @@ function Greeting() {
         const storedHebName = await AsyncStorage.getItem("userHebFirstName");
         const storedEngName = await AsyncStorage.getItem("userEngFirstName");
 
-        setUserHebFirstName(storedHebName || ""); 
-        setUserEngFirstName(storedEngName || ""); 
+        setUserHebFirstName(storedHebName || "");
+        setUserEngFirstName(storedEngName || "");
 
         console.log("Fetched Heb Name:", storedHebName);
         console.log("Fetched Eng Name:", storedEngName);
@@ -36,7 +37,6 @@ function Greeting() {
 
     fetchUserNames(); // Call the async function
   }, []);
-
 
   useEffect(() => {
     const updateGreeting = () => {
@@ -54,14 +54,13 @@ function Greeting() {
     updateGreeting();
   }, []);
 
- 
   const currentLanguage = i18n.language; // Get current language
   const firstName =
     currentLanguage === "he" && userHebFirstName
       ? userHebFirstName
       : userEngFirstName || ""; // Fallback to English name or empty string
 
-console.log("Name from greet plate:", firstName)
+  console.log("Name from greet plate:", firstName);
 
   const fullGreeting = `${t(greetingKey)}${
     firstName ? `, ${firstName}` : ""
@@ -80,7 +79,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: SCREEN_WIDTH * 0.9,
     minHeight: 100, // Use minHeight to allow text wrapping
-    backgroundColor: "#cdb876",
+    // backgroundColor: "#cdb876",
+    backgroundColor: "goldenrod",
     borderRadius: 20,
     marginTop: 20,
     marginBottom: 30,

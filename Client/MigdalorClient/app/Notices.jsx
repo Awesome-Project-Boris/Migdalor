@@ -7,17 +7,18 @@ import React, {
 } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 
-import NoticeCard from "../components/NoticeCard"; //
-import Header from "@/components/Header"; //
-import FlipButton from "../components/FlipButton"; //
-import FilterModal from "../components/NoticeFilterModal"; //
-import PaginatedListDisplay from "@/components/PaginatedListDisplay"; // The reusable component
+import NoticeCard from "../components/NoticeCard";
+import Header from "@/components/Header";
+import FlipButton from "../components/FlipButton";
+import FilterModal from "../components/NoticeFilterModal";
+import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import { Globals } from "../app/constants/Globals"; //
+import { Globals } from "../app/constants/Globals";
 
-const ITEMS_PER_PAGE = 10; // Consistent items per page
+const ITEMS_PER_PAGE = 10;
 
 // Fetches notices
 const fetchNotices = async () => {
@@ -31,11 +32,21 @@ const fetchNotices = async () => {
 };
 
 // Fetches categories
-
-// --- End Fetch Functions ---
+const fetchCategories = async () => {
+  console.log("Fetching categories from API...");
+  const response = await fetch(`${Globals.API_BASE_URL}/api/Categories`);
+  if (!response.ok) {
+    throw new Error(`Failed to load categories: HTTP ${response.status}`);
+  }
+  const rawCategories = await response.json();
+  const availableCategories = rawCategories.map((c) => c.categoryHebName);
+  return availableCategories || [];
+};
 
 export default function NoticesScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const flatListRef = useRef(null);
 
   const [allNotices, setAllNotices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -48,26 +59,6 @@ export default function NoticesScreen() {
   const [sortOrder, setSortOrder] = useState("recent");
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
 
-  const router = useRouter();
-  const flatListRef = useRef(null);
-
-  // --- Data Fetching Callbacks ---
-
-  const fetchCategories = async () => {
-    console.log("Fetching categories from API...");
-    const response = await fetch(`${Globals.API_BASE_URL}/api/Categories`);
-    if (!response.ok) {
-      throw new Error(`Failed to load categories: HTTP ${response.status}`);
-    }
-    const rawCategories = await response.json();
-    // WILL NEED TO CHANGE WHEN WE SORT LANGUAGES
-
-    const availableCategories = rawCategories.map(
-      (c) => c[t("NoticeBoardScreen_filterCategories")]
-    );
-    return availableCategories || [];
-  };
-
   const fetchNoticesCallback = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -77,7 +68,7 @@ export default function NoticesScreen() {
     } catch (err) {
       console.error("Failed to fetch notices:", err);
       setError(err.message || "Failed to load notices.");
-      setAllNotices([]); // Ensure empty array on error
+      setAllNotices([]);
     } finally {
       setIsLoading(false);
     }
@@ -98,30 +89,31 @@ export default function NoticesScreen() {
     }
   }, []);
 
-  // --- Initial Data Load Effect ---
+  // Initial data load
   useEffect(() => {
-    setCurrentPage(1); // Reset page on initial load
+    setCurrentPage(1);
     fetchNoticesCallback();
     fetchCategoriesCallback();
-  }, [fetchNoticesCallback, fetchCategoriesCallback]); // Run once on mount
+  }, [fetchNoticesCallback, fetchCategoriesCallback]);
 
-  // --- Filtering and Sorting ---
+  // Live refresh while screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const intervalId = setInterval(() => {
+        fetchNoticesCallback();
+      }, 3000);
+      return () => clearInterval(intervalId);
+    }, [fetchNoticesCallback])
+  );
+
+  // Filtering & sorting
   const processedNotices = useMemo(() => {
-    console.log(
-      `Processing ${
-        allNotices.length
-      } notices. Filter: [${selectedCategories.join(", ")}], Sort: ${sortOrder}`
-    );
     let filtered = [...allNotices];
-
-    // Apply category filter
     if (selectedCategories.length > 0) {
       filtered = filtered.filter(
         (n) => n.noticeCategory && selectedCategories.includes(n.noticeCategory)
       );
     }
-
-    // Apply sorting
     filtered.sort((a, b) => {
       const dateA = new Date(a.creationDate);
       const dateB = new Date(b.creationDate);
@@ -130,62 +122,46 @@ export default function NoticesScreen() {
       if (isNaN(dateB.getTime())) return -1;
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
-
-    console.log(`Processed down to ${filtered.length} notices.`);
     return filtered;
   }, [allNotices, selectedCategories, sortOrder]);
 
-  // --- Pagination Calculations ---
+  // Pagination
   const totalItems = processedNotices.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-
   const itemsForCurrentPage = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return processedNotices.slice(startIndex, endIndex);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return processedNotices.slice(start, start + ITEMS_PER_PAGE);
   }, [processedNotices, currentPage]);
 
-  // --- Effect to Reset Page When Filters/Sort Change Make Current Page Invalid ---
   useEffect(() => {
-    const newTotalPages = Math.ceil(processedNotices.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotalPages && newTotalPages > 0) {
-      setCurrentPage(newTotalPages);
-    }
-    // Reset to 1 if current page is 0 or less (can happen if list becomes empty)
-    else if (currentPage <= 0 && newTotalPages > 0) {
-      console.log(`Filter/Sort caused page reset from ${currentPage} to 1`);
-      setCurrentPage(1);
-    }
-    // If newTotalPages becomes 0, currentPage should ideally be 1 or 0
-    else if (newTotalPages === 0 && currentPage !== 1) {
-      // setCurrentPage(1); // Or keep current page, PaginatedListDisplay will show empty
-    }
-  }, [processedNotices, currentPage]); // Runs when filtered/sorted data changes
+    const pages = Math.ceil(processedNotices.length / ITEMS_PER_PAGE);
+    if (currentPage > pages && pages > 0) setCurrentPage(pages);
+    else if (currentPage <= 0 && pages > 0) setCurrentPage(1);
+  }, [processedNotices, currentPage]);
 
-  // --- Event Handlers ---
+  // Handlers
   const handlePageChange = useCallback(
     (newPage) => {
-      const safeTotalPages = Math.max(1, totalPages);
-      if (newPage >= 1 && newPage <= safeTotalPages) {
+      const max = Math.max(1, totalPages);
+      if (newPage >= 1 && newPage <= max) {
         setCurrentPage(newPage);
-        flatListRef.current?.scrollToOffset({ animated: true, offset: 0 }); // Scroll to top
+        flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
       }
     },
     [totalPages]
-  ); // Dependency on totalPages
+  );
 
   const toggleSortOrder = useCallback(() => {
-    setCurrentPage(1); // Reset page
+    setCurrentPage(1);
     setSortOrder((prev) => (prev === "recent" ? "oldest" : "recent"));
   }, []);
 
   const handleApplyFilter = useCallback((cats) => {
-    setCurrentPage(1); // Reset page
+    setCurrentPage(1);
     setSelectedCategories(cats);
     setIsFilterModalVisible(false);
   }, []);
 
-  // --- Render Item Function ---
   const renderNoticeItem = useCallback(
     ({ item }) => (
       <NoticeCard
@@ -201,10 +177,8 @@ export default function NoticesScreen() {
     [router]
   );
 
-  // --- Key Extractor ---
   const keyExtractor = useCallback((item) => item.noticeId.toString(), []);
 
-  // --- Custom Empty Component Logic ---
   const CustomEmptyComponent = useMemo(() => {
     if (isLoading && allNotices.length === 0)
       return (
@@ -219,8 +193,7 @@ export default function NoticesScreen() {
         <Text
           style={styles.errorText}
         >{`Error loading notices: ${error}`}</Text>
-      ); // Show notice error
-    // No matching results *after* filtering (and not loading/error)
+      );
     if (selectedCategories.length > 0 && processedNotices.length === 0)
       return (
         <Text style={styles.infoText}>
@@ -239,8 +212,7 @@ export default function NoticesScreen() {
           {t("NoticeBoardScreen_noNoticesMessage")}
         </Text>
       );
-
-    return null; // List has items
+    return null;
   }, [isLoading, error, selectedCategories, allNotices, processedNotices, t]);
 
   return (
@@ -284,7 +256,7 @@ export default function NoticesScreen() {
                 style={styles.buttonIcon}
               />
               <Text style={styles.buttonText}>
-                {t("NoticeBoardScreen_filterLabel")}{" "}
+                {t("NoticeBoardScreen_filterLabel")}
                 {sortOrder === "recent"
                   ? t("NoticeBoardScreen_sortOldest")
                   : t("NoticeBoardScreen_sortNewest")}
@@ -302,7 +274,7 @@ export default function NoticesScreen() {
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
-          flatListRef={flatListRef} // Passing ref
+          flatListRef={flatListRef}
           listContainerStyle={styles.listContainerStyle}
         />
 
@@ -373,9 +345,9 @@ const styles = StyleSheet.create({
   },
   listContainerStyle: {
     paddingHorizontal: 16,
-    paddingBottom: 16, // Padding at the bottom of the list content
-    width: "100%", // List takes full width
-    alignItems: "center", // Center cards within the list area
+    paddingBottom: 16,
+    width: "100%",
+    alignItems: "center",
   },
   errorText: {
     textAlign: "center",
