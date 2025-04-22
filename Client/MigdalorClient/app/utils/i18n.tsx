@@ -237,6 +237,9 @@ const resources = {
       Common_clearAllDataButton: "Clear All Data",
       Common_noResultsFound: "No results found",
 
+      Common_ValidationErrorTitle: "Error",
+      Common_ValidationErrorMsg: "Please fill all required fields",
+
       Common_UpdateButton: "Update", 
       Common_DeleteButton: "Delete", 
       Common_CancelButton: "Cancel", 
@@ -486,6 +489,9 @@ const resources = {
       Common_CancelButton: "ביטול", 
       Common_Error: "שגיאה", 
       Common_noResultsFound: "לא נמצאו תוצאות",
+
+      Common_ValidationErrorTitle: "שגיאה",
+      Common_ValidationErrorMsg: "אנא מלאו את כל השדות הדרושים",
 
       PaginatedList_PreviousButton: "הקודם",
       PaginatedList_NextButton: "הבא",

@@ -9,12 +9,16 @@ import React, {
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 import NoticeCard from "../components/NoticeCard";
 import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import FilterModal from "../components/NoticeFilterModal";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
+
+
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { Globals } from "../app/constants/Globals";
@@ -326,13 +330,13 @@ export default function NoticesScreen() {
   );
 }
 
-// --- Styles --- (Added placeholder style)
+
 const styles = StyleSheet.create({
-    pageContainer: { flex: 1, backgroundColor: "#f7f7f7" },
-    headerContainer: { alignItems: 'center', marginTop: 70 }, // Adjusted marginTop
+    pageContainer: { flex: 1, backgroundColor: "#f7f7f7", alignItems: 'center' },
+    headerContainer: { alignItems: 'center', width: "80%", marginTop: 70 }, 
     pageTitle: { width: "80%", fontSize: 26, fontWeight: "bold", color: "#333", textAlign: "center", marginBottom: 20, borderWidth: 1, borderColor: '#ddd', borderRadius: 25, paddingVertical: 12, backgroundColor: '#fff' },
-    controlsContainer: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", width: '100%', paddingVertical: 10, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: "#eee", backgroundColor: "#fff", marginBottom: 5 },
-    controlButton: { paddingVertical: 8, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderRadius: 6, flexShrink: 1 },
+    controlsContainer: { flexDirection: "row", gap: 15, justifyContent: "center", alignItems: "center", width: '90%', paddingVertical: 10, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: "#eee", backgroundColor: "#fff", marginBottom: 5 },
+    controlButton: { paddingVertical: 8, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderRadius: 6, flexShrink: 1,  },
     newNoticeButton: { paddingVertical: 16, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderRadius: 6, flexShrink: 1, width: 300, marginBottom: 15 },
     newNoticeButtonText: { color: '#ffffff' },
     newNoticeButtonContainer: {width: "100%", alignItems: 'center'},
@@ -342,12 +346,11 @@ const styles = StyleSheet.create({
     listContainerStyle: { paddingHorizontal: 16, paddingBottom: 16, width: '100%', alignItems: 'center' },
     errorText: { textAlign: "center", fontSize: 16, marginVertical: 20, color: "red", paddingHorizontal: 20 },
     infoText: { textAlign: "center", fontSize: 16, marginVertical: 20, color: "#666", paddingHorizontal: 20 },
-    // Placeholder to help balance layout when admin button isn't shown
+
     adminButtonPlaceholder: {
       paddingVertical: 8,
       paddingHorizontal: 10,
-      // Match dimensions/padding of other buttons roughly, but make it invisible
       opacity: 0,
-      // You might need to adjust this based on the exact size of the other buttons
+
     }
 });
