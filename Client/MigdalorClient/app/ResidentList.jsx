@@ -29,26 +29,8 @@ import { Globals } from "./constants/Globals";
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 10; 
 
-// --- Mock Data Function (Modified to return ALL users) ---
+const API_BASE_URL = Globals.API_BASE_URL;
 
-const fetchAllUsersAPI = async () => {
-  console.log(`Workspaceing ALL mock users...`);
-  await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
-  const allMockUsers = Array.from({ length: 150 }, (_, i) => ({
-    userId: `user_${i + 1}`,
-    name: `User ${String.fromCharCode(65 + (i % 26))}${i}`,
-    photoUrl: `https://i.pravatar.cc/150?u=user${i + 1}`,
-    // Keep hobby data for filtering example
-    _hobbies_server_only: [
-      "hobby " + ((i % 5) + 1),
-      "activity " + ((i % 3) + 1),
-      i % 4 === 0 ? "reading" : "music",
-    ],
-  }));
-  console.log(`API returning ${allMockUsers.length} mock users total.`);
-  return allMockUsers; // Return the full list
-};
-// --- End Mock API ---
 
 export default function ResidentList() {
   const { t } = useTranslation();
@@ -64,12 +46,21 @@ export default function ResidentList() {
   const flatListRef = useRef(null); // Keep if scroll-to-top needed
 
 
-  const fetchAllUsersCallback = useCallback(async () => { // Renamed for clarity
+  const fetchAllUsersCallback = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Replace with actual API 
-      const data = await fetchAllUsersAPI();
+      const apiUrl = `${API_BASE_URL}/api/People/ActiveDigests`;
+      console.log(`Fetching users from: ${apiUrl}`);
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(
+          `HTTP error ${response.status}: ${response.statusText}. ${errorBody}`
+        );
+      }
+      const data = await response.json();
+      console.log(`API returned ${data?.length ?? 0} users.`);
       setAllUsers(data || []);
     } catch (err) {
       console.error("Failed to fetch users:", err);
@@ -78,11 +69,11 @@ export default function ResidentList() {
     } finally {
       setIsLoading(false);
     }
-  }, []); 
+  }, []);
 
   useEffect(() => {
     fetchAllUsersCallback();
-  }, [fetchAllUsersCallback]); 
+  }, [fetchAllUsersCallback]);
 
   // --- Filtering Logic ---
   const filteredUsers = useMemo(() => {

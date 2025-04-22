@@ -2,6 +2,7 @@
 using MigdalorServer.BL;
 using MigdalorServer.Database;
 using MigdalorServer.Models.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 namespace MigdalorServer.Models
 {
@@ -158,6 +159,59 @@ namespace MigdalorServer.Models
 
             return result;
         }
+
+        public static async Task<List<ResidentDigest>> GetActiveResidentDigestsAsync(
+       MigdalorDBContext context) // Removed imageBaseUrl parameter
+        {
+            if (context == null) throw new ArgumentNullException(nameof(context));
+            // Removed check for imageBaseUrl
+
+            // Explicitly join OhResidents, OhPeople, and OhPictures
+            var query = context.OhResidents
+                .Where(r => r.IsActive)
+                .Join(context.OhPeople,
+                      resident => resident.ResidentId,
+                      person => person.PersonId,
+                      (resident, person) => new { resident, person })
+                .GroupJoin(context.OhPictures,
+                      rp => rp.person.ProfilePicId,
+                      picture => picture.PicId,
+                      (residentPersonPair, pictures) => new
+                      {
+                          residentPersonPair.resident,
+                          residentPersonPair.person,
+                          picture = pictures.FirstOrDefault()
+                      });
+
+            // Project the final result into the DTO
+            var digests = await query
+                .Select(joined => new ResidentDigest
+                {
+                    UserId = joined.person.PersonId,
+                    HebFirstName = joined.person.HebFirstName,
+                    HebLastName = joined.person.HebLastName,
+                    EngFirstName = joined.person.EngFirstName,
+                    EngLastName = joined.person.EngLastName,
+
+                    // Construct relative PhotoUrl: Combine Path and Name
+                    PhotoUrl = (joined.picture != null &&
+                                !string.IsNullOrEmpty(joined.picture.PicPath) &&
+                                !string.IsNullOrEmpty(joined.picture.PicName))
+                               // Combine path and name. Ensure no double slashes.
+                               ? $"{joined.picture.PicPath.TrimEnd('/')}/{joined.picture.PicName.TrimStart('/')}"
+                               // Alternative using Path.Combine (might behave differently on non-Windows if paths have backslashes)
+                               // ? Path.Combine(joined.picture.PicPath, joined.picture.PicName).Replace("\\", "/") // Ensure forward slashes for URL
+                               : null // Set to null if picture or path/name is missing
+                })
+                .ToListAsync();
+
+            return digests;
+        }
+
+
+        // --- Add other static resident-related logic methods here if needed ---
+
+
 
         public static OhPerson AddUser(UserRegister user)
         {
