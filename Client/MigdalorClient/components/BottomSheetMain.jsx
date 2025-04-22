@@ -85,7 +85,7 @@ export const BottomSheetProvider = ({ children }) => {
             <FlipButton
               style={styles.button}
               onPress={() => {
-                router.navigate("./FontSettings");
+                router.replace("/FontSettings");
                 setEditing(false);
                 bottomSheetRef.current?.close();
               }}
