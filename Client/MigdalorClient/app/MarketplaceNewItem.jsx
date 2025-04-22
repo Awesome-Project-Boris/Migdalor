@@ -7,7 +7,6 @@ import {
   ScrollView,
   Dimensions,
   Alert,
-  ActivityIndicator, // Added ActivityIndicator
 } from "react-native";
 import { Image as ExpoImage } from "expo-image"; // Use Expo Image
 import * as FileSystem from "expo-file-system";
@@ -39,22 +38,23 @@ export default function AddNewItem() {
   const { t } = useTranslation();
   const [itemName, setItemName] = useState("");
   const [itemDescription, setItemDescription] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
+  const [showConfirm, setShowConfirm] = useState(false); // "Are you sure?" modal
+  const [isSubmitting, setIsSubmitting] = useState(false); // Submission process has begun
+  const [formErrors, setFormErrors] = useState({}); // Do we have any errors?
 
   const [originalMainPicId, setOriginalMainPicId] = useState(null); // Store original ID for deletion check
-  const [originalExtraPicId, setOriginalExtraPicId] = useState(null);
+  const [originalExtraPicId, setOriginalExtraPicId] = useState(null); 
 
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams(); // Are we on edit or new item mode?
   const API = Globals.API_BASE_URL;
 
   const isEditMode = params.mode === 'edit';
 
-  const initialData = useMemo(() => {
+  const initialData = useMemo(() => { // Do we have initial data ( are we editing a listing )?
     if (!params.listingData) {
         return null;
     }
+
     try {
         return JSON.parse(params.listingData);
     } catch (e) {
@@ -62,6 +62,7 @@ export default function AddNewItem() {
         return null; 
     }
 }, [params.listingData]);
+
 
   const itemNameRef = useRef(null);
   const itemDescriptionRef = useRef(null);
@@ -76,7 +77,7 @@ export default function AddNewItem() {
   const DESCRIPTION_LIMIT = 300;
   const ESCAPED_DESCRIPTION_LIMIT = 400;
 
-  const copyImageToAppDir = async (sourceUri, prefix) => {
+  const copyImageToAppDir = async (sourceUri, prefix) => { // Copying a temporary image before server upload to a local library
     try {
       const filename = `${prefix}-${Date.now()}-${sourceUri.split("/").pop()}`;
       const destinationUri = FileSystem.documentDirectory + filename;
@@ -90,13 +91,13 @@ export default function AddNewItem() {
     }
   };
 
-  useEffect(() => {
+  useEffect(() => { // if we're editing a listing, we populate the variables for the form
     if (isEditMode && initialData) {
       console.log("Edit Mode: Pre-filling form with:", initialData);
       setItemName(initialData.title || "");
       setItemDescription(initialData.description || "");
 
-      // Set image URIs for display (these are full URLs from server)
+      // Set image URIs for display ( full URLs from server)
       const initialMainUrl = initialData.mainPicture?.picPath
           ? `${Globals.API_BASE_URL}${initialData.mainPicture.picPath}`
           : null;
@@ -113,7 +114,8 @@ export default function AddNewItem() {
     }
   }, [isEditMode, initialData]);
 
-  // --- Helper: Safely Delete Local File ---
+  
+  // Helper to delete local files when they're not needed anymore ( cancelled / uploaded to server already)
   const safeDeleteFile = async (uri) => {
     if (!uri || !uri.startsWith("file://")) return;
     try {
@@ -125,8 +127,8 @@ export default function AddNewItem() {
     }
   };
 
-  // --- Image Picker ---
-  const pickImage = async (setImage) => {
+  // Image Picker - Image library or a new photo
+  const pickImage = async (setImage) => { // Step 3 : this setImage is a Hook Setter - the uri value we pass into it is the new photo candidate
     const libraryPermission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (libraryPermission.status !== "granted") {
@@ -216,12 +218,12 @@ export default function AddNewItem() {
     );
   };
 
+  // Field verification - we're escaping special characters ( in the serverside ) to avoid SQL attacks. This calculates length with escapes.
   const validateField = (name, value) => {
-    const trimmedValue = value; // Don't trim here
+    const trimmedValue = value; 
     switch (name) {
       case "itemName":
         if (!trimmedValue.trim()) {
-          // Trim only for the required check
           return t("MarketplaceNewItemScreen_errorTitleRequired");
         }
         if (value.length >= ITEM_NAME_LIMIT) {
@@ -233,7 +235,7 @@ export default function AddNewItem() {
         return null; // No error
 
       case "itemDescription":
-        // First, check raw length against visual/DB limit
+        // check raw length against DB limit
         if (value.length >= DESCRIPTION_LIMIT) {
           // Check raw length >= limit
           return t("MarketplaceNewItemScreen_errorDescriptionTooLong", {
@@ -265,16 +267,16 @@ export default function AddNewItem() {
     // Prevent exceeding visual limits directly
     if (name === "itemName") {
       if (value.length > ITEM_NAME_LIMIT) {
-        limitedValue = value.substring(0, ITEM_NAME_LIMIT); // Truncate visually
+        limitedValue = value.substring(0, ITEM_NAME_LIMIT); // Cut visually
       }
       setItemName(limitedValue);
-      error = validateField(name, limitedValue); // Validate the potentially truncated value
+      error = validateField(name, limitedValue); // Validate the potentially cut value
     } else if (name === "itemDescription") {
       if (value.length > DESCRIPTION_LIMIT) {
-        limitedValue = value.substring(0, DESCRIPTION_LIMIT); // Truncate visually
+        limitedValue = value.substring(0, DESCRIPTION_LIMIT); // cut visually
       }
       setItemDescription(limitedValue);
-      error = validateField(name, limitedValue); // Validate the potentially truncated value
+      error = validateField(name, limitedValue); // Validate the potentially cut value
     }
 
     // Update errors state
@@ -291,7 +293,7 @@ export default function AddNewItem() {
     setOriginalMainPicId(null); setOriginalExtraPicId(null); // Reset original IDs too
   };
 
-  // --- Cancel Logic ---
+  // Cancel Logic 
   const handleCancel = async () => {
     // In edit mode, simply go back without confirmation for now, or add confirmation if needed
     if (isEditMode) {
@@ -301,15 +303,19 @@ export default function AddNewItem() {
    if (hasUnsavedChanges()) { setShowConfirm(true); }
    else { await resetState(); router.back(); }
  };
+
  const confirmCancel = async () => { setShowConfirm(false); await resetState(); router.back(); };
  const hasUnsavedChanges = () => itemName.trim() !== (initialData?.title || "") || itemDescription.trim() !== (initialData?.description || "") || (mainImage && mainImage.startsWith('file://')) || (extraImage && extraImage.startsWith('file://')) || (isEditMode && mainImage === null && originalMainPicId !== null) || (isEditMode && extraImage === null && originalExtraPicId !== null);
 
+
+
   // --- Image Viewing/Removal Logic ---
   const [showImageViewModal, setShowImageViewModal] = useState(false);
-  const [imageToViewUri, setImageToViewUri] = useState(null);
-  const [imageTypeToClear, setImageTypeToClear] = useState(null);
+  const [imageToViewUri, setImageToViewUri] = useState(null); // Image currently being viewed 
+  const [imageTypeToClear, setImageTypeToClear] = useState(null); // Are we clearing the main or extra?
 
-  const viewOrPickImage = (type) => {
+
+  const viewOrPickImage = (type) => { // Step 2 : after user clicks the card, we check if type is main or not. if it is and there's a URI, it's of the main's image.
     const currentImageUri = type === "main" ? mainImage : extraImage;
     if (currentImageUri) {
       // If it's an existing image (http) or a newly picked one (file)
@@ -317,7 +323,7 @@ export default function AddNewItem() {
       setImageTypeToClear(type); // Keep track of which image slot it is
       setShowImageViewModal(true);
     } else {
-      // If null, trigger image picker
+      // If there's no image assgined to the card, we trigger the image picker W/ a hook setter!
       pickImage(type === "main" ? setMainImage : setExtraImage);
     }
   };
@@ -461,48 +467,43 @@ const deletePicture = async (pictureId) => {
     let finalExtraPicId = isEditMode ? originalExtraPicId : null;
     let picsToDeleteOnSuccess = [];
 
-    // --- Step 1: Upload Pictures (unchanged logic, but ensure itemName used for alt text is trimmed) ---
+    //  Step 1: Upload Pictures 
     try {
-      // --- Step 1: Handle Main Image ---
-      if (mainImage && mainImage.startsWith('file://')) { // New image selected
-          if (isEditMode && originalMainPicId) picsToDeleteOnSuccess.push(originalMainPicId); // Mark old one for deletion
-          const altText = `Main photo for ${trimmedItemName}`; // Generate Alt Text
-          finalMainPicId = await uploadImage(mainImage, 'marketplace', altText, currentUserId);
-      } else if (mainImage === null && isEditMode && originalMainPicId) { // Image explicitly removed
+      // Step 1a: Main Picture 
+      if (mainImage && mainImage.startsWith('file://')) { // New photo selected, temp from device
+          if (isEditMode && originalMainPicId) picsToDeleteOnSuccess.push(originalMainPicId); // Mark old one for deletion if we're in edit mode
+          const altText = `Main photo for ${trimmedItemName}`; // Alt text for photo
+          finalMainPicId = await uploadImage(mainImage, 'marketplace', altText, currentUserId); // uploading the new Photo to ther server and getting its ID
+      } else if (mainImage === null && isEditMode && originalMainPicId) { // main photo was removed in edit mode
           picsToDeleteOnSuccess.push(originalMainPicId);
           finalMainPicId = null;
       } 
 
-      // --- Step 2: Handle Extra Image ---
-       if (extraImage && extraImage.startsWith('file://')) { // New image selected
-          if (isEditMode && originalExtraPicId) picsToDeleteOnSuccess.push(originalExtraPicId); // Mark old one for deletion
-          const altText = `Extra photo for ${trimmedItemName}`; // Generate Alt Text
+      //  Step 2a: Handle Extra Image - same as Main
+       if (extraImage && extraImage.startsWith('file://')) { 
+          if (isEditMode && originalExtraPicId) picsToDeleteOnSuccess.push(originalExtraPicId); 
+          const altText = `Extra photo for ${trimmedItemName}`; 
           finalExtraPicId = await uploadImage(extraImage, 'marketplace_extra', altText, currentUserId);
-      } else if (extraImage === null && isEditMode && originalExtraPicId) { // Image explicitly removed
+      } else if (extraImage === null && isEditMode && originalExtraPicId) { 
           picsToDeleteOnSuccess.push(originalExtraPicId);
           finalExtraPicId = null;
       } 
 
 
-      // --- Step 3: Create or Update Listing ---
+      // Step 3a: Create or Update Listing
       if (isEditMode) {
            const currentListingId = initialData?.listingId;
            const updateDto = {
-               // ListingId is needed for the URL, not usually the body
                Title: trimmedItemName,
                Description: trimmedItemDescription,
-               // SellerId typically shouldn't change, but include if API allows/requires
                MainPicId: finalMainPicId,
                ExtraPicId: finalExtraPicId,
-               // Add any other fields your Update DTO needs (like IsActive?)
            };
            console.log(`Attempting to update listing ID: ${currentListingId} with data:`, updateDto);
 
-           // ** TODO: Implement Backend Call **
-           // Requires: PUT /api/Listings/{id} endpoint
            const updateResponse = await fetch(`${API}/api/Listings/${currentListingId}`, {
                method: 'PUT',
-               headers: { 'Content-Type': 'application/json' /* Add Auth */ },
+               headers: { 'Content-Type': 'application/json' },
                body: JSON.stringify(updateDto)
            });
 
@@ -511,17 +512,16 @@ const deletePicture = async (pictureId) => {
                throw new Error(errorData?.message || `Failed to update listing (HTTP ${updateResponse.status})`);
            }
 
-          //  const updateResult = await updateResponse.json(); // Or handle 204 No Content if API returns that
 
            Toast.show({ type: 'success', text1: t("MarketplaceEditItemScreen_UpdateSuccess") });
-           // Now delete old pictures *after* successful update
+           // Here we delete old pictures *after* a successful update
            for (const picId of picsToDeleteOnSuccess) {
                await deletePicture(picId); // Await deletion, but maybe don't stop if one fails
            }
            router.back(); // Go back after successful update and attempted deletions
 
       } else {
-           // --- CREATE --- (Original Logic)
+           // Creating a list - not in edit mode
            const listingData = { Title: trimmedItemName, Description: trimmedItemDescription, SellerId: currentUserId, MainPicId: finalMainPicId, ExtraPicId: finalExtraPicId };
            console.log("Attempting to create listing with data:", listingData);
            const listingResponse = await fetch(`${API}/api/Listings/Create`, { method: "POST", headers: { "Content-Type": "application/json" /* Add Auth */ }, body: JSON.stringify(listingData) });
@@ -534,8 +534,6 @@ const deletePicture = async (pictureId) => {
 
   } catch (error) { // Catch errors from upload, update, or create steps
       console.error("Listing submission step failed:", error);
-      // Toast was likely already shown in uploadImage or deletePicture, or show generic one here
-      // Toast.show({ type: "error", text1: t(isEditMode ? "MarketplaceEditItemScreen_UpdateFailedTitle" : "MarketplaceNewItemScreen_listingCreationFailedTitle"), text2: error.message, position: "top" });
   } finally {
       setIsSubmitting(false);
   }
@@ -602,7 +600,7 @@ const deletePicture = async (pictureId) => {
               borderRadius="$4"
               overflow="hidden"
               margin={10}
-              onPress={() => viewOrPickImage("main")}
+              onPress={() => viewOrPickImage("main")} // Step 1 of picking or viewing the card's image
             >
               {mainImage ? (
                 <>
@@ -654,7 +652,7 @@ const deletePicture = async (pictureId) => {
               height={150}
               borderRadius="$4"
               overflow="hidden"
-              onPress={() => viewOrPickImage("extra")}
+              onPress={() => viewOrPickImage("extra")} // Step 1 of picking or viewing the card's image
             >
               {extraImage ? (
                 <>

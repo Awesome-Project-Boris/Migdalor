@@ -44,26 +44,20 @@ namespace MigdalorServer.Models
             try
             {
                 using MigdalorDBContext db = new();
-                Console.WriteLine("[AddOhNotice] Created new DbContext instance.");
 
                 db.OhNotices.Add(ohNotice);
-                Console.WriteLine("[AddOhNotice] Added entity to DbContext.");
 
-                Console.WriteLine("[AddOhNotice] Calling SaveChanges...");
-                db.SaveChanges(); // --- The likely point of failure ---
-                Console.WriteLine($"[AddOhNotice] SaveChanges SUCCEEDED. New NoticeID: {ohNotice.NoticeId}");
+                db.SaveChanges(); 
+
 
                 return ohNotice;
             }
             catch (Exception dbEx)
             {
-                // --- !! Log the specific DB/SaveChanges exception !! ---
-                Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                Console.WriteLine("[AddOhNotice] EXCEPTION during Add/SaveChanges:");
-                Console.WriteLine(dbEx.ToString()); // Log the FULL exception details + stack trace
-                Console.WriteLine("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-                // --- End Logging ---
-                throw; // Re-throw so the controller's catch block (and logger) can see it
+
+                Console.WriteLine(dbEx.ToString()); 
+
+                throw; 
             }
         }
 
