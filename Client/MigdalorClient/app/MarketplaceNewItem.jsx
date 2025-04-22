@@ -1,4 +1,11 @@
-import React, { useState, useContext, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useContext,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   Modal,
   View,
@@ -8,19 +15,18 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
-import { Image as ExpoImage } from "expo-image"; // Use Expo Image
+import { Image as ExpoImage } from "expo-image";
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter, useLocalSearchParams } from "expo-router"
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Toast } from "toastify-react-native";
 import FlipButton from "../components/FlipButton";
 import ImageViewModal from "../components/ImageViewModal";
 import FloatingLabelInput from "../components/FloatingLabelInput";
-import { useTranslation } from "react-i18next"; 
+import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "@/app/constants/Globals";
-import { Keyboard } from 'react-native';
-
+import { Keyboard } from "react-native";
 
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
 
@@ -48,28 +54,27 @@ export default function AddNewItem() {
   const params = useLocalSearchParams(); // Are we on edit or new item mode?
   const API = Globals.API_BASE_URL;
 
-  const isEditMode = params.mode === 'edit';
+  const isEditMode = params.mode === "edit";
 
   const initialData = useMemo(() => { // Do we have initial data ( are we editing a listing )?
     if (!params.listingData) {
-        return null;
+      return null;
     }
 
     try {
-        return JSON.parse(params.listingData);
+      return JSON.parse(params.listingData);
     } catch (e) {
-        console.error("Failed to parse listingData param:", e);
-        return null; 
+      console.error("Failed to parse listingData param:", e);
+      return null;
     }
-}, [params.listingData]);
+  }, [params.listingData]);
 
 
   const itemNameRef = useRef(null);
   const itemDescriptionRef = useRef(null);
 
-  // State for Local Image URIs
-  const [mainImage, setMainImage] = useState(null); // Stores LOCAL URI after picking/copying
-  const [extraImage, setExtraImage] = useState(null); // Stores LOCAL URI after picking/copying
+  const [mainImage, setMainImage] = useState(null);
+  const [extraImage, setExtraImage] = useState(null);
 
   const router = useRouter();
 
@@ -99,16 +104,15 @@ export default function AddNewItem() {
 
       // Set image URIs for display ( full URLs from server)
       const initialMainUrl = initialData.mainPicture?.picPath
-          ? `${Globals.API_BASE_URL}${initialData.mainPicture.picPath}`
-          : null;
+        ? `${Globals.API_BASE_URL}${initialData.mainPicture.picPath}`
+        : null;
       const initialExtraUrl = initialData.extraPicture?.picPath
-          ? `${Globals.API_BASE_URL}${initialData.extraPicture.picPath}`
-          : null;
+        ? `${Globals.API_BASE_URL}${initialData.extraPicture.picPath}`
+        : null;
 
       setMainImage(initialMainUrl);
       setExtraImage(initialExtraUrl);
 
-      // Store original IDs
       setOriginalMainPicId(initialData.mainPicture?.picId || null);
       setOriginalExtraPicId(initialData.extraPicture?.picId || null);
     }
@@ -227,25 +231,22 @@ export default function AddNewItem() {
           return t("MarketplaceNewItemScreen_errorTitleRequired");
         }
         if (value.length >= ITEM_NAME_LIMIT) {
-          // Check raw length >= limit
           return t("MarketplaceNewItemScreen_errorTitleTooLong", {
             count: ITEM_NAME_LIMIT,
           });
         }
-        return null; // No error
+        return null;
 
       case "itemDescription":
         // check raw length against DB limit
         if (value.length >= DESCRIPTION_LIMIT) {
-          // Check raw length >= limit
           return t("MarketplaceNewItemScreen_errorDescriptionTooLong", {
             count: DESCRIPTION_LIMIT,
           });
         }
-        // If raw length is okay, check estimated escaped length
+
         const estimatedLength = estimateEscapedLength(value);
         if (estimatedLength >= ESCAPED_DESCRIPTION_LIMIT) {
-          // Check estimated >= 400
           return t(
             "MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars",
             {
@@ -253,7 +254,7 @@ export default function AddNewItem() {
             }
           );
         }
-        return null; // No error
+        return null;
 
       default:
         return null;
@@ -264,7 +265,6 @@ export default function AddNewItem() {
     let limitedValue = value;
     let error = null;
 
-    // Prevent exceeding visual limits directly
     if (name === "itemName") {
       if (value.length > ITEM_NAME_LIMIT) {
         limitedValue = value.substring(0, ITEM_NAME_LIMIT); // Cut visually
@@ -279,26 +279,27 @@ export default function AddNewItem() {
       error = validateField(name, limitedValue); // Validate the potentially cut value
     }
 
-    // Update errors state
     setFormErrors((prev) => ({ ...prev, [name]: error }));
   };
 
-  // Resetting the form
   const resetState = async () => {
-    setItemName(''); setItemDescription('');
-    // Only delete file URIs, not HTTP URIs
-    await safeDeleteFile(mainImage); await safeDeleteFile(extraImage);
-    setMainImage(null); setExtraImage(null);
+    setItemName("");
+    setItemDescription("");
+
+    await safeDeleteFile(mainImage);
+    await safeDeleteFile(extraImage);
+    setMainImage(null);
+    setExtraImage(null);
     setFormErrors({});
-    setOriginalMainPicId(null); setOriginalExtraPicId(null); // Reset original IDs too
+    setOriginalMainPicId(null);
+    setOriginalExtraPicId(null);
   };
 
   // Cancel Logic 
   const handleCancel = async () => {
-    // In edit mode, simply go back without confirmation for now, or add confirmation if needed
     if (isEditMode) {
-        router.back();
-        return;
+      router.back();
+      return;
     }
    if (hasUnsavedChanges()) { setShowConfirm(true); }
    else { await resetState(); router.back(); }
@@ -318,9 +319,8 @@ export default function AddNewItem() {
   const viewOrPickImage = (type) => { // Step 2 : after user clicks the card, we check if type is main or not. if it is and there's a URI, it's of the main's image.
     const currentImageUri = type === "main" ? mainImage : extraImage;
     if (currentImageUri) {
-      // If it's an existing image (http) or a newly picked one (file)
       setImageToViewUri(currentImageUri);
-      setImageTypeToClear(type); // Keep track of which image slot it is
+      setImageTypeToClear(type);
       setShowImageViewModal(true);
     } else {
       // If there's no image assgined to the card, we trigger the image picker W/ a hook setter!
@@ -328,17 +328,15 @@ export default function AddNewItem() {
     }
   };
 
-
   const handleRemoveImage = async () => {
-    const uriToDelete = imageToViewUri; // The URI currently being viewed
+    const uriToDelete = imageToViewUri;
 
     if (imageTypeToClear === "main") {
-      setMainImage(null); // Clear the state URI
+      setMainImage(null);
     } else if (imageTypeToClear === "extra") {
       setExtraImage(null);
     }
 
-    // Only delete the local file if it's a newly selected one
     await safeDeleteFile(uriToDelete);
 
     setShowImageViewModal(false);
@@ -347,9 +345,11 @@ export default function AddNewItem() {
   };
 
   const uploadImage = async (imageUri, role, altText, uploaderId) => {
-    if (!imageUri || !imageUri.startsWith('file://')) {
-        console.log(`Skipping upload for non-local file or null URI: ${imageUri}`);
-        return null; // Not a local file to upload
+    if (!imageUri || !imageUri.startsWith("file://")) {
+      console.log(
+        `Skipping upload for non-local file or null URI: ${imageUri}`
+      );
+      return null;
     }
 
     console.log(`Uploading image: ${role}`);
@@ -357,63 +357,80 @@ export default function AddNewItem() {
     const fileType = imageUri.substring(imageUri.lastIndexOf(".") + 1);
     const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
 
-    formData.append("files", { uri: imageUri, name: `${role}.${fileType}`, type: mimeType });
+    formData.append("files", {
+      uri: imageUri,
+      name: `${role}.${fileType}`,
+      type: mimeType,
+    });
     formData.append("picRoles", role);
     formData.append("picAlts", altText);
     formData.append("uploaderId", uploaderId);
 
     try {
-        const uploadResponse = await fetch(`${API}/api/Picture`, { method: "POST", body: formData });
-        const uploadResults = await uploadResponse.json(); // Assume server always returns JSON
+      const uploadResponse = await fetch(`${API}/api/Picture`, {
+        method: "POST",
+        body: formData,
+      });
+      const uploadResults = await uploadResponse.json();
 
-        if (!uploadResponse.ok || !Array.isArray(uploadResults) || uploadResults.length === 0 || !uploadResults[0].success) {
-            const errorMsg = uploadResults?.[0]?.errorMessage || `Image upload failed (HTTP ${uploadResponse.status})`;
-            throw new Error(errorMsg);
-        }
-        console.log(`Upload successful for ${role}:`, uploadResults[0]);
-        await safeDeleteFile(imageUri); // Clean up local copy after successful upload
-        return uploadResults[0].picId; // Return the new PicID
-
+      if (
+        !uploadResponse.ok ||
+        !Array.isArray(uploadResults) ||
+        uploadResults.length === 0 ||
+        !uploadResults[0].success
+      ) {
+        const errorMsg =
+          uploadResults?.[0]?.errorMessage ||
+          `Image upload failed (HTTP ${uploadResponse.status})`;
+        throw new Error(errorMsg);
+      }
+      console.log(`Upload successful for ${role}:`, uploadResults[0]);
+      await safeDeleteFile(imageUri);
+      return uploadResults[0].picId;
     } catch (error) {
-        console.error(`Image upload failed for ${role}:`, error);
-        Toast.show({ type: 'error', text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"), text2: error.message, position: "top" });
-        // Decide if failure is critical. Maybe throw error to stop handleSubmit?
-        throw error; // Re-throw to stop the submission process
-    }
-};
+      console.error(`Image upload failed for ${role}:`, error);
+      Toast.show({
+        type: "error",
+        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
+        text2: error.message,
+        position: "top",
+      });
 
-const deletePicture = async (pictureId) => {
-  if (!pictureId) return; // No ID to delete
-  console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
-  try {
-      // ** TODO: Implement Backend Call **
-      // Requires: DELETE /api/Picture/{pictureId} endpoint
+      throw error;
+    }
+  };
+
+  const deletePicture = async (pictureId) => {
+    if (!pictureId) return;
+    console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
+    try {
       const response = await fetch(`${API}/api/Picture/${pictureId}`, {
-          method: 'DELETE',
-          // Add Auth headers if needed
+        method: "DELETE",
       });
 
       if (!response.ok) {
-           let errorMsg = `Failed to delete picture ${pictureId} (HTTP ${response.status})`;
-           try { const errData = await response.json(); errorMsg = errData.message || errorMsg; } catch {}
-           throw new Error(errorMsg);
+        let errorMsg = `Failed to delete picture ${pictureId} (HTTP ${response.status})`;
+        try {
+          const errData = await response.json();
+          errorMsg = errData.message || errorMsg;
+        } catch {}
+        throw new Error(errorMsg);
       }
       console.log(`Successfully deleted picture ID: ${pictureId} via API.`);
-      // No need to delete local file here, as it's an existing server file
-
-  } catch (err) {
+    } catch (err) {
       console.error(`Failed to delete picture ID ${pictureId}:`, err);
-      // Log error, maybe show a non-blocking warning to user?
-      Toast.show({ type: 'warning', text1: t("MarketplaceItemScreen_PicDeleteErrorTitle"), text2: err.message });
-      // Don't necessarily stop the whole edit process if old pic deletion fails
-  }
-};
 
-  // --- Main Submission Handler ---
+      Toast.show({
+        type: "warning",
+        text1: t("MarketplaceItemScreen_PicDeleteErrorTitle"),
+        text2: err.message,
+      });
+    }
+  };
+
   const handleSubmit = async () => {
-    Keyboard.dismiss(); 
+    Keyboard.dismiss();
 
-    // --- Perform Full Validation ---
     const titleError = validateField("itemName", itemName);
     const descriptionError = validateField("itemDescription", itemDescription);
     const currentErrors = {
@@ -421,27 +438,26 @@ const deletePicture = async (pictureId) => {
       itemDescription: descriptionError,
     };
     setFormErrors(currentErrors);
-    // --- Check for Errors and Focus ---
+
     if (titleError || descriptionError) {
       Toast.show({
         type: "error",
-        text1: t("Common_ValidationErrorTitle"), // Generic validation error title
-        text2: t("Common_ValidationErrorMsg"), // Generic message
+        text1: t("Common_ValidationErrorTitle"),
+        text2: t("Common_ValidationErrorMsg"),
         position: "top",
       });
-      // Focus on the first field with an error
+
       if (titleError && itemNameRef.current) {
         itemNameRef.current.focus();
       } else if (descriptionError && itemDescriptionRef.current) {
         itemDescriptionRef.current.focus();
       }
-      return; // Stop submission
+      return;
     }
-    // --- Trim values before sending ---
+
     const trimmedItemName = itemName.trim();
     const trimmedItemDescription = itemDescription.trim();
 
-    // --- Get User ID (unchanged) ---
     let currentUserId = null;
     try {
       currentUserId = await AsyncStorage.getItem("userID");
@@ -532,33 +548,131 @@ const deletePicture = async (pictureId) => {
            router.back();
       }
 
-  } catch (error) { // Catch errors from upload, update, or create steps
+      if (extraImage && extraImage.startsWith("file://")) {
+        if (isEditMode && originalExtraPicId)
+          picsToDeleteOnSuccess.push(originalExtraPicId);
+        const altText = `Extra photo for ${trimmedItemName}`;
+        finalExtraPicId = await uploadImage(
+          extraImage,
+          "marketplace_extra",
+          altText,
+          currentUserId
+        );
+      } else if (extraImage === null && isEditMode && originalExtraPicId) {
+        picsToDeleteOnSuccess.push(originalExtraPicId);
+        finalExtraPicId = null;
+      }
+
+      if (isEditMode) {
+        const currentListingId = initialData?.listingId;
+        const updateDto = {
+          Title: trimmedItemName,
+          Description: trimmedItemDescription,
+
+          MainPicId: finalMainPicId,
+          ExtraPicId: finalExtraPicId,
+        };
+        console.log(
+          `Attempting to update listing ID: ${currentListingId} with data:`,
+          updateDto
+        );
+
+        const updateResponse = await fetch(
+          `${API}/api/Listings/${currentListingId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" /* Add Auth */ },
+            body: JSON.stringify(updateDto),
+          }
+        );
+
+        if (!updateResponse.ok) {
+          let errorData = {};
+          try {
+            errorData = await updateResponse.json();
+          } catch {}
+          throw new Error(
+            errorData?.message ||
+              `Failed to update listing (HTTP ${updateResponse.status})`
+          );
+        }
+
+        Toast.show({
+          type: "success",
+          text1: t("MarketplaceEditItemScreen_UpdateSuccess"),
+        });
+
+        for (const picId of picsToDeleteOnSuccess) {
+          await deletePicture(picId);
+        }
+        router.back();
+      } else {
+        const listingData = {
+          Title: trimmedItemName,
+          Description: trimmedItemDescription,
+          SellerId: currentUserId,
+          MainPicId: finalMainPicId,
+          ExtraPicId: finalExtraPicId,
+        };
+        console.log("Attempting to create listing with data:", listingData);
+        const listingResponse = await fetch(`${API}/api/Listings/Create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" /* Add Auth */ },
+          body: JSON.stringify(listingData),
+        });
+        if (!listingResponse.ok) {
+          let errorData = {};
+          try {
+            errorData = await listingResponse.json();
+          } catch (e) {}
+          throw new Error(
+            errorData?.message ||
+              `Failed to create listing (HTTP ${listingResponse.status})`
+          );
+        }
+        const finalResult = await listingResponse.json();
+        Toast.show({
+          type: "success",
+          text1: t("MarketplaceNewItemScreen_listingCreatedSuccessTitle"),
+          text2: t("MarketplaceNewItemScreen_listingCreatedSuccessMsg", {
+            id: finalResult.listingId,
+          }),
+          position: "top",
+        });
+        await resetState();
+        router.back();
+      }
+    } catch (error) {
       console.error("Listing submission step failed:", error);
   } finally {
       setIsSubmitting(false);
-  }
-};
+    }
+  };
 
   return (
     <>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled" // Helps dismiss keyboard when tapping outside inputs
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
             <Text style={styles.title}>
-            {t(isEditMode ? "MarketplaceEditItemScreen_Header" : "MarketplaceNewItemScreen_NewItem")}
+              {t(
+                isEditMode
+                  ? "MarketplaceEditItemScreen_Header"
+                  : "MarketplaceNewItemScreen_NewItem"
+              )}
             </Text>
           </View>
 
           <FloatingLabelInput
-            ref={itemNameRef} // Assign ref
+            ref={itemNameRef}
             label={t(`MarketplaceNewItemScreen_ItemName`)}
             alignRight={Globals.userSelectedDirection === "rtl"}
             value={itemName}
             onChangeText={(text) => handleFormChange("itemName", text)}
-            maxLength={ITEM_NAME_LIMIT} // Enforce visual limit
+            maxLength={ITEM_NAME_LIMIT}
           />
 
           {formErrors.itemName ? (
@@ -570,14 +684,14 @@ const deletePicture = async (pictureId) => {
           )}
 
           <FloatingLabelInput
-            ref={itemDescriptionRef} // Assign ref
+            ref={itemDescriptionRef}
             label={t(`MarketplaceNewItemScreen_ItemDescription`)}
             alignRight={Globals.userSelectedDirection === "rtl"}
             value={itemDescription}
             onChangeText={(text) => handleFormChange("itemDescription", text)}
             multiline={true}
-            inputStyle={{ height: 80, textAlignVertical: "top" }} // Added textAlignVertical
-            maxLength={DESCRIPTION_LIMIT} // Enforce visual limit
+            inputStyle={{ height: 80, textAlignVertical: "top" }}
+            maxLength={DESCRIPTION_LIMIT}
           />
           {formErrors.itemDescription ? (
             <Text style={styles.errorText}>{formErrors.itemDescription}</Text>
@@ -604,9 +718,7 @@ const deletePicture = async (pictureId) => {
             >
               {mainImage ? (
                 <>
-                  
                   <Card.Background>
-                    
                     <ExpoImage
                       source={{ uri: mainImage }}
                       style={StyleSheet.absoluteFill}
@@ -619,7 +731,6 @@ const deletePicture = async (pictureId) => {
                     ai="center"
                     backgroundColor="rgba(0,0,0,0.4)"
                   >
-                    
                     <Paragraph theme="alt2">
                       {t("MarketplaceNewItemScreen_MainImage")}
                     </Paragraph>
@@ -633,10 +744,7 @@ const deletePicture = async (pictureId) => {
                   p="$2"
                   style={{ direction: Globals.userSelectedDirection }}
                 >
-                  
-                  <H2 size="$5">
-                    {t("MarketplaceNewItemScreen_MainImage")}
-                  </H2>
+                  <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
                   <Paragraph theme="alt2">
                     {t("MarketplaceNewItemScreen_ImageOptional")}
                   </Paragraph>
@@ -656,9 +764,7 @@ const deletePicture = async (pictureId) => {
             >
               {extraImage ? (
                 <>
-                  
                   <Card.Background>
-                    
                     <ExpoImage
                       source={{ uri: extraImage }}
                       style={StyleSheet.absoluteFill}
@@ -671,7 +777,6 @@ const deletePicture = async (pictureId) => {
                     ai="center"
                     backgroundColor="rgba(0,0,0,0.4)"
                   >
-                    
                     <Paragraph theme="alt2" color="$color">
                       {t("MarketplaceNewItemScreen_ExtraImage")}
                     </Paragraph>
@@ -685,10 +790,7 @@ const deletePicture = async (pictureId) => {
                   p="$2"
                   style={{ direction: Globals.userSelectedDirection }}
                 >
-                  
-                  <H2 size="$5">
-                    {t("MarketplaceNewItemScreen_ExtraImage")}
-                  </H2>
+                  <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2>
                   <Paragraph theme="alt2">
                     {t("MarketplaceNewItemScreen_ImageOptional")}
                   </Paragraph>
@@ -702,7 +804,7 @@ const deletePicture = async (pictureId) => {
 
           <View style={styles.buttonRow}>
             <FlipButton
-              onPress={handleSubmit} // handleSubmit uses updated validation
+              onPress={handleSubmit}
               bgColor="white"
               textColor="black"
               style={styles.submitButton}
@@ -712,7 +814,6 @@ const deletePicture = async (pictureId) => {
                 <Spinner size="small" color="black" />
               ) : (
                 <Text style={styles.buttonLabel}>
-                  
                   {t("MarketplaceSearchItem_SubmitButton")}
                 </Text>
               )}
@@ -725,35 +826,41 @@ const deletePicture = async (pictureId) => {
               disabled={isSubmitting}
             >
               <Text style={styles.buttonLabel}>
-                
                 {t("MarketplaceSearchItem_CancelButton")}
               </Text>
             </FlipButton>
           </View>
         </View>
-        {!isEditMode && showConfirm && ( <Modal visible={true} transparent={true} animationType="fade"> {/* ... */} </Modal> )}
-      <ImageViewModal visible={showImageViewModal} imageUri={imageToViewUri} onClose={() => { /* ... */ }} onRemove={handleRemoveImage} />
+        {!isEditMode && showConfirm && (
+          <Modal visible={true} transparent={true} animationType="fade">
+            {" "}
+            {/* ... */}{" "}
+          </Modal>
+        )}
+        <ImageViewModal
+          visible={showImageViewModal}
+          imageUri={imageToViewUri}
+          onClose={() => {
+            /* ... */
+          }}
+          onRemove={handleRemoveImage}
+        />
       </ScrollView>
 
       {showConfirm && (
         <Modal visible={true} transparent={true} animationType="fade">
-          
           <View style={styles.confirmOverlay}>
-            
             <View style={styles.confirmContainer}>
-              
               <Text style={styles.confirmText}>
                 {t("MarketplaceNewItemScreen_CancelDiscardHeader")}
               </Text>
               <View style={styles.confirmButtonRow}>
-                
                 <FlipButton
                   onPress={confirmCancel}
                   bgColor="#e0e0e0"
                   textColor="black"
                   style={styles.confirmButton}
                 >
-                  
                   <Text style={styles.buttonLabel}>
                     {t("MarketplaceNewItemScreen_CancelConfirmation")}
                   </Text>
@@ -764,7 +871,6 @@ const deletePicture = async (pictureId) => {
                   textColor="white"
                   style={styles.confirmButton}
                 >
-                  
                   <Text style={[styles.buttonLabel, { color: "white" }]}>
                     {t("MarketplaceNewItemScreen_CancelDiscard")}
                   </Text>
@@ -788,7 +894,6 @@ const deletePicture = async (pictureId) => {
   );
 }
 
-// --- Styles ---
 const styles = StyleSheet.create({
   screenContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)" },
   scrollContent: {
@@ -878,10 +983,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: "red",
-    alignSelf: "flex-start", // Align with input start
-    marginLeft: 10, // Indent slightly
-    marginTop: -10, // Move closer to the input above
-    marginBottom: 5, // Space before char count
-    fontSize: 12, // Smaller error font size
+    alignSelf: "flex-start",
+    marginLeft: 10,
+    marginTop: -10,
+    marginBottom: 5,
+    fontSize: 12,
   },
 });

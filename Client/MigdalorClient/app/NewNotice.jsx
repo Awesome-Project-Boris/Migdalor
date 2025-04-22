@@ -8,20 +8,19 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Dimensions
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { Picker } from '@react-native-picker/picker';
-import { Toast } from 'toastify-react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+  Dimensions,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { Picker } from "@react-native-picker/picker";
+import { Toast } from "toastify-react-native";
 
-import FloatingLabelInput from '@/components/FloatingLabelInput';
-import FlipButton from '@/components/FlipButton';
-import Header from '@/components/Header';
-import { Globals } from '@/app/constants/Globals';
-import { useTranslation } from 'react-i18next';
+import FloatingLabelInput from "@/components/FloatingLabelInput";
+import FlipButton from "@/components/FlipButton";
+import Header from "@/components/Header";
+import { Globals } from "@/app/constants/Globals";
+import { useTranslation } from "react-i18next";
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 // --- Fetch Categories Function (Defined Outside, Accepts Setters) ---
 const fetchCategories = async (
@@ -132,7 +131,10 @@ export default function NewNotice() {
   const handleSubmit = useCallback(async () => {
     // Validation
     if (!title.trim() || !message.trim() || !selectedCategory) {
-      Alert.alert(t("Common_ValidationErrorTitle"), t("NewNoticeScreen_errorAllFieldsRequired"));
+      Alert.alert(
+        t("Common_ValidationErrorTitle"),
+        t("NewNoticeScreen_errorAllFieldsRequired")
+      );
       return;
     }
     if (!currentUserId) {
@@ -232,8 +234,8 @@ export default function NewNotice() {
         style={styles.keyboardAvoidingView}
       >
         <ScrollView
-            contentContainerStyle={styles.scrollContainer}
-            keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContainer}
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.container}>
             <Text style={styles.pageTitle}>{t("NewNoticeScreen_title")}</Text>

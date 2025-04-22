@@ -67,8 +67,8 @@ export const BottomSheetProvider = ({ children }) => {
                 bottomSheetRef.current?.close();
                 console.log("Menu 1 pressed");
               }}
-              bgColor="#4CAF50"
-              textColor="#ffffff"
+              bgColor={styles.button.backgroundColor}
+              textColor={styles.button.color}
               flipborderwidth={3}
             >
               <Ionicons
@@ -89,8 +89,8 @@ export const BottomSheetProvider = ({ children }) => {
                 setEditing(false);
                 bottomSheetRef.current?.close();
               }}
-              bgColor="#4CAF50"
-              textColor="#ffffff"
+              bgColor={styles.button.backgroundColor}
+              textColor={styles.button.color}
               flipborderwidth={3}
             >
               <Ionicons
@@ -115,8 +115,8 @@ export const BottomSheetProvider = ({ children }) => {
                 router.navigate("Profile");
                 bottomSheetRef.current?.close();
               }}
-              bgColor="#4CAF50"
-              textColor="#ffffff"
+              bgColor={styles.button.backgroundColor}
+              textColor={styles.button.color}
               flipborderwidth={3}
             >
               <Ionicons
@@ -137,8 +137,8 @@ export const BottomSheetProvider = ({ children }) => {
                   setEditing(true);
                   bottomSheetRef.current?.close();
                 }}
-                bgColor="#4CAF50"
-                textColor="#ffffff"
+                bgColor={styles.button.backgroundColor}
+                textColor={styles.button.color}
                 flipborderwidth={3}
               >
                 <MaterialCommunityIcons
@@ -172,7 +172,9 @@ const styles = StyleSheet.create({
   button: {
     width: SCREEN_WIDTH * 0.42,
     height: 145,
-    backgroundColor: "#4CAF50",
+    // backgroundColor: "#4CAF50",
+    backgroundColor: "goldenrod",
+    color: "#fff",
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",

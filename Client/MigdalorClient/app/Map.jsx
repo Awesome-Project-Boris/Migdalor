@@ -1,4 +1,3 @@
-// Map.jsx
 import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
@@ -7,47 +6,44 @@ import {
   Text,
   Modal,
   Button,
-  // PermissionsAndroid, // No longer needed
-  Platform, // Still needed for Platform.OS check potentially, but not in current location logic
+  Platform,
   Alert,
-  Linking, // Still needed for linking to settings
+  Linking,
 } from "react-native";
 
 import MapView, { PROVIDER_GOOGLE, Polygon, Marker } from "react-native-maps";
 
-import * as Location from "expo-location"; // Use expo-location
+import * as Location from "expo-location";
 import pointInPolygon from "point-in-polygon";
 import FlipButton from "@/components/FlipButton";
 import { useTranslation } from "react-i18next";
 
-// --- Constants ---
 const { width, height } = Dimensions.get("window");
 const ASPECT_RATIO = width / height;
-// Use the delta that worked for zoom control, adjust if needed
-const INITIAL_LATITUDE_DELTA = 0.0049; // Start with a working delta
+
+const INITIAL_LATITUDE_DELTA = 0.0049;
 const INITIAL_LONGITUDE_DELTA = INITIAL_LATITUDE_DELTA * ASPECT_RATIO;
 const MAP_CENTER_LATITUDE = 32.310441;
 const MAP_CENTER_LONGITUDE = 34.895219;
 
-// Your coordinate variables
 const MapBoundsCoordinations = [
   {
-    latitude: 32.312541, // top left
+    latitude: 32.312541,
     longitude: 34.894063,
   },
   {
-    latitude: 32.31192, // top right
+    latitude: 32.31192,
     longitude: 34.896611,
   },
   {
-    latitude: 32.308411, // bottom right
+    latitude: 32.308411,
     longitude: 34.896262,
   },
   {
-    latitude: 32.308432, // bottom left
+    latitude: 32.308432,
     longitude: 34.894108,
   },
-  // Make sure polygon is closed if needed
+
   { latitude: 32.312541, longitude: 34.894063 },
 ];
 
@@ -55,8 +51,6 @@ const boundaryPolygonForCheck = MapBoundsCoordinations.map((p) => [
   p.longitude,
   p.latitude,
 ]);
-
-// -----------------
 
 const Map = () => {
   const { t } = useTranslation();
@@ -73,11 +67,11 @@ const Map = () => {
         { latitude: 32.310824, longitude: 34.895655 },
         { latitude: 32.310532, longitude: 34.895652 },
         { latitude: 32.310533, longitude: 34.895527 },
-        { latitude: 32.310919, longitude: 34.895532 }, // close polygon
+        { latitude: 32.310919, longitude: 34.895532 },
       ],
     },
   ];
-  // --- State & Refs ---
+
   const [mapRegion, setMapRegion] = useState({
     latitude: MAP_CENTER_LATITUDE,
     longitude: MAP_CENTER_LONGITUDE,
@@ -91,11 +85,9 @@ const Map = () => {
   const [locationPermissionGranted, setLocationPermissionGranted] =
     useState(false);
   const mapRef = useRef(null);
-  // watchId will now store the subscription object from watchPositionAsync
-  const watchId = useRef(null);
-  // --------------------
 
-  // --- Permission Request (Using expo-location) ---
+  const watchId = useRef(null);
+
   const requestLocationPermission = async () => {
     console.log(
       "[Permissions] Requesting location permission (expo-location)..."
@@ -106,7 +98,7 @@ const Map = () => {
     if (status !== "granted") {
       console.log("[Permissions] Expo Location permission denied");
       setLocationPermissionGranted(false);
-      // Suggest opening settings only if permission was denied permanently
+
       const alertMessage = t("Permissions_locationPermissionMessage");
       const alertButtons = [{ text: t("Permissions_okButton") }];
       if (!canAskAgain) {
@@ -126,34 +118,30 @@ const Map = () => {
     setLocationPermissionGranted(true);
     return true;
   };
-  // -------------------------------------------------
 
-  // --- useEffect Hook (Using expo-location) ---
   useEffect(() => {
     console.log("[Effect] Map component mounted. Requesting permission...");
 
-    let locationSubscription = null; // Variable to hold the subscription
+    let locationSubscription = null;
 
-    // --- Define Async Function for Location Logic ---
     const activateLocation = async () => {
       const granted = await requestLocationPermission();
       console.log("[Effect] Permission request finished. Granted:", granted);
 
       if (granted) {
-        // --- Get Initial Position ---
         console.log(
           "[Effect] Permission granted. Getting initial position (expo-location)..."
         );
         try {
           let location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High, // Request high accuracy
+            accuracy: Location.Accuracy.High,
           });
           console.log(
             "[Effect] getCurrentPositionAsync SUCCESS:",
             JSON.stringify(location.coords, null, 2)
           );
-          setCurrentUserLocation(location.coords); // Update state with coords object
-          // Initial boundary check
+          setCurrentUserLocation(location.coords);
+
           const userCoordsForCheck = [
             location.coords.longitude,
             location.coords.latitude,
@@ -171,10 +159,8 @@ const Map = () => {
           );
         }
 
-        // --- Start Watching Position ---
         console.log("[Effect] Starting location watcher (expo-location)...");
         try {
-          // Clear previous watcher if exists by removing the subscription
           if (watchId.current) {
             console.log("[Effect] Removing previous location subscription.");
             watchId.current.remove();
@@ -184,13 +170,12 @@ const Map = () => {
           locationSubscription = await Location.watchPositionAsync(
             {
               accuracy: Location.Accuracy.High,
-              timeInterval: 5000, // milliseconds
-              distanceInterval: 10, // meters
+              timeInterval: 5000,
+              distanceInterval: 10,
             },
             (location) => {
-              // This callback receives location updates
-              setCurrentUserLocation(location.coords); // Update state with coords object
-              // Continuous boundary check
+              setCurrentUserLocation(location.coords);
+
               const userCoordsForCheck = [
                 location.coords.longitude,
                 location.coords.latitude,
@@ -202,7 +187,7 @@ const Map = () => {
               setIsInsideBoundary(isInside);
             }
           );
-          watchId.current = locationSubscription; // Store subscription in ref
+          watchId.current = locationSubscription;
           console.log("[Effect] watchPositionAsync started.");
         } catch (error) {
           console.error("[Effect] watchPositionAsync ERROR:", error);
@@ -220,20 +205,17 @@ const Map = () => {
 
     activateLocation();
 
-    // --- Cleanup Function ---
     return () => {
       if (watchId.current) {
-        // Check if subscription exists
         console.log(
           "[Effect] Map component unmounting. Removing location subscription."
         );
-        watchId.current.remove(); // Call remove() on the subscription object
+        watchId.current.remove();
         watchId.current = null;
       }
     };
   }, []);
 
-  // --- Other Functions ---
   const handleBuildingPress = (building) => {
     setSelectedBuilding(building);
     setIsModalVisible(true);
@@ -242,7 +224,6 @@ const Map = () => {
   const onRegionChangeComplete = (newRegion) => {
     setMapRegion(newRegion);
   };
-  // ---------------------
 
   return (
     <View style={styles.container}>
@@ -251,21 +232,18 @@ const Map = () => {
         provider={PROVIDER_GOOGLE}
         style={styles.map}
         mapType="satellite"
-        region={mapRegion} // Use controlled region
+        region={mapRegion}
         onRegionChangeComplete={onRegionChangeComplete}
         onMapReady={() => console.log("Map is ready!")}
         showsUserLocation={locationPermissionGranted}
         showsMyLocationButton={locationPermissionGranted}
         followsUserLocation={false}
         onError={(error) => console.error("MapView Error:", error)}
-        // Add zoom/pan limits here if they work with expo-location
-        // minZoomLevel={15}
-        // mapBoundary={mapBoundary} // If you defined mapBoundary constant earlier
       >
         {/* Polygons */}
         <Polygon
           coordinates={MapBoundsCoordinations}
-          strokeColor="rgba(255, 0, 0, 0.4)" // Original colors
+          strokeColor="rgba(255, 0, 0, 0.4)"
           strokeWidth={2}
           fillColor={"rgba(55, 180, 0, 0.15)"}
         />
@@ -273,7 +251,7 @@ const Map = () => {
           <Polygon
             key={building.id}
             coordinates={building.coordinates}
-            fillColor="rgba(0, 0, 255, 0.1)" // Original colors
+            fillColor="rgba(0, 0, 255, 0.1)"
             strokeColor="rgba(0, 0, 255, 1)"
             strokeWidth={1.5}
             tappable={true}
@@ -285,8 +263,8 @@ const Map = () => {
       {/*/ For dev purposes mainly/*/}
       <View style={styles.statusOverlay}>
         <Text style={styles.statusText}>
-        {t("LocationScreen_locationPermissionLabel")}
-        {locationPermissionGranted ? "Granted" : "Not Granted"}
+          {t("LocationScreen_locationPermissionLabel")}
+          {locationPermissionGranted ? "Granted" : "Not Granted"}
         </Text>
         {locationPermissionGranted && (
           <Text style={styles.statusText}>
@@ -305,7 +283,8 @@ const Map = () => {
               { color: isInsideBoundary ? "lime" : "red", fontWeight: "bold" },
             ]}
           >
-            {t("LocationScreen_insideBoundaryLabel")} {isInsideBoundary ? "Yes" : "No"}
+            {t("LocationScreen_insideBoundaryLabel")}{" "}
+            {isInsideBoundary ? "Yes" : "No"}
           </Text>
         )}
       </View>
@@ -343,10 +322,8 @@ const Map = () => {
       </Modal>
     </View>
   );
-  // -------------------------------------------------
 };
 
-// --- Styles ---
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
@@ -358,12 +335,12 @@ const styles = StyleSheet.create({
   },
   statusOverlay: {
     position: "absolute",
-    top: 40, // Adjusted slightly for potential safe area
+    top: 40,
     left: 10,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
     padding: 8,
     borderRadius: 5,
-    zIndex: 1, // Make sure it's above the map
+    zIndex: 1,
   },
   statusText: {
     color: "white",
@@ -411,6 +388,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 });
-// ---------------------------
 
 export default Map;

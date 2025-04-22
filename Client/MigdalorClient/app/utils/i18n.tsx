@@ -10,7 +10,7 @@ const resources = {
     translation: {
       SettingsLayoutTabs_FontSettings: 'Font Settings',
       SettingsLayoutTabs_notificationSettings: 'Notification Settings',
-      SettingsLayoutTabs_languageSettings: 'Language Settings',
+      SettingsLayoutTabs_languageSettings: 'User Settings',
 
       FontSettingsPage_header: 'Font Settings:',
       FontSettingsPage_exampleHeader: 'Sample Text:',
@@ -26,6 +26,9 @@ const resources = {
       NotificationSettingsPage_off: 'Off',
 
       LanguageSettingsPage_header: 'Language Settings:',
+      LanguageSettingsPage_LogoutHeader: 'Account Settings:',
+      LanguageSettingsPage_Logout: 'Logout',
+      LanguageSettingsPage_LogoutToast: 'Logged out successfully!',
       LanguageSettingsPage_he: "Hebrew",
       LanguageSettingsPage_en: "English",
 
@@ -180,6 +183,7 @@ const resources = {
       NoticeBoardScreen_filterButton: "Filter", NoticeBoardScreen_all: "All",
 
       NoticeBoardScreen_filterLabel: "Filter:",
+      NoticeBoardScreen_filterCategories: "categoryEngName",
       NoticeBoardScreen_sortOldest: "Oldest",
       NoticeBoardScreen_sortNewest: "Newest",
       NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
@@ -248,7 +252,7 @@ const resources = {
     translation: {
       SettingsLayoutTabs_FontSettings: 'הגדרות גופן',
       SettingsLayoutTabs_notificationSettings: 'הגדרות התראות',
-      SettingsLayoutTabs_languageSettings: 'הגדרות שפה',
+      SettingsLayoutTabs_languageSettings: 'הגדרות משתמש',
 
       FontSettingsPage_header: 'גודל טקסט:',
       FontSettingsPage_exampleHeader: 'טקסט לדוגמה:',
@@ -262,8 +266,12 @@ const resources = {
       NotificationSettingsPage_silent: 'מושתק',
 
       LanguageSettingsPage_header: 'הגדרות שפה:',
+      LanguageSettingsPage_LogoutHeader: 'הגדרות חשבון:',
+      LanguageSettingsPage_Logout: 'התנתקות',
+      LanguageSettingsPage_LogoutToast: 'התנתקת בהצלחה!',
       LanguageSettingsPage_he: "עברית",
       LanguageSettingsPage_en: "אנגלית",
+
 
       ProfileScreen_header: 'פרופיל',
       ProfileScreen_partner: "בן/בת זוג",
@@ -411,12 +419,9 @@ const resources = {
 
 
 
-      MarketplaceScreen_NoItems: "לא נמצאו פריטים",
+      MarketplaceScreen_NoItems: "לא נמצאו פריטים",   
 
-
-
-    
-    
+      
       NoticeDetailsScreen_loadingDetails: "טוען פרטי הודעה...",
       NoticeDetailsScreen_categoryLabel: "קטגוריה:",
       NoticeDetailsScreen_dateLabel: "תאריך:",
@@ -424,6 +429,7 @@ const resources = {
       NoticeBoardScreen_boardTitle: "לוח המודעות",
       NoticeBoardScreen_filterButton: "סינון", NoticeBoardScreen_all: "הכל",
       NoticeBoardScreen_filterLabel: "סינון:",
+      NoticeBoardScreen_filterCategories: "categoryHebName",
       NoticeBoardScreen_sortOldest: "הישן ביותר",
       NoticeBoardScreen_sortNewest: "החדש ביותר",
       NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",

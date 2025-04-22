@@ -54,11 +54,6 @@ export const usePushNotifications = (): PushNotificationState => {
     Notifications.Notification | undefined
   >();
 
-  // const date = useRef<string>(new Date().toISOString().split("T")[0]);
-  // const prevDate = useRef<any>(async () => await AsyncStorage.getItem("lastTokenDate"));
-  // const [getNewToken, setGetNewToken] = useState(date === prevDate);
-
-
   const notificationListener = useRef<Notifications.EventSubscription>();
   const responseListener = useRef<Notifications.EventSubscription>();
 

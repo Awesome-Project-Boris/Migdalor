@@ -6,16 +6,9 @@ import React, {
   useCallback,
   // useContext, // No longer needed if not using useAuth
 } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  ActivityIndicator,
-  TouchableOpacity, // Keep for buttons inside modal? Check FilterModal usage if errors persist there
-} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Import AsyncStorage
+import { useFocusEffect } from "@react-navigation/native";
 
 import NoticeCard from "../components/NoticeCard";
 import Header from "@/components/Header";
@@ -26,14 +19,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { Globals } from "../app/constants/Globals";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 10;
 
 // --- Fetch Functions (remain the same) ---
 const fetchNotices = async () => {
   // console.log("Fetching notices from API...");
   const response = await fetch(`${Globals.API_BASE_URL}/api/Notices`);
-  if (!response.ok) { throw new Error(`Failed to load notices: HTTP ${response.status}`); }
+  if (!response.ok) {
+    throw new Error(`Failed to load notices: HTTP ${response.status}`);
+  }
   const notices = await response.json();
   return notices || [];
 };
@@ -41,21 +35,19 @@ const fetchNotices = async () => {
 const fetchCategories = async () => {
   // console.log("Fetching categories from API...");
   const response = await fetch(`${Globals.API_BASE_URL}/api/Categories`);
-  if (!response.ok) { throw new Error(`Failed to load categories: HTTP ${response.status}`); }
+  if (!response.ok) {
+    throw new Error(`Failed to load categories: HTTP ${response.status}`);
+  }
   const rawCategories = await response.json();
-  const availableCategories = rawCategories.map(c =>
-      Globals.userSelectedLanguage === 'he'
-        ? (c.categoryHebName || c.categoryName)
-        : (c.categoryEngName || c.categoryName)
-  );
+  const availableCategories = rawCategories.map((c) => c.categoryHebName);
   return availableCategories || [];
 };
-// --- End Fetch Functions ---
 
 export default function NoticesScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const flatListRef = useRef(null);
 
-  // --- State ---
   const [allNotices, setAllNotices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -69,9 +61,6 @@ export default function NoticesScreen() {
   // !! Added missing state variables !!
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(true);
-
-  const router = useRouter();
-  const flatListRef = useRef(null);
 
   // --- Data Fetching Callbacks (remain the same) ---
   const fetchNoticesCallback = useCallback(async () => {
@@ -104,7 +93,7 @@ export default function NoticesScreen() {
     }
   }, []);
 
-  // --- Initial Data Load Effect (remain the same) ---
+  // Initial data load
   useEffect(() => {
     setCurrentPage(1);
     fetchNoticesCallback();
@@ -161,7 +150,17 @@ export default function NoticesScreen() {
     checkAdminStatus();
   }, []); // Run ONCE on mount - relies on AsyncStorage having the correct ID at load time
 
-  // --- Filtering and Sorting ---
+  // Live refresh while screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const intervalId = setInterval(() => {
+        fetchNoticesCallback();
+      }, 3000);
+      return () => clearInterval(intervalId);
+    }, [fetchNoticesCallback])
+  );
+
+  // Filtering & sorting
   const processedNotices = useMemo(() => {
     // !! Added safeguard for allNotices !!
     if (!Array.isArray(allNotices)) {
@@ -172,7 +171,9 @@ export default function NoticesScreen() {
     let filtered = [...allNotices]; // Safe spread syntax now
 
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((n) => n.noticeCategory && selectedCategories.includes(n.noticeCategory));
+      filtered = filtered.filter(
+        (n) => n.noticeCategory && selectedCategories.includes(n.noticeCategory)
+      );
     }
 
     filtered.sort((a, b) => {
@@ -183,19 +184,15 @@ export default function NoticesScreen() {
       if (isNaN(dateB.getTime())) return -1;
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
-
-    // console.log(`Processed down to ${filtered.length} notices.`);
     return filtered;
   }, [allNotices, selectedCategories, sortOrder]);
 
-  // --- Pagination Calculations (remain the same) ---
+  // Pagination
   const totalItems = processedNotices.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-
   const itemsForCurrentPage = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return processedNotices.slice(startIndex, endIndex);
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return processedNotices.slice(start, start + ITEMS_PER_PAGE);
   }, [processedNotices, currentPage]);
 
   // --- Effect to Reset Page (remain the same) ---
@@ -264,7 +261,9 @@ export default function NoticesScreen() {
       <Header />
       <View style={styles.pageContainer}>
         <View style={styles.headerContainer}>
-          <Text style={styles.pageTitle}>{t("NoticeBoardScreen_boardTitle")}</Text>
+          <Text style={styles.pageTitle}>
+            {t("NoticeBoardScreen_boardTitle")}
+          </Text>
         </View>
         {!isAdminLoading && isAdmin && (
             <View style={styles.newNoticeButtonContainer}>

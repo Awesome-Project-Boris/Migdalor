@@ -15,12 +15,10 @@ import { toastConfig } from "@/components/CustomToasts";
 import { Text } from "react-native";
 import { Redirect, Slot } from "expo-router";
 import { AuthProvider, useAuth } from "@/context/AuthProvider";
-// import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 const config = createTamagui(defaultConfig);
 
 export default function Layout() {
-  // const { expoPushToken, notification } = usePushNotifications();
   return (
     <AuthProvider>
       <PaperProvider>
