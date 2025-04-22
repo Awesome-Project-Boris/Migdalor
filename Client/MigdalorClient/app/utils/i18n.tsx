@@ -11,6 +11,7 @@ const resources = {
       SettingsLayoutTabs_FontSettings: 'Font Settings',
       SettingsLayoutTabs_notificationSettings: 'Notification Settings',
       SettingsLayoutTabs_languageSettings: 'User Settings',
+      SettingsLayoutTabs_SaveChanges: 'Save Changes',
 
       FontSettingsPage_header: 'Font Settings:',
       FontSettingsPage_exampleHeader: 'Sample Text:',
@@ -253,6 +254,7 @@ const resources = {
       SettingsLayoutTabs_FontSettings: 'הגדרות גופן',
       SettingsLayoutTabs_notificationSettings: 'הגדרות התראות',
       SettingsLayoutTabs_languageSettings: 'הגדרות משתמש',
+      SettingsLayoutTabs_SaveChanges: 'שמור שינויים',
 
       FontSettingsPage_header: 'גודל טקסט:',
       FontSettingsPage_exampleHeader: 'טקסט לדוגמה:',
