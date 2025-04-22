@@ -59,7 +59,8 @@ export default function SettingsLayout() {
       </Tabs>
 
       {/* Save button container, sitting above the tab bar */}
-      <View style={styles.saveContainer}>
+
+      {/* <View style={styles.saveContainer}>
         <FlipButton
           bgColor={styles.saveButton.backgroundColor}
           textColor={styles.saveText.color}
@@ -71,7 +72,7 @@ export default function SettingsLayout() {
             {t("SettingsLayoutTabs_SaveChanges")}
           </Text>
         </FlipButton>
-      </View>
+      </View> */}
     </View>
   );
 }
