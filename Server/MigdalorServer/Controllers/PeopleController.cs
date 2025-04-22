@@ -140,13 +140,16 @@ namespace MigdalorServer.Controllers
 
             //resident.SpouseId = dto.SpouseId;
 
-            // patch pictures if provided
             if (dto.ProfilePicture != null)
                 person.ProfilePicId = dto.ProfilePicture.PicId;
+
             if (dto.AdditionalPicture1 != null)
                 resident.AdditionalPic1Id = dto.AdditionalPicture1.PicId;
+
             if (dto.AdditionalPicture2 != null)
                 resident.AdditionalPic2Id = dto.AdditionalPicture2.PicId;
+
+
 
             //if (resident.Id == 0)
             //    db.OhResidents.Add(resident);

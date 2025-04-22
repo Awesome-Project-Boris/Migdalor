@@ -119,6 +119,14 @@ export default function EditProfile() {
 
   const regexHebrewEnglish = /^[\u0590-\u05FFa-zA-Z\s\-'.(),:\/]+$/;
   const regexHebrewEnglishNumbers = /^[\u0590-\u05FFa-zA-Z0-9\s\-'.(),:\/]+$/;
+  const [removedMainPic, setRemovedMainPic] = useState(false);
+  const [removedAdd1Pic, setRemovedAdd1Pic] = useState(false);
+  const [removedAdd2Pic, setRemovedAdd2Pic] = useState(false);
+  const [clearedPics, setClearedPics] = useState({
+    profile: false,
+    add1: false,
+    add2: false,
+  });
 
   const handleFormChange = (name, value) => {
     const error = validateField(name, value);
@@ -181,20 +189,6 @@ export default function EditProfile() {
   };
 
   const handleSave = async () => {
-    //form.arrivalYear = String(form.arrivalYear);
-
-    // console.log("interests" , typeof form.interests);
-    // console.log("aboutMe" , typeof form.aboutMe);
-    // console.log("partner" , typeof form.partner);
-    // console.log("residentApartmentNumber" , typeof form.residentApartmentNumber);
-    // console.log("mobilePhone" , typeof form.mobilePhone);
-    // console.log("email" , typeof form.email);
-    // console.log("origin" , typeof form.origin);
-    // console.log("profession" , typeof form.profession);
-    // console.log("arrivalYear" , typeof form.arrivalYear);
-
-    //console.log("form", form);
-
     const newErrors = {};
     let firstErrorField = null;
 
@@ -271,117 +265,158 @@ export default function EditProfile() {
 
       console.log("cleanedform ", cleanedForm);
 
+      const uploadAndWrap = async (imageObj, role, altText, uploaderId) => {
+        const imageUri = imageObj.PicPath;
+        if (!imageUri || !imageUri.startsWith("file://")) return null;
+
+        const newPicId = await uploadImage(imageUri, role, altText, uploaderId);
+        return {
+          PicID: newPicId,
+          PicName: "", // optional
+          PicPath: imageUri,
+          PicAlt: altText,
+        };
+      };
+
       // const uploadedProfilePic = profilePic.PicPath.startsWith("file://")
-      //   ? await uploadImage(
-      //       profilePic.PicPath,
-      //       "profile_picture",
-      //       "Profile picture",
-      //       storedUserID
-      //     )
+      //   ? await (async () => {
+      //       const newPicId = await uploadImage(
+      //         profilePic.PicPath,
+      //         "profile_picture",
+      //         "Profile picture",
+      //         storedUserID
+      //       );
+      //       return {
+      //         PicID: newPicId,
+      //         PicName: "", // optional: you can extract the file name from path if needed
+      //         PicPath: profilePic.PicPath, // local URI
+      //         PicAlt: "Profile picture",
+      //       };
+      //     })()
       //   : profilePic.PicID
       //   ? profilePic
       //   : null;
 
+      // const uploadedProfilePic = profilePic.PicPath.startsWith("file://")
+      //   ? await uploadAndWrap(
+      //       profilePic,
+      //       "profile_picture",
+      //       "Profile picture",
+      //       storedUserID
+      //     )
+      //   : removedMainPic
+      //   ? null
+      //   : profilePic.PicID
+      //   ? profilePic
+      //   : undefined;
+
       const uploadedProfilePic = profilePic.PicPath.startsWith("file://")
-        ? await (async () => {
-            const newPicId = await uploadImage(
-              profilePic.PicPath,
-              "profile_picture",
-              "Profile picture",
-              storedUserID
-            );
-            return {
-              PicID: newPicId,
-              PicName: "", // optional: you can extract the file name from path if needed
-              PicPath: profilePic.PicPath, // local URI
-              PicAlt: "Profile picture",
-            };
-          })()
+        ? await uploadAndWrap(
+            profilePic,
+            "profile_picture",
+            "Profile picture",
+            storedUserID
+          )
         : profilePic.PicID
         ? profilePic
         : null;
 
       console.log("uploadedProfilePic: ", uploadedProfilePic);
-      //console.log("profilePic: ", profilePic);
       setProfilePic((prev) => ({ ...prev, PicID: uploadedProfilePic }));
-      //console.log("profilePic: ", profilePic);
 
       // const uploadedAdd1Pic = additionalPic1.PicPath.startsWith("file://")
-      //   ? await uploadImage(
-      //       additionalPic1.PicPath,
+      //   ? await uploadAndWrap(
+      //       additionalPic1,
       //       "secondary_profile",
       //       "Extra picture 1",
       //       storedUserID
       //     )
+      //   : removedAdd1Pic
+      //   ? null
       //   : additionalPic1.PicID
       //   ? additionalPic1
-      //   : null;
+      //   : undefined;
 
       // const uploadedAdd2Pic = additionalPic2.PicPath.startsWith("file://")
-      //   ? await uploadImage(
-      //       additionalPic2.PicPath,
+      //   ? await uploadAndWrap(
+      //       additionalPic2,
       //       "secondary_profile",
       //       "Extra picture 2",
       //       storedUserID
       //     )
+      //   : removedAdd2Pic
+      //   ? null
       //   : additionalPic2.PicID
       //   ? additionalPic2
-      //   : null;
+      //   : undefined;
 
       const uploadedAdd1Pic = additionalPic1.PicPath.startsWith("file://")
-        ? await (async () => {
-            const newPicId = await uploadImage(
-              additionalPic1.PicPath,
-              "secondary_profile",
-              "Extra picture 1",
-              storedUserID
-            );
-            return {
-              PicID: newPicId,
-              PicName: "", // optional
-              PicPath: additionalPic1.PicPath,
-              PicAlt: "Extra picture 1",
-            };
-          })()
+        ? await uploadAndWrap(
+            additionalPic1,
+            "secondary_profile",
+            "Extra picture 1",
+            storedUserID
+          )
+        : removedAdd1Pic
+        ? null
         : additionalPic1.PicID
         ? additionalPic1
-        : null;
+        : undefined;
 
       const uploadedAdd2Pic = additionalPic2.PicPath.startsWith("file://")
-        ? await (async () => {
-            const newPicId = await uploadImage(
-              additionalPic2.PicPath,
-              "secondary_profile",
-              "Extra picture 2",
-              storedUserID
-            );
-            return {
-              PicID: newPicId,
-              PicName: "", // optional
-              PicPath: additionalPic2.PicPath,
-              PicAlt: "Extra picture 2",
-            };
-          })()
+        ? await uploadAndWrap(
+            additionalPic2,
+            "secondary_profile",
+            "Extra picture 2",
+            storedUserID
+          )
+        : removedAdd2Pic
+        ? null
         : additionalPic2.PicID
         ? additionalPic2
-        : null;
+        : undefined;
+
+      console.log("uploadedAdd1Pic: ", uploadedAdd1Pic);
+      console.log("uploadedAdd2Pic: ", uploadedAdd2Pic);
 
       const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
+
+      // const requestBody = {
+      //   ...cleanedForm,
+      // };
+
+      // if (clearedPics.profile) {
+      //   requestBody.profilePicture = null;
+      // } else if (uploadedProfilePic !== undefined) {
+      //   requestBody.profilePicture = uploadedProfilePic;
+      // }
+
+      // if (clearedPics.add1) {
+      //   requestBody.additionalPicture1 = null;
+      // } else if (uploadedAdd1Pic !== undefined) {
+      //   requestBody.additionalPicture1 = uploadedAdd1Pic;
+      // }
+
+      // if (clearedPics.add2) {
+      //   requestBody.additionalPicture2 = null;
+      // } else if (uploadedAdd2Pic !== undefined) {
+      //   requestBody.additionalPicture2 = uploadedAdd2Pic;
+      // }
+
+      const requestBody = {
+        ...cleanedForm,
+        profilePicture: uploadedProfilePic,
+        additionalPicture1: uploadedAdd1Pic,
+        additionalPicture2: uploadedAdd2Pic,
+      };
+
       const response = await fetch(apiurl, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         //body: JSON.stringify({ phoneNumber, password }),
-        body: JSON.stringify({
-          ...cleanedForm,
-          //profilePic,
-          //additionalPic1,
-          //additionalPic2,
-          profilePicture: uploadedProfilePic,
-          additionalPicture1: uploadedAdd1Pic,
-          additionalPicture2: uploadedAdd2Pic,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log("body:");
@@ -395,7 +430,6 @@ export default function EditProfile() {
       console.log("response:", response);
 
       if (!response.ok) {
-        // You can throw an error or handle it with an error message.
         throw new Error(`Login failed: HTTP ${response.status}`);
       }
 
@@ -477,17 +511,55 @@ export default function EditProfile() {
   }, [initialData, initialPics]);
 
   // Construct the full image URL if mainImagePath exists, otherwise use placeholder
-  const imageUrl = profilePic.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` }
-    : defaultUserImage;
+  // const imageUrl = profilePic.PicPath?.trim()
+  //   ? { uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` }
+  //   : defaultUserImage;
 
-  const additionalImage1 = additionalPic1.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` }
-    : defaultUserImage;
+  // const additionalImage1 = additionalPic1.PicPath?.trim()
+  //   ? { uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` }
+  //   : defaultUserImage;
 
-  const additionalImage2 = additionalPic2.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` }
-    : defaultUserImage;
+  // const additionalImage2 = additionalPic2.PicPath?.trim()
+  //   ? { uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` }
+  //   : defaultUserImage;
+
+  const [profileImage, setProfileImage] = useState(defaultUserImage);
+  const [additionalImage1, setAdditionalImage1] = useState(defaultUserImage);
+  const [additionalImage2, setAdditionalImage2] = useState(defaultUserImage);
+
+  useEffect(() => {
+    if (profilePic.PicPath?.trim().startsWith("/Images/")) {
+      setProfileImage({ uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` });
+    } else if (profilePic.PicPath?.startsWith("file://")) {
+      setProfileImage({ uri: profilePic.PicPath });
+    } else {
+      setProfileImage(defaultUserImage);
+    }
+  }, [profilePic.PicPath]);
+
+  useEffect(() => {
+    if (additionalPic1.PicPath?.trim().startsWith("/Images/")) {
+      setAdditionalImage1({
+        uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}`,
+      });
+    } else if (additionalPic1.PicPath?.startsWith("file://")) {
+      setAdditionalImage1({ uri: additionalPic1.PicPath });
+    } else {
+      setAdditionalImage1(defaultUserImage);
+    }
+  }, [additionalPic1.PicPath]);
+
+  useEffect(() => {
+    if (additionalPic2.PicPath?.trim().startsWith("/Images/")) {
+      setAdditionalImage2({
+        uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}`,
+      });
+    } else if (additionalPic2.PicPath?.startsWith("file://")) {
+      setAdditionalImage2({ uri: additionalPic2.PicPath });
+    } else {
+      setAdditionalImage2(defaultUserImage);
+    }
+  }, [additionalPic2.PicPath]);
 
   const handleImagePress = (imageUriToView, altText = "") => {
     if (!imageUriToView) {
@@ -615,6 +687,7 @@ export default function EditProfile() {
                 );
                 console.log("New URI (camera):", newUri);
                 setFn((prev) => ({ ...prev, PicPath: newUri }));
+                setImageToViewUri(newUri); // Set the URI to view the image
                 //console.log("New URI after copy in camera:", newUri);
                 //setImage(newUri);
               } catch (copyError) {
@@ -646,7 +719,12 @@ export default function EditProfile() {
 
                   //setImage(newUri);
                   console.log("New URI (library):", newUri);
+                  setProfilePic((prev) => ({ ...prev, PicPath: newUri }));
+                  console.log("checking: ", newUri);
+                  console.log("checking: ", profilePic.PicPath);
+
                   setFn((prev) => ({ ...prev, PicPath: newUri }));
+                  setImageToViewUri(newUri);
                 } catch (copyError) {
                   Alert.alert(
                     t("ImagePicker_errorTitle"),
@@ -712,11 +790,16 @@ export default function EditProfile() {
     const uriToDelete = imageToViewUri;
 
     if (imageTypeToClear === "main") {
-      setProfilePic((prev) => ({ ...prev, PicPath: "" }));
-    } else if (imageTypeToClear === "add1") {
-      setAdditionalPic1((prev) => ({ ...prev, PicPath: "" }));
-    } else if (imageTypeToClear === "add2") {
-      setAdditionalPic2((prev) => ({ ...prev, PicPath: "" }));
+      setClearedPics((prev) => ({ ...prev, profile: true }));
+      setProfilePic({ PicID: "", PicName: "", PicPath: "", PicAlt: "" });
+    }
+    if (imageTypeToClear === "add1") {
+      setClearedPics((prev) => ({ ...prev, add1: true }));
+      setAdditionalPic1({ PicID: "", PicName: "", PicPath: "", PicAlt: "" });
+    }
+    if (imageTypeToClear === "add2") {
+      setClearedPics((prev) => ({ ...prev, add2: true }));
+      setAdditionalPic2({ PicID: "", PicName: "", PicPath: "", PicAlt: "" });
     }
 
     if (uriToDelete.startsWith("file://")) {
@@ -724,6 +807,7 @@ export default function EditProfile() {
     }
 
     setShowImageViewModal(false);
+    //setImageToViewUri("");
     setImageToViewUri(null);
     setImageTypeToClear(null);
   };
@@ -866,14 +950,16 @@ export default function EditProfile() {
           >
             {/* <Image
               alt={profilePic.PicAlt}
-              source={imageUrl}
+              //source={imageUrl}
+              source={profileImage}
               style={styles.profileImage}
             /> */}
             {profilePic.PicPath === "" ? (
               <>
                 <Image
                   alt={profilePic.PicAlt}
-                  source={imageUrl}
+                  //source={imageUrl}
+                  source={profileImage}
                   //source={imageUrl}
                   style={styles.profileImage}
                 />
@@ -908,7 +994,8 @@ export default function EditProfile() {
                 <Image
                   alt={profilePic.PicAlt}
                   //source={{ uri: profilePic.PicPath }}
-                  source={imageUrl}
+                  //source={imageUrl}
+                  source={profileImage}
                   //source={{ uri: imageUrl}}
                   style={styles.profileImage}
                 />
@@ -942,20 +1029,6 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.editableContainer}>
-          {/* <FloatingLabelInput
-            maxLength={maxLengths.partner}
-            style={styles.inputContainer}
-            alignRight={Globals.userSelectedDirection === "rtl"}
-            label={t("ProfileScreen_partner")}
-            name="partner"
-            value={form.partner}
-            onChangeText={(text) => handleFormChange("partner", text)}
-            ref={inputRefs.partner}
-          />
-          {formErrors.partner && (
-            <Text style={styles.errorText}>{formErrors.partner}</Text>
-          )} */}
-
           <FloatingLabelInput
             maxLength={maxLengths.residentApartmentNumber}
             style={styles.inputContainer}
@@ -1108,6 +1181,7 @@ export default function EditProfile() {
               <Image
                 alt={additionalPic1.PicAlt}
                 source={additionalImage1}
+                //source={{ uri: additionalPic1.PicPath }}
                 style={styles.profileImage}
               />
             </BouncyButton>
@@ -1143,6 +1217,7 @@ export default function EditProfile() {
               <Image
                 alt={additionalPic2.PicAlt}
                 source={additionalImage2}
+                //source={{ uri: additionalPic2.PicPath }}
                 style={styles.profileImage}
               />
             </BouncyButton>
