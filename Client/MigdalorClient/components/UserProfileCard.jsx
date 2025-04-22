@@ -1,5 +1,5 @@
 // components/UserProfileCard.jsx
-import React from "react";
+import React, { useMemo} from "react";
 import {
   View,
   Text,
@@ -10,32 +10,60 @@ import {
 } from "react-native";
 import BouncyButton from "./BouncyButton";
 import { useTranslation } from "react-i18next";
+import { Globals } from "@/app/constants/Globals";
+
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
+const API_BASE_URL = Globals.API_BASE_URL;
 
 // Assuming data structure: { userId: '...', name: '...', photoUrl: '...' }
-function UserProfileCard({ data }) {
+function UserProfileCard({ data, onPress }) {
   const { t } = useTranslation();
   
   // Basic placeholder image if photoUrl is missing
-  const placeholderImage = require("../assets/images/tempItem.jpg"); // CHANGE TO YOUR PLACEHOLDER IMAGE PATH
-  const imageUrl = data?.photoUrl ? { uri: data.photoUrl } : placeholderImage;
+  const placeholderImage = require("../assets/images/tempItem.jpg");
+
+  // Construct the full image URL for the Image component
+  const imageUrl = useMemo(() => {
+    if (data?.photoUrl) {
+      // data.photoUrl now contains the relative path like "path/to/image.jpg"
+      // Prepend the base URL
+      const relativePath = data.photoUrl.startsWith('/')
+                           ? data.photoUrl.substring(1) // Avoid double slash if path starts with /
+                           : data.photoUrl;
+      return { uri: `${API_BASE_URL}/${relativePath}` }; // Combine base URL and relative path
+    } else {
+      return placeholderImage; // Use placeholder if no relative path provided
+    }
+  }, [data?.photoUrl]); 
+
+  const displayName = useMemo(() => {
+    const engFirst = data?.engFirstName?.trim();
+    const engLast = data?.engLastName?.trim();
+    const hebFirst = data?.hebFirstName?.trim();
+    const hebLast = data?.hebLastName?.trim();
+
+    if (engFirst || engLast) {
+      return `${engFirst || ""} ${engLast || ""}`.trim();
+    } else if (hebFirst || hebLast) {
+      return `${hebFirst || ""} ${hebLast || ""}`.trim();
+    } else {
+      return t("UserProfileCard_unnamedUser");
+    }
+  }, [data, t]);
 
   return (
     <BouncyButton
       style={styles.container}
       springConfig={{ bounciness: 10, speed: 50 }}
       shrinkScale={0.85}
-      onPress={() =>
-        console.log(
-          "User profile card pressed" /*/ We will navigate to profile page here /*/
-        )
-      }
+      onPress={onPress}
     >
-      <Image source={imageUrl} style={styles.photo} />
+      {/* Image source now uses the dynamically constructed full URL or placeholder */}
+      <Image source={imageUrl} style={styles.photo} onError={(e) => console.log(`Failed to load image: ${imageUrl?.uri}`, e.nativeEvent.error)} />
       <View style={styles.infoContainer}>
-        <Text style={styles.name}>
-          {data?.name || t("UserProfileCard_unnamedUser")}
+        <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
+             {displayName}
         </Text>
       </View>
     </BouncyButton>
