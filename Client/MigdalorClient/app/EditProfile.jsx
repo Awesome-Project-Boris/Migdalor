@@ -57,7 +57,7 @@ export default function EditProfile() {
     // profilePicID: "",
     // additionalPic1ID: "",
     // additionalPic2ID: "",
-    residentApartmentNumber: "",
+    residentApartmentNumber: null,
   });
 
   const [profilePic, setProfilePic] = useState({
@@ -188,269 +188,106 @@ export default function EditProfile() {
     }
   };
 
-  const handleSave = async () => {
-    const newErrors = {};
-    let firstErrorField = null;
+  const handleRemoveImage = async () => {
+    const uriToDelete = imageToViewUri;
 
-    const cleanedForm = {};
-
-    Object.entries(form).forEach(([key, value]) => {
-      if (key === "arrivalYear") {
-        return;
-      }
-
-      const str = value == null ? "" : String(value);
-      const cleanedValue = str.trim(); // safe now
-      cleanedForm[key] = cleanedValue;
-
-      const error = validateField(key, cleanedValue);
-      newErrors[key] = error;
-      if (!firstErrorField && error) {
-        firstErrorField = key;
-      }
-    });
-
-    setFormErrors(newErrors);
-
-    if (firstErrorField) {
-      const ref = inputRefs[firstErrorField];
-      if (ref?.current) {
-        // Blur first to make sure that even if the input is focused, it will auto scroll to it
-        ref.current.blur();
-        setTimeout(() => {
-          ref.current?.focus();
-        }, 10);
-      }
-      return;
+    if (imageTypeToClear === "main") {
+      setClearedPics((prev) => ({ ...prev, profile: true }));
+      setProfilePic({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      //setProfilePic(null);
+    }
+    if (imageTypeToClear === "add1") {
+      setClearedPics((prev) => ({ ...prev, add1: true }));
+      setAdditionalPic1({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      //setAdditionalPic1(null);
+    }
+    if (imageTypeToClear === "add2") {
+      setClearedPics((prev) => ({ ...prev, add2: true }));
+      setAdditionalPic2({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      //setAdditionalPic2(null);
     }
 
-    setForm(cleanedForm);
-    console.log("Updated Data:", cleanedForm);
-    //alert(t("EditProfileScreen_ProfileUpdated"));
-    Toast.show({
-      type: "success", // Type for styling (if themes are set up)
-      text1: t("EditProfileScreen_ProfileUpdated"),
-      //text1: 'Submitted!', // Main text
-      //text2: t("EditProfileScreen_ProfileUpdated"), // Sub text
-      duration: 3500, // Custom duration
-      position: "top", // Example: 'top' or 'bottom'
-    });
+    if (uriToDelete.startsWith("file://")) {
+      await safeDeleteFile(uriToDelete);
+    }
 
-    //console.log(cleanedForm.residentApartmentNumber)
+    setShowImageViewModal(false);
+    //setImageToViewUri("");
+    setImageToViewUri(null);
+    setImageTypeToClear(null);
+  };
 
-    // !! Add API call to save the data here
-    console.log("Saving data to API...");
-    try {
-      const storedUserID = await AsyncStorage.getItem("userID");
-      console.log("Stored user ID:", storedUserID); // Debugging line
-      if (!storedUserID) {
-        console.error("No user ID found in AsyncStorage.");
-        return;
-      }
-
-      console.log("user:", storedUserID);
-      cleanedForm.residentApartmentNumber = parseInt(
-        cleanedForm.residentApartmentNumber
-      );
-      form.residentApartmentNumber = parseInt(form.residentApartmentNumber);
+  const uploadImage = async (imageUri, role, altText, uploaderId) => {
+    if (!imageUri || !imageUri.startsWith("file://")) {
       console.log(
-        "cleanedForm.residentApartmentNumber ",
-        cleanedForm.residentApartmentNumber
+        `Skipping upload for non-local file or null URI: ${imageUri}`
       );
-      console.log(typeof cleanedForm.residentApartmentNumber);
-      console.log(typeof form.residentApartmentNumber);
-      console.log("form.residentApartmentNumber", form.residentApartmentNumber);
-      // !! for testing, change later
-      form.residentApartmentNumber = parseInt(11111);
+      return null; // Not a local file to upload
+    }
 
-      console.log("cleanedform ", cleanedForm);
+    console.log(`Uploading image: ${role}`);
+    const formData = new FormData();
+    const fileType = imageUri.substring(imageUri.lastIndexOf(".") + 1);
+    const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
 
-      const uploadAndWrap = async (imageObj, role, altText, uploaderId) => {
-        const imageUri = imageObj.PicPath;
-        if (!imageUri || !imageUri.startsWith("file://")) return null;
+    formData.append("files", {
+      uri: imageUri,
+      name: `${role}.${fileType}`,
+      type: mimeType,
+    });
+    formData.append("picRoles", role);
+    formData.append("picAlts", altText);
+    formData.append("uploaderId", uploaderId);
 
-        const newPicId = await uploadImage(imageUri, role, altText, uploaderId);
-        return {
-          PicID: newPicId,
-          PicName: "", // optional
-          PicPath: imageUri,
-          PicAlt: altText,
-        };
-      };
+    console.log("imageUri:", imageUri); // Debugging line
+    console.log("role:", role); // Debugging line
+    console.log("fileType:", fileType); // Debugging line
+    console.log("picAlts:", altText); // Debugging line
+    console.log("uploaderId:", uploaderId); // Debugging line
 
-      // const uploadedProfilePic = profilePic.PicPath.startsWith("file://")
-      //   ? await (async () => {
-      //       const newPicId = await uploadImage(
-      //         profilePic.PicPath,
-      //         "profile_picture",
-      //         "Profile picture",
-      //         storedUserID
-      //       );
-      //       return {
-      //         PicID: newPicId,
-      //         PicName: "", // optional: you can extract the file name from path if needed
-      //         PicPath: profilePic.PicPath, // local URI
-      //         PicAlt: "Profile picture",
-      //       };
-      //     })()
-      //   : profilePic.PicID
-      //   ? profilePic
-      //   : null;
+    console.log("FormData:", formData); // Debugging line
+    console.log("ProfilePic", imageUri); // Debugging line
 
-      // const uploadedProfilePic = profilePic.PicPath.startsWith("file://")
-      //   ? await uploadAndWrap(
-      //       profilePic,
-      //       "profile_picture",
-      //       "Profile picture",
-      //       storedUserID
-      //     )
-      //   : removedMainPic
-      //   ? null
-      //   : profilePic.PicID
-      //   ? profilePic
-      //   : undefined;
+    try {
+      const uploadResponse = await fetch(
+        `${Globals.API_BASE_URL}/api/Picture`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      const uploadResults = await uploadResponse.json(); // Assume server always returns JSON
 
-      const uploadedProfilePic = profilePic.PicPath.startsWith("file://")
-        ? await uploadAndWrap(
-            profilePic,
-            "profile_picture",
-            "Profile picture",
-            storedUserID
-          )
-        : profilePic.PicID
-        ? profilePic
-        : null;
-
-      console.log("uploadedProfilePic: ", uploadedProfilePic);
-      setProfilePic((prev) => ({ ...prev, PicID: uploadedProfilePic }));
-
-      // const uploadedAdd1Pic = additionalPic1.PicPath.startsWith("file://")
-      //   ? await uploadAndWrap(
-      //       additionalPic1,
-      //       "secondary_profile",
-      //       "Extra picture 1",
-      //       storedUserID
-      //     )
-      //   : removedAdd1Pic
-      //   ? null
-      //   : additionalPic1.PicID
-      //   ? additionalPic1
-      //   : undefined;
-
-      // const uploadedAdd2Pic = additionalPic2.PicPath.startsWith("file://")
-      //   ? await uploadAndWrap(
-      //       additionalPic2,
-      //       "secondary_profile",
-      //       "Extra picture 2",
-      //       storedUserID
-      //     )
-      //   : removedAdd2Pic
-      //   ? null
-      //   : additionalPic2.PicID
-      //   ? additionalPic2
-      //   : undefined;
-
-      const uploadedAdd1Pic = additionalPic1.PicPath.startsWith("file://")
-        ? await uploadAndWrap(
-            additionalPic1,
-            "secondary_profile",
-            "Extra picture 1",
-            storedUserID
-          )
-        : removedAdd1Pic
-        ? null
-        : additionalPic1.PicID
-        ? additionalPic1
-        : undefined;
-
-      const uploadedAdd2Pic = additionalPic2.PicPath.startsWith("file://")
-        ? await uploadAndWrap(
-            additionalPic2,
-            "secondary_profile",
-            "Extra picture 2",
-            storedUserID
-          )
-        : removedAdd2Pic
-        ? null
-        : additionalPic2.PicID
-        ? additionalPic2
-        : undefined;
-
-      console.log("uploadedAdd1Pic: ", uploadedAdd1Pic);
-      console.log("uploadedAdd2Pic: ", uploadedAdd2Pic);
-
-      const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
-
-      // const requestBody = {
-      //   ...cleanedForm,
-      // };
-
-      // if (clearedPics.profile) {
-      //   requestBody.profilePicture = null;
-      // } else if (uploadedProfilePic !== undefined) {
-      //   requestBody.profilePicture = uploadedProfilePic;
-      // }
-
-      // if (clearedPics.add1) {
-      //   requestBody.additionalPicture1 = null;
-      // } else if (uploadedAdd1Pic !== undefined) {
-      //   requestBody.additionalPicture1 = uploadedAdd1Pic;
-      // }
-
-      // if (clearedPics.add2) {
-      //   requestBody.additionalPicture2 = null;
-      // } else if (uploadedAdd2Pic !== undefined) {
-      //   requestBody.additionalPicture2 = uploadedAdd2Pic;
-      // }
-
-      const requestBody = {
-        ...cleanedForm,
-        profilePicture: uploadedProfilePic,
-        additionalPicture1: uploadedAdd1Pic,
-        additionalPicture2: uploadedAdd2Pic,
-      };
-
-      const response = await fetch(apiurl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        //body: JSON.stringify({ phoneNumber, password }),
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log("body:");
-      console.log({
-        ...cleanedForm,
-        profilePic,
-        additionalPic1,
-        additionalPic2,
-      });
-
-      console.log("response:", response);
-
-      if (!response.ok) {
-        throw new Error(`Login failed: HTTP ${response.status}`);
+      if (
+        !uploadResponse.ok ||
+        !Array.isArray(uploadResults) ||
+        uploadResults.length === 0 ||
+        !uploadResults[0].success
+      ) {
+        const errorMsg =
+          uploadResults?.[0]?.errorMessage ||
+          `Image upload failed (HTTP ${uploadResponse.status})`;
+        throw new Error(errorMsg);
       }
-
-      //router.back({
-      //router.replace({
-      //   pathname: "./Profile",
-      //   params: {
-      //     //updatedData: JSON.stringify(form),
-      //     updatedData: JSON.stringify(cleanedForm),
-      //     updatedPics: JSON.stringify({
-      //       profilePic,
-      //       additionalPic1,
-      //       additionalPic2,
-      //     }),
-      //   },
-      // });
-      router.back();
+      console.log(`Upload successful for ${role}:`, uploadResults[0]);
+      await safeDeleteFile(imageUri); // Clean up local copy after successful upload
+      return uploadResults[0].picId; // Return the new PicID
     } catch (error) {
-      console.error("Error getting userID", error);
+      console.error(`Image upload failed for ${role}:`, error);
+      Toast.show({
+        type: "error",
+        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
+        text2: error.message,
+        position: "top",
+      });
+      // Decide if failure is critical. Maybe throw error to stop handleSubmit?
+      throw error; // Re-throw to stop the submission process
     }
   };
+
+  useEffect(() => {
+    console.log("ClearedPics updated:", clearedPics);
+  }, [clearedPics]);
 
   const handleCancel = () => {
     console.log("Cancelled Edit Profile");
@@ -509,19 +346,6 @@ export default function EditProfile() {
       setAdditionalPic2(pics.additionalPic2);
     }
   }, [initialData, initialPics]);
-
-  // Construct the full image URL if mainImagePath exists, otherwise use placeholder
-  // const imageUrl = profilePic.PicPath?.trim()
-  //   ? { uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` }
-  //   : defaultUserImage;
-
-  // const additionalImage1 = additionalPic1.PicPath?.trim()
-  //   ? { uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` }
-  //   : defaultUserImage;
-
-  // const additionalImage2 = additionalPic2.PicPath?.trim()
-  //   ? { uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` }
-  //   : defaultUserImage;
 
   const [profileImage, setProfileImage] = useState(defaultUserImage);
   const [additionalImage1, setAdditionalImage1] = useState(defaultUserImage);
@@ -719,7 +543,9 @@ export default function EditProfile() {
 
                   //setImage(newUri);
                   console.log("New URI (library):", newUri);
-                  setProfilePic((prev) => ({ ...prev, PicPath: newUri }));
+                  //setProfilePic((prev) => ({ ...prev, PicPath: newUri }));
+                  //setImage((prev) => ({ ...prev, PicPath: newUri }));
+                  setImageToViewUri(newUri);
                   console.log("checking: ", newUri);
                   console.log("checking: ", profilePic.PicPath);
 
@@ -786,100 +612,6 @@ export default function EditProfile() {
     }
   };
 
-  const handleRemoveImage = async () => {
-    const uriToDelete = imageToViewUri;
-
-    if (imageTypeToClear === "main") {
-      setClearedPics((prev) => ({ ...prev, profile: true }));
-      setProfilePic({ PicID: "", PicName: "", PicPath: "", PicAlt: "" });
-    }
-    if (imageTypeToClear === "add1") {
-      setClearedPics((prev) => ({ ...prev, add1: true }));
-      setAdditionalPic1({ PicID: "", PicName: "", PicPath: "", PicAlt: "" });
-    }
-    if (imageTypeToClear === "add2") {
-      setClearedPics((prev) => ({ ...prev, add2: true }));
-      setAdditionalPic2({ PicID: "", PicName: "", PicPath: "", PicAlt: "" });
-    }
-
-    if (uriToDelete.startsWith("file://")) {
-      await safeDeleteFile(uriToDelete);
-    }
-
-    setShowImageViewModal(false);
-    //setImageToViewUri("");
-    setImageToViewUri(null);
-    setImageTypeToClear(null);
-  };
-
-  const uploadImage = async (imageUri, role, altText, uploaderId) => {
-    if (!imageUri || !imageUri.startsWith("file://")) {
-      console.log(
-        `Skipping upload for non-local file or null URI: ${imageUri}`
-      );
-      return null; // Not a local file to upload
-    }
-
-    console.log(`Uploading image: ${role}`);
-    const formData = new FormData();
-    const fileType = imageUri.substring(imageUri.lastIndexOf(".") + 1);
-    const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
-
-    formData.append("files", {
-      uri: imageUri,
-      name: `${role}.${fileType}`,
-      type: mimeType,
-    });
-    formData.append("picRoles", role);
-    formData.append("picAlts", altText);
-    formData.append("uploaderId", uploaderId);
-
-    console.log("imageUri:", imageUri); // Debugging line
-    console.log("role:", role); // Debugging line
-    console.log("fileType:", fileType); // Debugging line
-    console.log("picAlts:", altText); // Debugging line
-    console.log("uploaderId:", uploaderId); // Debugging line
-
-    console.log("FormData:", formData); // Debugging line
-    console.log("ProfilePic", imageUri); // Debugging line
-
-    try {
-      const uploadResponse = await fetch(
-        `${Globals.API_BASE_URL}/api/Picture`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      const uploadResults = await uploadResponse.json(); // Assume server always returns JSON
-
-      if (
-        !uploadResponse.ok ||
-        !Array.isArray(uploadResults) ||
-        uploadResults.length === 0 ||
-        !uploadResults[0].success
-      ) {
-        const errorMsg =
-          uploadResults?.[0]?.errorMessage ||
-          `Image upload failed (HTTP ${uploadResponse.status})`;
-        throw new Error(errorMsg);
-      }
-      console.log(`Upload successful for ${role}:`, uploadResults[0]);
-      await safeDeleteFile(imageUri); // Clean up local copy after successful upload
-      return uploadResults[0].picId; // Return the new PicID
-    } catch (error) {
-      console.error(`Image upload failed for ${role}:`, error);
-      Toast.show({
-        type: "error",
-        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
-        text2: error.message,
-        position: "top",
-      });
-      // Decide if failure is critical. Maybe throw error to stop handleSubmit?
-      throw error; // Re-throw to stop the submission process
-    }
-  };
-
   const deletePicture = async (pictureId) => {
     if (!pictureId) return; // No ID to delete
     console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
@@ -915,6 +647,270 @@ export default function EditProfile() {
       // Don't necessarily stop the whole edit process if old pic deletion fails
     }
   };
+
+  console.log("profilePic: ", profilePic);
+  console.log("additionalPic1: ", additionalPic1);
+  console.log("additionalPic2: ", additionalPic2);
+
+  const handleSave = async () => {
+    const newErrors = {};
+    let firstErrorField = null;
+
+    const cleanedForm = {};
+
+    Object.entries(form).forEach(([key, value]) => {
+      if (key === "arrivalYear") {
+        return;
+      }
+
+      const str = value == null ? "" : String(value);
+      const cleanedValue = str.trim(); // safe now
+      cleanedForm[key] = cleanedValue;
+
+      const error = validateField(key, cleanedValue);
+      newErrors[key] = error;
+      if (!firstErrorField && error) {
+        firstErrorField = key;
+      }
+    });
+
+    setFormErrors(newErrors);
+
+    if (firstErrorField) {
+      const ref = inputRefs[firstErrorField];
+      if (ref?.current) {
+        // Blur first to make sure that even if the input is focused, it will auto scroll to it
+        ref.current.blur();
+        setTimeout(() => {
+          ref.current?.focus();
+        }, 10);
+      }
+      return;
+    }
+
+    setForm(cleanedForm);
+    console.log("Updated Data:", cleanedForm);
+    //alert(t("EditProfileScreen_ProfileUpdated"));
+    Toast.show({
+      type: "success", // Type for styling (if themes are set up)
+      text1: t("EditProfileScreen_ProfileUpdated"),
+      //text1: 'Submitted!', // Main text
+      //text2: t("EditProfileScreen_ProfileUpdated"), // Sub text
+      duration: 3500, // Custom duration
+      position: "top", // Example: 'top' or 'bottom'
+    });
+
+    //console.log(cleanedForm.residentApartmentNumber)
+
+    // !! Add API call to save the data here
+    console.log("Saving data to API...");
+    try {
+      const storedUserID = await AsyncStorage.getItem("userID");
+      console.log("Stored user ID:", storedUserID); // Debugging line
+      if (!storedUserID) {
+        console.error("No user ID found in AsyncStorage.");
+        return;
+      }
+
+      //console.log("user:", storedUserID);
+      cleanedForm.residentApartmentNumber = parseInt(
+        cleanedForm.residentApartmentNumber
+      );
+      form.residentApartmentNumber = parseInt(form.residentApartmentNumber);
+      console.log(
+        "cleanedForm.residentApartmentNumber ",
+        cleanedForm.residentApartmentNumber
+      );
+      //console.log(typeof cleanedForm.residentApartmentNumber);
+      //console.log(typeof form.residentApartmentNumber);
+      console.log("form.residentApartmentNumber", form.residentApartmentNumber);
+
+      // !! for testing, change later
+      //form.residentApartmentNumber = parseInt(22222);
+      //cleanedForm.residentApartmentNumber = parseInt(22222);
+
+      console.log("cleanedform ", cleanedForm);
+
+      const uploadAndWrap = async (imageObj, role, altText, uploaderId) => {
+        const imageUri = imageObj.PicPath;
+        if (!imageUri || !imageUri.startsWith("file://")) return null;
+
+        const newPicId = await uploadImage(imageUri, role, altText, uploaderId);
+        return {
+          PicID: newPicId,
+          PicName: "", // optional
+          PicPath: imageUri,
+          PicAlt: altText,
+        };
+      };
+
+  
+
+      let uploadedProfilePic;
+      if (clearedPics.profile) {
+        // “Remove” pressed
+        uploadedProfilePic = null;
+      } else if (
+        typeof profilePic?.PicPath === "string" &&
+        profilePic.PicPath.startsWith("file://")
+      ) {
+        // brand‑new local file → upload it
+        uploadedProfilePic = await uploadAndWrap(
+          profilePic,
+          "profile_picture",
+          "Profile picture",
+          storedUserID
+        );
+      } else {
+        // reuse existing if it has an ID, else clear
+        uploadedProfilePic = profilePic?.PicID ? profilePic : null;
+      }
+      let uploadedAdd1Pic;
+      if (removedAdd1Pic) {
+        // You clicked “remove”
+        uploadedAdd1Pic = null;
+      } else if (
+        typeof additionalPic1?.PicPath === "string" &&
+        additionalPic1.PicPath.startsWith("file://")
+      ) {
+        // A brand‑new local file that needs uploading
+        uploadedAdd1Pic = await uploadAndWrap(
+          additionalPic1,
+          "secondary_profile",
+          "Extra picture 1",
+          storedUserID
+        );
+      } else {
+        // Everything else: either reuse the existing picture object,
+        // or if there's genuinely nothing there, null it
+        uploadedAdd1Pic = additionalPic1?.PicID ? additionalPic1 : null;
+      }
+
+      let uploadedAdd2Pic;
+      if (removedAdd2Pic) {
+        uploadedAdd2Pic = null;
+      } else if (
+        typeof additionalPic2?.PicPath === "string" &&
+        additionalPic2.PicPath.startsWith("file://")
+      ) {
+        uploadedAdd2Pic = await uploadAndWrap(
+          additionalPic2,
+          "secondary_profile",
+          "Extra picture 2",
+          storedUserID
+        );
+      } else {
+        uploadedAdd2Pic = additionalPic2?.PicID ? additionalPic2 : null;
+      }
+
+      const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
+
+      // const requestBody = {
+      //   ...cleanedForm,
+      //   profilePicture: profilePic,
+      //   additionalPicture1: additionalPic1,
+      //   additionalPicture2: additionalPic2,
+      // };
+
+      const requestBody = {
+        // your cleaned form fields
+        ...cleanedForm,
+        // **must** match DTO names (in camelCase)
+        profilePicture:    uploadedProfilePic,
+        additionalPicture1: uploadedAdd1Pic,
+        additionalPicture2: uploadedAdd2Pic,
+      };
+
+
+      // if (clearedPics.profile) {
+      //   requestBody.profilePicture = null;
+      // } else if (uploadedProfilePic?.PicID) {
+      //   requestBody.profilePicture = uploadedProfilePic;
+      // } else if (profilePic?.PicID) {
+      //   requestBody.profilePicture = profilePic;
+      // }
+
+      // if (clearedPics.add1) {
+      //   requestBody.additionalPicture1 = null;
+      // } else if (uploadedAdd1Pic?.PicID) {
+      //   requestBody.additionalPicture1 = uploadedAdd1Pic;
+      // } else if (additionalPic1?.PicID) {
+      //   requestBody.additionalPicture1 = additionalPic1;
+      // }
+
+      // if (clearedPics.add2) {
+      //   requestBody.additionalPicture2 = null;
+      // } else if (uploadedAdd2Pic?.PicID) {
+      //   requestBody.additionalPicture2 = uploadedAdd2Pic;
+      // } else if (additionalPic2?.PicID) {
+      //   requestBody.additionalPicture2 = additionalPic2;
+      // }
+
+      console.log("requestBody: ", requestBody);
+
+      console.log("requestBody.profilePicture: ", requestBody.profilePicture);
+      console.log(
+        "requestBody.additionalPicture1: ",
+        requestBody.additionalPicture1
+      );
+      console.log(
+        "requestBody.additionalPicture2: ",
+        requestBody.additionalPicture2
+      );
+
+      // const requestBody = {
+      //   ...cleanedForm,
+      //   profilePicture: uploadedProfilePic,
+      //   additionalPicture1: uploadedAdd1Pic,
+      //   additionalPicture2: uploadedAdd2Pic,
+      // };
+
+      const response = await fetch(apiurl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        //body: JSON.stringify({ phoneNumber, password }),
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("body:");
+      console.log({
+        ...cleanedForm,
+        profilePic,
+        additionalPic1,
+        additionalPic2,
+      });
+
+      console.log("response:", response);
+
+      if (!response.ok) {
+        throw new Error(`Login failed: HTTP ${response.status}`);
+      }
+
+      //router.back({
+      //router.replace({
+      //   pathname: "./Profile",
+      //   params: {
+      //     //updatedData: JSON.stringify(form),
+      //     updatedData: JSON.stringify(cleanedForm),
+      //     updatedPics: JSON.stringify({
+      //       profilePic,
+      //       additionalPic1,
+      //       additionalPic2,
+      //     }),
+      //   },
+      // });
+      router.back();
+    } catch (error) {
+      console.error("Error getting userID", error);
+    }
+  };
+
+  //console.log("Form Data:", form);
+  console.log("profilePic", profilePic);
+  console.log("additionalPic1", additionalPic1);
+  console.log("additionalPic2", additionalPic2);
 
   return (
     <View style={styles.wrapper}>

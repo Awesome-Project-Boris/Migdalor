@@ -170,21 +170,24 @@ export default function Profile() {
             });
 
             setProfilePic({
-              PicID: userData.profilePicture?.PicID ?? "",
+              PicID: userData.profilePicture?.picId ?? null,
+              //PicID: userData.profilePicture?.picId ?? "",
               PicName: userData.profilePicture?.picName ?? "",
               PicPath: userData.profilePicture?.picPath ?? "",
               PicAlt: userData.profilePicture?.picAlt ?? "",
             });
 
             setAdditionalPic1({
-              PicID: userData.additionalPicture1?.PicID ?? "",
+              PicID: userData.additionalPicture1?.picId ?? null,
+              //PicID: userData.additionalPicture1?.picId ?? "",
               PicName: userData.additionalPicture1?.picName ?? "",
               PicPath: userData.additionalPicture1?.picPath ?? "",
               PicAlt: userData.additionalPicture1?.picAlt ?? "",
             });
 
             setAdditionalPic2({
-              PicID: userData.additionalPicture2?.PicID ?? "",
+              PicID: userData.additionalPicture2?.picId ?? null,
+              //PicID: userData.additionalPicture2?.picId ?? "",
               PicName: userData.additionalPicture2?.picName ?? "",
               PicPath: userData.additionalPicture2?.picPath ?? "",
               PicAlt: userData.additionalPicture2?.picAlt ?? "",
@@ -270,6 +273,7 @@ export default function Profile() {
   //     setAdditionalPic2(pics.additionalPic2);
   //   }
   // }, [params.updatedData, params.updatedPics]);
+
 
   return (
     <View style={styles.wrapper}>

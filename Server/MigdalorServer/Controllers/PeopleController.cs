@@ -142,13 +142,34 @@ namespace MigdalorServer.Controllers
 
             if (dto.ProfilePicture != null)
                 person.ProfilePicId = dto.ProfilePicture.PicId;
+            else
+                person.ProfilePicId = null;
 
             if (dto.AdditionalPicture1 != null)
                 resident.AdditionalPic1Id = dto.AdditionalPicture1.PicId;
+            else
+                resident.AdditionalPic1Id = null;
 
             if (dto.AdditionalPicture2 != null)
                 resident.AdditionalPic2Id = dto.AdditionalPicture2.PicId;
+            else
+                resident.AdditionalPic2Id = null;
 
+
+            //if (dto.ProfilePicture != null)
+            //    person.ProfilePicId = dto.ProfilePicture.PicId;
+            //else
+            //    person.ProfilePicId = null;
+
+            //if (dto.AdditionalPicture1 != null)
+            //    resident.AdditionalPic1Id = dto.AdditionalPicture1.PicId;
+            //else
+            //    resident.AdditionalPic1Id = null;
+
+            //if (dto.AdditionalPicture2 != null)
+            //    resident.AdditionalPic2Id = dto.AdditionalPicture2.PicId;
+            //else
+            //    resident.AdditionalPic2Id = null;
 
 
             //if (resident.Id == 0)
