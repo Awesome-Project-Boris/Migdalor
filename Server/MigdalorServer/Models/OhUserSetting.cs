@@ -11,12 +11,12 @@ namespace MigdalorServer.Models
             UserId = person.PersonId;
         }
 
-        //public OhUserSetting(Guid userID, UserSetting userSetting)
-        //{
-        //    UserId = userID;
-        //    UserSelectedDirection = userSetting.UserSelectedDirection;
-        //    UserSelectedFontSize = userSetting.UserSelectedFontSize;
-        //    UserSelectedLanguage = userSetting.UserSelectedLanguage;
-        //}
+        public OhUserSetting(UserSetting userSetting)
+        {
+            UserId = userSetting.UserId;
+            UserSelectedDirection = userSetting.UserSelectedDirection;
+            UserSelectedFontSize = userSetting.UserSelectedFontSize;
+            UserSelectedLanguage = userSetting.UserSelectedLanguage;
+        }
     }
 }
