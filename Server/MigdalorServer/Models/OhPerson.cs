@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using MigdalorServer.BL;
 using MigdalorServer.Database;
 using MigdalorServer.Models.DTOs;
-using Microsoft.EntityFrameworkCore;
 
 namespace MigdalorServer.Models
 {
@@ -48,14 +48,14 @@ namespace MigdalorServer.Models
             var result = (
                 from person in db.OhPeople
 
-                    // 1) find their resident record
+                // 1) find their resident record
                 join resident in db.OhResidents on person.PersonId equals resident.ResidentId
 
                 // 2) left‑join into OhPeople again for the spouse
                 join spouse in db.OhPeople on resident.SpouseId equals spouse.PersonId into spGroup
                 from s in spGroup.DefaultIfEmpty()
 
-                    // 3) filter to the one you want
+                // 3) filter to the one you want
                 where person.PersonId == ID
 
                 // join into profile picture (left)
@@ -64,19 +64,19 @@ namespace MigdalorServer.Models
                     into profPicGroup
                 from pp in profPicGroup.DefaultIfEmpty()
 
-                    // join into additional picture 1 (left)
+                // join into additional picture 1 (left)
                 join add1 in db.OhPictures
                     on resident.AdditionalPic1Id equals add1.PicId
                     into add1Group
                 from p1 in add1Group.DefaultIfEmpty()
 
-                    // join into additional picture 2 (left)
+                // join into additional picture 2 (left)
                 join add2 in db.OhPictures
                     on resident.AdditionalPic2Id equals add2.PicId
                     into add2Group
                 from p2 in add2Group.DefaultIfEmpty()
 
-                    // 4) project everything you need, including spouse names
+                // 4) project everything you need, including spouse names
                 select new
                 {
                     // --- from OH_People ---
@@ -161,27 +161,34 @@ namespace MigdalorServer.Models
         }
 
         public static async Task<List<ResidentDigest>> GetActiveResidentDigestsAsync(
-       MigdalorDBContext context) // Removed imageBaseUrl parameter
+            MigdalorDBContext context
+        ) // Removed imageBaseUrl parameter
         {
-            if (context == null) throw new ArgumentNullException(nameof(context));
+            if (context == null)
+                throw new ArgumentNullException(nameof(context));
             // Removed check for imageBaseUrl
 
             // Explicitly join OhResidents, OhPeople, and OhPictures
-            var query = context.OhResidents
-                .Where(r => r.IsActive)
-                .Join(context.OhPeople,
-                      resident => resident.ResidentId,
-                      person => person.PersonId,
-                      (resident, person) => new { resident, person })
-                .GroupJoin(context.OhPictures,
-                      rp => rp.person.ProfilePicId,
-                      picture => picture.PicId,
-                      (residentPersonPair, pictures) => new
-                      {
-                          residentPersonPair.resident,
-                          residentPersonPair.person,
-                          picture = pictures.FirstOrDefault()
-                      });
+            var query = context
+                .OhResidents.Where(r => r.IsActive)
+                .Join(
+                    context.OhPeople,
+                    resident => resident.ResidentId,
+                    person => person.PersonId,
+                    (resident, person) => new { resident, person }
+                )
+                .GroupJoin(
+                    context.OhPictures,
+                    rp => rp.person.ProfilePicId,
+                    picture => picture.PicId,
+                    (residentPersonPair, pictures) =>
+                        new
+                        {
+                            residentPersonPair.resident,
+                            residentPersonPair.person,
+                            picture = pictures.FirstOrDefault(),
+                        }
+                );
 
             // Project the final result into the DTO
             var digests = await query
@@ -194,20 +201,22 @@ namespace MigdalorServer.Models
                     EngLastName = joined.person.EngLastName,
 
                     // Construct relative PhotoUrl: Combine Path and Name
-                    PhotoUrl = (joined.picture != null &&
-                                !string.IsNullOrEmpty(joined.picture.PicPath) &&
-                                !string.IsNullOrEmpty(joined.picture.PicName))
-                               // Combine path and name. Ensure no double slashes.
-                               ? $"{joined.picture.PicPath.TrimEnd('/')}/{joined.picture.PicName.TrimStart('/')}"
-                               // Alternative using Path.Combine (might behave differently on non-Windows if paths have backslashes)
-                               // ? Path.Combine(joined.picture.PicPath, joined.picture.PicName).Replace("\\", "/") // Ensure forward slashes for URL
-                               : null // Set to null if picture or path/name is missing
+                    PhotoUrl =
+                        (
+                            joined.picture != null
+                            && !string.IsNullOrEmpty(joined.picture.PicPath)
+                            && !string.IsNullOrEmpty(joined.picture.PicName)
+                        )
+                            // Combine path and name. Ensure no double slashes.
+                            ? $"{joined.picture.PicPath.TrimEnd('/')}/{joined.picture.PicName.TrimStart('/')}"
+                            // Alternative using Path.Combine (might behave differently on non-Windows if paths have backslashes)
+                            // ? Path.Combine(joined.picture.PicPath, joined.picture.PicName).Replace("\\", "/") // Ensure forward slashes for URL
+                            : null, // Set to null if picture or path/name is missing
                 })
                 .ToListAsync();
 
             return digests;
         }
-
 
         // --- Add other static resident-related logic methods here if needed ---
 
@@ -220,6 +229,7 @@ namespace MigdalorServer.Models
             db.OhPeople.Add(newUser);
             db.SaveChanges();
             db.OhResidents.Add(new OhResident(newUser));
+            db.OhUserSettings.Add(new OhUserSetting(newUser));
             db.SaveChanges();
             return newUser;
         }
@@ -247,9 +257,7 @@ namespace MigdalorServer.Models
         public static Guid[] GetAllUserIds()
         {
             using MigdalorDBContext db = new MigdalorDBContext();
-            return db.OhPeople
-                     .Select(u => u.PersonId)
-                     .ToArray();
+            return db.OhPeople.Select(u => u.PersonId).ToArray();
         }
 
         public static bool IsAdmin(Guid userId)
