@@ -5,14 +5,22 @@ import { useTranslation } from "react-i18next";
 export default function SettingsLayout() {
   const { t } = useTranslation();
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: "goldenrod" }}>
+    <Tabs
+      screenOptions={{
+        tabBarStyle: { height: 80 },
+        tabBarIconStyle: { height: 40, width: 40 },
+        tabBarLabelStyle: { fontSize: 12 },
+        tabBarActiveTintColor: "goldenrod",
+        tabBarInactiveTintColor: "black",
+      }}
+    >
       <Tabs.Screen
         name="FontSettings"
         options={{
           title: t("SettingsLayoutTabs_FontSettings"),
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="font" color={color} />
+            <FontAwesome size={40} name="font" color={color} />
           ),
         }}
       />
@@ -23,7 +31,7 @@ export default function SettingsLayout() {
           title: t("SettingsLayoutTabs_notificationSettings"),
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="bell" color={color} />
+            <FontAwesome size={40} name="bell" color={color} />
           ),
         }}
       />
@@ -33,7 +41,7 @@ export default function SettingsLayout() {
           title: t("SettingsLayoutTabs_languageSettings"),
           headerShown: false,
           tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="language" color={color} />
+            <FontAwesome size={40} name="language" color={color} />
           ),
         }}
       />

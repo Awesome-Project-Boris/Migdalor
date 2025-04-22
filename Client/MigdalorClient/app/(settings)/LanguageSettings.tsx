@@ -5,8 +5,11 @@ import { useState, useEffect } from "react";
 import { View, Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
 import FlipButton from "../../components/FlipButton";
 import Header from "@/components/Header";
-
+import { Divider } from 'react-native-paper';
+import { useAuth } from "@/context/AuthProvider";
+import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { Toast } from "toastify-react-native";
 
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -14,6 +17,8 @@ const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 export default function LanguageSettingsPage() {
   const {t, i18n} = useTranslation();
+  const { logout } = useAuth();
+  const router = useRouter();
 
   const [languageSetting, setLanguageSetting] = useState(Globals.userSelectedLanguage);
 
@@ -34,6 +39,7 @@ export default function LanguageSettingsPage() {
 
         <Text
             fontSize={40}
+            marginTop={10}
             fontWeight={800}
             alignSelf="center"
             // direction={Globals.userSelectedDirection as "rtl" | "ltr"}
@@ -72,6 +78,38 @@ export default function LanguageSettingsPage() {
             {/* <Ionicons name="settings" size={32} color="#fff" style={styles.icon} /> */}
             <Text style={styles.buttonText}>{t("LanguageSettingsPage_en")}</Text>
           </FlipButton>
+
+          <Divider/>
+
+          <Text
+            fontSize={40}
+            marginTop={10}
+            fontWeight={800}
+            alignSelf="center"
+            // direction={Globals.userSelectedDirection as "rtl" | "ltr"}
+            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+          >
+            {t("LanguageSettingsPage_LogoutHeader")}
+          </Text>
+            <FlipButton
+              style={styles.button}
+              bgColor="#ffffff"
+              textColor="#0b0908"
+              onPress={async () => {
+                console.log("Logging out...");
+                await logout();
+                router.replace("/LoginScreen");
+                      Toast.show({
+                        type: "success",
+                        text1: t("LanguageSettingsPage_LogoutToast"),
+                        // duration: 3500,
+                        position: "top",
+                      });
+
+              }}
+            >
+              <Text style={styles.buttonText}>{t("LanguageSettingsPage_Logout")}</Text>
+            </FlipButton>            
         </YStack>
       </ScrollView>
     </View>
