@@ -219,7 +219,7 @@ export default function EditProfile() {
 
 
   const handleAddImage = async () => {
-    const uriToAdd = imageToViewUri;
+    //const uriToAdd = imageToViewUri;
 
     // if (imageTypeToClear === "main") {
     //   setClearedPics((prev) => ({ ...prev, profile: true }));
@@ -241,8 +241,9 @@ export default function EditProfile() {
     //   await safeDeleteFile(uriToAdd);
     // }
 
-    // setShowImageViewModal(false);
-    // //setImageToViewUri("");
+    //setShowImageViewModal(false);
+    //setImageToViewUri(imageToViewUri);
+    //console.log("imageToViewUri: ", imageToViewUri);
     // setImageToViewUri(null);
     // setImageTypeToClear(null);
 
@@ -590,7 +591,7 @@ export default function EditProfile() {
                   console.log("New URI (library):", newUri);
                   //setProfilePic((prev) => ({ ...prev, PicPath: newUri }));
                   //setImage((prev) => ({ ...prev, PicPath: newUri }));
-                  setImageToViewUri(newUri);
+                  //setImageToViewUri(newUri);
                   console.log("checking: ", newUri);
                   console.log("checking: ", profilePic.PicPath);
 
