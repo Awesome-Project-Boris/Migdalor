@@ -825,6 +825,7 @@ export default function EditProfile() {
       }
 
       const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
+      console.log("API URL:", apiurl); // Debugging line
 
       // const requestBody = {
       //   ...cleanedForm,
@@ -1057,7 +1058,8 @@ export default function EditProfile() {
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
-            value={String(form.residentApartmentNumber)}
+            //value={String(form.residentApartmentNumber)}
+            value={form.residentApartmentNumber}
             onChangeText={(text) =>
               handleFormChange("residentApartmentNumber", text)
             }
