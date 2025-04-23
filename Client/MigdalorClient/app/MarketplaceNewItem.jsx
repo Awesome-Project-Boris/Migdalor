@@ -27,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "@/app/constants/Globals";
 import { Keyboard } from "react-native";
+import Header from "@/components/Header";
 
 import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
 
@@ -68,7 +69,6 @@ export default function AddNewItem() {
       return null;
     }
   }, [params.listingData]);
-
 
   const itemNameRef = useRef(null);
   const itemDescriptionRef = useRef(null);
@@ -285,7 +285,6 @@ export default function AddNewItem() {
   const resetState = async () => {
     setItemName("");
     setItemDescription("");
-
     await safeDeleteFile(mainImage);
     await safeDeleteFile(extraImage);
     setMainImage(null);
@@ -588,6 +587,7 @@ export default function AddNewItem() {
 
   return (
     <>
+      <Header />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -770,15 +770,13 @@ export default function AddNewItem() {
         </View>
         {!isEditMode && showConfirm && (
           <Modal visible={true} transparent={true} animationType="fade">
-            {" "}
-            {/* ... */}{" "}
+            
           </Modal>
         )}
         <ImageViewModal
           visible={showImageViewModal}
           imageUri={imageToViewUri}
           onClose={() => {
-            /* ... */
           }}
           onRemove={handleRemoveImage}
         />
