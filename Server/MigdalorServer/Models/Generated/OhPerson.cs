@@ -61,6 +61,11 @@ public partial class OhPerson
     [Unicode(false)]
     public string? PersonRole { get; set; }
 
+    [Column("pushToken")]
+    [StringLength(100)]
+    [Unicode(false)]
+    public string? PushToken { get; set; }
+
     [InverseProperty("Host")]
     public virtual ICollection<OhActivity> OhActivities { get; set; } = new List<OhActivity>();
 
@@ -78,6 +83,9 @@ public partial class OhPerson
 
     [InverseProperty("Resident")]
     public virtual OhResident? OhResident { get; set; }
+
+    [InverseProperty("User")]
+    public virtual OhUserSetting? OhUserSetting { get; set; }
 
     [ForeignKey("ProfilePicId")]
     [InverseProperty("OhPeople")]

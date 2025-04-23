@@ -9,14 +9,15 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using MigdalorServer.BL;
 using MigdalorServer.Database;
+using YourApp.PushNotifications.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Bind the Kestrel server to all network interfaces on port 5293
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.ListenAnyIP(5293); // HTTP
-});
+//builder.WebHost.ConfigureKestrel(serverOptions =>
+//{
+//    serverOptions.ListenAnyIP(5293); // HTTP
+//});
 
 builder.Services.AddCors(options =>
 {
@@ -49,6 +50,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MigdalorDBContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("myProjDB"))
 );
+
+// Add Expo Push Notification Service
+builder.Services
+.AddHttpClient<ExpoPushService>() // HttpClient injected into ExpoPushService
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler());
+
+
 
 // ---- JWT Setup ----
 //var jwtSettingsSection = builder.Configuration.GetSection("JwtSettings");
@@ -86,11 +94,11 @@ builder.Services.AddDbContext<MigdalorDBContext>(options =>
 // ---- Build App ----
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
+//}
     app.UseSwagger();
     app.UseSwaggerUI();
-}
 
 // Static file support for uploaded files
 app.UseStaticFiles(

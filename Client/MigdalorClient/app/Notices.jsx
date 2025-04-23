@@ -4,198 +4,229 @@ import React, {
   useMemo,
   useRef,
   useCallback,
-  useTransition,
+  // useContext, // No longer needed if not using useAuth
 } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-  Dimensions,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 import NoticeCard from "../components/NoticeCard";
 import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import FilterModal from "../components/NoticeFilterModal";
+import PaginatedListDisplay from "@/components/PaginatedListDisplay";
+
+
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-
 import { Globals } from "../app/constants/Globals";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 10;
 
-const fetchNoticesAPI = async () => {
-  console.log("Fetching notices from API...", Globals.API_BASE_URL, Date.now());
-  const [noticesRes, categoriesRes] = await Promise.all([
-    fetch(`${Globals.API_BASE_URL}/api/Notices`, { method: "GET" }),
-    fetch(`${Globals.API_BASE_URL}/api/Categories`, { method: "GET" }),
-  ]);
+// --- Fetch Functions (remain the same) ---
+const fetchNotices = async () => {
+  // console.log("Fetching notices from API...");
+  const response = await fetch(`${Globals.API_BASE_URL}/api/Notices`);
+  if (!response.ok) {
+    throw new Error(`Failed to load notices: HTTP ${response.status}`);
+  }
+  const notices = await response.json();
+  return notices || [];
+};
 
-  if (!noticesRes.ok)
-    throw new Error(`Failed to load notices: HTTP ${noticesRes.status}`);
-  if (!categoriesRes.ok)
-    throw new Error(`Failed to load categories: HTTP ${categoriesRes.status}`);
-
-  // const rawNotices = await noticesRes.json();
-  const notices = await noticesRes.json();
-  const rawCategories = await categoriesRes.json();
-
-  // const notices = rawNotices.map((n) => ({
-  //   noticeId: n.noticeId,
-  //   senderId: n.senderId,
-  //   creationDate: n.creationDate,
-  //   noticeTitle: n.noticeTitle,
-  //   noticeMessage: n.noticeMessage,
-  //   noticeCategory: n.noticeCategory,
-  //   noticeSubCategory: n.noticeSubCategory || null,
-  // }));
-
-  const availableCategories = rawCategories.map((c) => c.categoryName);
-
-  return { notices, totalCount: notices.length, availableCategories };
+const fetchCategories = async () => {
+  // console.log("Fetching categories from API...");
+  const response = await fetch(`${Globals.API_BASE_URL}/api/Categories`);
+  if (!response.ok) {
+    throw new Error(`Failed to load categories: HTTP ${response.status}`);
+  }
+  const rawCategories = await response.json();
+  const availableCategories = rawCategories.map((c) => c.categoryHebName);
+  return availableCategories || [];
 };
 
 export default function NoticesScreen() {
-  const { t } = useTranslation(); // Initialize translation hook
-  const [allNotices, setAllNotices] = useState([]);
-  const [allCategories, setAllCategories] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [sortOrder, setSortOrder] = useState("recent");
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-
+  const { t } = useTranslation();
   const router = useRouter();
   const flatListRef = useRef(null);
 
+  const [allNotices, setAllNotices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allCategories, setAllCategories] = useState([]);
+  const [isCategoryLoading, setIsCategoryLoading] = useState(true);
+  const [categoryError, setCategoryError] = useState(null);
+  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [sortOrder, setSortOrder] = useState("recent");
+  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
+
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(true);
+
+
+  const fetchNoticesCallback = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await fetchNotices();
+      setAllNotices(data);
+    } catch (err) {
+      console.error("Failed to fetch notices:", err);
+      setError(err.message || "Failed to load notices.");
+      setAllNotices([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const fetchCategoriesCallback = useCallback(async () => {
+    setIsCategoryLoading(true);
+    setCategoryError(null);
+    try {
+      const cats = await fetchCategories();
+      setAllCategories(cats);
+    } catch (err) {
+      console.error("Failed to load categories:", err);
+      setCategoryError(err.message || "Failed to load categories.");
+      setAllCategories([]);
+    } finally {
+      setIsCategoryLoading(false);
+    }
+  }, []);
+
+  // Initial data load
   useEffect(() => {
-    const loadNotices = async () => {
-      setIsLoading(true);
+    setCurrentPage(1);
+    fetchNoticesCallback();
+    fetchCategoriesCallback();
+  }, [fetchNoticesCallback, fetchCategoriesCallback]);
+
+  // Effect to Check Admin Status ---
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      let currentUserId = null; 
       try {
-        const { notices, availableCategories } = await fetchNoticesAPI();
-        setAllNotices(notices);
-        setAllCategories(availableCategories);
-        setCurrentPage(1);
-        setSelectedCategories([]);
-        setSortOrder("recent");
-      } catch (error) {
-        console.error("Failed to fetch notices:", error);
-        setAllNotices([]);
-        setAllCategories([]);
+        currentUserId = await AsyncStorage.getItem("userID"); // Get ID here
+        if (!currentUserId) {
+          console.log("Admin Check: No user ID found in storage.");
+          setIsAdmin(false);
+          setIsAdminLoading(false);
+          return;
+        }
+      } catch (storageError) {
+          console.error("Admin Check: Error reading userID from AsyncStorage", storageError);
+          setIsAdmin(false);
+          setIsAdminLoading(false);
+          return;
+      }
+
+
+      console.log(`Admin Check: Checking status for user ID: ${currentUserId}`);
+      setIsAdminLoading(true);
+      try {
+        const response = await fetch(`${Globals.API_BASE_URL}/api/People/isadmin/?userId=${currentUserId}`); // Use fetched ID
+        if (!response.ok) {
+          console.error(`Admin Check Failed: HTTP ${response.status}`);
+          throw new Error('Failed to verify admin status');
+        }
+        const isAdminResult = await response.json();
+        console.log("Admin Check Result:", isAdminResult);
+
+        if (typeof isAdminResult === 'boolean') {
+             setIsAdmin(isAdminResult);
+        } else if (typeof isAdminResult === 'object' && typeof isAdminResult.isAdmin === 'boolean') {
+             setIsAdmin(isAdminResult.isAdmin);
+        } else {
+             console.warn("Admin Check: Unexpected response format.");
+             setIsAdmin(false);
+        }
+      } catch (err) {
+        console.error("Error during admin check API call:", err);
+        setIsAdmin(false);
       } finally {
-        setIsLoading(false);
+        setIsAdminLoading(false);
       }
     };
-    loadNotices();
-  }, []);
 
-  ///////////////////////////////// LIVE REFRESH /////////////////////////////////
+    checkAdminStatus();
+  }, []); 
 
-  // useEffect(() => {
-  //   const intervalId = setInterval(async () => {
-  //     try {
-  //       const { notices } = await fetchNoticesAPI();
-  //       setAllNotices(notices);
-  //     } catch (err) {
-  //       console.error("Polling notices failed:", err);
-  //     }
-  //   }, 3000);
-  //   return () => clearInterval(intervalId);
-  // }, []);
+  // Live refresh while screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const intervalId = setInterval(() => {
+        fetchNoticesCallback();
+      }, 3000);
+      return () => clearInterval(intervalId);
+    }, [fetchNoticesCallback])
+  );
 
-  ///////////////////////////////// LIVE REFRESH /////////////////////////////////
-
-  const onRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    try {
-      const { notices, availableCategories } = await fetchNoticesAPI();
-      setAllNotices(notices);
-      setAllCategories(availableCategories);
-      setCurrentPage(1);
-      setSelectedCategories([]);
-      setSortOrder("recent");
-    } catch (err) {
-      console.error("Failed to refresh notices:", err);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, []);
-
+  // Filtering & sorting
   const processedNotices = useMemo(() => {
-    let filtered = [...allNotices];
+    if (!Array.isArray(allNotices)) {
+        console.warn("processedNotices: allNotices is not an array!", allNotices);
+        return []; 
+    }
+    let filtered = [...allNotices]; 
+
     if (selectedCategories.length > 0) {
-      filtered = filtered.filter((n) =>
-        selectedCategories.includes(n.noticeCategory)
+      filtered = filtered.filter(
+        (n) => n.noticeCategory && selectedCategories.includes(n.noticeCategory)
       );
     }
+
     filtered.sort((a, b) => {
       const dateA = new Date(a.creationDate);
       const dateB = new Date(b.creationDate);
-      if (sortOrder === "recent") {
-        return dateB - dateA; // Newer dates first
-      } else {
-        return dateA - dateB; // Older dates first
-      }
+      if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+      if (isNaN(dateA.getTime())) return 1;
+      if (isNaN(dateB.getTime())) return -1;
+      return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
     return filtered;
   }, [allNotices, selectedCategories, sortOrder]);
 
-  const totalFilteredItems = processedNotices.length;
-  const totalPages = Math.ceil(totalFilteredItems / ITEMS_PER_PAGE);
 
+  const totalItems = processedNotices.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const itemsForCurrentPage = useMemo(() => {
-    const newTotal = Math.ceil(processedNotices.length / ITEMS_PER_PAGE);
-    if (currentPage > newTotal && newTotal > 0)
-      setTimeout(() => setCurrentPage(newTotal), 0);
-    else if (currentPage === 0 && newTotal > 0)
-      setTimeout(() => setCurrentPage(1), 0);
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return processedNotices.slice(start, start + ITEMS_PER_PAGE);
   }, [processedNotices, currentPage]);
 
+
+  useEffect(() => {
+    const newTotalPages = Math.max(1, Math.ceil(processedNotices.length / ITEMS_PER_PAGE)); // Ensure at least 1 page
+    if (currentPage > newTotalPages) { 
+      setCurrentPage(newTotalPages);
+    }
+  }, [processedNotices, currentPage]);
+
+
+  const handlePageChange = useCallback((newPage) => {
+      const safeTotalPages = Math.max(1, totalPages);
+      if (newPage >= 1 && newPage <= safeTotalPages) {
+          setCurrentPage(newPage);
+          flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+      }
+  }, [totalPages]);
+
   const toggleSortOrder = useCallback(() => {
-    setSortOrder((prev) => (prev === "recent" ? "oldest" : "recent"));
     setCurrentPage(1);
-    flatListRef.current?.scrollToOffset({ animated: false, offset: 0 });
+    setSortOrder((prev) => (prev === "recent" ? "oldest" : "recent"));
   }, []);
 
   const handleApplyFilter = useCallback((cats) => {
-    setSelectedCategories(cats);
     setCurrentPage(1);
+    setSelectedCategories(cats);
     setIsFilterModalVisible(false);
-    flatListRef.current?.scrollToOffset({ animated: false, offset: 0 });
   }, []);
 
-  const pagesToShow = useMemo(() => {
-    const safeTotal = Math.max(1, totalPages);
-    const maxPages = 3;
-    const pages = [];
-    if (safeTotal <= maxPages) {
-      for (let i = 1; i <= safeTotal; i++) pages.push(i);
-    } else {
-      let start = Math.max(1, currentPage - Math.floor(maxPages / 2));
-      let end = Math.min(safeTotal, start + maxPages - 1);
-      if (end - start + 1 < maxPages) start = Math.max(1, end - maxPages + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-    }
-    return pages;
-  }, [currentPage, totalPages]);
-
-  const goToPage = (pageNumber) => {
-    const safeTotalPages = Math.max(1, totalPages);
-    if (pageNumber >= 1 && pageNumber <= safeTotalPages) {
-      setCurrentPage(pageNumber);
-      flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
-    }
-  };
-
-  const renderItem = ({ item }) => (
+  // Render Item Function
+  const renderNoticeItem = useCallback(({ item }) => (
     <NoticeCard
       data={item}
       onPress={() =>
@@ -205,134 +236,74 @@ export default function NoticesScreen() {
         })
       }
     />
-  );
+  ), [router]);
+
+  // Key Extractor 
+  const keyExtractor = useCallback((item) => item.noticeId.toString(), []);
+
+  //  Custom Empty Component Logic 
+   const CustomEmptyComponent = useMemo(() => {
+    if(isLoading && allNotices.length === 0) return <ActivityIndicator size="large" color="#0000ff" style={{marginTop: 50}}/>;
+    if(error) return <Text style={styles.errorText}>{`Error loading notices: ${error}`}</Text>;
+    if (selectedCategories.length > 0 && processedNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noMatchMessage")}</Text>;
+    if (!isLoading && !error && allNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noNoticesMessage")}</Text>;
+
+    if (processedNotices.length === 0) return <Text style={styles.infoText}>{t("NoticeBoardScreen_noNoticesMessage")}</Text>;
+
+    return null;
+   }, [isLoading, error, selectedCategories, allNotices, processedNotices, t]);
+
 
   return (
     <>
       <Header />
-
-      <View style={styles.Head}>
-        <Text style={styles.H1}>{t("NoticeBoardScreen_boardTitle")}</Text>
-      </View>
-      <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.pageTitle}>
+            {t("NoticeBoardScreen_boardTitle")}
+          </Text>
+        </View>
+        {!isAdminLoading && isAdmin && (
+            <View style={styles.newNoticeButtonContainer}>
+                <FlipButton
+                    onPress={() => router.push('/NewNotice')}
+                    style={styles.newNoticeButton}
+                    bgColor="#ffffff"
+                    textColor="#000000"
+                >
+                        <Ionicons name="add-circle-outline" size={20} color="white" style={styles.buttonIcon}/>
+                        <Text style={[styles.buttonText, styles.newNoticeButtonText]}>{t("NoticesScreen_NewNoticeButton")}</Text>
+                </FlipButton>
+              </View>
+            )}
         <View style={styles.controlsContainer}>
-          <FlipButton
-            onPress={() => setIsFilterModalVisible(true)}
-            style={styles.controlButton}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons
-                name="filter"
-                size={20}
-                color="black"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.buttonText}>
-                {t("NoticeBoardScreen_filterButton")} (
-                {selectedCategories.length > 0
-                  ? selectedCategories.length
-                  : t("NoticeBoardScreen_all")}
-                )
-              </Text>
-            </View>
-          </FlipButton>
-
-          <FlipButton onPress={toggleSortOrder} style={styles.controlButton}>
-            <View style={styles.buttonContent}>
-              <Ionicons
-                name={sortOrder === "recent" ? "arrow-down" : "arrow-up"} // Icon indicates direction data flows to
-                size={20}
-                color="black"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.buttonText}>
-                {t("NoticeBoardScreen_filterLabel")}
-                {sortOrder === "recent"
-                  ? t("NoticeBoardScreen_sortOldest")
-                  : t("NoticeBoardScreen_sortNewest")}
-              </Text>
-            </View>
-          </FlipButton>
+            <FlipButton onPress={() => setIsFilterModalVisible(true)} style={styles.controlButton} disabled={isCategoryLoading}>
+                <View style={styles.buttonContent}>
+                    <Ionicons name="filter" size={20} color="black" style={styles.buttonIcon}/>
+                    <Text style={styles.buttonText}>{t("NoticeBoardScreen_filterButton")} ({selectedCategories.length > 0 ? selectedCategories.length : t("NoticeBoardScreen_all")})</Text>
+                </View>
+            </FlipButton>
+            <FlipButton onPress={toggleSortOrder} style={styles.controlButton}>
+                <View style={styles.buttonContent}>
+                    <Ionicons name={sortOrder === "recent" ? "arrow-down" : "arrow-up" } size={20} color="black" style={styles.buttonIcon}/>
+                    <Text style={styles.buttonText}>{t("NoticeBoardScreen_filterLabel")} { sortOrder === "recent" ?  t("NoticeBoardScreen_sortNewest") : t("NoticeBoardScreen_sortOldest") }</Text>
+                </View>
+            </FlipButton>
+             {isAdminLoading && <View style={styles.adminButtonPlaceholder} />}
         </View>
 
-        {isLoading && totalFilteredItems === 0 && (
-          <ActivityIndicator
-            size="large"
-            color="#0000ff"
-            style={styles.loadingIndicator}
-          />
-        )}
-        {!isLoading && totalFilteredItems === 0 && (
-          <View style={styles.centeredMessage}>
-            <Text style={styles.noDataText}>
-              {selectedCategories.length > 0
-                ? t("NoticeBoardScreen_noMatchMessage")
-                : t("NoticeBoardScreen_noNoticesMessage")}
-            </Text>
-          </View>
-        )}
-
-        {/* --- Notices List --- */}
-        {totalFilteredItems > 0 && (
-          <FlatList
-            ref={flatListRef}
-            data={itemsForCurrentPage}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.noticeId.toString()}
-            contentContainerStyle={styles.listContainer}
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-          />
-        )}
-
-        {!isLoading && totalPages > 1 && (
-          <View style={styles.paginationContainer}>
-            <TouchableOpacity
-              style={[
-                styles.paginationButton,
-                currentPage === 1 && styles.disabledButton,
-              ]}
-              onPress={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <Text style={styles.paginationButtonText}>
-                {t("MarketplaceScreen_PreviousButton")}
-              </Text>
-            </TouchableOpacity>
-            {pagesToShow.map((p) => (
-              <TouchableOpacity
-                key={p}
-                style={[
-                  styles.paginationButton,
-                  p === currentPage && styles.activePaginationButton,
-                ]}
-                onPress={() => goToPage(p)}
-                disabled={p === currentPage}
-              >
-                <Text
-                  style={[
-                    styles.paginationButtonText,
-                    p === currentPage && styles.activePaginationButtonText,
-                  ]}
-                >
-                  {p}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            <TouchableOpacity
-              style={[
-                styles.paginationButton,
-                currentPage === totalPages && styles.disabledButton,
-              ]}
-              onPress={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <Text style={styles.paginationButtonText}>
-                {t("MarketplaceScreen_NextButton")}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <PaginatedListDisplay
+          items={itemsForCurrentPage}
+          renderItem={renderNoticeItem}
+          itemKeyExtractor={keyExtractor}
+          isLoading={isLoading && allNotices.length === 0} // Indicate loading on initial fetch
+          ListEmptyComponent={CustomEmptyComponent}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          flatListRef={flatListRef}
+          listContainerStyle={styles.listContainerStyle}
+        />
 
         <FilterModal
           visible={isFilterModalVisible}
@@ -346,92 +317,27 @@ export default function NoticesScreen() {
   );
 }
 
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f7f7f7",
-    width: SCREEN_WIDTH,
-    alignItems: "center",
-  },
-  controlsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    width: SCREEN_WIDTH,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    backgroundColor: "#fff",
-  },
-  controlButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  buttonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonIcon: {
-    marginRight: 8,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    alignSelf: "center",
-    width: SCREEN_WIDTH,
-    maxWidth: SCREEN_WIDTH * 0.95,
-    alignItems: "center"
-  },
-  loadingIndicator: { marginTop: 50 },
-  centeredMessage: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  noDataText: { fontSize: 18, color: "#666", textAlign: "center" },
-  paginationContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    backgroundColor: "#f7f7f7",
-    width: "100%",
-  },
-  paginationButton: {
-    backgroundColor: "#ddd",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginHorizontal: 4,
-    borderRadius: 6,
-    minWidth: 40,
-    alignItems: "center",
-  },
-  paginationButtonText: { fontSize: 16, color: "#333" },
-  activePaginationButton: { backgroundColor: "#007bff" },
-  activePaginationButtonText: { color: "#fff", fontWeight: "bold" },
-  disabledButton: { opacity: 0.5, backgroundColor: "#e9ecef" },
-  H1: {
-    width: "70%",
-    marginTop: 70,
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#333",
-    textAlign: "center",
-    marginBottom: 20,
-    borderWidth: 1,
-    borderRadius: 20,
-    paddingVertical: 10,
-  },
-  Head: { alignItems: "center" },
+    pageContainer: { flex: 1, backgroundColor: "#f7f7f7", alignItems: 'center' },
+    headerContainer: { alignItems: 'center', width: "80%", marginTop: 70 }, 
+    pageTitle: { width: "80%", fontSize: 26, fontWeight: "bold", color: "#333", textAlign: "center", marginBottom: 20, borderWidth: 1, borderColor: '#ddd', borderRadius: 25, paddingVertical: 12, backgroundColor: '#fff' },
+    controlsContainer: { flexDirection: "row", gap: 15, justifyContent: "center", alignItems: "center", width: '90%', paddingVertical: 10, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: "#eee", backgroundColor: "#fff", marginBottom: 5 },
+    controlButton: { paddingVertical: 8, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderRadius: 6, flexShrink: 1,  },
+    newNoticeButton: { paddingVertical: 16, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", borderRadius: 6, flexShrink: 1, width: 300, marginBottom: 15 },
+    newNoticeButtonText: { color: '#ffffff' },
+    newNoticeButtonContainer: {width: "100%", alignItems: 'center'},
+    buttonContent: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
+    buttonIcon: { marginRight: 5 },
+    buttonText: { fontSize: 14, fontWeight: "600", textAlign: 'center' },
+    listContainerStyle: { paddingHorizontal: 16, paddingBottom: 16, width: '100%', alignItems: 'center' },
+    errorText: { textAlign: "center", fontSize: 16, marginVertical: 20, color: "red", paddingHorizontal: 20 },
+    infoText: { textAlign: "center", fontSize: 16, marginVertical: 20, color: "#666", paddingHorizontal: 20 },
+
+    adminButtonPlaceholder: {
+      paddingVertical: 8,
+      paddingHorizontal: 10,
+      opacity: 0,
+
+    }
 });

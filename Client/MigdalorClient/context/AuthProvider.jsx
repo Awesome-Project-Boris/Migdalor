@@ -2,7 +2,7 @@ import React, { createContext, useEffect, useState, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator } from "react-native";
 import { Globals } from "../app/constants/Globals";
-
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 // Create the AuthContext with a default value
 const AuthContext = createContext({
   user: null,
@@ -19,6 +19,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { expoPushToken } = usePushNotifications();
 
   // On mount, try to load the user data from AsyncStorage.
   useEffect(() => {
@@ -54,12 +55,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     loadUserFromStorage();
-  }, []); 
+  }, []);
 
-  // login function that mirrors your current logic:
   const login = async (phoneNumber, password) => {
     try {
-      // Build your API URL (adjust Globals.API_BASE_URL accordingly).
       const apiurl = `${Globals.API_BASE_URL}/api/People/login`;
       const response = await fetch(apiurl, {
         method: "POST",
@@ -84,6 +83,29 @@ export const AuthProvider = ({ children }) => {
         ["userEngFirstName", data.engFirstName],
         ["userEngLastName", data.engLastName],
       ]);
+
+      //Post push token to server
+      console.log("Token from login", expoPushToken);
+      if (expoPushToken.data) {
+        const apiurl = `${Globals.API_BASE_URL}/api/Notifications/registerToken`;
+        const response = await fetch(apiurl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            personId: data.personId,
+            pushToken: expoPushToken.data,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(
+            `Failed to register push token: HTTP ${response.status}`
+          );
+        } else {
+          console.log("Push token registered successfully from login");
+        }
+      }
 
       // Set the user information in state.
       setUser(data);

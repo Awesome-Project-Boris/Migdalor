@@ -2,15 +2,15 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, usePathname } from 'expo-router';
-import { useBottomSheet } from './BottomSheetMain'; // adjust the path if needed
+import { useBottomSheet } from './BottomSheetMain'; 
 
 const Header: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const { openSheet } = useBottomSheet(); // Get the openSheet function from context
+  const { openSheet } = useBottomSheet(); 
 
-  // Show the back button only if we're not on the home page
-  const showBackButton = pathname !== "/MainMenu";
+  
+  const showBackButton = pathname !== "/MainMenu" && pathname !== "/FontSettings" && pathname !== "/LanguageSettings" && pathname !== "/NotificationSettings";
 
   return (
     <View style={styles.header}>

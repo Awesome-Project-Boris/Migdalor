@@ -1,4 +1,3 @@
-// app/UserProfiles.jsx (or your chosen path)
 import React, {
   useState,
   useEffect,
@@ -9,316 +8,292 @@ import React, {
 import {
   View,
   Text,
-  FlatList,
   StyleSheet,
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
-  Platform,
   Keyboard,
+  FlatList, // Ensure FlatList is imported if PaginatedListDisplay doesn't handle it internally
 } from "react-native";
 
-import Accordion from 'react-native-collapsible/Accordion'; 
-import * as Animatable from 'react-native-animatable'; 
-
+// Component Imports (ensure paths are correct)
 import UserProfileCard from "../components/UserProfileCard";
-import Header from "@/components/Header";
+import Header from "@/components/Header"; // Assuming path is correct
 import FlipButton from "../components/FlipButton";
 import FloatingLabelInput from "../components/FloatingLabelInput";
-import SearchAccordion from "@/components/SearchAccordion";
+import SearchAccordion from "@/components/SearchAccordion"; // Assuming path is correct
+import PaginatedListDisplay from "@/components/PaginatedListDisplay"; // Assuming path is correct
 
+// Icon and Translation Imports
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "expo-router";
+
+// Constants and Globals (ensure path is correct)
 import { Globals } from "./constants/Globals";
 
+// Constants
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const ITEMS_PER_PAGE = 12;
+const ITEMS_PER_PAGE = 10;
+const API_BASE_URL = Globals.API_BASE_URL; // Ensure Globals.API_BASE_URL is defined
 
-// --- Mock API Function (Simulates Server-Side Pagination & Typed Search) ---
-// Replace with your actual API call logic
-const fetchUsersAPI = async (
-  page = 1,
-  limit = ITEMS_PER_PAGE,
-  query = "",
-  searchType = "name"
-) => {
-  console.log(
-    `Workspaceing users - Page: ${page}, Limit: ${limit}, Query: "${query}", Type: ${searchType}`
-  );
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  const allMockUsers = Array.from({ length: 150 }, (_, i) => ({
-    userId: `user_${i + 1}`,
-    name: `User ${String.fromCharCode(65 + (i % 26))}${i}`,
-    photoUrl: `https://i.pravatar.cc/150?u=user${i + 1}`,
-    _hobbies_server_only: [
-      "hobby " + ((i % 5) + 1),
-      "activity " + ((i % 3) + 1),
-      i % 4 === 0 ? "reading" : "music",
-    ],
-  }));
-  let filteredUsers = allMockUsers;
-  if (query) {
-    const lowerCaseQuery = query.toLowerCase();
-    if (searchType === "name") {
-      filteredUsers = allMockUsers.filter((user) =>
-        user.name.toLowerCase().includes(lowerCaseQuery)
-      );
-    } else if (searchType === "hobby") {
-      filteredUsers = allMockUsers.filter((user) =>
-        user._hobbies_server_only.some((hobby) =>
-          hobby.toLowerCase().includes(lowerCaseQuery)
-        )
-      );
-    }
-  }
-  const totalCount = filteredUsers.length;
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
-  console.log(
-    `API returning ${paginatedUsers.length} users, Total Count: ${totalCount}`
-  );
-  return { users: paginatedUsers, totalCount: totalCount };
-};
-
-// --- End Mock API ---
-
-export default function UserProfilesScreen() {
+// --- Component Definition ---
+export default function ResidentList() {
   const { t } = useTranslation();
-  const [displayedUsers, setDisplayedUsers] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchType, setSearchType] = useState("name");
-  const [activeSearchQuery, setActiveSearchQuery] = useState("");
-  const [activeSearchType, setActiveSearchType] = useState("name");
-  const [activeSections, setActiveSections] = useState([]); // accordion
+  const router = useRouter();
 
-  const flatListRef = useRef(null);
+  // --- State Variables ---
+  const [allUsers, setAllUsers] = useState([]); // Holds ALL fetched users from API
+  const [isLoading, setIsLoading] = useState(true); // For initial data load
+  const [error, setError] = useState(null); // For API fetch errors
+  const [currentPage, setCurrentPage] = useState(1); // For pagination
+  const [searchInput, setSearchInput] = useState(""); // User's current text in search input
+  const [searchType, setSearchType] = useState("name"); // 'name' or 'hobby' for search type
 
-  const executeSearch = useCallback(
-    async (page = 1, query = activeSearchQuery, type = activeSearchType) => {
-      const isNewSearch =
-        page === 1 &&
-        (query !== activeSearchQuery || type !== activeSearchType);
-      const isPageChange = page > 1;
-      console.log(
-        `Executing search: page=${page}, query=${query}, type=${type}, isNewSearch=${isNewSearch}, isPageChange=${isPageChange}`
-      );
-      if (isNewSearch) {
-        setIsLoading(true);
-        setDisplayedUsers([]);
-        setActiveSearchQuery(query);
-        setActiveSearchType(type);
-      } else if (isPageChange) {
-        setIsLoadingMore(true);
-      } else {
-        setIsLoading(true);
+  // --- Refs ---
+  const flatListRef = useRef(null); // For scrolling FlatList to top
+
+  // --- Callbacks for Data Fetching ---
+  const fetchAllUsersCallback = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    setAllUsers([]); // Clear previous users before fetching
+    try {
+      const apiUrl = `${API_BASE_URL}/api/People/ActiveDigests`;
+      console.log(`Fetching users from: ${apiUrl}`);
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(
+          `HTTP error ${response.status}: ${response.statusText}. ${errorBody}`
+        );
       }
-      try {
-        const response = await fetchUsersAPI(page, ITEMS_PER_PAGE, query, type);
-        setDisplayedUsers(response.users || []);
-        setTotalItems(response.totalCount || 0);
-        if (isNewSearch || page === 1) {
-          flatListRef.current?.scrollToOffset({ animated: false, offset: 0 });
-        }
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-        setDisplayedUsers([]);
-        setTotalItems(0);
-      } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-      }
-    },
-    [activeSearchQuery, activeSearchType]
-  ); // Include active params
-
-  // Initial Load
-  useEffect(() => {
-    executeSearch(1, "", "name");
-  }, []);
-
-  // Fetch more data when currentPage changes - maybe not needed
-  useEffect(() => {
-    if (currentPage > 1) {
-      console.log("Fetching next page:", currentPage);
-      executeSearch(currentPage, activeSearchQuery, activeSearchType);
+      const data = await response.json();
+      console.log(`API returned ${data?.length ?? 0} users.`);
+      setAllUsers(data || []); // Set fetched users, ensuring it's an array
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      setError(err.message || "Failed to load users.");
+      // Keep allUsers as empty array on error
+    } finally {
+      setIsLoading(false); // Loading finished
     }
-  }, [currentPage, executeSearch, activeSearchQuery, activeSearchType]);
+  }, []); // No dependencies, API_BASE_URL is from constant
 
-  // --- UI Handlers ---
-  const toggleSearchType = () => {
-    setSearchType((prev) => (prev === "name" ? "hobby" : "name"));
-    // Clear search query when type changes
-    // setSearchQuery('');
-  };
+  // --- Effects ---
+  // Fetch users on initial mount
+  useEffect(() => {
+    fetchAllUsersCallback();
+  }, [fetchAllUsersCallback]);
 
-  const handleSearchPress = () => {
-    Keyboard.dismiss();
-    setCurrentPage(1);
-    executeSearch(1, searchQuery, searchType); // Trigger search with current input
-  };
+  // --- Filtering Logic (Memoized) ---
+  const filteredUsers = useMemo(() => {
+    const query = searchInput.trim(); // Use live search input
+    const type = searchType;
+
+    if (!query) {
+      return allUsers; // Return all if no search query
+    }
+
+    const lowerCaseQuery = query.toLowerCase();
+
+    return allUsers.filter((user) => {
+      if (type === "name") {
+        const hebFirstName = user.hebFirstName?.toLowerCase() || "";
+        const hebLastName = user.hebLastName?.toLowerCase() || "";
+        const engFirstName = user.engFirstName?.toLowerCase() || "";
+        const engLastName = user.engLastName?.toLowerCase() || "";
+        // Check individual names and combined full names
+        return (
+          hebFirstName.includes(lowerCaseQuery) ||
+          hebLastName.includes(lowerCaseQuery) ||
+          engFirstName.includes(lowerCaseQuery) ||
+          engLastName.includes(lowerCaseQuery) ||
+          `${hebFirstName} ${hebLastName}`.trim().includes(lowerCaseQuery) ||
+          `${engFirstName} ${engLastName}`.trim().includes(lowerCaseQuery)
+        );
+      } else if (type === "hobby") {
+        // WARNING: Hobby filtering still requires backend data for `user.hobbies`
+        return (
+          Array.isArray(user.hobbies) &&
+          user.hobbies.some((hobby) =>
+            hobby?.toLowerCase().includes(lowerCaseQuery)
+          )
+        );
+      }
+      return false;
+    });
+  }, [allUsers, searchInput, searchType]); // Re-filter when master list, input, or type changes
 
   // --- Pagination Calculation ---
-  const totalPages = useMemo(
-    () => Math.ceil(totalItems / ITEMS_PER_PAGE),
-    [totalItems]
-  );
-  const pagesToShow = useMemo(() => {
+  const totalItems = filteredUsers.length;
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+
+  // Effect to reset page if filters make current page invalid
+  useEffect(() => {
     const safeTotalPages = Math.max(1, totalPages);
-    const maxPagesToShow = 3;
-    const pages = [];
-    if (safeTotalPages <= maxPagesToShow) {
-      for (let i = 1; i <= safeTotalPages; i++) pages.push(i);
-    } else {
-      let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-      let endPage = Math.min(safeTotalPages, startPage + maxPagesToShow - 1);
-      if (endPage - startPage + 1 < maxPagesToShow) {
-        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    if (currentPage > safeTotalPages) {
+      setCurrentPage(safeTotalPages); // Go to last valid page
+    }
+    // No need to reset to 1 if currentPage is 0, as it starts at 1
+  }, [currentPage, totalPages]); // Run when page or total pages change
+
+  // Calculate items for the current page (Memoized)
+  const itemsForCurrentPage = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [filteredUsers, currentPage]); // Recalculate when filtered list or page changes
+
+  // --- Callback for Page Changes ---
+  const handlePageChange = useCallback(
+    (newPage) => {
+      const safeTotalPages = Math.max(1, totalPages);
+      if (newPage >= 1 && newPage <= safeTotalPages) {
+        setCurrentPage(newPage);
+        // Scroll to top when page changes
+        flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
       }
-      for (let i = startPage; i <= endPage; i++) pages.push(i);
+    },
+    [totalPages] // Dependency: totalPages needed for boundary check
+  );
+
+  // --- Callbacks for Rendering List Items ---
+  const renderUserItem = useCallback(
+    ({ item }) => (
+      <UserProfileCard
+        data={item}
+        onPress={() => {
+
+          router.push({
+            // Example pathname, adjust to your actual route
+            pathname: "/Profile", // Or maybe './ProfileScreen', etc.
+            params: { userId: item.userId }, // Pass userId as a parameter
+          });
+          console.log(`Navigating to profile for user ID: ${item.userId}`);
+        }}
+      />
+    ),
+    [router] // Add router as a dependency
+  );
+
+  const keyExtractor = useCallback((item) => item.userId.toString(), []);
+
+  // --- Callbacks for UI Interactions ---
+  const toggleSearchType = useCallback(() => {
+    setSearchType((prevType) => (prevType === "name" ? "hobby" : "name"));
+    setCurrentPage(1); // Reset page when search type changes
+  }, []); // No dependencies
+
+  const handleSearchPress = useCallback(() => {
+    Keyboard.dismiss(); // Dismiss keyboard on search button press
+  }, []);
+
+  const handleSearchInputChange = useCallback((text) => {
+    setSearchInput(text); // Update the search input state
+    setCurrentPage(1); // Reset to page 1 on every keystroke for live filtering
+  }, []); // No dependencies
+
+  // --- Component for Empty List State (Memoized) ---
+  const CustomEmptyComponent = useMemo(() => {
+    // Show loading indicator only on initial load
+    if (isLoading && allUsers.length === 0) {
+        return <ActivityIndicator size="large" color="#0000ff" style={styles.centeredMessage} />;
     }
-    return pages;
-  }, [currentPage, totalPages]);
-
-  const goToPage = (pageNumber) => {
-    const safeTotalPages = Math.max(1, totalPages);
-    if (
-      pageNumber >= 1 &&
-      pageNumber <= safeTotalPages &&
-      pageNumber !== currentPage
-    ) {
-      setCurrentPage(pageNumber);
+    // Show error if fetching failed
+    if (error) {
+        return <Text style={[styles.infoText, styles.errorText]}>Error: {error}</Text>;
     }
-  };
+    // Show 'no match' if there's a query but results are empty
+    if (searchInput.trim() && filteredUsers.length === 0) {
+        return <Text style={styles.infoText}>{t("ResidentSearchScreen_noMatchMessage")}</Text>;
+    }
+    // Show 'no users' if not loading, no query, and master list is empty
+    if (!searchInput.trim() && !isLoading && allUsers.length === 0) {
+        return <Text style={styles.infoText}>{t("ResidentSearchScreen_noUsersMessage")}</Text>;
+    }
+    // Otherwise, render nothing (FlatList will be empty or show items)
+    return null;
+  }, [isLoading, error, searchInput, allUsers, filteredUsers, t]); // Dependencies for empty state
 
-  // Render item function
-  const renderItem = ({ item }) => <UserProfileCard data={item} />;
-
-
+  // --- Render Component JSX ---
   return (
     <View style={styles.container}>
+      <Header />
       <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
-      <Header title="User Profiles" />
-        <SearchAccordion
-          headerOpenTextKey= "ResidentSearchScreen_accordionOpen"// Pass appropriate keys
-          headerClosedTextKey= "ResidentSearchScreen_accordionClose"
-          containerStyle={styles.accordionContainer} // Pass screen-specific container styles
+
+      {/* Search UI */}
+      <SearchAccordion
+        headerOpenTextKey="ResidentSearchScreen_accordionOpen"
+        headerClosedTextKey="ResidentSearchScreen_accordionClose"
+        containerStyle={styles.accordionContainer}
       >
-          {/* Content for Resident Search */}
-          <TouchableOpacity onPress={toggleSearchType} style={styles.searchTypeButton} >
-            <Text style={styles.searchTypeText}>
-              {t("ResidentSearchScreen_searchByLabel")}
-              <Text style={{ fontWeight: "bold" }}>
-                {searchType === "name" ? t("ResidentSearchScreen_searchByName") : t("ResidentSearchScreen_searchByHobby")}
-              </Text>
+        {/* Toggle Button */}
+        <TouchableOpacity
+          onPress={toggleSearchType}
+          style={styles.searchTypeButton}
+        >
+          <Text style={styles.searchTypeText}>
+            {t("ResidentSearchScreen_searchByLabel")}{" "}
+            <Text style={{ fontWeight: "bold" }}>
+              {searchType === "name"
+                ? t("ResidentSearchScreen_searchByName")
+                : t("ResidentSearchScreen_searchByHobby")}
             </Text>
-          </TouchableOpacity>
+          </Text>
+        </TouchableOpacity>
 
-          <FloatingLabelInput
-            label={searchType === "name" ? t("ResidentSearchScreen_enterNamePlaceholder") : t("ResidentSearchScreen_enterHobbyPlaceholder")}
-            value={searchQuery}
-            onChangeText={setSearchQuery} // Use the state setter from this screen
-            returnKeyType="search"
-            onSubmitEditing={handleSearchPress}
-            style={styles.searchInputContainer}
-            inputStyle={styles.searchInput}
-            alignRight={Globals.userSelectedDirection === "rtl"}
-          />
+        {/* Search Input */}
+        <FloatingLabelInput
+          label={
+            searchType === "name"
+              ? t("ResidentSearchScreen_enterNamePlaceholder")
+              : t("ResidentSearchScreen_enterHobbyPlaceholder")
+          }
+          value={searchInput}
+          onChangeText={handleSearchInputChange} // Use live update handler
+          returnKeyType="search"
+          onSubmitEditing={handleSearchPress} // Dismiss keyboard on submit
+          style={styles.searchInputContainer}
+          inputStyle={styles.searchInput}
+          alignRight={Globals.userSelectedDirection === "rtl"} // Handle RTL if needed
+        />
 
-          <FlipButton onPress={handleSearchPress} style={styles.searchSubmitButton} bgColor="#007bff" textColor="#fff" disabled={isLoading} >
-            <View style={styles.buttonContent}>
-              <Ionicons name="search" size={20} color="white" style={styles.buttonIcon} />
-              <Text style={styles.searchButtonText}>{t("MarketplaceScreen_SearchButton")}</Text>
-            </View>
-          </FlipButton>
-          {/* End Content for Resident Search */}
+        {/* Search Submit Button */}
+        <FlipButton
+          onPress={handleSearchPress} // Primarily dismisses keyboard
+          style={styles.searchSubmitButton}
+          bgColor="#007bff"
+          textColor="#fff"
+        >
+          <View style={styles.buttonContent}>
+            <Ionicons
+              name="search"
+              size={20}
+              color="white"
+              style={styles.buttonIcon}
+            />
+            <Text style={styles.searchButtonText}>
+              {t("MarketplaceScreen_SearchButton")}
+            </Text>
+          </View>
+        </FlipButton>
       </SearchAccordion>
 
-      {isLoading && displayedUsers.length === 0 && (
-        <ActivityIndicator
-          size="large"
-          color="#0000ff"
-          style={styles.loadingIndicator}
-        />
-      )}
-      {!isLoading && totalItems === 0 && (
-        <View style={styles.centeredMessage}>
-          <Text style={styles.noDataText}>
-            {activeSearchQuery
-              ? t("ResidentSearchScreen_noMatchMessage")
-              : t("ResidentSearchScreen_noUsersMessage")}
-          </Text>
-        </View>
-      )}
-      <FlatList
-        ref={flatListRef}
-        data={displayedUsers}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.userId.toString()}
-        contentContainerStyle={styles.listContainer}
-        ListFooterComponent={
-          isLoadingMore ? (
-            <ActivityIndicator
-              size="small"
-              color="#888"
-              style={{ marginVertical: 10 }}
-            />
-          ) : null
-        }
+      {/* Paginated List */}
+      <PaginatedListDisplay
+        items={itemsForCurrentPage}
+        renderItem={renderUserItem}
+        itemKeyExtractor={keyExtractor}
+        // Show loading indicator overlay *only* during initial load
+        isLoading={isLoading && allUsers.length === 0}
+        ListEmptyComponent={CustomEmptyComponent}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        listContainerStyle={styles.listContainerStyle}
+        flatListRef={flatListRef} // Pass ref to underlying FlatList
       />
-      {!isLoading && !isLoadingMore && totalPages > 1 && (
-        <View style={styles.paginationContainer}>
-          {/* Pagination buttons */}
-          <TouchableOpacity
-            style={[
-              styles.paginationButton,
-              currentPage === 1 && styles.disabledButton,
-            ]}
-            onPress={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1 || isLoading || isLoadingMore}
-          >
-            <Text style={styles.paginationButtonText}>
-              {t("MarketplaceScreen_PreviousButton")}
-            </Text>
-          </TouchableOpacity>
-          {pagesToShow.map((p) => (
-            <TouchableOpacity
-              key={p}
-              style={[
-                styles.paginationButton,
-                p === currentPage && styles.activePaginationButton,
-              ]}
-              onPress={() => goToPage(p)}
-              disabled={p === currentPage || isLoading || isLoadingMore}
-            >
-              <Text
-                style={[
-                  styles.paginationButtonText,
-                  p === currentPage && styles.activePaginationButtonText,
-                ]}
-              >
-                {p}
-              </Text>
-            </TouchableOpacity>
-          ))}
-          <TouchableOpacity
-            style={[
-              styles.paginationButton,
-              currentPage === totalPages && styles.disabledButton,
-            ]}
-            onPress={() => goToPage(currentPage + 1)}
-            disabled={currentPage === totalPages || isLoading || isLoadingMore}
-          >
-            <Text style={styles.paginationButtonText}>
-              {t("MarketplaceScreen_NextButton")}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 }
@@ -330,122 +305,88 @@ const styles = StyleSheet.create({
     backgroundColor: "#f7f7f7",
     width: "100%",
     alignItems: "center",
-  },
-  searchControlsContainer: {
-    marginTop: 70,
-    width: "90%",
-    maxWidth: 600,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    padding: 15,
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  searchTypeButton: {
-    marginBottom: 20,
-    paddingVertical: 10,
-    marginBottom: 15,
-    alignItems: "center",
-    backgroundColor: "#e7e7e7",
-    borderRadius: 6,
-  }, // Increased marginBottom
-  searchTypeText: { fontSize: 16, color: "#333" },
-
-  searchInputContainer: {
-    marginTop: 30,
-  },
-
-  searchInput: {
-    fontSize: 20,
-    color: "#333",
-  },
-  searchSubmitButton: { paddingVertical: 12 },
-  buttonContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonIcon: { marginRight: 8 },
-  searchButtonText: { fontSize: 16, fontWeight: "bold", color: "white" },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    alignSelf: "center",
-    width: "100%",
-    maxWidth: SCREEN_WIDTH * 0.95,
-  },
-  loadingIndicator: { marginTop: 50 },
-  centeredMessage: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  noDataText: { fontSize: 18, color: "#666", textAlign: "center" },
-  paginationContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: "#eee",
-    backgroundColor: "#f7f7f7",
-    width: "100%",
-  },
-  paginationButton: {
-    backgroundColor: "#ddd",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    marginHorizontal: 4,
-    borderRadius: 6,
-    minWidth: 40,
-    alignItems: "center",
-  },
-  paginationButtonText: { fontSize: 16, color: "#333" },
-  activePaginationButton: { backgroundColor: "#007bff" },
-  activePaginationButtonText: { color: "#fff", fontWeight: "bold" },
-  disabledButton: { opacity: 0.5, backgroundColor: "#e9ecef" },
-  accordionContainer: {
-    width: SCREEN_WIDTH * 0.9, // Match original container width
-    marginVertical: 10,
-    backgroundColor: "#fff", // Optional: background for the whole accordion block
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    overflow: "hidden", // Ensures content stays within rounded corners
-    minHeight: 70,
-    marginTop: 15,
-  },
-  accordionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    // backgroundColor: '#f9f9f9', // Slightly different bg for header
-  },
-  active: {
-    // backgroundColor: '#e7e7e7', // Slightly darker when open
-  },
-  inactive: {
-    // backgroundColor: '#f9f9f9',
-  },
-  accordionHeaderText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#333",
-  },
-  accordionContent: {
-    padding: 15, // Padding for the content area
-    backgroundColor: "#fff", // Background for content area
+    paddingBottom: 10,
   },
   mainTitle: {
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
     marginTop: 70,
-    marginBottom: 15,
+    marginBottom: 10,
     color: "#111",
+  },
+  accordionContainer: {
+    width: SCREEN_WIDTH * 0.9,
+    marginVertical: 10,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    overflow: "hidden",
+  },
+  searchTypeButton: {
+    paddingVertical: 10,
+    marginBottom: 15,
+    alignItems: "center",
+    backgroundColor: "#e7e7e7",
+    borderRadius: 6,
+    marginHorizontal: 15,
+    marginTop: 15,
+  },
+  searchTypeText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  searchInputContainer: {
+    marginHorizontal: 15,
+    marginBottom: 10,
+  },
+  searchInput: {
+    fontSize: 16,
+    color: "#333",
+  },
+  searchSubmitButton: {
+    paddingVertical: 12,
+    marginHorizontal: 15,
+    marginBottom: 15,
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  searchButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+  },
+  listContainerStyle: {
+    paddingHorizontal: 0,
+    width: "100%",
+    alignItems: "center",
+  },
+  centeredMessage: { // Style for loading indicator container
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+    marginTop: 50, // Adjust as needed
+  },
+  infoText: { // Style for 'no results'/'no users' text
+    fontSize: 18,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 50,
+    paddingHorizontal: 20,
+  },
+  errorText: { // Style for error text
+    fontSize: 18,
+    color: "red", // Make errors stand out
+    textAlign: "center",
+    marginTop: 50,
+    paddingHorizontal: 20,
   },
 });

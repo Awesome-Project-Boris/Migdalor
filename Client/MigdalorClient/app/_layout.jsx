@@ -131,14 +131,14 @@ export default function Layout() {
                       name="CommittieePage"
                       options={{
                         title: "Committiee Page",
-                        headerShown: false
+                        headerShown: false,
                       }}
                     />
                     <Stack.Screen
                       name="NoticeFocus"
                       options={{
                         title: "Notice Page",
-                        headerShown: false
+                        headerShown: false,
                       }}
                     />
                   </Stack>
