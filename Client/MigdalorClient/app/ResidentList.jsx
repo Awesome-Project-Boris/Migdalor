@@ -227,14 +227,21 @@ export default function ResidentList() {
         headerOpenTextKey="ResidentSearchScreen_accordionOpen"
         headerClosedTextKey="ResidentSearchScreen_accordionClose"
         containerStyle={styles.accordionContainer}
+        headerStyle={{
+          justifyContent:
+            Globals.userSelectedDirection === "rtl"
+              ? "flex-end"
+              : "space-between",
+          gap: 10,
+        }}
+        headerTextStyle={{}}
       >
-        {/* Toggle Button */}
         <TouchableOpacity
           onPress={toggleSearchType}
           style={styles.searchTypeButton}
         >
           <Text style={styles.searchTypeText}>
-            {t("ResidentSearchScreen_searchByLabel")}{" "}
+            {t("ResidentSearchScreen_searchByLabel")}
             <Text style={{ fontWeight: "bold" }}>
               {searchType === "name"
                 ? t("ResidentSearchScreen_searchByName")
@@ -242,8 +249,6 @@ export default function ResidentList() {
             </Text>
           </Text>
         </TouchableOpacity>
-
-        {/* Search Input */}
         <FloatingLabelInput
           label={
             searchType === "name"

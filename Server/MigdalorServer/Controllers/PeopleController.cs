@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
+using System.Text.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -144,6 +145,72 @@ namespace MigdalorServer.Controllers
 
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value) { }
+
+
+        [HttpPut("UpdateProfile/{id}")]
+        public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
+        {
+            using var db = new MigdalorDBContext();
+
+            Console.WriteLine("printing dto:");
+            Console.WriteLine("dto: " + JsonSerializer.Serialize(dto));
+            Console.WriteLine("dto.ProfilePicture: " + JsonSerializer.Serialize(dto.ProfilePicture));
+            Console.WriteLine("dto.ProfilePicture.PicId: " + dto.ProfilePicture?.PicId);
+
+            var person = db.OhPeople.Find(id);
+
+            var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
+                          //?? new OhResident { ResidentId = id, person.PersonId = id };
+
+            // patch scalar fields...
+            person.PhoneNumber = dto.MobilePhone;
+            person.Email = dto.Email;
+            resident.HomePlace = dto.Origin;
+            resident.Profession = dto.Profession;
+            resident.ResidentDescription = dto.AboutMe;
+            resident.ResidentApartmentNumber = dto.ResidentApartmentNumber;
+
+
+            //resident.SpouseId = dto.SpouseId;
+
+            if (dto.ProfilePicture != null)
+                person.ProfilePicId = dto.ProfilePicture.PicId;
+            else
+                person.ProfilePicId = null;
+
+            if (dto.AdditionalPicture1 != null)
+                resident.AdditionalPic1Id = dto.AdditionalPicture1.PicId;
+            else
+                resident.AdditionalPic1Id = null;
+
+            if (dto.AdditionalPicture2 != null)
+                resident.AdditionalPic2Id = dto.AdditionalPicture2.PicId;
+            else
+                resident.AdditionalPic2Id = null;
+
+
+            //if (dto.ProfilePicture != null)
+            //    person.ProfilePicId = dto.ProfilePicture.PicId;
+            //else
+            //    person.ProfilePicId = null;
+
+            //if (dto.AdditionalPicture1 != null)
+            //    resident.AdditionalPic1Id = dto.AdditionalPicture1.PicId;
+            //else
+            //    resident.AdditionalPic1Id = null;
+
+            //if (dto.AdditionalPicture2 != null)
+            //    resident.AdditionalPic2Id = dto.AdditionalPicture2.PicId;
+            //else
+            //    resident.AdditionalPic2Id = null;
+
+
+            //if (resident.Id == 0)
+            //    db.OhResidents.Add(resident);
+
+            db.SaveChanges();
+            return NoContent();
+        }
 
         // DELETE api/<PeopleController>/5
         [HttpDelete("{id}")]

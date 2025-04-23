@@ -37,13 +37,12 @@ namespace MigdalorServer.Models
             //using MigdalorDBContext db = new MigdalorDBContext();
             using var db = new MigdalorDBContext();
 
-            Console.WriteLine($"[DEBUG] Incoming ID: {ID}");
+            //Console.WriteLine($"[DEBUG] Incoming ID: {ID}");
             var directPerson = db.OhPeople.Find(ID);
-            Console.WriteLine(
-                directPerson == null
-                    ? "[DEBUG] OhPeople.Find returned null"
-                    : $"[DEBUG] OhPeople.Find succeeded: {directPerson.HebFirstName} {directPerson.HebLastName}"
-            );
+            //Console.WriteLine(directPerson == null
+            //    ? "[DEBUG] OhPeople.Find returned null"
+            //    : $"[DEBUG] OhPeople.Find succeeded: {directPerson.HebFirstName} {directPerson.HebLastName}");
+
 
             var result = (
                 from person in db.OhPeople
@@ -148,11 +147,8 @@ namespace MigdalorServer.Models
                 }
             ).FirstOrDefault();
 
-            var json = JsonSerializer.Serialize(
-                result,
-                new JsonSerializerOptions { WriteIndented = true }
-            );
-            Console.WriteLine(json);
+            //var json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
+            //Console.WriteLine(json);
 
             if (result == null)
                 throw new Exception("User not found");
