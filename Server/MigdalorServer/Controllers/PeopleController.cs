@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
@@ -15,6 +16,16 @@ namespace MigdalorServer.Controllers
     [ApiController]
     public class PeopleController : ControllerBase
     {
+
+
+        private readonly MigdalorDBContext _context;
+
+        // Inject DbContext and Configuration
+        public PeopleController(MigdalorDBContext context)
+        {
+            _context = context;
+        }
+
         // GET: api/<PeopleController>
         [HttpGet]
         public void GetAllPeople() { }
@@ -91,6 +102,28 @@ namespace MigdalorServer.Controllers
                             $"Error Logging In: {e.InnerException?.Message ?? e.Message}"
                         );
                 }
+            }
+        }
+
+        [HttpGet("ActiveDigests")]
+        public async Task<ActionResult<IEnumerable<ResidentDigest>>> GetActiveResidentDigests()
+        {
+            try
+            {
+                // Removed logic to get imageBaseUrl from configuration
+
+                // Call the static query method (now without imageBaseUrl)
+                // Make sure to call the method on the correct class (ResidentQueries, not OhPerson)
+                var digests = await OhPerson.GetActiveResidentDigestsAsync(_context);
+
+                return Ok(digests);
+            }
+            // Removed ArgumentException catch block as the specific check is gone
+            catch (Exception ex) // General catch for other potential errors (e.g., database issues)
+            {
+                Console.WriteLine($"ERROR in GetActiveResidentDigests: {ex.Message}");
+                // Log the exception
+                return StatusCode(500, new { message = "An error occurred while fetching resident digests.", error = ex.Message });
             }
         }
 

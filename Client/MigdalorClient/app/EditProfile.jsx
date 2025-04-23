@@ -44,7 +44,6 @@ export default function EditProfile() {
 
   const router = useRouter();
 
-  // !! Switch these with the values from the database
   const [form, setForm] = useState({
     name: "",
     partner: "",
@@ -54,9 +53,7 @@ export default function EditProfile() {
     profession: "",
     interests: "",
     aboutMe: "",
-    // profilePicID: "",
-    // additionalPic1ID: "",
-    // additionalPic2ID: "",
+
     residentApartmentNumber: null,
   });
 
@@ -65,10 +62,6 @@ export default function EditProfile() {
     PicName: "",
     PicPath: "",
     PicAlt: "",
-    //UploaderID: "",
-    //PicRole: "",
-    //ListingID: "",
-    //DateTime: "",
   });
 
   const [additionalPic1, setAdditionalPic1] = useState({
@@ -76,10 +69,6 @@ export default function EditProfile() {
     PicName: "",
     PicPath: "",
     PicAlt: "",
-    //UploaderID: "",
-    //PicRole: "",
-    //ListingID: "",
-    //DateTime: "",
   });
 
   const [additionalPic2, setAdditionalPic2] = useState({
@@ -87,10 +76,6 @@ export default function EditProfile() {
     PicName: "",
     PicPath: "",
     PicAlt: "",
-    //UploaderID: "",
-    //PicRole: "",
-    //ListingID: "",
-    //DateTime: "",
   });
 
   const maxLengths = {
@@ -728,7 +713,6 @@ export default function EditProfile() {
     if (firstErrorField) {
       const ref = inputRefs[firstErrorField];
       if (ref?.current) {
-        // Blur first to make sure that even if the input is focused, it will auto scroll to it
         ref.current.blur();
         setTimeout(() => {
           ref.current?.focus();
@@ -739,15 +723,6 @@ export default function EditProfile() {
 
     setForm(cleanedForm);
     console.log("Updated Data:", cleanedForm);
-    //alert(t("EditProfileScreen_ProfileUpdated"));
-    Toast.show({
-      type: "success", // Type for styling (if themes are set up)
-      text1: t("EditProfileScreen_ProfileUpdated"),
-      //text1: 'Submitted!', // Main text
-      //text2: t("EditProfileScreen_ProfileUpdated"), // Sub text
-      duration: 3500, // Custom duration
-      position: "top", // Example: 'top' or 'bottom'
-    });
 
     //console.log(cleanedForm.residentApartmentNumber)
 
@@ -1067,7 +1042,6 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.profileNameContainer}>
-          {/* !! Change this to full name  */}
           <Text style={styles.profileName}>
             {form.name || t("ProfileScreen_emptyDataField")}
           </Text>
@@ -1416,8 +1390,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    // maxWidth: "90%", // 💡 prevent overflow
-    // flexWrap: "wrap", // allow long names to wrap
+
     width: "100%",
     textAlign: "center",
   },
@@ -1426,11 +1399,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginVertical: 5,
   },
-  // label: {
-  //   fontSize: 14,
-  //   marginBottom: 5,
-  //   textAlign: "right",
-  // },
+
   input: {
     backgroundColor: "#fff",
     borderRadius: 8,
@@ -1483,8 +1452,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 20,
     width: "80%",
-    // marginLeft: 50,
-    // marginRight: 50,
   },
   box: {
     width: "85%",
@@ -1527,21 +1494,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
     gap: 30,
   },
-  // extraImage: {
-  //   width: 300,
-  //   height: 300,
-  //   borderRadius: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#ddd",
-  //   marginHorizontal: 5,
-  //   backgroundColor: "#fff",
-  //   shadowColor: "#000",
-  //   shadowOffset: { width: 0, height: 1 },
-  //   shadowOpacity: 0.1,
-  //   shadowRadius: 2,
-  //   elevation: 3, // for Android shadow
-  //   marginBottom: 30,
-  // },
 
   buttonLabel: { fontSize: 20, fontWeight: "bold" },
   errorText: {

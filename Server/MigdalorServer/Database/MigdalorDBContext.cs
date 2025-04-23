@@ -34,6 +34,8 @@ public partial class MigdalorDBContext : DbContext
 
     public virtual DbSet<OhRoom> OhRooms { get; set; }
 
+    public virtual DbSet<OhUserSetting> OhUserSettings { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OhActivity>(entity =>
@@ -171,6 +173,22 @@ public partial class MigdalorDBContext : DbContext
         modelBuilder.Entity<OhRoom>(entity =>
         {
             entity.HasKey(e => new { e.RoomNumber, e.BuildingNumber }).HasName("PK__OH_Rooms__CD87FECFF4277B52");
+        });
+
+        modelBuilder.Entity<OhUserSetting>(entity =>
+        {
+            entity.HasKey(e => e.UserId).HasName("PK_OH_UserSettings_UserID");
+
+            entity.Property(e => e.UserId).ValueGeneratedNever();
+            entity.Property(e => e.UserSelectedDirection)
+                .HasDefaultValue("rtl")
+                .IsFixedLength();
+            entity.Property(e => e.UserSelectedFontSize).HasDefaultValue(1);
+            entity.Property(e => e.UserSelectedLanguage).HasDefaultValue("he");
+
+            entity.HasOne(d => d.User).WithOne(p => p.OhUserSetting)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_OH_UserSettings_UserID_People");
         });
 
         OnModelCreatingPartial(modelBuilder);

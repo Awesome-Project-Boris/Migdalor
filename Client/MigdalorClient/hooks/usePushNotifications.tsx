@@ -54,11 +54,6 @@ export const usePushNotifications = (): PushNotificationState => {
     Notifications.Notification | undefined
   >();
 
-  // const date = useRef<string>(new Date().toISOString().split("T")[0]);
-  // const prevDate = useRef<any>(async () => await AsyncStorage.getItem("lastTokenDate"));
-  // const [getNewToken, setGetNewToken] = useState(date === prevDate);
-
-
   const notificationListener = useRef<Notifications.EventSubscription>();
   const responseListener = useRef<Notifications.EventSubscription>();
 
@@ -89,7 +84,7 @@ export const usePushNotifications = (): PushNotificationState => {
       Notifications.setNotificationChannelAsync("default", {
         name: "default",
         importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 125, 250],
+        vibrationPattern: [0, 250, 250, 250],
         lightColor: "#FF231F7C",
       });
     }

@@ -28,6 +28,8 @@ namespace MigdalorServer.Models
 
         public static OhNotice AddOhNotice(NewNotice notice)
         {
+            // --- !! Add Logging !! ---
+            Console.WriteLine("[AddOhNotice] Method Entry. Received Title: " + notice?.Title);
             var ohNotice = new OhNotice
             {
                 NoticeTitle = notice.Title,
@@ -35,13 +37,28 @@ namespace MigdalorServer.Models
                 SenderId = notice.SenderId,
                 NoticeCategory = notice.Category,
                 NoticeSubCategory = notice.SubCategory,
+                CreationDate = DateTime.UtcNow // Explicitly set date
             };
+            Console.WriteLine("[AddOhNotice] Mapped DTO to OhNotice entity.");
 
-            using MigdalorDBContext db = new();
-            db.OhNotices.Add(ohNotice);
-            db.SaveChanges();
+            try
+            {
+                using MigdalorDBContext db = new();
 
-            return ohNotice;
+                db.OhNotices.Add(ohNotice);
+
+                db.SaveChanges(); 
+
+
+                return ohNotice;
+            }
+            catch (Exception dbEx)
+            {
+
+                Console.WriteLine(dbEx.ToString()); 
+
+                throw; 
+            }
         }
 
         public static List<dynamic> GetOhNoticesByCategory(string category)

@@ -84,6 +84,9 @@ public partial class OhPerson
     [InverseProperty("Resident")]
     public virtual OhResident? OhResident { get; set; }
 
+    [InverseProperty("User")]
+    public virtual OhUserSetting? OhUserSetting { get; set; }
+
     [ForeignKey("ProfilePicId")]
     [InverseProperty("OhPeople")]
     public virtual OhPicture? ProfilePic { get; set; }

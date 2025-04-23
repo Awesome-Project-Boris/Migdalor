@@ -10,7 +10,8 @@ const resources = {
     translation: {
       SettingsLayoutTabs_FontSettings: 'Font Settings',
       SettingsLayoutTabs_notificationSettings: 'Notification Settings',
-      SettingsLayoutTabs_languageSettings: 'Language Settings',
+      SettingsLayoutTabs_languageSettings: 'User Settings',
+      SettingsLayoutTabs_SaveChanges: 'Save Changes',
 
       FontSettingsPage_header: 'Font Settings:',
       FontSettingsPage_exampleHeader: 'Sample Text:',
@@ -26,6 +27,9 @@ const resources = {
       NotificationSettingsPage_off: 'Off',
 
       LanguageSettingsPage_header: 'Language Settings:',
+      LanguageSettingsPage_LogoutHeader: 'Account Settings:',
+      LanguageSettingsPage_Logout: 'Logout',
+      LanguageSettingsPage_LogoutToast: 'Logged out successfully!',
       LanguageSettingsPage_he: "Hebrew",
       LanguageSettingsPage_en: "English",
 
@@ -181,6 +185,7 @@ const resources = {
       NoticeBoardScreen_filterButton: "Filter", NoticeBoardScreen_all: "All",
 
       NoticeBoardScreen_filterLabel: "Filter:",
+      NoticeBoardScreen_filterCategories: "categoryEngName",
       NoticeBoardScreen_sortOldest: "Oldest",
       NoticeBoardScreen_sortNewest: "Newest",
       NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
@@ -189,6 +194,23 @@ const resources = {
       NoticeFilterModal_modalTitle: "Filter by categories", NoticeFilterModal_selectAll: "Select All", NoticeFilterModal_deselectAll: "Deselect All", NoticeFilterModal_cancelButton: "Cancel", NoticeFilterModal_applyFilter: "Apply Filter",
       NoticeCard_dateLabel: "Notice date: ",
       NoticeCard_categoryLabel: "Category: ",
+
+      NewNoticeScreen_errorAllFieldsRequired: "Please fill in title, message, and category.",
+      NewNoticeScreen_errorUserInfoMissing: "User information could not be found. Cannot post notice.",
+      NewNoticeScreen_successTitle: "Notice Published!",
+      NewNoticeScreen_successMessage: "Your notice has been successfully published.",
+      NewNoticeScreen_broadcastWarnTitle: "Broadcast Warning",
+      NewNoticeScreen_broadcastSuccessTitle: "Broadcast Sent",
+      NewNoticeScreen_broadcastSuccessMessage: "Notification sent to {{count}} recipients.", // Note the interpolation
+      NewNoticeScreen_broadcastErrorTitle: "Broadcast Error",
+      NewNoticeScreen_errorSubmitFailed: "Failed to submit the notice.",
+      NewNoticeScreen_title: "Publish New Notice",
+      NewNoticeScreen_noticeTitleLabel: "Notice Title",
+      NewNoticeScreen_noticeMessageLabel: "Notice Message",
+      NewNoticeScreen_categoryLabel: "Category",
+      NewNoticeScreen_publishButton: "Publish Notice",
+
+      NoticesScreen_NewNoticeButton: "New Notice",
 
 
 
@@ -217,6 +239,9 @@ const resources = {
       Common_clearAllDataButton: "Clear All Data",
       Common_noResultsFound: "No results found",
 
+      Common_ValidationErrorTitle: "Error",
+      Common_ValidationErrorMsg: "Please fill all required fields",
+
       Common_UpdateButton: "Update", 
       Common_DeleteButton: "Delete", 
       Common_CancelButton: "Cancel", 
@@ -232,7 +257,8 @@ const resources = {
     translation: {
       SettingsLayoutTabs_FontSettings: 'הגדרות גופן',
       SettingsLayoutTabs_notificationSettings: 'הגדרות התראות',
-      SettingsLayoutTabs_languageSettings: 'הגדרות שפה',
+      SettingsLayoutTabs_languageSettings: 'הגדרות משתמש',
+      SettingsLayoutTabs_SaveChanges: 'שמור שינויים',
 
       FontSettingsPage_header: 'גודל טקסט:',
       FontSettingsPage_exampleHeader: 'טקסט לדוגמה:',
@@ -246,8 +272,12 @@ const resources = {
       NotificationSettingsPage_silent: 'מושתק',
 
       LanguageSettingsPage_header: 'הגדרות שפה:',
+      LanguageSettingsPage_LogoutHeader: 'הגדרות חשבון:',
+      LanguageSettingsPage_Logout: 'התנתקות',
+      LanguageSettingsPage_LogoutToast: 'התנתקת בהצלחה!',
       LanguageSettingsPage_he: "עברית",
       LanguageSettingsPage_en: "אנגלית",
+
 
       ProfileScreen_header: 'פרופיל',
       ProfileScreen_partner: "בן/בת זוג",
@@ -396,12 +426,9 @@ const resources = {
 
 
 
-      MarketplaceScreen_NoItems: "לא נמצאו פריטים",
+      MarketplaceScreen_NoItems: "לא נמצאו פריטים",   
 
-
-
-    
-    
+      
       NoticeDetailsScreen_loadingDetails: "טוען פרטי הודעה...",
       NoticeDetailsScreen_categoryLabel: "קטגוריה:",
       NoticeDetailsScreen_dateLabel: "תאריך:",
@@ -409,6 +436,7 @@ const resources = {
       NoticeBoardScreen_boardTitle: "לוח המודעות",
       NoticeBoardScreen_filterButton: "סינון", NoticeBoardScreen_all: "הכל",
       NoticeBoardScreen_filterLabel: "סינון:",
+      NoticeBoardScreen_filterCategories: "categoryHebName",
       NoticeBoardScreen_sortOldest: "הישן ביותר",
       NoticeBoardScreen_sortNewest: "החדש ביותר",
       NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
@@ -418,6 +446,23 @@ const resources = {
 
       NoticeFilterModal_modalTitle: "סנן לפי קטגוריות", NoticeFilterModal_selectAll: "בחר הכל", NoticeFilterModal_deselectAll: "בטל את כל הבחירות", NoticeFilterModal_cancelButton: "ביטול", NoticeFilterModal_applyFilter: "בצע סינון",
 
+
+      NewNoticeScreen_errorAllFieldsRequired: "אנא מלא כותרת, הודעה וקטגוריה.",
+      NewNoticeScreen_errorUserInfoMissing: "לא ניתן למצוא פרטי משתמש. לא ניתן לפרסם הודעה.",
+      NewNoticeScreen_successTitle: "הודעה פורסמה!",
+      NewNoticeScreen_successMessage: "ההודעה שלך פורסמה בהצלחה.",
+      NewNoticeScreen_broadcastWarnTitle: "אזהרת שידור",
+      NewNoticeScreen_broadcastSuccessTitle: "שידור נשלח",
+      NewNoticeScreen_broadcastSuccessMessage: "התראה נשלחה ל-{{count}} נמענים.",
+      NewNoticeScreen_broadcastErrorTitle: "שגיאת שידור",
+      NewNoticeScreen_errorSubmitFailed: "שליחת ההודעה נכשלה.",
+      NewNoticeScreen_title: "פרסם הודעה חדשה",
+      NewNoticeScreen_noticeTitleLabel: "כותרת ההודעה",
+      NewNoticeScreen_noticeMessageLabel: "תוכן ההודעה",
+      NewNoticeScreen_categoryLabel: "קטגוריה",
+      NewNoticeScreen_publishButton: "פרסם הודעה",
+ 
+      NoticesScreen_NewNoticeButton: "הודעה חדשה",
 
       ResidentsSearchScreen_title: "רשימת הדיירים",
       ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
@@ -448,6 +493,9 @@ const resources = {
       Common_CancelButton: "ביטול", 
       Common_Error: "שגיאה", 
       Common_noResultsFound: "לא נמצאו תוצאות",
+
+      Common_ValidationErrorTitle: "שגיאה",
+      Common_ValidationErrorMsg: "אנא מלאו את כל השדות הדרושים",
 
       PaginatedList_PreviousButton: "הקודם",
       PaginatedList_NextButton: "הבא",

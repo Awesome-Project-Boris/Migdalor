@@ -14,10 +14,10 @@ using YourApp.PushNotifications.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Bind the Kestrel server to all network interfaces on port 5293
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.ListenAnyIP(5293); // HTTP
-});
+//builder.WebHost.ConfigureKestrel(serverOptions =>
+//{
+//    serverOptions.ListenAnyIP(5293); // HTTP
+//});
 
 builder.Services.AddCors(options =>
 {
@@ -94,11 +94,11 @@ builder.Services
 // ---- Build App ----
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
+//}
     app.UseSwagger();
     app.UseSwaggerUI();
-}
 
 // Static file support for uploaded files
 app.UseStaticFiles(

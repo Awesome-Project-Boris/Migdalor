@@ -58,7 +58,7 @@ export const toastConfig = {
       borderRadius: 8,
       marginVertical: 5,
       alignItems: 'center',
-      // Add shadow or other base styles if desired
+      pointerEvents: 'box-none'
     },
     successToast: {
       backgroundColor: '#4CAF50', // Green for success
