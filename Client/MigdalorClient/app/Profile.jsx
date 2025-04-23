@@ -259,22 +259,6 @@ export default function Profile() {
     });
   };
 
-  // // when screen comes into focus (or you can use useEffect on params)
-  // const params = useLocalSearchParams();
-  // useEffect(() => {
-  //   if (params.updatedData) {
-  //     const d = JSON.parse(params.updatedData);
-  //     setForm(d);
-  //   }
-  //   if (params.updatedPics) {
-  //     const pics = JSON.parse(params.updatedPics);
-  //     setProfilePic(pics.profilePic);
-  //     setAdditionalPic1(pics.additionalPic1);
-  //     setAdditionalPic2(pics.additionalPic2);
-  //   }
-  // }, [params.updatedData, params.updatedPics]);
-
-
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -306,15 +290,7 @@ export default function Profile() {
         <View style={styles.profileImageContainer}>
           {/* !! Change this to users profile picture */}
 
-          {/* <Image
-            alt={profilePic.PicAlt}
-            source={{
-              uri: profilePic.PicPath?.trim()
-                ? Globals.API_BASE_URL + profilePic.PicPath
-                : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-            }}
-            style={styles.profileImage}
-          /> */}
+
 
           <BouncyButton
             shrinkScale={0.95}
@@ -765,21 +741,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     gap: 30,
   },
-  // extraImage: {
-  //   width: 300,
-  //   height: 300,
-  //   borderRadius: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#ddd",
-  //   marginHorizontal: 5,
-  //   backgroundColor: "#fff",
-  //   shadowColor: "#000",
-  //   shadowOffset: { width: 0, height: 1 },
-  //   shadowOpacity: 0.1,
-  //   shadowRadius: 2,
-  //   elevation: 3, // for Android shadow
-  //   marginBottom: 30,
-  // },
   editProfileButton: {
     paddingVertical: 20,
     borderRadius: 20,
