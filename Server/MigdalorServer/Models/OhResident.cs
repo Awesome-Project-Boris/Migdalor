@@ -4,7 +4,7 @@ namespace MigdalorServer.Models
 {
     public partial class OhResident
     {
-        public OhResident() { }
+        
 
         public OhResident(OhPerson user)
         {
@@ -17,7 +17,7 @@ namespace MigdalorServer.Models
             SpouseId = null;
             SpouseHebName = null;
             SpouseEngName = null;
-            DateOfArrival = DateOnly.FromDateTime(DateTime.Now);
+            DateOfArrival = DateTime.Now.Date;
             HomePlace = null;
             Profession = null;
             ResidentDescription = null;

@@ -283,7 +283,7 @@ const Map = () => {
               { color: isInsideBoundary ? "lime" : "red", fontWeight: "bold" },
             ]}
           >
-            {t("LocationScreen_insideBoundaryLabel")}{" "}
+            {t("LocationScreen_insideBoundaryLabel")}
             {isInsideBoundary ? "Yes" : "No"}
           </Text>
         )}

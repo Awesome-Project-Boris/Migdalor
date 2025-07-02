@@ -1,24 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
-using System.ComponentModel.DataAnnotations;
 using MigdalorServer.Models.DTOs;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace MigdalorServer.Controllers
 {
-
-    
-
     [Route("api/[controller]")]
     [ApiController]
     public class ListingsController : ControllerBase
     {
-
         private readonly MigdalorDBContext _context;
         private readonly IWebHostEnvironment _hostingEnvironment;
 
@@ -27,7 +23,6 @@ namespace MigdalorServer.Controllers
             _context = context;
             _hostingEnvironment = hostingEnvironment;
         }
-
 
         // GET: api/<ListingsController>
         [HttpGet]
@@ -45,17 +40,12 @@ namespace MigdalorServer.Controllers
 
         // POST api/<ListingsController>
         [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-
+        public void Post([FromBody] string value) { }
 
         [HttpPost("Create")]
         // [Authorize] // TODO: Add authorization
         public async Task<IActionResult> CreateListing([FromBody] ListingCreation listingDto)
         {
-
             try
             {
                 OhListing savedListing = await OhListing.CreateAndLinkPicturesAsync(
@@ -63,16 +53,27 @@ namespace MigdalorServer.Controllers
                     _context
                 );
 
-                return Ok(new { message = "Listing created successfully.", listingId = savedListing.ListingId });
+                return Ok(
+                    new
+                    {
+                        message = "Listing created successfully.",
+                        listingId = savedListing.ListingId,
+                    }
+                );
             }
             catch (Exception ex) // Catch all exceptions
             {
-                Console.WriteLine($"ERROR in CreateListing: {ex.Message} | Inner: {ex.InnerException?.Message}");
-                return StatusCode(500, new
-                {
-                    message = "An error occurred while creating the listing.",
-                    error = ex.Message
-                });
+                Console.WriteLine(
+                    $"ERROR in CreateListing: {ex.Message} | Inner: {ex.InnerException?.Message}"
+                );
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        message = "An error occurred while creating the listing.",
+                        error = ex.Message,
+                    }
+                );
             }
         }
 
@@ -81,19 +82,19 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                var listings = await _context.OhListings
-                    .Where(l => l.IsActive) // Filter for active listings 
-                    .Include(l => l.Seller) // Include Seller navigation property 
+                var listings = await _context
+                    .OhListings.Where(l => l.IsActive!.Value) // Filter for active listings
+                    .Include(l => l.Seller) // Include Seller navigation property
                     .Select(l => new
                     {
                         Listing = l,
-                        SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName, // Combine seller names 
+                        SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName, // Combine seller names
                         // Get the main picture (role 'marketplace') or the first one if 'marketplace' role doesn't exist or fallback to null
-                        MainPicture = _context.OhPictures
-                                        .Where(p => p.ListingId == l.ListingId) // Filter pictures for this listing 
-                                        .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1) // Prioritize 'marketplace' role 
-                                        .ThenBy(p => p.DateTime) // Then by date as a fallback ordering
-                                        .FirstOrDefault() // Take the first one matching the criteria
+                        MainPicture = _context
+                            .OhPictures.Where(p => p.ListingId == l.ListingId) // Filter pictures for this listing
+                            .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1) // Prioritize 'marketplace' role
+                            .ThenBy(p => p.DateTime) // Then by date as a fallback ordering
+                            .FirstOrDefault(), // Take the first one matching the criteria
                     })
                     .OrderByDescending(l => l.Listing.Date) // Order by listing date, newest first
                     .Select(l_info => new ListingSummary
@@ -104,7 +105,8 @@ namespace MigdalorServer.Controllers
                         Date = l_info.Listing.Date,
                         SellerId = l_info.Listing.SellerId,
                         SellerName = l_info.SellerName,
-                        MainImagePath = l_info.MainPicture != null ? l_info.MainPicture.PicPath : null // Select the path or null 
+                        MainImagePath =
+                            l_info.MainPicture != null ? l_info.MainPicture.PicPath : null, // Select the path or null
                     })
                     .ToListAsync(); // Execute the query
 
@@ -136,7 +138,9 @@ namespace MigdalorServer.Controllers
             }
             catch (ArgumentNullException ex) // Catch specific exceptions if needed
             {
-                Console.WriteLine($"ERROR in GetListingDetails Endpoint (ID: {id}): Null argument - {ex.Message}");
+                Console.WriteLine(
+                    $"ERROR in GetListingDetails Endpoint (ID: {id}): Null argument - {ex.Message}"
+                );
                 return StatusCode(500, "An internal server error occurred (null argument).");
             }
             catch (Exception ex) // General catch
@@ -147,7 +151,10 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateListing([FromRoute] int id, [FromBody] ListingUpdateDto updateDto)
+        public async Task<IActionResult> UpdateListing(
+            [FromRoute] int id,
+            [FromBody] ListingUpdateDto updateDto
+        )
         {
             // WARNING: Ownership check is assumed to happen *before* this action is called.
             try
@@ -158,7 +165,13 @@ namespace MigdalorServer.Controllers
                 // Note: The BL method now throws FileNotFoundException if not found
                 // if (updatedListing == null) return NotFound(...); // This check is now redundant if BL throws
 
-                return Ok(new { message = "Listing updated successfully.", listingId = updatedListing.ListingId }); // Or return NoContent()
+                return Ok(
+                    new
+                    {
+                        message = "Listing updated successfully.",
+                        listingId = updatedListing.ListingId,
+                    }
+                ); // Or return NoContent()
             }
             catch (ValidationException vex)
             {
@@ -171,8 +184,17 @@ namespace MigdalorServer.Controllers
             // Removed UnauthorizedAccessException catch block
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR in UpdateListing (ID: {id}): {ex.Message} | Inner: {ex.InnerException?.Message}");
-                return StatusCode(500, new { message = "An error occurred while updating the listing.", error = ex.Message });
+                Console.WriteLine(
+                    $"ERROR in UpdateListing (ID: {id}): {ex.Message} | Inner: {ex.InnerException?.Message}"
+                );
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        message = "An error occurred while updating the listing.",
+                        error = ex.Message,
+                    }
+                );
             }
         }
 
@@ -184,7 +206,11 @@ namespace MigdalorServer.Controllers
             try
             {
                 // Call BL method without currentUserId
-                bool deleted = await OhListing.DeleteListingAsync(id, _context, _hostingEnvironment.ContentRootPath);
+                bool deleted = await OhListing.DeleteListingAsync(
+                    id,
+                    _context,
+                    _hostingEnvironment.ContentRootPath
+                );
 
                 if (!deleted)
                 {
@@ -200,8 +226,17 @@ namespace MigdalorServer.Controllers
             // Removed UnauthorizedAccessException catch block
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR in DeleteListing (ID: {id}): {ex.Message} | Inner: {ex.InnerException?.Message}");
-                return StatusCode(500, new { message = "An error occurred while deleting the listing.", error = ex.Message });
+                Console.WriteLine(
+                    $"ERROR in DeleteListing (ID: {id}): {ex.Message} | Inner: {ex.InnerException?.Message}"
+                );
+                return StatusCode(
+                    500,
+                    new
+                    {
+                        message = "An error occurred while deleting the listing.",
+                        error = ex.Message,
+                    }
+                );
             }
         }
     }

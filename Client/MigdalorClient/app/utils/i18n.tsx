@@ -1,4 +1,4 @@
-import { transform } from '@babel/core';
+//import { transform } from '@babel/core';
 import i18next from 'i18next';
 import { initReactI18next } from "react-i18next";
 import {Globals} from '../constants/Globals';
@@ -434,7 +434,8 @@ const resources = {
       NoticeDetailsScreen_dateLabel: "תאריך:",
       Common_backButton: "חזרה לאחור",
       NoticeBoardScreen_boardTitle: "לוח המודעות",
-      NoticeBoardScreen_filterButton: "סינון", NoticeBoardScreen_all: "הכל",
+      NoticeBoardScreen_filterButton: "סינון",
+      NoticeBoardScreen_all: "הכל",
       NoticeBoardScreen_filterLabel: "סינון:",
       NoticeBoardScreen_filterCategories: "categoryHebName",
       NoticeBoardScreen_sortOldest: "הישן ביותר",

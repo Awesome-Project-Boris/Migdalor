@@ -1,14 +1,13 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
-using System.Text.Json;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 
 namespace MigdalorServer.Controllers
 {
@@ -16,153 +15,150 @@ namespace MigdalorServer.Controllers
     [ApiController]
     public class PeopleController : ControllerBase
     {
-
-
         private readonly MigdalorDBContext _context;
 
-        // Inject DbContext and Configuration
         public PeopleController(MigdalorDBContext context)
         {
             _context = context;
         }
 
-        // GET: api/<PeopleController>
+        // GET: api/People
+        // Changed from minimal API style to classic Web API: returns ActionResult<IEnumerable<OhPerson>>
         [HttpGet]
-        public void GetAllPeople() { }
+        public async Task<ActionResult<IEnumerable<OhPerson>>> GetAllPeople()
+        {
+            var people = await _context.OhPeople.ToListAsync();
+            return Ok(people); // Changed: use Ok() to wrap result
+        }
 
-        // GET api/<PeopleController>/5
+        // GET: api/People/GetPersonByIDForProfile/{id}
+        // Kept signature similar but return type is IActionResult for classic style
         [HttpGet("GetPersonByIDForProfile/{id}")]
-        public IActionResult GetPersonByIDForProfile(Guid id) 
+        public IActionResult GetPersonByIDForProfile(Guid id)
         {
             try
             {
                 var data = OhPerson.GetPersonByIDForProfile(id);
-                return Ok(data);
+                return Ok(data); // Changed: use Ok() for 200
             }
             catch (Exception e)
             {
-                switch (e.Message)
-                {
-                    case "User not found":
-                        return StatusCode(StatusCodes.Status404NotFound, "User Not Found");
-                    default:
-                        return StatusCode(
-                            StatusCodes.Status500InternalServerError,
-                            $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
-                        );
-                }
+                if (e.Message == "User not found")
+                    return NotFound("User Not Found"); // Changed: return NotFound() for 404
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
+                ); // Changed: classic error handling
             }
         }
 
-        // POST api/<PeopleController>
+        // POST: api/People/register
+        // Changed to IActionResult and uses Ok() for result
         [HttpPost("register")]
         public IActionResult Register([FromBody] UserRegister user)
         {
             try
             {
-                return Ok(OhPerson.AddUser(user));
+                var newUser = OhPerson.AddUser(user);
+                return Ok(newUser); // Changed: wrap in Ok()
             }
             catch (Exception e)
             {
                 return StatusCode(
-                    500,
+                    StatusCodes.Status500InternalServerError,
                     $"Error Registering User: {e.InnerException?.Message ?? e.Message}"
-                );
+                ); // Changed: classic error
             }
         }
 
+        // POST: api/People/login
+        // Changed to return IActionResult for conventional API
         [HttpPost("login")]
-        // public IActionResult Login([FromBody] UserLogin user)
         public IActionResult Login([FromBody] UserLogin userLogin)
         {
             try
             {
                 OhPerson user = OhPerson.AuthenticateUser(userLogin);
-                return Ok(new
-                {
-                    user.PersonId,
-                    user.HebFirstName,
-                    user.HebLastName,
-                    user.EngFirstName,
-                    user.EngLastName
-                });
-                
+                return Ok(
+                    new
+                    {
+                        user.PersonId,
+                        user.HebFirstName,
+                        user.HebLastName,
+                        user.EngFirstName,
+                        user.EngLastName,
+                    }
+                ); // Changed: Ok() with object result
             }
             catch (Exception e)
             {
-                switch (e.Message)
-                {
-                    case "User not found":
-                        return StatusCode(StatusCodes.Status404NotFound, "User Not Found");
-                    case "Wrong password":
-                        return StatusCode(StatusCodes.Status401Unauthorized, "Wrong Password");
-                    default:
-                        return StatusCode(
-                            StatusCodes.Status500InternalServerError,
-                            $"Error Logging In: {e.InnerException?.Message ?? e.Message}"
-                        );
-                }
+                if (e.Message == "User not found")
+                    return NotFound("User Not Found"); // Changed: NotFound()
+                if (e.Message == "Wrong password")
+                    return Unauthorized("Wrong Password"); // Changed: Unauthorized()
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error Logging In: {e.InnerException?.Message ?? e.Message}"
+                ); // Changed: classic error
             }
         }
 
+        // GET: api/People/ActiveDigests
+        // Changed signature to ActionResult<IEnumerable<ResidentDigest>> and use Ok()
         [HttpGet("ActiveDigests")]
         public async Task<ActionResult<IEnumerable<ResidentDigest>>> GetActiveResidentDigests()
         {
             try
             {
-                // Removed logic to get imageBaseUrl from configuration
-
-                // Call the static query method (now without imageBaseUrl)
-                // Make sure to call the method on the correct class (ResidentQueries, not OhPerson)
                 var digests = await OhPerson.GetActiveResidentDigestsAsync(_context);
-
-                return Ok(digests);
+                return Ok(digests); // Changed: Ok() result
             }
-            // Removed ArgumentException catch block as the specific check is gone
-            catch (Exception ex) // General catch for other potential errors (e.g., database issues)
+            catch (Exception ex)
             {
-                Console.WriteLine($"ERROR in GetActiveResidentDigests: {ex.Message}");
-                // Log the exception
-                return StatusCode(500, new { message = "An error occurred while fetching resident digests.", error = ex.Message });
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        message = "An error occurred while fetching resident digests.",
+                        error = ex.Message,
+                    }
+                ); // Changed: classic error
             }
         }
 
-        [HttpGet("isadmin")]
+        // GET: api/People/isadmin/{userId}
+        // Changed to IActionResult and use Ok() to return boolean
+        [HttpGet("isadmin/{userId}")]
         public IActionResult IsAdmin(Guid userId)
         {
             try
             {
-                return Ok(OhPerson.IsAdmin(userId));
+                return Ok(OhPerson.IsAdmin(userId)); // Changed: Ok() with boolean
             }
             catch (Exception e)
             {
                 return StatusCode(
-                    500,
+                    StatusCodes.Status500InternalServerError,
                     $"Error Checking Admin Status: {e.InnerException?.Message ?? e.Message}"
-                );
+                ); // Changed: classic error
             }
         }
 
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value) { }
-
-
+        // PUT: api/People/UpdateProfile/{id}
+        // Changed to IActionResult and return NoContent() on success
         [HttpPut("UpdateProfile/{id}")]
         public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
         {
             using var db = new MigdalorDBContext();
-
-            Console.WriteLine("printing dto:");
-            Console.WriteLine("dto: " + JsonSerializer.Serialize(dto));
-            Console.WriteLine("dto.ProfilePicture: " + JsonSerializer.Serialize(dto.ProfilePicture));
-            Console.WriteLine("dto.ProfilePicture.PicId: " + dto.ProfilePicture?.PicId);
-
             var person = db.OhPeople.Find(id);
+            if (person == null)
+                return NotFound(); // Changed: NotFound()
 
             var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
-                          //?? new OhResident { ResidentId = id, person.PersonId = id };
+            if (resident == null)
+                return NotFound(); // Changed: NotFound()
 
-            // patch scalar fields...
+            // Update fields
             person.PhoneNumber = dto.MobilePhone;
             person.Email = dto.Email;
             resident.HomePlace = dto.Origin;
@@ -170,50 +166,25 @@ namespace MigdalorServer.Controllers
             resident.ResidentDescription = dto.AboutMe;
             resident.ResidentApartmentNumber = dto.ResidentApartmentNumber;
 
-
-            //resident.SpouseId = dto.SpouseId;
-
-            if (dto.ProfilePicture != null)
-                person.ProfilePicId = dto.ProfilePicture.PicId;
-            else
-                person.ProfilePicId = null;
-
-            if (dto.AdditionalPicture1 != null)
-                resident.AdditionalPic1Id = dto.AdditionalPicture1.PicId;
-            else
-                resident.AdditionalPic1Id = null;
-
-            if (dto.AdditionalPicture2 != null)
-                resident.AdditionalPic2Id = dto.AdditionalPicture2.PicId;
-            else
-                resident.AdditionalPic2Id = null;
-
-
-            //if (dto.ProfilePicture != null)
-            //    person.ProfilePicId = dto.ProfilePicture.PicId;
-            //else
-            //    person.ProfilePicId = null;
-
-            //if (dto.AdditionalPicture1 != null)
-            //    resident.AdditionalPic1Id = dto.AdditionalPicture1.PicId;
-            //else
-            //    resident.AdditionalPic1Id = null;
-
-            //if (dto.AdditionalPicture2 != null)
-            //    resident.AdditionalPic2Id = dto.AdditionalPicture2.PicId;
-            //else
-            //    resident.AdditionalPic2Id = null;
-
-
-            //if (resident.Id == 0)
-            //    db.OhResidents.Add(resident);
+            person.ProfilePicId = dto.ProfilePicture?.PicId;
+            resident.AdditionalPic1Id = dto.AdditionalPicture1?.PicId;
+            resident.AdditionalPic2Id = dto.AdditionalPicture2?.PicId;
 
             db.SaveChanges();
-            return NoContent();
+            return NoContent(); // Changed: return 204 on success
         }
 
-        // DELETE api/<PeopleController>/5
+        // DELETE: api/People/{id}
+        // Changed to IActionResult and return NoContent() on delete
         [HttpDelete("{id}")]
-        public void Delete(int id) { }
+        public IActionResult Delete(Guid id)
+        {
+            var person = _context.OhPeople.Find(id);
+            if (person == null)
+                return NotFound(); // Changed: NotFound()
+            _context.OhPeople.Remove(person);
+            _context.SaveChanges();
+            return NoContent(); // Changed: return 204
+        }
     }
 }

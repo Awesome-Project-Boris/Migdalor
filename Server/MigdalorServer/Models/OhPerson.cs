@@ -8,8 +8,6 @@ namespace MigdalorServer.Models
 {
     public partial class OhPerson
     {
-        public OhPerson() { }
-
         public OhPerson(UserRegister user)
         {
             PasswordHash = PasswordServices.CreatePasswordHash(user.Password);
@@ -166,7 +164,7 @@ namespace MigdalorServer.Models
 
             // Explicitly join OhResidents, OhPeople, and OhPictures
             var query = context
-                .OhResidents.Where(r => r.IsActive)
+                .OhResidents.Where(r => r.IsActive!.Value)
                 .Join(
                     context.OhPeople,
                     resident => resident.ResidentId,

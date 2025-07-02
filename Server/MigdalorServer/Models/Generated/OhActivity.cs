@@ -4,46 +4,43 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace MigdalorServer.Models;
-
-[Table("OH_Activities")]
-[Index("ActivityName", Name = "UQ__OH_Activ__BD8CC0A98C74AE38", IsUnique = true)]
-public partial class OhActivity
+namespace MigdalorServer.Models
 {
-    [Key]
-    [Column("activityID")]
-    public int ActivityId { get; set; }
+    [Table("OH_Activities")]
+    [Index("ActivityName", Name = "UQ__OH_Activ__BD8CC0A98C74AE38", IsUnique = true)]
+    public partial class OhActivity
+    {
+        public OhActivity()
+        {
+            OhParticipations = new HashSet<OhParticipation>();
+        }
 
-    [Column("activityName")]
-    [StringLength(100)]
-    public string ActivityName { get; set; } = null!;
+        [Key]
+        [Column("activityID")]
+        public int ActivityId { get; set; }
+        [Column("activityName")]
+        [StringLength(100)]
+        public string ActivityName { get; set; } = null!;
+        [Column("startDate", TypeName = "datetime")]
+        public DateTime StartDate { get; set; }
+        [Column("capacity")]
+        public int Capacity { get; set; }
+        [Column("hostID")]
+        public Guid? HostId { get; set; }
+        [Column("location")]
+        public string? Location { get; set; }
+        [Column("PicID")]
+        public int? PicId { get; set; }
 
-    [Column("startDate", TypeName = "datetime")]
-    public DateTime StartDate { get; set; }
-
-    [Column("capacity")]
-    public int Capacity { get; set; }
-
-    [Column("hostID")]
-    public Guid? HostId { get; set; }
-
-    [Column("location")]
-    public string? Location { get; set; }
-
-    [Column("PicID")]
-    public int? PicId { get; set; }
-
-    [ForeignKey("HostId")]
-    [InverseProperty("OhActivities")]
-    public virtual OhPerson? Host { get; set; }
-
-    [InverseProperty("Class")]
-    public virtual OhClass? OhClass { get; set; }
-
-    [InverseProperty("Activity")]
-    public virtual ICollection<OhParticipation> OhParticipations { get; set; } = new List<OhParticipation>();
-
-    [ForeignKey("PicId")]
-    [InverseProperty("OhActivities")]
-    public virtual OhPicture? Pic { get; set; }
+        [ForeignKey("HostId")]
+        [InverseProperty("OhActivities")]
+        public virtual OhPerson? Host { get; set; }
+        [ForeignKey("PicId")]
+        [InverseProperty("OhActivities")]
+        public virtual OhPicture? Pic { get; set; }
+        [InverseProperty("Class")]
+        public virtual OhClass? OhClass { get; set; }
+        [InverseProperty("Activity")]
+        public virtual ICollection<OhParticipation> OhParticipations { get; set; }
+    }
 }

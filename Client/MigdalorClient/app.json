@@ -74,7 +74,8 @@
           "photosPermission": "Allow Migdalor to access your photos.",
           "cameraPermission": "Allow Migdalor to access your camera."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true

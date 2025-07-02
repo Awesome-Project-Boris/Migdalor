@@ -202,7 +202,6 @@ export default function EditProfile() {
     setImageTypeToClear(null);
   };
 
-
   const handleAddImage = async () => {
     //const uriToAdd = imageToViewUri;
 
@@ -768,8 +767,6 @@ export default function EditProfile() {
         };
       };
 
-  
-
       let uploadedProfilePic;
       if (clearedPics.profile) {
         // “Remove” pressed
@@ -828,6 +825,7 @@ export default function EditProfile() {
       }
 
       const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
+      console.log("API URL:", apiurl); // Debugging line
 
       // const requestBody = {
       //   ...cleanedForm,
@@ -840,11 +838,10 @@ export default function EditProfile() {
         // your cleaned form fields
         ...cleanedForm,
         // **must** match DTO names (in camelCase)
-        profilePicture:    uploadedProfilePic,
+        profilePicture: uploadedProfilePic,
         additionalPicture1: uploadedAdd1Pic,
         additionalPicture2: uploadedAdd2Pic,
       };
-
 
       // if (clearedPics.profile) {
       //   requestBody.profilePicture = null;
@@ -907,6 +904,14 @@ export default function EditProfile() {
       });
 
       console.log("response:", response);
+
+      Toast.show({
+        type: "success",
+        text1: t("EditProfileScreen_ProfileUpdated"),
+
+        duration: 3500,
+        position: "top",
+      });
 
       if (!response.ok) {
         throw new Error(`Login failed: HTTP ${response.status}`);
@@ -1053,7 +1058,8 @@ export default function EditProfile() {
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
-            value={String(form.residentApartmentNumber)}
+            //value={String(form.residentApartmentNumber)}
+            value={form.residentApartmentNumber}
             onChangeText={(text) =>
               handleFormChange("residentApartmentNumber", text)
             }
@@ -1306,7 +1312,6 @@ export default function EditProfile() {
         imageUri={imageToViewUri}
         //imageUri={profilePic.Path === "" ? imageToViewUri : profilePic.Path}
         onClose={() => setShowImageViewModal(false)}
-
         onAdd={() => {
           //viewOrPickImage(imageTypeToClear, imageToViewUri); // your existing viewOrPickImage
           //pickImage(imageTypeToClear);        // your existing pickImage
@@ -1315,8 +1320,6 @@ export default function EditProfile() {
           handleAddImage(); // Clear the image after picking a new one
           //imageUri={imageToViewUri}
         }}
-
-
         //onRemove={wasDefaultImage ? undefined : handleRemoveImage}
         //onRemove={imageToViewUri === "" ? undefined : handleRemoveImage}
 
