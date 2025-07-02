@@ -43,7 +43,14 @@ namespace MigdalorServer.Controllers
             [FromForm] Guid uploaderId) // TODO: Get from HttpContext.User
         {
 
-            Console.WriteLine($"--- PictureController POST action HIT at {DateTime.UtcNow} ---");
+            //Console.WriteLine($"FILES COUNT: {files?.Count}");
+            //Console.WriteLine($"ROLES COUNT: {picRoles?.Count}");
+            //Console.WriteLine($"ALTS COUNT: {picAlts?.Count}");
+            //Console.WriteLine($"UPLOADER ID: {uploaderId}");
+
+
+
+            //Console.WriteLine($"--- PictureController POST action HIT at {DateTime.UtcNow} ---");
 
             // --- Validation ---
             if (files == null || !files.Any()) return BadRequest(new { message = "No files provided." });

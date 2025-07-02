@@ -26,6 +26,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals";
+import { AlignRight } from "@tamagui/lucide-icons";
 
 const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
 const ITEMS_PER_PAGE = 10;

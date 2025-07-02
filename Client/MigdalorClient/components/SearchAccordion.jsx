@@ -51,6 +51,7 @@ export default function SearchAccordion({
   headerClosedTextKey = 'Common_Accordion_Open', 
   containerStyle, 
   headerStyle, 
+  headerTextStyle,
   contentStyle, 
   initialCollapsed = true, 
 }) {
@@ -67,7 +68,8 @@ export default function SearchAccordion({
         transition="backgroundColor"
         style={[defaultStyles.header, headerStyle, isActive ? defaultStyles.active : defaultStyles.inactive]}
       >
-        <Text style={defaultStyles.headerText}>
+        <Text style={ headerTextStyle || defaultStyles.headerText}>
+
           {isActive ? t(headerOpenTextKey) : t(headerClosedTextKey)}
         </Text>
         <Ionicons

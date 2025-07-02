@@ -1,4 +1,4 @@
-import { transform } from '@babel/core';
+//import { transform } from '@babel/core';
 import i18next from 'i18next';
 import { initReactI18next } from "react-i18next";
 import {Globals} from '../constants/Globals';
@@ -38,7 +38,7 @@ const resources = {
       ProfileScreen_apartmentNumber: "Apartment Number",
       ProfileScreen_mobilePhone: "Mobile Phone",
       ProfileScreen_email: "Email",
-      ProfileScreen_arrivalYear: "Year of Arrival to Nordia",
+      ProfileScreen_arrivalYear: "Date of Arrival to Nordia",
       ProfileScreen_origin: "Originally From",
       ProfileScreen_profession: "Profession",
       ProfileScreen_interests: "Interests",
@@ -141,6 +141,7 @@ const resources = {
 
       MarketplaceEditItemScreen_UpdateSuccess: "Listing updated successfully!",
       MarketplaceEditItemScreen_UpdateFailedTitle: "Update Failed",
+      MarketplaceNewItemScreen_listingCreatedSuccessTitle: "Listing Created Successfully",
 
 
 
@@ -283,7 +284,7 @@ const resources = {
       ProfileScreen_apartmentNumber: "מספר דירה",
       ProfileScreen_mobilePhone: "טלפון נייד",
       ProfileScreen_email: "דואר אלקטרוני",
-      ProfileScreen_arrivalYear: "שנת הגעה לנורדיה",
+      ProfileScreen_arrivalYear: "תאריך הגעה לנורדיה",
       ProfileScreen_origin: "מקום מוצא",
       ProfileScreen_profession: "מקצוע",
       ProfileScreen_interests: "תחומי עניין",
@@ -384,6 +385,7 @@ const resources = {
       MarketplaceEditItemScreen_Header: "עריכת פריט קיים",
       MarketplaceEditItemScreen_UpdateSuccess: "ההצעה עודכנה בהצלחה!",
       MarketplaceEditItemScreen_UpdateFailedTitle: "העדכון נכשל", // אם תוסיף חזרה את הודעת השגיאה
+      MarketplaceNewItemScreen_listingCreatedSuccessTitle: "ההצעה נוצרה בהצלחה",
 
       
 
@@ -432,7 +434,8 @@ const resources = {
       NoticeDetailsScreen_dateLabel: "תאריך:",
       Common_backButton: "חזרה לאחור",
       NoticeBoardScreen_boardTitle: "לוח המודעות",
-      NoticeBoardScreen_filterButton: "סינון", NoticeBoardScreen_all: "הכל",
+      NoticeBoardScreen_filterButton: "סינון",
+      NoticeBoardScreen_all: "הכל",
       NoticeBoardScreen_filterLabel: "סינון:",
       NoticeBoardScreen_filterCategories: "categoryHebName",
       NoticeBoardScreen_sortOldest: "הישן ביותר",

@@ -9,7 +9,9 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
+import { useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Header from "@/components/Header";
 
@@ -23,6 +25,10 @@ import { useTranslation } from "react-i18next";
 import LabeledTextInput from "@/components/LabeledTextInput";
 import { Globals } from "@/app/constants/Globals";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { G } from "react-native-svg";
+import BouncyButton from "@/components/BouncyButton";
+
+const defaultUserImage = require("../assets/images/defaultUser.png");
 
 export default function Profile() {
   const { t } = useTranslation();
@@ -92,8 +98,150 @@ export default function Profile() {
   //   ? { uri: extraImageUrl }
   //   : placeholderImage;
 
+  //const params = useLocalSearchParams();
+  // this is the data passed from the previous screen
+  // useEffect(() => {
+  //   const updated = params.updatedData;
+  //   if (typeof updated === "string") {
+  //     try {
+  //       const parsed = JSON.parse(updated);
+  //       setForm(parsed);
+  //     } catch (err) {
+  //       console.warn("Failed to parse updatedData:", err);
+  //     }
+  //   }
+  // }, [params.updatedData]);
+
+  // On mount, try to load the user data from AsyncStorage.
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const loadUserProfileData = async () => {
+        try {
+          const storedUserID = await AsyncStorage.getItem("userID");
+          console.log("Stored user ID:", storedUserID); // Debugging line
+          if (storedUserID) {
+            //const apiurl = `${Globals.API_BASE_URL}/api/People/{id}`;
+            const apiurl = `${Globals.API_BASE_URL}/api/People/GetPersonByIDForProfile/${storedUserID}`; // !! check this is the  correct endpoint
+            const response = await fetch(apiurl, {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              //body: JSON.stringify({ phoneNumber, password }),
+            });
+
+            if (!response.ok) {
+              // You can throw an error or handle it with an error message.
+              throw new Error(`Login failed: HTTP ${response.status}`);
+            }
+
+            const userData = await response.json();
+
+            console.log("User data:", userData);
+
+            if (!isActive) return;
+            // populate form & pics exactly as before…
+            if (userData.residentApartmentNumber === null) {
+              userData.residentApartmentNumber = "";
+            }
+
+            // if(userData.phoneNumber === null) {
+            //   userData.phoneNumber = "";
+            // }
+
+            // !! now to load the data into the form
+            setForm({
+              //apartmentNumber: userData.apartmentNumber,
+              mobilePhone: userData.phoneNumber,
+              email: userData.email,
+              //arrivalYear: new Date(userData.dateOfArrival).getFullYear(),
+              arrivalYear: userData.dateOfArrival,
+              origin: userData.homePlace,
+              profession: userData.profession,
+              interests: userData.interests,
+              aboutMe: userData.residentDescription,
+              //profilePicID: userData.profilePicID,
+              //additionalPic1ID: userData.additionalPic1ID,
+              //additionalPic2ID: userData.additionalPic2ID,
+              //residentApartmentNumber: userData.residentApartmentNumber,
+              residentApartmentNumber: String(userData.residentApartmentNumber),
+            });
+
+            setProfilePic({
+              PicID: userData.profilePicture?.picId ?? null,
+              //PicID: userData.profilePicture?.picId ?? "",
+              PicName: userData.profilePicture?.picName ?? "",
+              PicPath: userData.profilePicture?.picPath ?? "",
+              PicAlt: userData.profilePicture?.picAlt ?? "",
+            });
+
+            setAdditionalPic1({
+              PicID: userData.additionalPicture1?.picId ?? null,
+              //PicID: userData.additionalPicture1?.picId ?? "",
+              PicName: userData.additionalPicture1?.picName ?? "",
+              PicPath: userData.additionalPicture1?.picPath ?? "",
+              PicAlt: userData.additionalPicture1?.picAlt ?? "",
+            });
+
+            setAdditionalPic2({
+              PicID: userData.additionalPicture2?.picId ?? null,
+              //PicID: userData.additionalPicture2?.picId ?? "",
+              PicName: userData.additionalPicture2?.picName ?? "",
+              PicPath: userData.additionalPicture2?.picPath ?? "",
+              PicAlt: userData.additionalPicture2?.picAlt ?? "",
+            });
+
+            if (Globals.userSelectedLanguage === "he") {
+              setForm((prev) => ({
+                ...prev,
+                name: userData.hebName,
+                partner: userData.spouseHebName,
+              }));
+            } else if (Globals.userSelectedLanguage === "en") {
+              setForm((prev) => ({
+                ...prev,
+                name: userData.engName,
+                partner: userData.spouseEngName,
+              }));
+            }
+          }
+        } catch (error) {
+          console.error("Error loading user data from storage", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadUserProfileData(); // Call the function to load user data
+      return () => {
+        isActive = false;
+      };
+    }, [])
+  );
+
+  // Construct the full image URL if mainImagePath exists, otherwise use placeholder
+  const imageUrl = profilePic.PicPath?.trim()
+    ? { uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` }
+    : defaultUserImage;
+
+  const additionalImage1 = additionalPic1.PicPath?.trim()
+    ? { uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` }
+    : defaultUserImage;
+
+  const additionalImage2 = additionalPic2.PicPath?.trim()
+    ? { uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` }
+    : defaultUserImage;
+
   const handleImagePress = (imageUriToView, altText = "") => {
     if (!imageUriToView) {
+      console.log("handleImagePress: No valid imageUri provided.");
+      return;
+    }
+    console.log("handleImagePress: imageUriToView:", imageUriToView);
+
+    if (imageUriToView === Globals.API_BASE_URL) {
       console.log("handleImagePress: No valid imageUri provided.");
       return;
     }
@@ -111,104 +259,6 @@ export default function Profile() {
     });
   };
 
-  const params = useLocalSearchParams();
-  useEffect(() => {
-    const updated = params.updatedData;
-    if (typeof updated === "string") {
-      try {
-        const parsed = JSON.parse(updated);
-        setForm(parsed);
-      } catch (err) {
-        console.warn("Failed to parse updatedData:", err);
-      }
-    }
-  }, [params.updatedData]);
-
-  // On mount, try to load the user data from AsyncStorage.
-  useEffect(() => {
-    const loadUserProfileData = async () => {
-      try {
-        const storedUserID = await AsyncStorage.getItem("userID");
-        console.log("Stored user ID:", storedUserID); // Debugging line
-        if (storedUserID) {
-          //const apiurl = `${Globals.API_BASE_URL}/api/People/{id}`;
-          const apiurl = `${Globals.API_BASE_URL}/api/People/GetPersonByIDForProfile/${storedUserID}`; // !! check this is the  correct endpoint
-          const response = await fetch(apiurl, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            //body: JSON.stringify({ phoneNumber, password }),
-          });
-
-          if (!response.ok) {
-            // You can throw an error or handle it with an error message.
-            throw new Error(`Login failed: HTTP ${response.status}`);
-          }
-
-          const userData = await response.json();
-
-          console.log("User data:", userData);
-
-          // !! now to load the data into the form
-          setForm({
-            apartmentNumber: userData.apartmentNumber,
-            mobilePhone: userData.phoneNumber,
-            email: userData.email,
-            arrivalYear: new Date(userData.dateOfArrival).getFullYear(),
-            origin: userData.homePlace,
-            profession: userData.profession,
-            interests: userData.interests,
-            aboutMe: userData.residentDescription,
-            //profilePicID: userData.profilePicID,
-            //additionalPic1ID: userData.additionalPic1ID,
-            //additionalPic2ID: userData.additionalPic2ID,
-            residentApartmentNumber: userData.residentApartmentNumber,
-          });
-
-          setProfilePic({
-            PicID: userData.profilePicture.PicID,
-            PicName: userData.profilePicture.picName,
-            PicPath: userData.profilePicture.picPath,
-            PicAlt: userData.profilePicture.picAlt,
-          });
-          setAdditionalPic1({
-            PicID: userData.additionalPicture1.PicID,
-            PicName: userData.additionalPicture1.picName,
-            PicPath: userData.additionalPicture1.picPath,
-            PicAlt: userData.additionalPicture1.picAlt,
-          });
-          setAdditionalPic2({
-            PicID: userData.additionalPicture2.PicID,
-            PicName: userData.additionalPicture2.picName,
-            PicPath: userData.additionalPicture2.picPath,
-            PicAlt: userData.additionalPicture2.picAlt,
-          });
-
-          if (Globals.userSelectedLanguage === "he") {
-            setForm((prev) => ({
-              ...prev,
-              name: userData.hebName,
-              partner: userData.spouseHebName,
-            }));
-          } else if (Globals.userSelectedLanguage === "en") {
-            setForm((prev) => ({
-              ...prev,
-              name: userData.engName,
-              partner: userData.spouseEngName,
-            }));
-          }
-        }
-      } catch (error) {
-        console.error("Error loading user data from storage", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUserProfileData(); // Call the function to load user data
-  }, []);
-
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -220,6 +270,11 @@ export default function Profile() {
               pathname: "./EditProfile",
               params: {
                 initialData: JSON.stringify(form),
+                initialPics: JSON.stringify({
+                  profilePic,
+                  additionalPic1,
+                  additionalPic2,
+                }),
               },
             })
           }
@@ -235,17 +290,10 @@ export default function Profile() {
         <View style={styles.profileImageContainer}>
           {/* !! Change this to users profile picture */}
 
-          {/* <Image
-            alt={profilePic.PicAlt}
-            source={{
-              uri: profilePic.PicPath?.trim()
-                ? Globals.API_BASE_URL + profilePic.PicPath
-                : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-            }}
-            style={styles.profileImage}
-          /> */}
 
-          <TouchableOpacity
+
+          <BouncyButton
+            shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
                 Globals.API_BASE_URL + profilePic.PicPath,
@@ -256,14 +304,17 @@ export default function Profile() {
           >
             <Image
               alt={profilePic.PicAlt}
-              source={{
-                uri: profilePic.PicPath?.trim()
-                  ? Globals.API_BASE_URL + profilePic.PicPath
-                  : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-              }}
+              // source={{
+              //   uri: profilePic.PicPath?.trim()
+              //     ? Globals.API_BASE_URL + profilePic.PicPath
+              //     : defaultUserImage,
+              //     //q: fix the pathing here
+              //     //a:
+              // }}
+              source={imageUrl}
               style={styles.profileImage}
             />
-          </TouchableOpacity>
+          </BouncyButton>
         </View>
 
         <View style={styles.profileNameContainer}>
@@ -502,7 +553,8 @@ export default function Profile() {
             }}
             style={styles.extraImage}
           /> */}
-          <TouchableOpacity
+          <BouncyButton
+           shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
                 Globals.API_BASE_URL + additionalPic1.PicPath,
@@ -513,14 +565,10 @@ export default function Profile() {
           >
             <Image
               alt={additionalPic1.PicAlt}
-              source={{
-                uri: additionalPic1.PicPath?.trim()
-                  ? Globals.API_BASE_URL + additionalPic1.PicPath
-                  : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-              }}
+              source={additionalImage1}
               style={styles.profileImage}
             />
-          </TouchableOpacity>
+          </BouncyButton>
           {/* <Image
             source={{
               uri: form.additionalPic2ID?.trim()
@@ -530,7 +578,8 @@ export default function Profile() {
             style={styles.extraImage}
           /> */}
 
-          <TouchableOpacity
+          <BouncyButton
+            shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
                 Globals.API_BASE_URL + additionalPic2.PicPath,
@@ -541,14 +590,10 @@ export default function Profile() {
           >
             <Image
               alt={additionalPic2.PicAlt}
-              source={{
-                uri: additionalPic2.PicPath?.trim()
-                  ? Globals.API_BASE_URL + additionalPic2.PicPath
-                  : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-              }}
+              source={additionalImage2}
               style={styles.profileImage}
             />
-          </TouchableOpacity>
+          </BouncyButton>
         </View>
       </ScrollView>
     </View>
@@ -693,23 +738,9 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     alignItems: "center",
     width: "75%",
-    marginTop: 10,
+    marginTop: 20,
+    gap: 30,
   },
-  // extraImage: {
-  //   width: 300,
-  //   height: 300,
-  //   borderRadius: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#ddd",
-  //   marginHorizontal: 5,
-  //   backgroundColor: "#fff",
-  //   shadowColor: "#000",
-  //   shadowOffset: { width: 0, height: 1 },
-  //   shadowOpacity: 0.1,
-  //   shadowRadius: 2,
-  //   elevation: 3, // for Android shadow
-  //   marginBottom: 30,
-  // },
   editProfileButton: {
     paddingVertical: 20,
     borderRadius: 20,
