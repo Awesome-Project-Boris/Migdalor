@@ -123,7 +123,6 @@ export default function NoticesScreen() {
           return;
       }
 
-
       console.log(`Admin Check: Checking status for user ID: ${currentUserId}`);
       setIsAdminLoading(true);
       try {
