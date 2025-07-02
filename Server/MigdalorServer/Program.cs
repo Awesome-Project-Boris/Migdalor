@@ -14,10 +14,10 @@ using YourApp.PushNotifications.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Bind the Kestrel server to all network interfaces on port 5293
-//builder.WebHost.ConfigureKestrel(serverOptions =>
-//{
-//    serverOptions.ListenAnyIP(5293); // HTTP
-//});
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(44315); // HTTP
+});
 
 builder.Services.AddCors(options =>
 {
@@ -115,8 +115,8 @@ app.UseStaticFiles(
 app.UseCors("AllowAll");
 
 // Apply authentication & authorization
-app.UseAuthentication();
-app.UseAuthorization();
+//app.UseAuthentication();
+//app.UseAuthorization();
 
 app.MapControllers();
 app.Run();
