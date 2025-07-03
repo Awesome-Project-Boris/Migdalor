@@ -4,11 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Globals } from "../app/constants/Globals"; // Adjust the import path as necessary
 import BouncyButton from "./BouncyButton";
 
-const SCREEN_WIDTH = Globals.SCREEN_WIDTH
-
-const textAlignStyle = {
-  textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left",
-};
+const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
 
 const formatDate = (dateTimeString) => {
   if (!dateTimeString) return "N/A";
@@ -23,32 +19,30 @@ const formatDate = (dateTimeString) => {
     }
 
     // Get date parts
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
     const year = dateObj.getFullYear();
 
     // Get time parts
-    const hours = String(dateObj.getHours()).padStart(2, '0');
-    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-    const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+    const hours = String(dateObj.getHours()).padStart(2, "0");
+    const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+    const seconds = String(dateObj.getSeconds()).padStart(2, "0");
 
     // Construct the desired format
     return `${hours}:${minutes}:${seconds} - ${day}/${month}/${year}`;
-
   } catch (e) {
     console.error("Error formatting date-time:", dateTimeString, e);
     return dateTimeString; // Return original string on error
   }
 };
 
-// // Creates snippet for message if we need it 
+// Creates snippet for message if we need it
 const createSnippet = (message, maxLength = 100) => {
   if (!message) return "";
   return message.length <= maxLength
     ? message
     : message.substring(0, maxLength) + "...";
 };
-
 
 export default function NoticeCard({ data, onPress }) {
   if (!data) return null;
@@ -57,30 +51,51 @@ export default function NoticeCard({ data, onPress }) {
   const displaySnippet = createSnippet(data.noticeMessage);
   const borderColor = data.categoryColor || "#ccc";
 
+  // Check if the current language direction is Right-to-Left
+  const isRTL = Globals.userSelectedDirection === "rtl";
+
+  // Define a dynamic style for the container to align its children
+  const infoContainerStyle = {
+    alignItems: isRTL ? "flex-end" : "flex-start",
+  };
+
+  // Define dynamic text styles based on language direction
+  const textStyle = {
+    textAlign: isRTL ? "right" : "left",
+    writingDirection: isRTL ? "rtl" : "ltr",
+  };
+
+  // Special style for the title. In LTR it's centered, in RTL it aligns right.
+  const titleStyle = {
+    textAlign: isRTL ? "right" : "center",
+    writingDirection: isRTL ? "rtl" : "ltr",
+  };
+
   return (
     <BouncyButton
       onPress={onPress}
       style={[styles.container, { borderColor }]} // Apply border color
       springConfig={{ speed: 20, bounciness: 10 }}
     >
-      <View style={styles.infoContainer}>
-        <Text style={styles.noticeTitle}>
-           {data.noticeTitle}
-        </Text>
+      <View style={[styles.infoContainer, infoContainerStyle]}>
+        <Text style={[styles.noticeTitle, titleStyle]}>{data.noticeTitle}</Text>
 
         {data.noticeCategory && (
-          <Text style={[styles.noticeCategory, textAlignStyle]}>
+          <Text style={[styles.noticeCategory, textStyle]}>
             {t("NoticeCard_categoryLabel")} {data.noticeCategory}
             {data.noticeSubCategory ? ` (${data.noticeSubCategory})` : ""}
           </Text>
         )}
 
-        <Text style={[styles.noticeDate, textAlignStyle]}>
+        <Text style={[styles.noticeDate, textStyle]}>
           {t("NoticeCard_dateLabel")} {displayDate}
         </Text>
 
-        {displaySnippet && ( <Text style={styles.noticeSnippet}>{displaySnippet}</Text> )}
-
+        {displaySnippet && (
+          <Text style={[styles.noticeSnippet, textStyle]}>
+            {displaySnippet}
+          </Text>
+        )}
       </View>
     </BouncyButton>
   );
@@ -97,7 +112,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15, // Vertical padding
     paddingHorizontal: 15, // Horizontal padding
     marginVertical: 8,
-    borderWidth: 5, 
+    borderWidth: 5,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -107,19 +122,20 @@ const styles = StyleSheet.create({
   infoContainer: {
     flex: 1,
     justifyContent: "flex-start",
+    // alignItems is now handled dynamically by infoContainerStyle
   },
   noticeTitle: {
-    fontSize: 22, 
+    fontSize: 22,
     fontWeight: "bold",
-    color: "#111", 
-    marginBottom: 8, 
-    textAlign: "center", 
+    color: "#111",
+    marginBottom: 8,
+    // Default textAlign is now handled by the dynamic `titleStyle`
   },
   noticeCategory: {
-    fontSize: 16, 
-    color: "#444", 
+    fontSize: 16,
+    color: "#444",
     marginBottom: 5,
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
   noticeDate: {
     fontSize: 16,
@@ -130,7 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#333",
     lineHeight: 20,
-    marginTop: 10
+    marginTop: 10,
   },
   moreInfoContainer: {
     position: "absolute",
