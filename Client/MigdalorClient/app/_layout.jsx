@@ -1,4 +1,4 @@
-import { useEffect, useState, useLayoutEffect } from "react";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router/stack";
 import { PaperProvider } from "react-native-paper";
@@ -8,18 +8,43 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import ToastManager from "toastify-react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { defaultConfig } from "@tamagui/config/v4";
+
 import { BottomSheetProvider } from "../components/BottomSheetMain";
 import { MainMenuEditProvider } from "@/context/MainMenuEditProvider";
 import { MarketplaceProvider } from "@/context/MarketplaceProvider";
 import { toastConfig } from "@/components/CustomToasts";
-import { Text } from "react-native";
-import { Redirect, Slot } from "expo-router";
-import { AuthProvider, useAuth } from "@/context/AuthProvider";
-import "./utils/i18n.tsx";
+import { AuthProvider } from "@/context/AuthProvider";
+
+// Import the i18next instance to use its methods
+import i18next from "./utils/i18n.tsx";
 
 const config = createTamagui(defaultConfig);
 
+// Keep the splash screen visible while we resolve the language
+SplashScreen.preventAutoHideAsync();
+
 export default function Layout() {
+  useEffect(() => {
+    async function prepare() {
+      try {
+        // Load the saved language from storage
+        const savedLanguage = await AsyncStorage.getItem("user-language"); // Use a consistent key
+
+        // If a language is found, change i18next's language
+        if (savedLanguage) {
+          await i18next.changeLanguage(savedLanguage);
+        }
+      } catch (e) {
+        console.warn("Failed to load language from storage", e);
+      } finally {
+        // Hide the splash screen after everything is ready
+        await SplashScreen.hideAsync();
+      }
+    }
+
+    prepare();
+  }, []); // The empty dependency array ensures this runs only once
+
   return (
     <AuthProvider>
       <PaperProvider>

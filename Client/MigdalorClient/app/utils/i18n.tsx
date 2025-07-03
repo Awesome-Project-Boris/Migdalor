@@ -1,7 +1,7 @@
 //import { transform } from '@babel/core';
 import i18next from 'i18next';
 import { initReactI18next } from "react-i18next";
-import {Globals} from '../constants/Globals';
+// import {Globals} from '../constants/Globals'; // No longer needed for initialization
 
 const resources = {
   en: { // English translations
@@ -88,7 +88,6 @@ const resources = {
       MarketplaceSearchItem_SearchButton: "Search",
       MarketplaceSearchItem_CancelButton: "Cancel",
       MarketplaceSearchItem_SubmitButton: "Sumbit",
-      
 
 
 
@@ -101,7 +100,7 @@ const resources = {
       MarketplaceItemScreen_MessageButton: "Message on WhatsApp",
       MarketplaceItemScreen_EmailButton: "Email",
       MarketplaceItemScreen_PublishedDate: "Published on:",
-      MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp", 
+      MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp",
       MarketplaceItemScreen_Loading: "Loading item...",
       MarketplaceItemScreen_EditButton: "Edit Listing",
       MarketplaceItemScreen_DeleteButton: "Delete Listing",
@@ -110,7 +109,7 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "Listing deleted successfully!",
       MarketplaceItemScreen_DeleteErrorMsg: "Failed to delete listing.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
-      
+
 
       MarketplaceItemCard_Untitled: "Untitled",
       MarketplaceItemCard_UnknownSeller: "Unknown Seller",
@@ -163,9 +162,9 @@ const resources = {
 
 
       MapScreen_building1Name: "Building One", MapScreen_building1Info: "This is the first building we defined – the entrance building",Permissions_locationPermissionMessage: "Location permission is needed to show position.", Permissions_okButton: "OK.", Permissions_openSettingsButton: "Open Settings.", Permissions_permissionDeniedTitle: "Permission denied.",
-      LocationScreen_locationPermissionLabel: "Location Permission:", LocationScreen_insideBoundaryLabel: "Inside Boundary:", LocationScreen_userLocationLabel: "User Location:",MapScreen_backToMapButton: "Back to Map", 
-    
-    
+      LocationScreen_locationPermissionLabel: "Location Permission:", LocationScreen_insideBoundaryLabel: "Inside Boundary:", LocationScreen_userLocationLabel: "User Location:",MapScreen_backToMapButton: "Back to Map",
+
+
       ImagePicker_selectSourceTitle: "Select Image Source", ImagePicker_selectSourceMessage: "Choose how to select the image", ImagePicker_takePhotoButton: "Take Photo", ImagePicker_chooseFromLibraryButton: "Choose From Library", ImagePicker_cancelButton: "Cancel", ImagePicker_permissionDeniedTitle: "Permission Denied", ImagePicker_libraryPermissionDeniedMessage: "Permission to access photos is required!", ImagePicker_cameraPermissionDeniedMessage: "Camera permission is required!", ImagePicker_errorTitle: "Error", ImagePicker_saveCameraImageFailure: "Could not save camera image.", ImagePicker_saveLibraryImageFailure: "Could not save library image.", ImagePicker_openLibraryFailure: "Could not open image library.",
       ImageViewScreen_ErrorNoImage: "No image available",
       MarketplaceScreen_NoItems: "No items found",
@@ -179,7 +178,7 @@ const resources = {
       NoticeDetailsScreen_dateLabel: "Date: ",
       Common_backButton: "Go back",
       Common_BackButtonShort: "Back",
-      NoticeBoardScreen_boardTitle: "Notice Board", 
+      NoticeBoardScreen_boardTitle: "Notice Board",
       NoticeBoardScreen_filterButton: "Filter", NoticeBoardScreen_all: "All",
 
       NoticeBoardScreen_filterLabel: "Filter:",
@@ -220,14 +219,14 @@ const resources = {
       ResidentSearchScreen_accordionOpen: "Press to close search field",
 
 
-      
-      
+
+
       ResidentsCommitte_nameUnavailable: "Name Unavailable", ResidentsCommitte_titleUnavailable: "Title Unavailable",
       ResidentsCommittePage_title: "The Committee",
       ResidentsCommittePage_contact: "Contact the Committee",
       ResidentsCommittePage_committeeNotFound: "No committee members found.",
 
-      
+
 
       UserProfileCard_unnamedUser: "Unnamed User",
 
@@ -240,14 +239,14 @@ const resources = {
       Common_ValidationErrorTitle: "Error",
       Common_ValidationErrorMsg: "Please fill all required fields",
 
-      Common_UpdateButton: "Update", 
-      Common_DeleteButton: "Delete", 
-      Common_CancelButton: "Cancel", 
+      Common_UpdateButton: "Update",
+      Common_DeleteButton: "Delete",
+      Common_CancelButton: "Cancel",
       Common_Error: "Error",
       PaginatedList_PreviousButton: "Previous",
       PaginatedList_NextButton: "Next",
 
-      LoginScreen_rememberMe: "Remember Me", 
+      LoginScreen_rememberMe: "Remember Me",
 
     },
   },
@@ -307,7 +306,7 @@ const resources = {
       //EditProfileScreen_errorMessageExtraImages: "אנא מלא את שדה 'תמונות נוספות'",
       //EditProfileScreen_errorMessageImage: "אנא מלא את שדה 'תמונה'",
 
-      
+
       MainMenuScreen_ProfileButton: 'פרופיל',
       MainMenuScreen_ActivitiesAndClassesButton: 'חוגים ופעילויות',
       MainMenuScreen_MarketplaceButton: 'שוק',
@@ -333,14 +332,14 @@ const resources = {
       MarketplaceScreen_ShowingResultsFor: "מראה תוצאות עבור:",
       MarketplaceScreen_ClearSearchButton: "לביטול החיפוש",
       MarketplaceSearchItem_Header: "חפש פריט",
-      MarketplaceSearchItem_SearchButton: "חפש",  
+      MarketplaceSearchItem_SearchButton: "חפש",
       MarketplaceSearchItem_CancelButton: "ביטול",
       MarketplaceSearchItem_SubmitButton: "שלח",
       MarketplaceScreen_accordionClose:"לחיצה לסגירת החיפוש",
       MarketplaceScreen_accordionOpen: "לחיצה לחיפוש פריטים",
       MarketplaceScreen_title: "שוק",
-      
-      
+
+
 
       MarketplaceItemScreen_Seller:  "מוכר:",
       MarketplaceItemScreen_Description: "תיאור:",
@@ -385,7 +384,7 @@ const resources = {
       MarketplaceEditItemScreen_UpdateFailedTitle: "העדכון נכשל", // אם תוסיף חזרה את הודעת השגיאה
       MarketplaceNewItemScreen_listingCreatedSuccessTitle: "ההצעה נוצרה בהצלחה",
 
-      
+
 
       MarketplaceNewItemScreen_listingCreatedSuccessMsg: "ההצעה שלך נוצרה בהצלחה!",
       MarketplaceNewItemScreen_errorTitleRequired: "חובה להזין שם הפריט.",
@@ -414,19 +413,19 @@ const resources = {
 
       MapScreen_building1Name: "בניין מספר אחת", MapScreen_building1Info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",Permissions_locationPermissionMessage: "נדרשת הרשאת מיקום להצגת המיקום.", Permissions_okButton: "אישור.", Permissions_openSettingsButton: "פתח הגדרות.", Permissions_permissionDeniedTitle: "ההרשאה נדחתה.",
       LocationScreen_locationPermissionLabel: "הרשאת מיקום:", LocationScreen_insideBoundaryLabel: "בתוך הגבול:", LocationScreen_userLocationLabel: "מיקום משתמש:",MapScreen_backToMapButton: "חזרה למפה",
-    
-    
-    
-    
-    
+
+
+
+
+
       ImagePicker_selectSourceTitle: "בחר מקור תמונה", ImagePicker_selectSourceMessage: "בחר כיצד לבחור את התמונה", ImagePicker_takePhotoButton: "צלם תמונה", ImagePicker_chooseFromLibraryButton: "בחר מהספרייה", ImagePicker_cancelButton: "ביטול", ImagePicker_permissionDeniedTitle: "ההרשאה נדחתה", ImagePicker_libraryPermissionDeniedMessage: "נדרשת הרשאה לגישה לתמונות!", ImagePicker_cameraPermissionDeniedMessage: "נדרשת הרשאת מצלמה!", ImagePicker_errorTitle: "שגיאה", ImagePicker_saveCameraImageFailure: "לא ניתן לשמור את תמונת המצלמה.", ImagePicker_saveLibraryImageFailure: "לא ניתן לשמור את תמונת הספרייה.", ImagePicker_openLibraryFailure: "לא ניתן לפתוח את ספריית התמונות.",
       ImageViewScreen_ErrorNoImage: "אין תמונה זמינה",
 
 
 
-      MarketplaceScreen_NoItems: "לא נמצאו פריטים",   
+      MarketplaceScreen_NoItems: "לא נמצאו פריטים",
 
-      
+
       NoticeDetailsScreen_loadingDetails: "טוען פרטי הודעה...",
       NoticeDetailsScreen_categoryLabel: "קטגוריה:",
       NoticeDetailsScreen_dateLabel: "תאריך:",
@@ -460,7 +459,7 @@ const resources = {
       NewNoticeScreen_noticeMessageLabel: "תוכן ההודעה",
       NewNoticeScreen_categoryLabel: "קטגוריה",
       NewNoticeScreen_publishButton: "פרסם הודעה",
- 
+
       NoticesScreen_NewNoticeButton: "הודעה חדשה",
 
       ResidentsSearchScreen_title: "רשימת הדיירים",
@@ -487,10 +486,10 @@ const resources = {
       Common_viewAllDataButton: "הצג את כל הנתונים",
       Common_clearAllDataButton: "נקה את כל הנתונים",
       Common_BackButtonShort: "חזרה",
-      Common_UpdateButton: "עדכן", 
-      Common_DeleteButton: "מחק", 
-      Common_CancelButton: "ביטול", 
-      Common_Error: "שגיאה", 
+      Common_UpdateButton: "עדכן",
+      Common_DeleteButton: "מחק",
+      Common_CancelButton: "ביטול",
+      Common_Error: "שגיאה",
       Common_noResultsFound: "לא נמצאו תוצאות",
 
       Common_ValidationErrorTitle: "שגיאה",
@@ -511,12 +510,15 @@ i18next
   .use(initReactI18next)
   .init({
     resources,
-    lng: Globals.userSelectedLanguage, // Set the language based on user selection
+    lng: 'en', // Set a default language synchronously
     fallbackLng: 'en', // Fallback to English if translation is missing
     debug: true,
     interpolation: {
       escapeValue: false, // React already does escaping
     },
+    react: {
+        useSuspense: false, // Important for controlling splash screen
+    }
   })
 
 export default i18next;
