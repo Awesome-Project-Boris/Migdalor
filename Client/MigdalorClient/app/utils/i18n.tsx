@@ -2,8 +2,6 @@
 import i18next from 'i18next';
 import { initReactI18next } from "react-i18next";
 import {Globals} from '../constants/Globals';
-import Profile from '../Profile';
-import SettingsLayout from '../(settings)/_layout';
 
 const resources = {
   en: { // English translations

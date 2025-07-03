@@ -15,6 +15,7 @@ import { toastConfig } from "@/components/CustomToasts";
 import { Text } from "react-native";
 import { Redirect, Slot } from "expo-router";
 import { AuthProvider, useAuth } from "@/context/AuthProvider";
+import "./utils/i18n.tsx";
 
 const config = createTamagui(defaultConfig);
 
