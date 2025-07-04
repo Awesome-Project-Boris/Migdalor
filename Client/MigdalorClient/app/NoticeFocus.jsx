@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -40,12 +40,13 @@ const formatDate = (dateTimeString) => {
 };
 
 export default function NoticeFocus() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [noticeData, setNoticeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const { noticeId } = useLocalSearchParams();
+  // Get all params, including the sender names passed from the previous screen
+  const { noticeId, hebSenderName, engSenderName } = useLocalSearchParams();
   const router = useRouter();
 
   const fetchNoticeDetails = useCallback(async () => {
@@ -57,7 +58,6 @@ export default function NoticeFocus() {
     setError(null);
     try {
       const apiUrl = `${Globals.API_BASE_URL}/api/Notices/${noticeId}`;
-      console.log(`Fetching notice details from: ${apiUrl}`);
       const response = await fetch(apiUrl);
       if (!response.ok) {
         const status = response.status;
@@ -66,7 +66,6 @@ export default function NoticeFocus() {
           const errorText = await response.text();
           errorPayload += `: ${errorText}`;
         } catch (e) {}
-        console.error(`API Error: ${errorPayload}`);
         if (status === 404) {
           throw new Error(
             t("NoticeDetailsScreen_errorNotFound", { id: noticeId })
@@ -78,10 +77,8 @@ export default function NoticeFocus() {
         }
       }
       const data = await response.json();
-      console.log("Fetched Data:", data);
       setNoticeData(data);
     } catch (err) {
-      console.error("Error fetching notice details:", err);
       setError(err.message || t("NoticeDetailsScreen_errorDefault"));
       setNoticeData(null);
     } finally {
@@ -91,7 +88,6 @@ export default function NoticeFocus() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("NoticeFocusScreen focused, fetching details...");
       setIsLoading(true);
       setNoticeData(null);
       setError(null);
@@ -99,7 +95,6 @@ export default function NoticeFocus() {
     }, [fetchNoticeDetails])
   );
 
-  // Show large loading indicator while fetching
   if (isLoading) {
     return (
       <>
@@ -143,15 +138,17 @@ export default function NoticeFocus() {
     );
   }
 
+  // Determine which name to display based on current language
+  const isRTL = i18n.dir() === "rtl";
+  const senderName = isRTL ? hebSenderName : engSenderName;
+
   return (
     <>
       <Header />
-      {/* Use ScrollView to ensure content scrolls if it exceeds screen height */}
       <ScrollView
         style={styles.screenContainer}
         contentContainerStyle={styles.scrollContentContainer}
       >
-        {/* Card Component for main content */}
         <Card
           elevate
           bordered
@@ -160,18 +157,31 @@ export default function NoticeFocus() {
           backgroundColor="$background"
         >
           <YStack gap="$4">
-            {/* Title using Tamagui H2 */}
             <H2 textAlign="center" fontSize={28} color="$color11">
               {noticeData.noticeTitle ?? "No Title"}
             </H2>
 
-            {/* Meta Info Section */}
             <YStack
-              gap="$2"
+              gap="$3" // Adjusted gap for better spacing
               paddingVertical="$3"
               borderBottomWidth={1}
               borderColor="$borderColor"
             >
+              {/* Sender Info Section */}
+              {senderName && (
+                <XStack alignItems="center" gap="$2">
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={24}
+                    color="$color10"
+                  />
+                  <Paragraph fontSize={16} color="$color10">
+                    {t("NoticeDetailsScreen_senderLabel", "Posted by:")}{" "}
+                    {senderName}
+                  </Paragraph>
+                </XStack>
+              )}
+
               {/* Category with Icon */}
               {noticeData.noticeCategory && (
                 <XStack alignItems="center" gap="$2">
@@ -181,7 +191,7 @@ export default function NoticeFocus() {
                     color="$color10"
                   />
                   <Paragraph fontSize={16} color="$color10">
-                    {t("NoticeDetailsScreen_categoryLabel")}
+                    {t("NoticeDetailsScreen_categoryLabel", "Category:")}{" "}
                     {noticeData.noticeCategory}
                     {noticeData.noticeSubCategory
                       ? ` (${noticeData.noticeSubCategory})`
@@ -193,7 +203,7 @@ export default function NoticeFocus() {
               <XStack alignItems="center" gap="$2">
                 <Ionicons name="calendar-outline" size={24} color="$color10" />
                 <Paragraph fontSize={16} color="$color10">
-                  {t("NoticeDetailsScreen_dateLabel")}
+                  {t("NoticeDetailsScreen_dateLabel", "Date:")}{" "}
                   {noticeData.creationDate
                     ? formatDate(noticeData.creationDate)
                     : "N/A"}
@@ -201,14 +211,12 @@ export default function NoticeFocus() {
               </XStack>
             </YStack>
 
-            {/* Message using Tamagui Paragraph */}
-            <Paragraph fontSize={32} lineHeight={34} color="$color12">
+            <Paragraph fontSize={22} lineHeight={30} color="$color12">
               {noticeData.noticeMessage ?? "No Message"}
             </Paragraph>
           </YStack>
         </Card>
 
-        {/* Back Button outside the Card */}
         <View style={styles.backButtonContainer}>
           <FlipButton style={styles.backButton} onPress={() => router.back()}>
             <Text
@@ -226,15 +234,6 @@ export default function NoticeFocus() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fcfcfc",
-    marginTop: 60,
-  },
-  contentContainer: {
-    padding: 25,
-    paddingBottom: 50,
-  },
   screenContainer: {
     flex: 1,
     backgroundColor: "#f0f2f5",
@@ -251,41 +250,11 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f0f2f5",
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: "#555",
-  },
   errorText: {
     color: "#B00020",
-    fontSize: 32,
+    fontSize: 18,
     marginBottom: 20,
     textAlign: "center",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 25,
-    color: "#1C1C1E",
-    textAlign: "center",
-  },
-  metaContainer: {
-    marginBottom: 25,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-  },
-  metaText: {
-    fontSize: 32,
-    color: "#4A4A4A",
-    marginBottom: 8,
-    lineHeight: 32,
-  },
-  message: {
-    fontSize: 26,
-    lineHeight: 28,
-    color: "#2C2C2E",
-    marginBottom: 40,
   },
   backButtonContainer: {
     marginTop: 30,

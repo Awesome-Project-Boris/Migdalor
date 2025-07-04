@@ -4,7 +4,6 @@ import React, {
   useMemo,
   useRef,
   useCallback,
-  // useContext, // No longer needed if not using useAuth
 } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
@@ -23,9 +22,8 @@ import { Globals } from "../app/constants/Globals";
 
 const ITEMS_PER_PAGE = 10;
 
-// --- Fetch Functions (remain the same) ---
+// --- Fetch Functions ---
 const fetchNotices = async () => {
-  // console.log("Fetching notices from API...");
   const response = await fetch(`${Globals.API_BASE_URL}/api/Notices`);
   if (!response.ok) {
     throw new Error(`Failed to load notices: HTTP ${response.status}`);
@@ -34,19 +32,22 @@ const fetchNotices = async () => {
   return notices || [];
 };
 
+/**
+ * Fetches the full list of category objects from the server.
+ * Each object contains both Hebrew and English names.
+ */
 const fetchCategories = async () => {
-  // console.log("Fetching categories from API...");
   const response = await fetch(`${Globals.API_BASE_URL}/api/Categories`);
   if (!response.ok) {
     throw new Error(`Failed to load categories: HTTP ${response.status}`);
   }
+  // Returns the full array of category objects, e.g., [{ categoryHebName, categoryEngName, ... }]
   const rawCategories = await response.json();
-  const availableCategories = rawCategories.map((c) => c.categoryHebName);
-  return availableCategories || [];
+  return rawCategories || [];
 };
 
 export default function NoticesScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(); // Get i18n for language detection
   const router = useRouter();
   const flatListRef = useRef(null);
 
@@ -54,9 +55,11 @@ export default function NoticesScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  // allCategories will now store the full category objects
   const [allCategories, setAllCategories] = useState([]);
   const [isCategoryLoading, setIsCategoryLoading] = useState(true);
   const [categoryError, setCategoryError] = useState(null);
+  // selectedCategories will store the names in the currently displayed language
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [sortOrder, setSortOrder] = useState("recent");
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
@@ -101,54 +104,38 @@ export default function NoticesScreen() {
     fetchCategoriesCallback();
   }, [fetchNoticesCallback, fetchCategoriesCallback]);
 
-  // Effect to Check Admin Status ---
+  // Effect to Check Admin Status
   useEffect(() => {
     const checkAdminStatus = async () => {
       let currentUserId = null;
       try {
-        currentUserId = await AsyncStorage.getItem("userID"); // Get ID here
+        currentUserId = await AsyncStorage.getItem("userID");
         if (!currentUserId) {
-          console.log("Admin Check: No user ID found in storage.");
           setIsAdmin(false);
           setIsAdminLoading(false);
           return;
         }
       } catch (storageError) {
-        console.error(
-          "Admin Check: Error reading userID from AsyncStorage",
-          storageError
-        );
         setIsAdmin(false);
         setIsAdminLoading(false);
         return;
       }
 
-      console.log(`Admin Check: Checking status for user ID: ${currentUserId}`);
       setIsAdminLoading(true);
       try {
         const response = await fetch(
           `${Globals.API_BASE_URL}/api/People/isadmin/${currentUserId}`
-        ); // Use fetched ID
+        );
         if (!response.ok) {
-          console.error(`Admin Check Failed: HTTP ${response.status}`);
           throw new Error("Failed to verify admin status");
         }
         const isAdminResult = await response.json();
-        console.log("Admin Check Result:", isAdminResult);
-
-        if (typeof isAdminResult === "boolean") {
-          setIsAdmin(isAdminResult);
-        } else if (
-          typeof isAdminResult === "object" &&
+        setIsAdmin(
           typeof isAdminResult.isAdmin === "boolean"
-        ) {
-          setIsAdmin(isAdminResult.isAdmin);
-        } else {
-          console.warn("Admin Check: Unexpected response format.");
-          setIsAdmin(false);
-        }
+            ? isAdminResult.isAdmin
+            : false
+        );
       } catch (err) {
-        console.error("Error during admin check API call:", err);
         setIsAdmin(false);
       } finally {
         setIsAdminLoading(false);
@@ -168,17 +155,31 @@ export default function NoticesScreen() {
     }, [fetchNoticesCallback])
   );
 
-  // Filtering & sorting
+  // Filtering & sorting logic
   const processedNotices = useMemo(() => {
     if (!Array.isArray(allNotices)) {
-      console.warn("processedNotices: allNotices is not an array!", allNotices);
       return [];
     }
     let filtered = [...allNotices];
 
     if (selectedCategories.length > 0) {
+      const isRTL = i18n.dir() === "rtl";
+      // The notice data (`n.noticeCategory`) uses the Hebrew name as the key.
+      // If the user selected English names, we must convert them to their Hebrew equivalents to filter correctly.
+      const selectedHebrewNames = isRTL
+        ? selectedCategories
+        : selectedCategories
+            .map((engName) => {
+              const cat = allCategories.find(
+                (c) => c.categoryEngName === engName
+              );
+              return cat ? cat.categoryHebName : null;
+            })
+            .filter(Boolean);
+
       filtered = filtered.filter(
-        (n) => n.noticeCategory && selectedCategories.includes(n.noticeCategory)
+        (n) =>
+          n.noticeCategory && selectedHebrewNames.includes(n.noticeCategory)
       );
     }
 
@@ -191,7 +192,7 @@ export default function NoticesScreen() {
       return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
     });
     return filtered;
-  }, [allNotices, selectedCategories, sortOrder]);
+  }, [allNotices, selectedCategories, sortOrder, allCategories, i18n.language]);
 
   const totalItems = processedNotices.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -204,7 +205,7 @@ export default function NoticesScreen() {
     const newTotalPages = Math.max(
       1,
       Math.ceil(processedNotices.length / ITEMS_PER_PAGE)
-    ); // Ensure at least 1 page
+    );
     if (currentPage > newTotalPages) {
       setCurrentPage(newTotalPages);
     }
@@ -232,7 +233,6 @@ export default function NoticesScreen() {
     setIsFilterModalVisible(false);
   }, []);
 
-  // Render Item Function
   const renderNoticeItem = useCallback(
     ({ item }) => (
       <NoticeCard
@@ -240,7 +240,11 @@ export default function NoticesScreen() {
         onPress={() =>
           router.push({
             pathname: "/NoticeFocus",
-            params: { noticeId: item.noticeId },
+            params: {
+              noticeId: item.noticeId,
+              senderNameHeb: item.senderNameHeb,
+              senderNameEng: item.senderNameEng,
+            },
           })
         }
       />
@@ -248,10 +252,8 @@ export default function NoticesScreen() {
     [router]
   );
 
-  // Key Extractor
   const keyExtractor = useCallback((item) => item.noticeId.toString(), []);
 
-  //  Custom Empty Component Logic
   const CustomEmptyComponent = useMemo(() => {
     if (isLoading && allNotices.length === 0)
       return (
@@ -261,12 +263,7 @@ export default function NoticesScreen() {
           style={{ marginTop: 50 }}
         />
       );
-    if (error)
-      return (
-        <Text
-          style={styles.errorText}
-        >{`Error loading notices: ${error}`}</Text>
-      );
+    if (error) return <Text style={styles.errorText}>{`Error: ${error}`}</Text>;
     if (selectedCategories.length > 0 && processedNotices.length === 0)
       return (
         <Text style={styles.infoText}>
@@ -279,16 +276,16 @@ export default function NoticesScreen() {
           {t("NoticeBoardScreen_noNoticesMessage")}
         </Text>
       );
-
-    if (processedNotices.length === 0)
-      return (
-        <Text style={styles.infoText}>
-          {t("NoticeBoardScreen_noNoticesMessage")}
-        </Text>
-      );
-
     return null;
   }, [isLoading, error, selectedCategories, allNotices, processedNotices, t]);
+
+  // Create a list of category names (string[]) for the filter modal based on language
+  const categoryNamesForFilter = useMemo(() => {
+    const isRTL = i18n.dir() === "rtl";
+    return allCategories.map((c) =>
+      isRTL ? c.categoryHebName : c.categoryEngName
+    );
+  }, [allCategories, i18n.language]);
 
   return (
     <>
@@ -364,7 +361,7 @@ export default function NoticesScreen() {
           items={itemsForCurrentPage}
           renderItem={renderNoticeItem}
           itemKeyExtractor={keyExtractor}
-          isLoading={isLoading && allNotices.length === 0} // Indicate loading on initial fetch
+          isLoading={isLoading && allNotices.length === 0}
           ListEmptyComponent={CustomEmptyComponent}
           currentPage={currentPage}
           totalPages={totalPages}
@@ -376,7 +373,7 @@ export default function NoticesScreen() {
         <FilterModal
           visible={isFilterModalVisible}
           onClose={() => setIsFilterModalVisible(false)}
-          allCategories={allCategories}
+          allCategories={categoryNamesForFilter}
           initialSelectedCategories={selectedCategories}
           onApply={handleApplyFilter}
         />
