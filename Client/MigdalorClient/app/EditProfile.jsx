@@ -179,17 +179,14 @@ export default function EditProfile() {
     if (imageTypeToClear === "main") {
       setClearedPics((prev) => ({ ...prev, profile: true }));
       setProfilePic({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-      //setProfilePic(null);
     }
     if (imageTypeToClear === "add1") {
       setClearedPics((prev) => ({ ...prev, add1: true }));
       setAdditionalPic1({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-      //setAdditionalPic1(null);
     }
     if (imageTypeToClear === "add2") {
       setClearedPics((prev) => ({ ...prev, add2: true }));
       setAdditionalPic2({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-      //setAdditionalPic2(null);
     }
 
     if (uriToDelete.startsWith("file://")) {
@@ -197,40 +194,11 @@ export default function EditProfile() {
     }
 
     setShowImageViewModal(false);
-    //setImageToViewUri("");
     setImageToViewUri(null);
     setImageTypeToClear(null);
   };
 
   const handleAddImage = async () => {
-    //const uriToAdd = imageToViewUri;
-
-    // if (imageTypeToClear === "main") {
-    //   setClearedPics((prev) => ({ ...prev, profile: true }));
-    //   setProfilePic({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-    //   //setProfilePic(null);
-    // }
-    // if (imageTypeToClear === "add1") {
-    //   setClearedPics((prev) => ({ ...prev, add1: true }));
-    //   setAdditionalPic1({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-    //   //setAdditionalPic1(null);
-    // }
-    // if (imageTypeToClear === "add2") {
-    //   setClearedPics((prev) => ({ ...prev, add2: true }));
-    //   setAdditionalPic2({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-    //   //setAdditionalPic2(null);
-    // }
-
-    // if (uriToAdd.startsWith("file://")) {
-    //   await safeDeleteFile(uriToAdd);
-    // }
-
-    //setShowImageViewModal(false);
-    //setImageToViewUri(imageToViewUri);
-    //console.log("imageToViewUri: ", imageToViewUri);
-    // setImageToViewUri(null);
-    // setImageTypeToClear(null);
-
     switch (imageTypeToClear) {
       case "main":
         pickImage("main", setProfilePic);
@@ -244,7 +212,7 @@ export default function EditProfile() {
       default:
         console.error("Invalid image type:", type);
     }
-    setShowImageViewModal(false);
+    // setShowImageViewModal(false);
   };
 
   const uploadImage = async (imageUri, role, altText, uploaderId) => {
@@ -301,7 +269,12 @@ export default function EditProfile() {
       }
       console.log(`Upload successful for ${role}:`, uploadResults[0]);
       await safeDeleteFile(imageUri); // Clean up local copy after successful upload
-      return uploadResults[0].picId; // Return the new PicID
+      return {
+        PicID: uploadResults[0].picId,
+        PicPath: uploadResults[0].serverPath, // This is the server path!
+        PicName: uploadResults[0].originalFileName, // Keep original file name if useful
+        PicAlt: altText, // Keep the alt text
+      };
     } catch (error) {
       console.error(`Image upload failed for ${role}:`, error);
       Toast.show({
@@ -331,34 +304,16 @@ export default function EditProfile() {
       setAdditionalPic1(parsedInitialPics.additionalPic1);
       setAdditionalPic2(parsedInitialPics.additionalPic2);
 
-      //alert(t("EditProfileScreen_ProfileUpdateCancelled"));
       Toast.show({
         type: "info", // Type for styling (if themes are set up)
         text1: t("EditProfileScreen_ProfileUpdateCancelled"),
-        //text1: 'Submitted!', // Main text
-        //text2: t("EditProfileScreen_ProfileUpdated"), // Sub text
         duration: 3500, // Custom duration
         position: "top", // Example: 'top' or 'bottom'
       });
 
-      //router.back({
-      //router.replace({
-      //   pathname: "./Profile",
-      //   params: {
-      //     updatedData: JSON.stringify(parsedInitialData),
-      //     updatedPics: JSON.stringify({
-      //       profilePic: parsedInitialPics.profilePic,
-      //       additionalPic1: parsedInitialPics.additionalPic1,
-      //       additionalPic2: parsedInitialPics.additionalPic2,
-      //     }),
-      //   },
-      // });
       router.back();
     } catch (err) {
       console.warn("Failed to parse initialData during cancel:", err);
-      // You can fallback to just navigating without data
-
-      //router.replace("./Profile");
       router.back();
     }
   };
@@ -415,30 +370,55 @@ export default function EditProfile() {
     }
   }, [additionalPic2.PicPath]);
 
-  const handleImagePress = (imageUriToView, altText = "") => {
-    if (!imageUriToView) {
-      console.log("handleImagePress: No valid imageUri provided.");
-      return;
+
+  // Helper function to get the current URI based on type
+  // This function should return the *display-ready* URI (local or full server URL)
+  const getDisplayUriForType = (type) => {
+    switch (type) {
+      case "main":
+        // profileImage is already a { uri: ... } object or defaultUserImage
+        return profileImage.uri || ""; // Return the URI string or empty
+      case "add1":
+        return additionalImage1.uri || "";
+      case "add2":
+        return additionalImage2.uri || "";
+      default:
+        return "";
     }
-    console.log("handleImagePress: imageUriToView:", imageUriToView);
-
-    // if (imageUriToView === Globals.API_BASE_URL) {
-    //   console.log("handleImagePress: No valid imageUri provided.");
-    //   return;
-    // }
-
-    const paramsToPass = {
-      imageUri: imageUriToView,
-      altText: altText,
-    };
-
-    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
-
-    router.push({
-      pathname: "/ImageViewScreen",
-      params: paramsToPass,
-    });
   };
+
+  const handleImagePress = (type) => {
+    setImageTypeToClear(type);
+    const uriToDisplay = getDisplayUriForType(type); // Get the display-ready URI
+    setImageToViewUri(uriToDisplay);
+    setShowImageViewModal(true);
+  };
+
+  // Old logic
+  // const handleImagePress = (imageUriToView, altText = "") => {
+  //   if (!imageUriToView) {
+  //     console.log("handleImagePress: No valid imageUri provided.");
+  //     return;
+  //   }
+  //   console.log("handleImagePress: imageUriToView:", imageUriToView);
+
+  //   // if (imageUriToView === Globals.API_BASE_URL) {
+  //   //   console.log("handleImagePress: No valid imageUri provided.");
+  //   //   return;
+  //   // }
+
+  //   const paramsToPass = {
+  //     imageUri: imageUriToView,
+  //     altText: altText,
+  //   };
+
+  //   console.log("Navigating to ImageViewScreen with params:", paramsToPass);
+
+  //   router.push({
+  //     pathname: "/ImageViewScreen",
+  //     params: paramsToPass,
+  //   });
+  // };
 
   // Updating Pictures
 
@@ -463,26 +443,6 @@ export default function EditProfile() {
     }
   };
 
-  // const pickImage = async (type) => {
-  //   //console.log("pickImage: type:", type); // Debugging line
-
-  //   const result = await ImagePicker.launchImageLibraryAsync({
-  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //     allowsEditing: true,
-  //     quality: 0.8,
-  //   });
-
-  //   if (!result.canceled && result.assets.length > 0) {
-  //     const localUri = result.assets[0].uri;
-  //     if (type === "main") {
-  //       setProfilePic({ ...profilePic, PicPath: localUri }); // local
-  //     } else if (type === "add1") {
-  //       setAdditionalPic1({ ...additionalPic1, PicPath: localUri });
-  //     } else if (type === "add2") {
-  //       setAdditionalPic2({ ...additionalPic2, PicPath: localUri });
-  //     }
-  //   }
-  // };
 
   // --- Helper: Safely Delete Local File ---
   const safeDeleteFile = async (uri) => {
@@ -570,12 +530,7 @@ export default function EditProfile() {
                     result.assets[0].uri,
                     "library"
                   );
-
-                  //setImage(newUri);
                   console.log("New URI (library):", newUri);
-                  //setProfilePic((prev) => ({ ...prev, PicPath: newUri }));
-                  //setImage((prev) => ({ ...prev, PicPath: newUri }));
-                  //setImageToViewUri(newUri);
                   console.log("checking: ", newUri);
                   console.log("checking: ", profilePic.PicPath);
 
@@ -607,12 +562,9 @@ export default function EditProfile() {
   };
 
   const viewOrPickImage = (type, currentUri) => {
-    //console.log("viewOrPickImage: currentUri:", currentUri);
     console.log(currentUri === Globals.API_BASE_URL);
     console.log("currentUri: ", currentUri);
     console.log(currentUri == "");
-    //
-    //if (currentUri === Globals.API_BASE_URL) {
     if (currentUri == "") {
       // When no image is set
       // Show add-new option instead of remove
@@ -625,23 +577,6 @@ export default function EditProfile() {
       setImageToViewUri(currentUri);
       setImageTypeToClear(type);
       setShowImageViewModal(true);
-
-      // pickImage(type === "main" ? setMainImage : setExtraImage);
-      // pickImage(type === "add1" ? setMainImage : setExtraImage);
-      // pickImage(type === "add2" ? setMainImage : setExtraImage);
-      // switch (type) {
-      //   case "main":
-      //     pickImage("main", setProfilePic);
-      //     break;
-      //   case "add1":
-      //     pickImage("add1", setAdditionalPic1);
-      //     break;
-      //   case "add2":
-      //     pickImage("add2", setAdditionalPic2);
-      //     break;
-      //   default:
-      //     console.error("Invalid image type:", type);
-      // }
     }
   };
 
@@ -649,13 +584,10 @@ export default function EditProfile() {
     if (!pictureId) return; // No ID to delete
     console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
     try {
-      // ** TODO: Implement Backend Call **
-      // Requires: DELETE /api/Picture/{pictureId} endpoint
       const response = await fetch(
         `${Globals.API_BASE_URL}/api/Picture/${pictureId}`,
         {
           method: "DELETE",
-          // Add Auth headers if needed
         }
       );
 
@@ -683,6 +615,7 @@ export default function EditProfile() {
 
   console.log("profilePic: ", profilePic);
   console.log("additionalPic1: ", additionalPic1);
+  console.log("additionalImage1: ", additionalImage1);
   console.log("additionalPic2: ", additionalPic2);
 
   const handleSave = async () => {
@@ -734,8 +667,6 @@ export default function EditProfile() {
         console.error("No user ID found in AsyncStorage.");
         return;
       }
-
-      //console.log("user:", storedUserID);
       cleanedForm.residentApartmentNumber = parseInt(
         cleanedForm.residentApartmentNumber
       );
@@ -744,8 +675,6 @@ export default function EditProfile() {
         "cleanedForm.residentApartmentNumber ",
         cleanedForm.residentApartmentNumber
       );
-      //console.log(typeof cleanedForm.residentApartmentNumber);
-      //console.log(typeof form.residentApartmentNumber);
       console.log("form.residentApartmentNumber", form.residentApartmentNumber);
 
       // !! for testing, change later
@@ -756,117 +685,95 @@ export default function EditProfile() {
 
       const uploadAndWrap = async (imageObj, role, altText, uploaderId) => {
         const imageUri = imageObj.PicPath;
-        if (!imageUri || !imageUri.startsWith("file://")) return null;
-
-        const newPicId = await uploadImage(imageUri, role, altText, uploaderId);
-        return {
-          PicID: newPicId,
-          PicName: "", // optional
-          PicPath: imageUri,
-          PicAlt: altText,
-        };
+        // Only upload if it's a new local file (starts with file://)
+        if (imageUri?.startsWith("file://")) {
+          const uploadedPicData = await uploadImage(imageUri, role, altText, uploaderId);
+          return uploadedPicData; // Returns { PicID, PicPath (serverPath), PicName, PicAlt }
+        }
+        // If it's an existing server path (not a local file), return the existing object
+        if (imageObj.PicID && imageObj.PicPath?.trim().startsWith("/Images/")) {
+          return imageObj;
+        }
+        // Otherwise, it's null or an invalid path, so return null
+        return null;
       };
 
-      let uploadedProfilePic;
-      if (clearedPics.profile) {
-        // “Remove” pressed
-        uploadedProfilePic = null;
-      } else if (
-        typeof profilePic?.PicPath === "string" &&
-        profilePic.PicPath.startsWith("file://")
-      ) {
-        // brand‑new local file → upload it
-        uploadedProfilePic = await uploadAndWrap(
-          profilePic,
-          "profile_picture",
-          "Profile picture",
-          storedUserID
-        );
-      } else {
-        // reuse existing if it has an ID, else clear
-        uploadedProfilePic = profilePic?.PicID ? profilePic : null;
+      // --- Image Processing Logic for each picture ---
+      // This logic determines the FINAL state of each picture (null, or server data)
+      // and handles deletions of old server images if replaced or removed.
+
+      let finalProfilePicData = null;
+      // Scenario 1: A new local image was picked (either replacing an old one or adding to an empty slot)
+      if (profilePic.PicPath?.startsWith("file://")) {
+          // If there was an old server image (before the current edit session), delete it
+          if (initialPics.profilePic?.PicID) { // Use initialPics to check for original server image
+              await deletePicture(initialPics.profilePic.PicID);
+          }
+          finalProfilePicData = await uploadAndWrap(profilePic, "profile_picture", "Profile picture", storedUserID);
       }
-      let uploadedAdd1Pic;
-      if (removedAdd1Pic) {
-        // You clicked “remove”
-        uploadedAdd1Pic = null;
-      } else if (
-        typeof additionalPic1?.PicPath === "string" &&
-        additionalPic1.PicPath.startsWith("file://")
-      ) {
-        // A brand‑new local file that needs uploading
-        uploadedAdd1Pic = await uploadAndWrap(
-          additionalPic1,
-          "secondary_profile",
-          "Extra picture 1",
-          storedUserID
-        );
-      } else {
-        // Everything else: either reuse the existing picture object,
-        // or if there's genuinely nothing there, null it
-        uploadedAdd1Pic = additionalPic1?.PicID ? additionalPic1 : null;
+      // Scenario 2: Image was cleared (removed) AND no new local image was picked
+      else if (clearedPics.profile) {
+          // If there was an old server image, delete it
+          if (initialPics.profilePic?.PicID) {
+              await deletePicture(initialPics.profilePic.PicID);
+          }
+          finalProfilePicData = null; // Truly cleared
+      }
+      // Scenario 3: Image was an existing server image and was NOT cleared or replaced
+      else if (profilePic.PicID && profilePic.PicPath?.trim().startsWith("/Images/")) {
+          finalProfilePicData = profilePic; // Keep the existing server image data
+      }
+      // Else, it remains null (e.g., if it was always null or an invalid path)
+
+
+      let finalAdd1PicData = null;
+      if (additionalPic1.PicPath?.startsWith("file://")) {
+          if (initialPics.additionalPic1?.PicID) {
+              await deletePicture(initialPics.additionalPic1.PicID);
+          }
+          finalAdd1PicData = await uploadAndWrap(additionalPic1, "secondary_profile", "Extra picture 1", storedUserID);
+      } else if (clearedPics.add1) {
+          if (initialPics.additionalPic1?.PicID) {
+              await deletePicture(initialPics.additionalPic1.PicID);
+          }
+          finalAdd1PicData = null;
+      } else if (additionalPic1.PicID && additionalPic1.PicPath?.trim().startsWith("/Images/")) {
+          finalAdd1PicData = additionalPic1;
       }
 
-      let uploadedAdd2Pic;
-      if (removedAdd2Pic) {
-        uploadedAdd2Pic = null;
-      } else if (
-        typeof additionalPic2?.PicPath === "string" &&
-        additionalPic2.PicPath.startsWith("file://")
-      ) {
-        uploadedAdd2Pic = await uploadAndWrap(
-          additionalPic2,
-          "secondary_profile",
-          "Extra picture 2",
-          storedUserID
-        );
-      } else {
-        uploadedAdd2Pic = additionalPic2?.PicID ? additionalPic2 : null;
+
+      let finalAdd2PicData = null;
+      if (additionalPic2.PicPath?.startsWith("file://")) {
+          if (initialPics.additionalPic2?.PicID) {
+              await deletePicture(initialPics.additionalPic2.PicID);
+          }
+          finalAdd2PicData = await uploadAndWrap(additionalPic2, "secondary_profile", "Extra picture 2", storedUserID);
+      } else if (clearedPics.add2) {
+          if (initialPics.additionalPic2?.PicID) {
+              await deletePicture(initialPics.additionalPic2.PicID);
+          }
+          finalAdd2PicData = null;
+      } else if (additionalPic2.PicID && additionalPic2.PicPath?.trim().startsWith("/Images/")) {
+          finalAdd2PicData = additionalPic2;
       }
 
-      const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; // !! check this is the  correct endpoint
+      // --- CRITICAL: Update the component's state with the new server paths and IDs ---
+      setProfilePic(finalProfilePicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      setAdditionalPic1(finalAdd1PicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      setAdditionalPic2(finalAdd2PicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      setClearedPics({ profile: false, add1: false, add2: false }); // Reset cleared flags
+
+
+      const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; 
       console.log("API URL:", apiurl); // Debugging line
-
-      // const requestBody = {
-      //   ...cleanedForm,
-      //   profilePicture: profilePic,
-      //   additionalPicture1: additionalPic1,
-      //   additionalPicture2: additionalPic2,
-      // };
 
       const requestBody = {
         // your cleaned form fields
         ...cleanedForm,
-        // **must** match DTO names (in camelCase)
-        profilePicture: uploadedProfilePic,
-        additionalPicture1: uploadedAdd1Pic,
-        additionalPicture2: uploadedAdd2Pic,
+        profilePicture: finalProfilePicData,
+        additionalPicture1: finalAdd1PicData,
+        additionalPicture2: finalAdd2PicData,
       };
-
-      // if (clearedPics.profile) {
-      //   requestBody.profilePicture = null;
-      // } else if (uploadedProfilePic?.PicID) {
-      //   requestBody.profilePicture = uploadedProfilePic;
-      // } else if (profilePic?.PicID) {
-      //   requestBody.profilePicture = profilePic;
-      // }
-
-      // if (clearedPics.add1) {
-      //   requestBody.additionalPicture1 = null;
-      // } else if (uploadedAdd1Pic?.PicID) {
-      //   requestBody.additionalPicture1 = uploadedAdd1Pic;
-      // } else if (additionalPic1?.PicID) {
-      //   requestBody.additionalPicture1 = additionalPic1;
-      // }
-
-      // if (clearedPics.add2) {
-      //   requestBody.additionalPicture2 = null;
-      // } else if (uploadedAdd2Pic?.PicID) {
-      //   requestBody.additionalPicture2 = uploadedAdd2Pic;
-      // } else if (additionalPic2?.PicID) {
-      //   requestBody.additionalPicture2 = additionalPic2;
-      // }
-
       console.log("requestBody: ", requestBody);
 
       console.log("requestBody.profilePicture: ", requestBody.profilePicture);
@@ -879,31 +786,29 @@ export default function EditProfile() {
         requestBody.additionalPicture2
       );
 
-      // const requestBody = {
-      //   ...cleanedForm,
-      //   profilePicture: uploadedProfilePic,
-      //   additionalPicture1: uploadedAdd1Pic,
-      //   additionalPicture2: uploadedAdd2Pic,
-      // };
-
       const response = await fetch(apiurl, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        //body: JSON.stringify({ phoneNumber, password }),
         body: JSON.stringify(requestBody),
       });
 
       console.log("body:");
       console.log({
         ...cleanedForm,
-        profilePic,
+        profilePic, // Note: These profilePic, additionalPic1, additionalPic2 here will be the *updated* state
         additionalPic1,
         additionalPic2,
       });
 
       console.log("response:", response);
+
+      if (!response.ok) {
+      let errorData = {};
+      try { errorData = await response.json(); } catch (e) { }
+      throw new Error(errorData?.message || `Profile update failed: HTTP ${response.status}`);
+    }
 
       Toast.show({
         type: "success",
@@ -912,31 +817,11 @@ export default function EditProfile() {
         duration: 3500,
         position: "top",
       });
-
-      if (!response.ok) {
-        throw new Error(`Login failed: HTTP ${response.status}`);
-      }
-
-      //router.back({
-      //router.replace({
-      //   pathname: "./Profile",
-      //   params: {
-      //     //updatedData: JSON.stringify(form),
-      //     updatedData: JSON.stringify(cleanedForm),
-      //     updatedPics: JSON.stringify({
-      //       profilePic,
-      //       additionalPic1,
-      //       additionalPic2,
-      //     }),
-      //   },
-      // });
       router.back();
     } catch (error) {
       console.error("Error getting userID", error);
     }
   };
-
-  //console.log("Form Data:", form);
   console.log("profilePic", profilePic);
   console.log("additionalPic1", additionalPic1);
   console.log("additionalPic2", additionalPic2);
@@ -951,51 +836,34 @@ export default function EditProfile() {
         <View style={styles.profileImageContainer}>
           <BouncyButton
             shrinkScale={0.95}
+
             // onPress={() =>
-            //   handleImagePress(
-            //     Globals.API_BASE_URL + profilePic.PicPath,
-            //     profilePic.PicAlt
+            //   viewOrPickImage(
+            //     "main",
+            //     profilePic.PicPath?.trim()
+            //       ? Globals.API_BASE_URL + profilePic.PicPath
+            //       : "" // Triggers default
             //   )
             // }
-            //onPress={() => viewOrPickImage("main", imageUrl.uri)}
-            // onPress={() =>
-            //   viewOrPickImage("main", Globals.API_BASE_URL + profilePic.PicPath)
-            // }
 
-            onPress={() =>
-              viewOrPickImage(
-                "main",
-                profilePic.PicPath?.trim()
-                  ? Globals.API_BASE_URL + profilePic.PicPath
-                  : "" // Triggers default
-              )
-            }
-            //disabled={!(Globals.API_BASE_URL + profilePic.PicPath)}
+            onPress={() => handleImagePress("main")}
             disabled={!profilePic.PicPath?.trim()}
           >
-            {/* <Image
-              alt={profilePic.PicAlt}
-              //source={imageUrl}
-              source={profileImage}
-              style={styles.profileImage}
-            /> */}
             {profilePic.PicPath === "" ? (
               <>
                 <Image
                   alt={profilePic.PicAlt}
                   //source={imageUrl}
-                  source={profileImage}
+                  //source={profileImage}
+                  source={
+                    profilePic.PicPath
+                      ? { uri: profilePic.PicPath }
+                      : defaultUserImage
+                  }
                   //source={imageUrl}
                   style={styles.profileImage}
                 />
                 <Card.Background>
-                  {/* <ExpoImage
-                    alt={profilePic.PicAlt}
-                    source={defaultUserImage}
-                    //source={imageUrl}
-                    style={StyleSheet.absoluteFill}
-                    contentFit="cover"
-                  /> */}
                 </Card.Background>
                 <YStack
                   f={1}
@@ -1003,9 +871,6 @@ export default function EditProfile() {
                   ai="center"
                   backgroundColor="rgba(0,0,0,0.4)"
                 >
-                  {/* <Paragraph theme="alt2">
-                    {t("MarketplaceNewItemScreen_MainImage")}
-                  </Paragraph> */}
                 </YStack>
               </>
             ) : (
@@ -1018,29 +883,9 @@ export default function EditProfile() {
               >
                 <Image
                   alt={profilePic.PicAlt}
-                  //source={{ uri: profilePic.PicPath }}
-                  //source={imageUrl}
                   source={profileImage}
-                  //source={{ uri: imageUrl}}
                   style={styles.profileImage}
                 />
-                {/* <ExpoImage
-                  alt={profilePic.PicAlt}
-                  //source={defaultUserImage}
-                  source={imageUrl}
-                  //source={{ uri: profilePic.PicPath }}
-
-                  style={StyleSheet.absoluteFill}
-                  contentFit="cover"
-                /> */}
-
-                {/* <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
-                <Paragraph theme="alt2">
-                  {t("MarketplaceNewItemScreen_ImageOptional")}
-                </Paragraph>
-                <Paragraph theme="alt2">
-                  {t("MarketplaceNewItemScreen_ImageTapToChoose")}
-                </Paragraph> */}
               </YStack>
             )}
           </BouncyButton>
@@ -1058,7 +903,6 @@ export default function EditProfile() {
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
-            //value={String(form.residentApartmentNumber)}
             value={form.residentApartmentNumber}
             onChangeText={(text) =>
               handleFormChange("residentApartmentNumber", text)
@@ -1136,7 +980,6 @@ export default function EditProfile() {
             value={form.interests}
             onChangeText={(text) => handleFormChange("interests", text)}
             ref={inputRefs.interests}
-            //multiline
             multiline={true}
             inputStyle={{ height: 100, textAlignVertical: "top" }}
             numberOfLines={4}
@@ -1178,71 +1021,50 @@ export default function EditProfile() {
             <BouncyButton
               shrinkScale={0.95}
               // onPress={() =>
-              //   handleImagePress(
-              //     Globals.API_BASE_URL + additionalPic1.PicPath,
-              //     additionalPic1.PicAlt
-              //   )
-              // }
-              //onPress={() => viewOrPickImage("add1", additionalImage1.uri)}
-
-              // onPress={() =>
               //   viewOrPickImage(
               //     "add1",
-              //     Globals.API_BASE_URL + additionalPic1.PicPath
+              //     additionalPic1.PicPath?.trim()
+              //       ? Globals.API_BASE_URL + additionalPic1.PicPath
+              //       : "" // Triggers default
               //   )
               // }
 
-              onPress={() =>
-                viewOrPickImage(
-                  "add1",
-                  additionalPic1.PicPath?.trim()
-                    ? Globals.API_BASE_URL + additionalPic1.PicPath
-                    : "" // Triggers default
-                )
-              }
-              //disabled={!(Globals.API_BASE_URL + additionalPic1.PicPath)}
+              onPress={() => handleImagePress("add1")}
               disabled={!additionalPic1.PicPath?.trim()}
             >
               <Image
                 alt={additionalPic1.PicAlt}
+                // source={
+                //   additionalPic1.PicPath
+                //     ? { uri: additionalPic1.PicPath }
+                //     : defaultUserImage // Or a placeholder for empty extra image
+                // }
                 source={additionalImage1}
-                //source={{ uri: additionalPic1.PicPath }}
                 style={styles.profileImage}
               />
             </BouncyButton>
-
             <BouncyButton
               shrinkScale={0.95}
               // onPress={() =>
-              //   handleImagePress(
-              //     Globals.API_BASE_URL + additionalPic2.PicPath,
-              //     additionalPic2.PicAlt
-              //   )
-              // }
-              //onPress={() => viewOrPickImage("add2", additionalImage2.uri)}
-
-              // onPress={() =>
               //   viewOrPickImage(
               //     "add2",
-              //     Globals.API_BASE_URL + additionalPic2.PicPath
+              //     additionalPic2.PicPath?.trim()
+              //       ? Globals.API_BASE_URL + additionalPic2.PicPath
+              //       : "" // Triggers default
               //   )
               // }
 
-              onPress={() =>
-                viewOrPickImage(
-                  "add2",
-                  additionalPic2.PicPath?.trim()
-                    ? Globals.API_BASE_URL + additionalPic2.PicPath
-                    : "" // Triggers default
-                )
-              }
-              //disabled={!(Globals.API_BASE_URL + additionalPic2.PicPath)}
+              onPress={() => handleImagePress("add2")}
               disabled={!additionalPic2.PicPath?.trim()}
             >
               <Image
                 alt={additionalPic2.PicAlt}
+                // source={
+                //   additionalPic2.PicPath
+                //     ? { uri: additionalPic2.PicPath }
+                //     : defaultUserImage // Or a placeholder for empty extra image
+                // }
                 source={additionalImage2}
-                //source={{ uri: additionalPic2.PicPath }}
                 style={styles.profileImage}
               />
             </BouncyButton>
@@ -1260,6 +1082,7 @@ export default function EditProfile() {
             </Text>
           </FlipButton>
 
+
           <FlipButton
             onPress={handleCancel}
             bgColor="white"
@@ -1272,68 +1095,14 @@ export default function EditProfile() {
           </FlipButton>
         </View>
       </ScrollView>
-
       <ImageViewModal
         visible={showImageViewModal}
-        //imageUri={imageToViewUri}
-        //imageUri={defaultUserImage}
-        // imageUri= {
-        //   typeof imageToViewUri === "string"
-        //     ? imageToViewUri
-        //     : defaultUserImage // likely a `require(...)` from defaultUserImage
-        // }
-
-        // imageUri= {
-        //   imageToViewUri === ""
-        //     ? defaultUserImage
-        //     : imageToViewUri // likely a `require(...)` from defaultUserImage
-        // }
-
-        // source={
-        //   imageToViewUri === ""
-        //     ? defaultUserImage
-        //     : { imageUri: imageToViewUri } // This handles require(...)
-        // }
-
-        // imageUri={
-        //   imageToViewUri === null
-        //     ? "../assets/images/defaultUser.png"
-        //     : { uri: imageToViewUri } // This handles require(...)
-        // }
-
-        // imageUri={
-        //   typeof imageToViewUri === "string" && imageToViewUri.trim() !== ""
-        //     ? { uri: imageToViewUri }
-        //     : require("../assets/images/defaultUser.png")
-        // }
-
-        //imageUri={"../assets/images/defaultUser.png"}
-
         imageUri={imageToViewUri}
-        //imageUri={profilePic.Path === "" ? imageToViewUri : profilePic.Path}
         onClose={() => setShowImageViewModal(false)}
         onAdd={() => {
-          //viewOrPickImage(imageTypeToClear, imageToViewUri); // your existing viewOrPickImage
-          //pickImage(imageTypeToClear);        // your existing pickImage
-          //setShowImageViewModal(false);
-
           handleAddImage(); // Clear the image after picking a new one
-          //imageUri={imageToViewUri}
         }}
-        //onRemove={wasDefaultImage ? undefined : handleRemoveImage}
-        //onRemove={imageToViewUri === "" ? undefined : handleRemoveImage}
-
-        //onRemove={imageToViewUri === "" ?  pickImage : handleRemoveImage}
-
         onRemove={handleRemoveImage}
-        // onAddNew={
-        //   wasDefaultImage
-        //     ? () => {
-        //         pickImage(imageTypeToClear);
-        //         setShowImageViewModal(false);
-        //       }
-        //     : undefined
-        // }
       />
     </View>
   );
@@ -1492,7 +1261,6 @@ const styles = StyleSheet.create({
   editableContainer: {
     pointerEvents: "box-none",
     alignItems: "center",
-    //alignSelf: "center",
     width: "100%",
     marginTop: 30,
     gap: 30,
