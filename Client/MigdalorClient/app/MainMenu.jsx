@@ -63,39 +63,44 @@ export default function Index() {
   const initialDataStructure = [
     {
       key: "menu1",
+      name: t("MainMenuScreen_GoodMorningButton"),
+      destination: "GoodMorningProcedure",
+    },
+    {
+      key: "menu2",
       name: t("MainMenuScreen_ProfileButton"),
       destination: "Profile",
     },
     {
-      key: "menu2",
+      key: "menu3",
       name: t("MainMenuScreen_ActivitiesAndClassesButton"),
       destination: "",
     },
     {
-      key: "menu3",
+      key: "menu4",
       name: t("MainMenuScreen_MarketplaceButton"),
       destination: "Marketplace",
     },
     {
-      key: "menu4",
+      key: "menu5",
       name: t("MainMenuScreen_ResidentsCommitteeButton"),
       destination: "CommittieePage",
     },
     {
-      key: "menu5",
+      key: "menu6",
       name: t("MainMenuScreen_ActivityHoursButton"),
-      destination: "",
+      destination: "OpeningHours",
     },
-    { key: "menu6", 
+    { key: "menu7", 
       name: t("MainMenuScreen_MapButton"), 
       destination: "Map" },
     {
-      key: "menu7",
+      key: "menu8",
       name: t("MainMenuScreen_NoticeBoardButton"),
       destination: "Notices",
     },
     {
-      key: "menu8",
+      key: "menu9",
       name: t("MainMenuScreen_ResidentListButton"),
       destination: "ResidentList",
     },

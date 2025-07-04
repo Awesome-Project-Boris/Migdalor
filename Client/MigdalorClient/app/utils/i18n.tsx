@@ -1,4 +1,5 @@
 //import { transform } from '@babel/core';
+
 import i18next from 'i18next';
 import { initReactI18next } from "react-i18next";
 // import {Globals} from '../constants/Globals'; // No longer needed for initialization
@@ -247,6 +248,14 @@ const resources = {
       PaginatedList_NextButton: "Next",
 
       LoginScreen_rememberMe: "Remember Me",
+
+
+      MainMenuScreen_GoodMorningButton: "Good Morning Procedure",
+      GoodMorning_title: "Good Morning!",
+      GoodMorning_signInMe: "Sign In For Me",
+      GoodMorning_signInBoth: "Sign In For Me and My Spouse",
+      GoodMorning_signInSuccessTitle: "Signed In",
+      GoodMorning_signInSuccessMessage: "Your attendance has been recorded. Have a great day!",
 
     },
   },
@@ -500,6 +509,12 @@ const resources = {
 
       LoginScreen_rememberMe: "זכור אותי",
 
+      MainMenuScreen_GoodMorningButton: 'נוהל בוקר טוב',
+      GoodMorning_title: "בוקר טוב!",
+      GoodMorning_signInMe: "דיווח נוכחות עבורי",
+      GoodMorning_signInBoth: "דיווח נוכחות עבורי ועבור בן/בת הזוג",
+      GoodMorning_signInSuccessTitle: "דיווח בוצע",
+      GoodMorning_signInSuccessMessage: "הנוכחות שלך נרשמה. שיהיה לך יום נהדר!",
 
     },
   }

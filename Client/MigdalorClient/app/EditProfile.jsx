@@ -11,6 +11,7 @@ import {
   Modal,
   Alert,
 } from "react-native";
+
 import * as ImagePicker from "expo-image-picker";
 import { useRoute, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -1170,6 +1171,8 @@ const styles = StyleSheet.create({
     width: "85%",
     alignSelf: "center",
     marginVertical: 5,
+    marginTop: 30,
+    marginBottom: 30,
   },
 
   input: {
