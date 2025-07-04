@@ -86,7 +86,9 @@ export default function Index() {
       name: t("MainMenuScreen_ActivityHoursButton"),
       destination: "",
     },
-    { key: "menu6", name: t("MainMenuScreen_MapButton"), destination: "Map" },
+    { key: "menu6", 
+      name: t("MainMenuScreen_MapButton"), 
+      destination: "Map" },
     {
       key: "menu7",
       name: t("MainMenuScreen_NoticeBoardButton"),
