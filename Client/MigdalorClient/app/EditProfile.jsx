@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, forwardRef } from "react";
+import React, { useEffect, useState, useRef, forwardRef, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -34,6 +34,8 @@ import Checkbox from "../components/CheckBox";
 import { useTranslation } from "react-i18next";
 import LabeledTextInput from "@/components/LabeledTextInput";
 import { Globals } from "@/app/constants/Globals";
+import InterestModal from "@/components/InterestSelectionModal";
+
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
 export default function EditProfile() {
@@ -89,6 +91,53 @@ export default function EditProfile() {
     interests: 200,
     aboutMe: 300,
   };
+
+  // Interests modal      //////////////////////
+
+  const [isInterestModalVisible, setInterestModalVisible] = useState(false);
+  const [allInterests, setAllInterests] = useState([]); // Fetched on mount
+  const [userInterests, setUserInterests] = useState([]); // The single source of truth for the user's choices
+
+  // 2. Add a useEffect to fetch all interests when the component loads
+  useEffect(() => {
+    // This assumes you have a function to fetch all interests from the backend
+    // We can reuse the one from our previous mock service for now.
+    const fetchAllInterests = async () => {
+      // In a real app, this would be a fetch call to your API
+      const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
+      const data = await response.json();
+      setAllInterests(data);
+    };
+
+    fetchAllInterests();
+  }, []); // Empty array means this runs only once on mount
+
+  const { initialSelectedNames, initialNewInterests } = useMemo(() => {
+    const allExistingNames = new Set(allInterests.map((i) => i.name));
+
+    const selected = userInterests
+      .filter((i) => allExistingNames.has(i.name))
+      .map((i) => i.name);
+    const newlyAdded = userInterests
+      .filter((i) => !allExistingNames.has(i.name))
+      .map((i) => i.name);
+
+    return {
+      initialSelectedNames: selected,
+      initialNewInterests: newlyAdded,
+    };
+  }, [userInterests, allInterests]);
+
+  const handleConfirmInterests = ({ selectedNames, newInterests }) => {
+    // Combine the results from the modal into a single list for display and state
+    const existingInterestObjects = selectedNames.map((name) => ({ name }));
+    const newInterestObjects = newInterests.map((name) => ({ name }));
+
+    setUserInterests([...existingInterestObjects, ...newInterestObjects]);
+    setInterestModalVisible(false);
+  };
+
+  //////////////////////////////////////////
 
   const [formErrors, setFormErrors] = useState({});
 
@@ -331,6 +380,9 @@ export default function EditProfile() {
       setAdditionalPic1(pics.additionalPic1);
       setAdditionalPic2(pics.additionalPic2);
     }
+    // if (parsedData.residentInterests) { // May be null until we edit it
+    //   setUserInterests(parsedData.residentInterests);
+    // }
   }, [initialData, initialPics]);
 
   const [profileImage, setProfileImage] = useState(defaultUserImage);
@@ -370,7 +422,6 @@ export default function EditProfile() {
       setAdditionalImage2(defaultUserImage);
     }
   }, [additionalPic2.PicPath]);
-
 
   // Helper function to get the current URI based on type
   // This function should return the *display-ready* URI (local or full server URL)
@@ -443,7 +494,6 @@ export default function EditProfile() {
       throw e;
     }
   };
-
 
   // --- Helper: Safely Delete Local File ---
   const safeDeleteFile = async (uri) => {
@@ -682,13 +732,32 @@ export default function EditProfile() {
       //form.residentApartmentNumber = parseInt(22222);
       //cleanedForm.residentApartmentNumber = parseInt(22222);
 
+      /////////////////////////////////////////////// Interests ////////////////////////////////////////////////////
+
+      // const allExistingNames = new Set(allInterests.map((i) => i.name));
+
+      // const finalSelectedNames = userInterests
+      //   .filter((i) => allExistingNames.has(i.name))
+      //   .map((i) => i.name);
+
+      // const finalNewInterestNames = userInterests
+      //   .filter((i) => !allExistingNames.has(i.name))
+      //   .map((i) => i.name);
+
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
       console.log("cleanedform ", cleanedForm);
 
       const uploadAndWrap = async (imageObj, role, altText, uploaderId) => {
         const imageUri = imageObj.PicPath;
         // Only upload if it's a new local file (starts with file://)
         if (imageUri?.startsWith("file://")) {
-          const uploadedPicData = await uploadImage(imageUri, role, altText, uploaderId);
+          const uploadedPicData = await uploadImage(
+            imageUri,
+            role,
+            altText,
+            uploaderId
+          );
           return uploadedPicData; // Returns { PicID, PicPath (serverPath), PicName, PicAlt }
         }
         // If it's an existing server path (not a local file), return the existing object
@@ -706,66 +775,109 @@ export default function EditProfile() {
       let finalProfilePicData = null;
       // Scenario 1: A new local image was picked (either replacing an old one or adding to an empty slot)
       if (profilePic.PicPath?.startsWith("file://")) {
-          // If there was an old server image (before the current edit session), delete it
-          if (initialPics.profilePic?.PicID) { // Use initialPics to check for original server image
-              await deletePicture(initialPics.profilePic.PicID);
-          }
-          finalProfilePicData = await uploadAndWrap(profilePic, "profile_picture", "Profile picture", storedUserID);
+        // If there was an old server image (before the current edit session), delete it
+        if (initialPics.profilePic?.PicID) {
+          // Use initialPics to check for original server image
+          await deletePicture(initialPics.profilePic.PicID);
+        }
+        finalProfilePicData = await uploadAndWrap(
+          profilePic,
+          "profile_picture",
+          "Profile picture",
+          storedUserID
+        );
       }
       // Scenario 2: Image was cleared (removed) AND no new local image was picked
       else if (clearedPics.profile) {
-          // If there was an old server image, delete it
-          if (initialPics.profilePic?.PicID) {
-              await deletePicture(initialPics.profilePic.PicID);
-          }
-          finalProfilePicData = null; // Truly cleared
+        // If there was an old server image, delete it
+        if (initialPics.profilePic?.PicID) {
+          await deletePicture(initialPics.profilePic.PicID);
+        }
+        finalProfilePicData = null; // Truly cleared
       }
       // Scenario 3: Image was an existing server image and was NOT cleared or replaced
-      else if (profilePic.PicID && profilePic.PicPath?.trim().startsWith("/Images/")) {
-          finalProfilePicData = profilePic; // Keep the existing server image data
+      else if (
+        profilePic.PicID &&
+        profilePic.PicPath?.trim().startsWith("/Images/")
+      ) {
+        finalProfilePicData = profilePic; // Keep the existing server image data
       }
       // Else, it remains null (e.g., if it was always null or an invalid path)
 
-
       let finalAdd1PicData = null;
       if (additionalPic1.PicPath?.startsWith("file://")) {
-          if (initialPics.additionalPic1?.PicID) {
-              await deletePicture(initialPics.additionalPic1.PicID);
-          }
-          finalAdd1PicData = await uploadAndWrap(additionalPic1, "secondary_profile", "Extra picture 1", storedUserID);
+        if (initialPics.additionalPic1?.PicID) {
+          await deletePicture(initialPics.additionalPic1.PicID);
+        }
+        finalAdd1PicData = await uploadAndWrap(
+          additionalPic1,
+          "secondary_profile",
+          "Extra picture 1",
+          storedUserID
+        );
       } else if (clearedPics.add1) {
-          if (initialPics.additionalPic1?.PicID) {
-              await deletePicture(initialPics.additionalPic1.PicID);
-          }
-          finalAdd1PicData = null;
-      } else if (additionalPic1.PicID && additionalPic1.PicPath?.trim().startsWith("/Images/")) {
-          finalAdd1PicData = additionalPic1;
+        if (initialPics.additionalPic1?.PicID) {
+          await deletePicture(initialPics.additionalPic1.PicID);
+        }
+        finalAdd1PicData = null;
+      } else if (
+        additionalPic1.PicID &&
+        additionalPic1.PicPath?.trim().startsWith("/Images/")
+      ) {
+        finalAdd1PicData = additionalPic1;
       }
-
 
       let finalAdd2PicData = null;
       if (additionalPic2.PicPath?.startsWith("file://")) {
-          if (initialPics.additionalPic2?.PicID) {
-              await deletePicture(initialPics.additionalPic2.PicID);
-          }
-          finalAdd2PicData = await uploadAndWrap(additionalPic2, "secondary_profile", "Extra picture 2", storedUserID);
+        if (initialPics.additionalPic2?.PicID) {
+          await deletePicture(initialPics.additionalPic2.PicID);
+        }
+        finalAdd2PicData = await uploadAndWrap(
+          additionalPic2,
+          "secondary_profile",
+          "Extra picture 2",
+          storedUserID
+        );
       } else if (clearedPics.add2) {
-          if (initialPics.additionalPic2?.PicID) {
-              await deletePicture(initialPics.additionalPic2.PicID);
-          }
-          finalAdd2PicData = null;
-      } else if (additionalPic2.PicID && additionalPic2.PicPath?.trim().startsWith("/Images/")) {
-          finalAdd2PicData = additionalPic2;
+        if (initialPics.additionalPic2?.PicID) {
+          await deletePicture(initialPics.additionalPic2.PicID);
+        }
+        finalAdd2PicData = null;
+      } else if (
+        additionalPic2.PicID &&
+        additionalPic2.PicPath?.trim().startsWith("/Images/")
+      ) {
+        finalAdd2PicData = additionalPic2;
       }
 
       // --- CRITICAL: Update the component's state with the new server paths and IDs ---
-      setProfilePic(finalProfilePicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-      setAdditionalPic1(finalAdd1PicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-      setAdditionalPic2(finalAdd2PicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      setProfilePic(
+        finalProfilePicData || {
+          PicID: null,
+          PicName: "",
+          PicPath: "",
+          PicAlt: "",
+        }
+      );
+      setAdditionalPic1(
+        finalAdd1PicData || {
+          PicID: null,
+          PicName: "",
+          PicPath: "",
+          PicAlt: "",
+        }
+      );
+      setAdditionalPic2(
+        finalAdd2PicData || {
+          PicID: null,
+          PicName: "",
+          PicPath: "",
+          PicAlt: "",
+        }
+      );
       setClearedPics({ profile: false, add1: false, add2: false }); // Reset cleared flags
 
-
-      const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`; 
+      const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`;
       console.log("API URL:", apiurl); // Debugging line
 
       const requestBody = {
@@ -774,6 +886,8 @@ export default function EditProfile() {
         profilePicture: finalProfilePicData,
         additionalPicture1: finalAdd1PicData,
         additionalPicture2: finalAdd2PicData,
+        // interestNames: finalSelectedNames,                                              !!!INTERESTS!!!
+        // newInterestNames: finalNewInterestNames,                                        !!!INTERESTS!!!
       };
       console.log("requestBody: ", requestBody);
 
@@ -806,10 +920,14 @@ export default function EditProfile() {
       console.log("response:", response);
 
       if (!response.ok) {
-      let errorData = {};
-      try { errorData = await response.json(); } catch (e) { }
-      throw new Error(errorData?.message || `Profile update failed: HTTP ${response.status}`);
-    }
+        let errorData = {};
+        try {
+          errorData = await response.json();
+        } catch (e) {}
+        throw new Error(
+          errorData?.message || `Profile update failed: HTTP ${response.status}`
+        );
+      }
 
       Toast.show({
         type: "success",
@@ -837,7 +955,6 @@ export default function EditProfile() {
         <View style={styles.profileImageContainer}>
           <BouncyButton
             shrinkScale={0.95}
-
             // onPress={() =>
             //   viewOrPickImage(
             //     "main",
@@ -864,15 +981,13 @@ export default function EditProfile() {
                   //source={imageUrl}
                   style={styles.profileImage}
                 />
-                <Card.Background>
-                </Card.Background>
+                <Card.Background></Card.Background>
                 <YStack
                   f={1}
                   jc="center"
                   ai="center"
                   backgroundColor="rgba(0,0,0,0.4)"
-                >
-                </YStack>
+                ></YStack>
               </>
             ) : (
               <YStack
@@ -973,21 +1088,33 @@ export default function EditProfile() {
             <Text style={styles.errorText}>{formErrors.profession}</Text>
           )}
 
-          <FloatingLabelInput
-            maxLength={maxLengths.interests}
-            style={styles.inputContainer}
-            alignRight={Globals.userSelectedDirection === "rtl"}
-            label={t("ProfileScreen_interests")}
-            value={form.interests}
-            onChangeText={(text) => handleFormChange("interests", text)}
-            ref={inputRefs.interests}
-            multiline={true}
-            inputStyle={{ height: 100, textAlignVertical: "top" }}
-            numberOfLines={4}
-          />
-          {formErrors.interests && (
-            <Text style={styles.errorText}>{formErrors.interests}</Text>
-          )}
+          <View style={styles.interestSectionContainer}>
+            <Text style={styles.label}>{t("ProfileScreen_interests")}</Text>
+            <View style={styles.interestChipDisplay}>
+              {userInterests.length > 0 ? (
+                userInterests.map((interest) => (
+                  <View
+                    key={interest.interestID || interest.name}
+                    style={styles.chipReadOnly}
+                  >
+                    <Text style={styles.chipTextReadOnly}>{interest.name}</Text>
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noInterestsText}>
+                  {t("EditProfileScreen_noInterests")}
+                </Text>
+              )}
+            </View>
+            <FlipButton
+              onPress={() => setInterestModalVisible(true)}
+              style={styles.editInterestsButton}
+            >
+              <Text style={styles.editInterestsButtonText}>
+                {t("EditProfileScreen_editInterestsButton")}
+              </Text>
+            </FlipButton>
+          </View>
 
           <FloatingLabelInput
             maxLength={maxLengths.aboutMe}
@@ -1083,7 +1210,6 @@ export default function EditProfile() {
             </Text>
           </FlipButton>
 
-
           <FlipButton
             onPress={handleCancel}
             bgColor="white"
@@ -1104,6 +1230,16 @@ export default function EditProfile() {
           handleAddImage(); // Clear the image after picking a new one
         }}
         onRemove={handleRemoveImage}
+      />
+
+      <InterestModal
+        visible={isInterestModalVisible}
+        mode="edit"
+        allInterests={allInterests}
+        initialSelectedNames={initialSelectedNames}
+        initialNewInterests={initialNewInterests} // Pass down the preserved new interests
+        onClose={() => setInterestModalVisible(false)}
+        onConfirm={handleConfirmInterests}
       />
     </View>
   );
@@ -1277,5 +1413,53 @@ const styles = StyleSheet.create({
     fontSize: 28,
     width: "90%",
     textAlign: "center",
+  },
+
+  // INTERESTS
+
+  interestSectionContainer: {
+    width: "85%",
+    alignSelf: "center",
+    marginBottom: 10,
+  },
+  interestChipDisplay: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    padding: 10,
+    backgroundColor: "#fff",
+    borderColor: "#ddd",
+    borderWidth: 1,
+    borderRadius: 8,
+    minHeight: 50,
+  },
+  chipReadOnly: {
+    backgroundColor: "#e0e0e0",
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    margin: 4,
+  },
+  chipTextReadOnly: {
+    color: "#333",
+    fontSize: 24,
+  },
+  noInterestsText: {
+    color: "#999",
+    fontStyle: "italic",
+  },
+  editInterestsButton: {
+    marginTop: 15,
+    alignSelf: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 8,
+    backgroundColor: "#347af0",
+    marginBottom: 30,
+  },
+  editInterestsButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });

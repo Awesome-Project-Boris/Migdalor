@@ -1,256 +1,333 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
-  Modal, View, Text, StyleSheet, SafeAreaView, FlatList, TextInput, TouchableOpacity, Keyboard,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTranslation } from 'react-i18next';
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  ScrollView,
+  TouchableOpacity,
+  Keyboard,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTranslation } from "react-i18next";
+import { Globals } from "../app/constants/Globals"; // For RTL support
 
-import { fetchAllInterests } from '../services/interestService';
-import { levenshteinDistance } from '../utils/stringSimilarity';
-import InterestChip from './InterestChip'; // Your existing chip component
+// Import your custom components
+import InterestChip from "./InterestChip";
+import FloatingLabelInput from "./FloatingLabelInput";
+import FlipButton from "./FlipButton";
 
-/**
- * A modal for selecting from a list of interests and adding new custom ones.
- *
- * @param {object} props
- * @param {boolean} props.visible - Controls if the modal is shown.
- * @param {'edit' | 'filter'} props.mode - 'edit' mode shows the "add new" section, 'filter' mode hides it.
- * @param {number[]} props.initialSelectedIds - Pre-selected interest IDs.
- * @param {function} props.onClose - Function to call to close the modal.
- * @param {function(object)} props.onConfirm - Callback with results.
- * - In 'edit' mode, returns { selectedIds: number[], newInterests: string[] }.
- * - In 'filter' mode, returns { selectedIds: number[] }.
- */
 export default function InterestModal({
   visible,
-  mode = 'filter',
-  initialSelectedIds = [],
+  mode = "edit",
+  allInterests = [],
+  initialSelectedNames = [],
+  initialNewInterests = [], // Receives the preserved list
   onClose,
   onConfirm,
 }) {
   const { t } = useTranslation();
+  const isRTL = Globals.userSelectedDirection === "rtl";
 
-  // State
-  const [allInterests, setAllInterests] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [newInterest, setNewInterest] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [selectedIds, setSelectedIds] = useState(new Set(initialSelectedIds));
-  const [newlyAdded, setNewlyAdded] = useState([]);
+  const scrollViewRef = useRef(null);
+  const newInterestInputRef = useRef(null);
 
-  // Fetch all interests when modal opens
+  // State Management
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedNames, setSelectedNames] = useState(new Set());
+  const [newInterestInput, setNewInterestInput] = useState("");
+  const [newlyAddedNames, setNewlyAddedNames] = useState([]);
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  // Effect to reset the state when the modal becomes visible
   useEffect(() => {
     if (visible) {
-      fetchAllInterests().then(setAllInterests);
+      setSelectedNames(new Set(initialSelectedNames));
+      setNewlyAddedNames(initialNewInterests || []);
+      setSearchTerm("");
+      setNewInterestInput("");
     }
-  }, [visible]);
+    // This is a common technique to create a stable dependency from arrays.
+    // The effect will now only re-run if the *content* of the arrays changes.
+  }, [visible, JSON.stringify([initialSelectedNames, initialNewInterests])]);
 
-  // Reset state when modal re-opens
+  // keyboard focused
+
   useEffect(() => {
-    setSelectedIds(new Set(initialSelectedIds));
-    setSearchTerm('');
-    setNewInterest('');
-    setNewlyAdded([]);
-  }, [visible, initialSelectedIds]);
+    const keyboardDidShowListener = Keyboard.addListener(
+      "keyboardDidShow",
+      () => setKeyboardVisible(true)
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      "keyboardDidHide",
+      () => setKeyboardVisible(false)
+    );
 
-  // Memoized filtered list of interests based on search term
+    // Cleanup function
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
+  //
+
+  const handleNewInterestFocus = () => {
+    setTimeout(() => {
+      if (newInterestInputRef.current) {
+        newInterestInputRef.current.measureLayout(
+          scrollViewRef.current.getInnerViewNode(),
+          (x, y) => {
+            scrollViewRef.current.scrollTo({ y: y - 20, animated: true });
+          },
+          () => {}
+        );
+      }
+    }, 100);
+  };
+
+  // Memoized list of interests filtered by the search term
   const filteredInterests = useMemo(() => {
     if (!searchTerm) return allInterests;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return allInterests.filter(interest =>
-      interest.name.toLowerCase().includes(lowercasedTerm)
+    return allInterests.filter(
+      (interest) =>
+        !selectedNames.has(interest.name) && // Exclude already selected
+        interest.name.toLowerCase().includes(lowercasedTerm)
     );
-  }, [allInterests, searchTerm]);
-
-  // Update "Did you mean..." suggestions as user types
-  useEffect(() => {
-    if (newInterest.length < 3) {
-      setSuggestions([]);
-      return;
-    }
-    const lowercasedInput = newInterest.toLowerCase();
-    const allSuggestions = allInterests
-      .map(interest => ({
-        ...interest,
-        distance: levenshteinDistance(lowercasedInput, interest.name),
-      }))
-      .filter(interest => interest.distance < 4 && !selectedIds.has(interest.interestID))
-      .sort((a, b) => a.distance - b.distance);
-
-    setSuggestions(allSuggestions.slice(0, 3));
-  }, [newInterest, allInterests, selectedIds]);
+  }, [allInterests, searchTerm, selectedNames]);
 
   // Handlers
-  const handleSelect = useCallback((id) => {
-    setSelectedIds(prev => {
+  const handleSelect = (name) => {
+    setSelectedNames((prev) => {
       const newSet = new Set(prev);
-      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+      newSet.has(name) ? newSet.delete(name) : newSet.add(name);
       return newSet;
     });
-  }, []);
-  
-  const handleSelectSuggestion = (id) => {
-    handleSelect(id);
-    setNewInterest('');
   };
 
-  const handleAddNew = () => {
-    if (newInterest.trim()) {
-      setNewlyAdded(prev => [...prev, newInterest.trim()]);
-      setNewInterest('');
+  const handleAddNewInterest = () => {
+    const newName = newInterestInput.trim();
+    if (newName && !newlyAddedNames.includes(newName)) {
+      setNewlyAddedNames((prev) => [...prev, newName]);
+      setNewInterestInput("");
       Keyboard.dismiss();
     }
   };
 
+  const handleRemoveNewInterest = (nameToRemove) => {
+    setNewlyAddedNames((prev) => prev.filter((name) => name !== nameToRemove));
+  };
+
   const handleConfirm = () => {
-    const result = { selectedIds: Array.from(selectedIds) };
-    if (mode === 'edit') {
-      result.newInterests = newlyAdded;
-    }
-    onConfirm(result);
+    onConfirm({
+      selectedNames: Array.from(selectedNames),
+      newInterests: newlyAddedNames,
+    });
     onClose();
   };
+
+  // Replace your existing return statement with this corrected structure
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.container}>
-        {/* Floating Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.headerButton}>
-            <Ionicons name="close" size={28} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t('interestModal_title')}</Text>
-          <TouchableOpacity onPress={handleConfirm} style={[styles.headerButton, styles.doneButton]}>
-            <Text style={styles.doneButtonText}>{t('interestModal_doneButton')}</Text>
+        <View style={styles.topPanel}>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Ionicons name="close" size={32} color="#555" />
           </TouchableOpacity>
         </View>
 
-        {/* Search Input */}
-        <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#888" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('interestModal_searchPlaceholder')}
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-          />
-          {searchTerm.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchTerm('')}>
-              <Ionicons name="close-circle" size={20} color="#aaa" />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <FlatList
-          data={filteredInterests}
-          keyExtractor={(item) => item.interestID.toString()}
-          renderItem={({ item }) => (
-            <InterestChip
-              label={item.name}
-              isSelected={selectedIds.has(item.interestID)}
-              onPress={() => handleSelect(item.interestID)}
-            />
-          )}
-          contentContainerStyle={styles.listContainer}
-          numColumns={2} // This creates a grid-like layout for the chips
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
-          ListFooterComponent={
-            mode === 'edit' ? (
-              <View style={styles.addContainer}>
-                <Text style={styles.addTitle}>{t('interestModal_addNewTitle')}</Text>
-                {newlyAdded.map((item, index) => (
-                  <InterestChip key={index} label={item} isSelected={true} onPress={()=>{}}/>
-                ))}
-                <TextInput
-                  style={styles.addInput}
-                  placeholder={t('interestModal_addPlaceholder')}
-                  value={newInterest}
-                  onChangeText={setNewInterest}
-                  onSubmitEditing={handleAddNew}
-                />
-                <TouchableOpacity style={styles.addButton} onPress={handleAddNew}>
-                  <Text style={styles.addButtonText}>{t('interestModal_addButton')}</Text>
-                </TouchableOpacity>
+        >
+          {/* This block contains all content that will be hidden when the keyboard opens */}
+          <View style={isKeyboardVisible ? styles.hidden : {}}>
+            <Text style={styles.title}>{t("interestModal_title")}</Text>
 
-                {suggestions.length > 0 && (
-                  <View style={styles.suggestionsContainer}>
-                    <Text style={styles.suggestionsTitle}>{t('interestModal_suggestionsTitle')}</Text>
-                    <View style={styles.suggestionsChips}>
-                      {suggestions.map(sugg => (
-                        <InterestChip
-                          key={`sugg-${sugg.interestID}`}
-                          label={sugg.name}
-                          isSelected={false}
-                          onPress={() => handleSelectSuggestion(sugg.interestID)}
-                        />
-                      ))}
-                    </View>
-                  </View>
-                )}
+            <FloatingLabelInput
+              label={t("interestModal_searchPlaceholder")}
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              style={styles.inputContainer}
+              alignRight={isRTL}
+            />
+
+            <Text style={styles.subHeader}>
+              {t("interestModal_selectExisting")}
+            </Text>
+            <View style={styles.interestContainer}>
+              {filteredInterests.length > 0 ? (
+                filteredInterests.map((interest) => (
+                  <InterestChip
+                    key={interest.name}
+                    label={interest.name}
+                    isSelected={selectedNames.has(interest.name)}
+                    onPress={() => handleSelect(interest.name)}
+                  />
+                ))
+              ) : (
+                <Text style={styles.noResultsText}>
+                  {t("interestModal_noResults")}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {mode === "edit" && (
+            <>
+              <Text style={styles.subHeader}>{t("interestModal_addNew")}</Text>
+              <View style={styles.addContainer}>
+                <FloatingLabelInput
+                  ref={newInterestInputRef}
+                  onFocus={handleNewInterestFocus}
+                  label={t("interestModal_addPlaceholder")}
+                  value={newInterestInput}
+                  onChangeText={setNewInterestInput}
+                  style={[styles.inputContainer, { marginBottom: 15 }]}
+                  alignRight={isRTL}
+                />
+                <FlipButton
+                  style={styles.addButton}
+                  onPress={handleAddNewInterest}
+                >
+                  <Text style={styles.addButtonText}>
+                    {t("interestModal_addButton")}
+                  </Text>
+                </FlipButton>
               </View>
-            ) : null
-          }
-        />
+            </>
+          )}
+
+          {/* This container for newly added chips is always visible */}
+          {newlyAddedNames.length > 0 && (
+            <View style={styles.newlyAddedContainer}>
+              {newlyAddedNames.map((name) => (
+                <InterestChip
+                  key={name}
+                  label={name}
+                  isSelected={true}
+                  onPress={() => handleRemoveNewInterest(name)}
+                />
+              ))}
+            </View>
+          )}
+
+          {/* The footer is now inside the ScrollView and will be hidden with the keyboard */}
+          <View style={[styles.footer, isKeyboardVisible ? styles.hidden : {}]}>
+            <FlipButton onPress={handleConfirm} style={styles.acceptButton}>
+              <Text style={styles.acceptButtonText}>
+                {t("interestModal_acceptButton")}
+              </Text>
+            </FlipButton>
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </Modal>
   );
 }
 
-// Add styles here
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 15,
-      paddingVertical: 10,
-      borderBottomWidth: 1,
-      borderBottomColor: '#eee',
-    },
-    headerTitle: { fontSize: 18, fontWeight: 'bold' },
-    headerButton: { padding: 5 },
-    doneButton: { backgroundColor: '#007AFF', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
-    doneButtonText: { color: '#fff', fontWeight: 'bold' },
-    searchContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#f0f0f0',
-      borderRadius: 10,
-      margin: 15,
-      paddingHorizontal: 10,
-    },
-    searchIcon: { marginRight: 5 },
-    searchInput: { flex: 1, height: 40, fontSize: 16 },
-    listContainer: { paddingHorizontal: 10, alignItems: 'center' },
-    addContainer: {
-      width: '100%',
-      marginTop: 30,
-      padding: 20,
-      borderTopWidth: 1,
-      borderTopColor: '#eee',
-      alignItems: 'center',
-    },
-    addTitle: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
-    addInput: {
-      width: '90%',
-      height: 45,
-      borderWidth: 1,
-      borderColor: '#ccc',
-      borderRadius: 8,
-      paddingHorizontal: 10,
-      fontSize: 16,
-      marginTop: 10,
-    },
-    addButton: {
-      backgroundColor: '#28a745',
-      borderRadius: 8,
-      paddingVertical: 12,
-      paddingHorizontal: 20,
-      marginTop: 15,
-    },
-    addButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-    suggestionsContainer: { marginTop: 20, width: '90%', alignItems: 'center' },
-    suggestionsTitle: { color: '#666', marginBottom: 5 },
-    suggestionsChips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: "#fff" },
+  topPanel: {
+    height: 60,
+    justifyContent: "center",
+    alignItems: "flex-start",
+    paddingHorizontal: 15,
+  },
+  closeButton: { padding: 5 },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 100, // Space for the floating footer
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#111",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  subHeader: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#444",
+    marginTop: 25,
+    marginBottom: 10,
+  },
+  inputContainer: {
+    marginBottom: 5,
+    marginTop: 25,
+  },
+  interestContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    backgroundColor: "#f0f2f5", // Dim gray color
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0", // Mild border
+    padding: 10,
+    minHeight: 100,
+    justifyContent: "flex-start",
+  },
+  noResultsText: {
+    flex: 1,
+    textAlign: "center",
+    color: "#888",
+    marginTop: 30,
+    fontSize: 16,
+  },
+  addContainer: {
+    alignItems: "center",
+  },
+  addButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 35,
+    borderRadius: 8,
+    marginBottom: 40,
+  },
+  addButtonText: {
+    fontSize: 16,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  newlyAddedContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 15,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    marginBottom: 40,
+  },
+  footer: {
+    paddingTop: 20, // Extra space for home bar on iOS
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+  },
+  acceptButton: {
+    minHeight: 65,
+    marginBottom: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  acceptButtonText: {
+    fontSize: 24,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  // Add this new style to your existing StyleSheet.create({...}) call
+  focusedAddContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 30,
+    paddingBottom: 50,
+  },
+  hidden: {
+    display: "none",
+  },
 });
