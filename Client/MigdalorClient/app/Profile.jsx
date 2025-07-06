@@ -27,6 +27,7 @@ import { Globals } from "@/app/constants/Globals";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { G } from "react-native-svg";
 import BouncyButton from "@/components/BouncyButton";
+import InterestChip from "../components/InterestChip";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -68,8 +69,6 @@ export default function Profile() {
     PicPath: "",
     PicAlt: "",
   });
-
-
 
   // On mount, try to load the user data from AsyncStorage.
   useFocusEffect(
@@ -241,8 +240,6 @@ export default function Profile() {
 
         <View style={styles.profileImageContainer}>
           {/* !! Change this to users profile picture */}
-
-
 
           <BouncyButton
             shrinkScale={0.95}
@@ -427,6 +424,7 @@ export default function Profile() {
         >
           {t("ProfileScreen_profession")}
         </Text>
+
         <Text
           style={[
             styles.box,
@@ -450,17 +448,21 @@ export default function Profile() {
         >
           {t("ProfileScreen_interests")}
         </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.interests || t("ProfileScreen_emptyDataField")}
-        </Text>
+        <View style={styles.chipContainer}>
+          {form.interests && form.interests.length > 0 ? (
+            form.interests.map((interestName) => (
+              <InterestChip
+                key={interestName}
+                mode="display"
+                label={interestName}
+              />
+            ))
+          ) : (
+            <Text style={styles.noInterestsText}>
+              {t("ProfileScreen_emptyDataField")}
+            </Text>
+          )}
+        </View>
 
         <Text
           style={[
@@ -506,7 +508,7 @@ export default function Profile() {
             style={styles.extraImage}
           /> */}
           <BouncyButton
-           shrinkScale={0.95}
+            shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
                 Globals.API_BASE_URL + additionalPic1.PicPath,
@@ -705,5 +707,21 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
+  },
+  chipContainer: {
+    width: "85%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 6,
+    padding: 8,
+    minHeight: 50,
+  },
+  noInterestsText: {
+    color: "#666",
+    fontStyle: "italic",
+    padding: 5,
   },
 });

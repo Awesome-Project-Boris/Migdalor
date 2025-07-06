@@ -23,6 +23,7 @@ import FlipButton from "../components/FlipButton";
 import FloatingLabelInput from "../components/FloatingLabelInput";
 import SearchAccordion from "@/components/SearchAccordion"; // Assuming path is correct
 import PaginatedListDisplay from "@/components/PaginatedListDisplay"; // Assuming path is correct
+import InterestModal from "@/components/InterestSelectionModal";
 
 // Icon and Translation Imports
 import { Ionicons } from "@expo/vector-icons";
@@ -49,6 +50,11 @@ export default function ResidentList() {
   const [currentPage, setCurrentPage] = useState(1); // For pagination
   const [searchInput, setSearchInput] = useState(""); // User's current text in search input
   const [searchType, setSearchType] = useState("name"); // 'name' or 'hobby' for search type
+
+  // Interest based search states
+  const [isInterestModalVisible, setInterestModalVisible] = useState(false);
+  const [allInterests, setAllInterests] = useState([]); // To hold all possible interests
+  const [filterByInterests, setFilterByInterests] = useState([]); // To hold the selected names for filtering
 
   // --- Refs ---
   const flatListRef = useRef(null); // For scrolling FlatList to top
@@ -85,6 +91,32 @@ export default function ResidentList() {
   useEffect(() => {
     fetchAllUsersCallback();
   }, [fetchAllUsersCallback]);
+
+  const initialSelectedNamesForModal = useMemo(
+    () => filterByInterests,
+    [filterByInterests]
+  );
+
+  // Pulling all the interests !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+  //   useEffect(() => {
+  //   const fetchAllInterestsFromDB = async () => {
+  //     try {
+  //       const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`); // EDIT ENDPOINT
+  //       const data = await response.json();
+  //       setAllInterests(data);
+  //     } catch (err) {
+  //       console.error("Failed to fetch all interests:", err);
+  //     }
+  //   };
+
+  //   fetchAllInterestsFromDB();
+  // }, []);
+
+  const handleApplyInterestFilter = ({ selectedNames }) => {
+    setFilterByInterests(selectedNames);
+    setInterestModalVisible(false);
+  };
 
   // --- Filtering Logic (Memoized) ---
   const filteredUsers = useMemo(() => {
@@ -164,7 +196,6 @@ export default function ResidentList() {
       <UserProfileCard
         data={item}
         onPress={() => {
-
           router.push({
             // Example pathname, adjust to your actual route
             pathname: "/Profile", // Or maybe './ProfileScreen', etc.
@@ -186,8 +217,55 @@ export default function ResidentList() {
   }, []); // No dependencies
 
   const handleSearchPress = useCallback(() => {
-    Keyboard.dismiss(); // Dismiss keyboard on search button press
-  }, []);
+    Keyboard.dismiss();
+
+    if (searchType === "hobby") {
+      // If searching by hobby, call our new dedicated function
+      searchByInterests();
+    } else {
+      // If searching by name, the client-side filter handles it automatically.
+      // We don't need to do anything extra here.
+      setCurrentPage(1);
+    }
+  }, [searchType, filterByInterests]);
+
+  // Search by interests ///////////////////////////////////////////////////////////////
+
+  // const searchByInterests = async () => {
+  //   if (filterByInterests.length === 0) {
+  //     // Fetches the default list if no interests are selected for filtering
+  //     fetchAllUsersCallback();
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+  //   setError(null);
+
+  //   const apiUrl = `${Globals.API_BASE_URL}/api/People/SearchByInterests`;
+
+  //   try {
+  //     const response = await fetch(apiUrl, {
+  //       method: 'POST', // 1. Specify the method is POST
+  //       headers: {
+  //         'Content-Type': 'application/json', // 2. Set the content type header
+  //       },
+  //       // 3. Send the array in the request body as a JSON string
+  //       body: JSON.stringify(filterByInterests),
+  //     });
+
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error ${response.status}`);
+  //     }
+  //     const data = await response.json();
+  //     setAllUsers(data || []); // Update the user list with the filtered results
+  //   } catch (err) {
+  //     setError(err.message);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
   const handleSearchInputChange = useCallback((text) => {
     setSearchInput(text); // Update the search input state
@@ -198,19 +276,35 @@ export default function ResidentList() {
   const CustomEmptyComponent = useMemo(() => {
     // Show loading indicator only on initial load
     if (isLoading && allUsers.length === 0) {
-        return <ActivityIndicator size="large" color="#0000ff" style={styles.centeredMessage} />;
+      return (
+        <ActivityIndicator
+          size="large"
+          color="#0000ff"
+          style={styles.centeredMessage}
+        />
+      );
     }
     // Show error if fetching failed
     if (error) {
-        return <Text style={[styles.infoText, styles.errorText]}>Error: {error}</Text>;
+      return (
+        <Text style={[styles.infoText, styles.errorText]}>Error: {error}</Text>
+      );
     }
     // Show 'no match' if there's a query but results are empty
     if (searchInput.trim() && filteredUsers.length === 0) {
-        return <Text style={styles.infoText}>{t("ResidentSearchScreen_noMatchMessage")}</Text>;
+      return (
+        <Text style={styles.infoText}>
+          {t("ResidentSearchScreen_noMatchMessage")}
+        </Text>
+      );
     }
     // Show 'no users' if not loading, no query, and master list is empty
     if (!searchInput.trim() && !isLoading && allUsers.length === 0) {
-        return <Text style={styles.infoText}>{t("ResidentSearchScreen_noUsersMessage")}</Text>;
+      return (
+        <Text style={styles.infoText}>
+          {t("ResidentSearchScreen_noUsersMessage")}
+        </Text>
+      );
     }
     // Otherwise, render nothing (FlatList will be empty or show items)
     return null;
@@ -221,8 +315,6 @@ export default function ResidentList() {
     <View style={styles.container}>
       <Header />
       <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
-
-      {/* Search UI */}
       <SearchAccordion
         headerOpenTextKey="ResidentSearchScreen_accordionOpen"
         headerClosedTextKey="ResidentSearchScreen_accordionClose"
@@ -234,8 +326,8 @@ export default function ResidentList() {
               : "space-between",
           gap: 10,
         }}
-        headerTextStyle={{}}
       >
+        {/* This button to toggle search type remains the same */}
         <TouchableOpacity
           onPress={toggleSearchType}
           style={styles.searchTypeButton}
@@ -249,24 +341,54 @@ export default function ResidentList() {
             </Text>
           </Text>
         </TouchableOpacity>
-        <FloatingLabelInput
-          label={
-            searchType === "name"
-              ? t("ResidentSearchScreen_enterNamePlaceholder")
-              : t("ResidentSearchScreen_enterHobbyPlaceholder")
-          }
-          value={searchInput}
-          onChangeText={handleSearchInputChange} // Use live update handler
-          returnKeyType="search"
-          onSubmitEditing={handleSearchPress} // Dismiss keyboard on submit
-          style={styles.searchInputContainer}
-          inputStyle={styles.searchInput}
-          alignRight={Globals.userSelectedDirection === "rtl"} // Handle RTL if needed
-        />
 
-        {/* Search Submit Button */}
+        {searchType === "name" ? (
+          // UI for searching by name
+          <FloatingLabelInput
+            label={t("ResidentSearchScreen_enterNamePlaceholder")}
+            value={searchInput}
+            onChangeText={handleSearchInputChange}
+            returnKeyType="search"
+            onSubmitEditing={handleSearchPress}
+            style={styles.searchInputContainer}
+            inputStyle={styles.searchInput}
+            alignRight={Globals.userSelectedDirection === "rtl"}
+          />
+        ) : (
+          // UI for filtering by interest
+          // This is the UI for filtering by interest
+          <View style={styles.filterContainer}>
+            {/* 1. Button to summon the modal */}
+            <FlipButton
+              onPress={() => setInterestModalVisible(true)}
+              style={styles.selectButton}
+            >
+              <Text style={styles.selectButtonText}>
+                {t("ResidentSearchScreen_selectInterestsButton")}
+              </Text>
+            </FlipButton>
+
+            {/* 2. A small area declaring what we're filtering by */}
+            <Text style={styles.filterLabel}>
+              {t("ResidentSearchScreen_filteringByLabel")}
+            </Text>
+            <View style={styles.chipDisplayArea}>
+              {filterByInterests.length > 0 ? (
+                filterByInterests.map((name) => (
+                  <InterestChip key={name} mode="display" label={name} />
+                ))
+              ) : (
+                <Text style={styles.noFilterText}>
+                  {t("ResidentSearchScreen_noInterestsSelected")}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* This main search button remains, to submit the search */}
         <FlipButton
-          onPress={handleSearchPress} // Primarily dismisses keyboard
+          onPress={handleSearchPress}
           style={styles.searchSubmitButton}
           bgColor="#007bff"
           textColor="#fff"
@@ -284,20 +406,27 @@ export default function ResidentList() {
           </View>
         </FlipButton>
       </SearchAccordion>
-
-      {/* Paginated List */}
+      {/* The PaginatedListDisplay component remains unchanged */}
       <PaginatedListDisplay
         items={itemsForCurrentPage}
         renderItem={renderUserItem}
         itemKeyExtractor={keyExtractor}
-        // Show loading indicator overlay *only* during initial load
         isLoading={isLoading && allUsers.length === 0}
         ListEmptyComponent={CustomEmptyComponent}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
         listContainerStyle={styles.listContainerStyle}
-        flatListRef={flatListRef} // Pass ref to underlying FlatList
+        flatListRef={flatListRef}
+      />
+
+      <InterestModal
+        visible={isInterestModalVisible}
+        mode="filter"
+        allInterests={allInterests}
+        initialSelectedNames={initialSelectedNamesForModal} // <-- Ensure it uses this stable variable
+        onClose={() => setInterestModalVisible(false)}
+        onConfirm={handleApplyInterestFilter}
       />
     </View>
   );
@@ -373,21 +502,24 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
   },
-  centeredMessage: { // Style for loading indicator container
+  centeredMessage: {
+    // Style for loading indicator container
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
     marginTop: 50, // Adjust as needed
   },
-  infoText: { // Style for 'no results'/'no users' text
+  infoText: {
+    // Style for 'no results'/'no users' text
     fontSize: 18,
     color: "#666",
     textAlign: "center",
     marginTop: 50,
     paddingHorizontal: 20,
   },
-  errorText: { // Style for error text
+  errorText: {
+    // Style for error text
     fontSize: 18,
     color: "red", // Make errors stand out
     textAlign: "center",

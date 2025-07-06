@@ -1,37 +1,39 @@
 //import { transform } from '@babel/core';
-import i18next from 'i18next';
+
+import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
 // import {Globals} from '../constants/Globals'; // No longer needed for initialization
 
 const resources = {
-  en: { // English translations
+  en: {
+    // English translations
     translation: {
-      SettingsLayoutTabs_FontSettings: 'Font Settings',
-      SettingsLayoutTabs_notificationSettings: 'Notification Settings',
-      SettingsLayoutTabs_languageSettings: 'User Settings',
-      SettingsLayoutTabs_SaveChanges: 'Save Changes',
+      SettingsLayoutTabs_FontSettings: "Font Settings",
+      SettingsLayoutTabs_notificationSettings: "Notification Settings",
+      SettingsLayoutTabs_languageSettings: "User Settings",
+      SettingsLayoutTabs_SaveChanges: "Save Changes",
 
-      FontSettingsPage_header: 'Font Settings:',
-      FontSettingsPage_exampleHeader: 'Sample Text:',
-      FontSettingsPage_example: "The Wizard of Oz: Dorothy and her little dog Toto lived in a small village in America.\nDorothy loved Toto very much, and they played with each other all the time. One day there was a terrible tornado. \"We have to get to the basement, Toto!\" Dorothy shouted. But it was too late. The strong and fierce wind lifted the farmhouse into the air and took Dorothy and Toto to the distant Land of Oz.",
+      FontSettingsPage_header: "Font Settings:",
+      FontSettingsPage_exampleHeader: "Sample Text:",
+      FontSettingsPage_example:
+        'The Wizard of Oz: Dorothy and her little dog Toto lived in a small village in America.\nDorothy loved Toto very much, and they played with each other all the time. One day there was a terrible tornado. "We have to get to the basement, Toto!" Dorothy shouted. But it was too late. The strong and fierce wind lifted the farmhouse into the air and took Dorothy and Toto to the distant Land of Oz.',
 
+      NotificationSettingsPage_header: "Notification Settings:",
+      NotificationSettingsPage_both: "Sound and Vibration",
+      NotificationSettingsPage_sound: "Sound",
+      NotificationSettingsPage_vibrate: "Vibration",
+      NotificationSettingsPage_silent: "Silent",
+      NotificationSettingsPage_on: "On",
+      NotificationSettingsPage_off: "Off",
 
-      NotificationSettingsPage_header: 'Notification Settings:',
-      NotificationSettingsPage_both: 'Sound and Vibration',
-      NotificationSettingsPage_sound: 'Sound',
-      NotificationSettingsPage_vibrate: 'Vibration',
-      NotificationSettingsPage_silent: 'Silent',
-      NotificationSettingsPage_on: 'On',
-      NotificationSettingsPage_off: 'Off',
-
-      LanguageSettingsPage_header: 'Language Settings:',
-      LanguageSettingsPage_LogoutHeader: 'Account Settings:',
-      LanguageSettingsPage_Logout: 'Logout',
-      LanguageSettingsPage_LogoutToast: 'Logged out successfully!',
+      LanguageSettingsPage_header: "Language Settings:",
+      LanguageSettingsPage_LogoutHeader: "Account Settings:",
+      LanguageSettingsPage_Logout: "Logout",
+      LanguageSettingsPage_LogoutToast: "Logged out successfully!",
       LanguageSettingsPage_he: "Hebrew",
       LanguageSettingsPage_en: "English",
 
-      ProfileScreen_header: 'Profile',
+      ProfileScreen_header: "Profile",
       ProfileScreen_partner: "Partner",
       ProfileScreen_apartmentNumber: "Apartment Number",
       ProfileScreen_mobilePhone: "Mobile Phone",
@@ -47,35 +49,53 @@ const resources = {
 
       EditProfileScreen_saveButton: "Save Changes",
       EditProfileScreen_cancelButton: "Cancel",
-      EditProfileScreen_errorMessagePartner: "Partner name must contain only Hebrew and English letters",
-      EditProfileScreen_errorMessageApartmentNumber: "Apartment number must be numeric",
-      EditProfileScreen_errorMessageMobilePhone: "Enter a valid Israeli mobile number",
+      EditProfileScreen_errorMessagePartner:
+        "Partner name must contain only Hebrew and English letters",
+      EditProfileScreen_errorMessageApartmentNumber:
+        "Apartment number must be numeric",
+      EditProfileScreen_errorMessageMobilePhone:
+        "Enter a valid Israeli mobile number",
       EditProfileScreen_errorMessageEmail: "Enter a valid email address",
-      EditProfileScreen_errorMessageArrivalYear: "Arrival year must have 4 digits",
-      EditProfileScreen_errorMessageOrigin: "Origin field must contain only Hebrew and English letters or numbers",
-      EditProfileScreen_errorMessageProfession: "Profession field must contain only Hebrew and English letters or numbers",
-      EditProfileScreen_errorMessageInterests: "Interests field must contain only Hebrew and English letters or numbers",
-      EditProfileScreen_errorMessageAboutMe: "About Me field must contain only Hebrew and English letters or numbers",
+      EditProfileScreen_errorMessageArrivalYear:
+        "Arrival year must have 4 digits",
+      EditProfileScreen_errorMessageOrigin:
+        "Origin field must contain only Hebrew and English letters or numbers",
+      EditProfileScreen_errorMessageProfession:
+        "Profession field must contain only Hebrew and English letters or numbers",
+      EditProfileScreen_errorMessageInterests:
+        "Interests field must contain only Hebrew and English letters or numbers",
+      EditProfileScreen_errorMessageAboutMe:
+        "About Me field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_ProfileUpdated: "Profile Updated Successfully!",
       EditProfileScreen_ProfileUpdateCancelled: "Profile Update Cancelled",
       //EditProfileScreen_errorMessageExtraImages: "Please fill in the 'Extra Images' field",
       //EditProfileScreen_errorMessageImage: "Please fill in the 'Image' field",
 
+      EditProfileScreen_noInterests: "No interests to display",
+      EditProfileScreen_editInterestsButton: "Select Interests",
 
-      MainMenuScreen_ProfileButton: 'Profile',
-      MainMenuScreen_ActivitiesAndClassesButton: 'Activities and Classes',
-      MainMenuScreen_MarketplaceButton: 'Marketplace',
+      interestModal_title: "Edit Interests",
+      interestModal_searchPlaceholder: "Search for an interest...",
+      interestModal_selectExisting: "Select from existing",
+      interestModal_noResults: "No interests found.",
+      interestModal_addNew: "Or add a new one",
+      interestModal_addPlaceholder: "Type a new interest ( Hebrew only )",
+      interestModal_addButton: "Add",
+      interestModal_acceptButton: "Accept",
+
+      MainMenuScreen_ProfileButton: "Profile",
+      MainMenuScreen_ActivitiesAndClassesButton: "Activities and Classes",
+      MainMenuScreen_MarketplaceButton: "Marketplace",
       MainMenuScreen_ResidentsCommitteeButton: "Residents' Committee",
-      MainMenuScreen_ActivityHoursButton: 'Activity Hours',
-      MainMenuScreen_MapButton: 'Map',
+      MainMenuScreen_ActivityHoursButton: "Activity Hours",
+      MainMenuScreen_MapButton: "Map",
       MainMenuScreen_NoticeBoardButton: "Notice Board",
       MainMenuScreen_ResidentListButton: "Resident List",
 
-
-      SettingsPopup_SettingsButton: 'Settings',
-      SettingsPopup_HomeButton: 'Home',
-      SettingsPopup_ProfileButton: 'Profile',
-      SettingsPopup_ChangeLayoutButton: 'Change Menu Layout',
+      SettingsPopup_SettingsButton: "Settings",
+      SettingsPopup_HomeButton: "Home",
+      SettingsPopup_ProfileButton: "Profile",
+      SettingsPopup_ChangeLayoutButton: "Change Menu Layout",
 
       MarketplaceScreen_SearchButton: "Search",
       MarketplaceScreen_NewItemButton: "New Item",
@@ -89,10 +109,6 @@ const resources = {
       MarketplaceSearchItem_CancelButton: "Cancel",
       MarketplaceSearchItem_SubmitButton: "Sumbit",
 
-
-
-
-
       MarketplaceItemScreen_Seller: "Seller:",
       MarketplaceItemScreen_Description: "Description:",
       MarketplaceItemScreen_ContactDetails: "Contact Details",
@@ -100,16 +116,21 @@ const resources = {
       MarketplaceItemScreen_MessageButton: "Message on WhatsApp",
       MarketplaceItemScreen_EmailButton: "Email",
       MarketplaceItemScreen_PublishedDate: "Published on:",
-      MarketplaceItemScreen_ExtraImage: "Extra Image", MarketplaceItemScreen_DescriptionTitle: "Description", MarketplaceItemScreen_SellerTitle: "Seller", MarketplaceItemScreen_ContactEmail: "Email", MarketplaceItemScreen_ContactPhone: "Phone", MarketplaceItemScreen_ContactWhatsApp: "WhatsApp",
+      MarketplaceItemScreen_ExtraImage: "Extra Image",
+      MarketplaceItemScreen_DescriptionTitle: "Description",
+      MarketplaceItemScreen_SellerTitle: "Seller",
+      MarketplaceItemScreen_ContactEmail: "Email",
+      MarketplaceItemScreen_ContactPhone: "Phone",
+      MarketplaceItemScreen_ContactWhatsApp: "WhatsApp",
       MarketplaceItemScreen_Loading: "Loading item...",
       MarketplaceItemScreen_EditButton: "Edit Listing",
       MarketplaceItemScreen_DeleteButton: "Delete Listing",
       MarketplaceItemScreen_DeleteConfirmTitle: "Confirm Deletion",
-      MarketplaceItemScreen_DeleteConfirmMsg: "Are you sure you want to delete this listing? This cannot be undone.",
+      MarketplaceItemScreen_DeleteConfirmMsg:
+        "Are you sure you want to delete this listing? This cannot be undone.",
       MarketplaceItemScreen_DeleteSuccessMsg: "Listing deleted successfully!",
       MarketplaceItemScreen_DeleteErrorMsg: "Failed to delete listing.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
-
 
       MarketplaceItemCard_Untitled: "Untitled",
       MarketplaceItemCard_UnknownSeller: "Unknown Seller",
@@ -125,22 +146,32 @@ const resources = {
       MarketplaceNewItemScreen_ExtraImage: "Extra Image",
       MarketplaceNewItemScreen_ImageOptional: "(Optional)",
       MarketplaceNewItemScreen_ImageTapToChoose: "Tap to choose",
-      MarketplaceNewItemScreen_missingInfoTitle: "Missing Info", MarketplaceNewItemScreen_missingInfoMessage: "Please enter an item name.", MarketplaceNewItemScreen_authErrorTitle: "Authentication Error", MarketplaceNewItemScreen_authErrorMessage: "User not identified. Please log in again.", MarketplaceNewItemScreen_errorTitle: "Error", MarketplaceNewItemScreen_userInfoRetrievalError: "Could not retrieve user information.",
+      MarketplaceNewItemScreen_missingInfoTitle: "Missing Info",
+      MarketplaceNewItemScreen_missingInfoMessage: "Please enter an item name.",
+      MarketplaceNewItemScreen_authErrorTitle: "Authentication Error",
+      MarketplaceNewItemScreen_authErrorMessage:
+        "User not identified. Please log in again.",
+      MarketplaceNewItemScreen_errorTitle: "Error",
+      MarketplaceNewItemScreen_userInfoRetrievalError:
+        "Could not retrieve user information.",
       MarketplaceNewItemScreen_imageUploadFailedTitle: "Image Upload Failed",
-      MarketplaceNewItemScreen_listingCreationFailedTitle: "Listing Creation Failed",
+      MarketplaceNewItemScreen_listingCreationFailedTitle:
+        "Listing Creation Failed",
       MarketplaceNewItemScreen_listingCreatedTitle: "Listing Created!",
-      MarketplaceNewItemScreen_listingCreatedSuccessMsg: "Your listing has been created successfully!",
+      MarketplaceNewItemScreen_listingCreatedSuccessMsg:
+        "Your listing has been created successfully!",
       MarketplaceNewItemScreen_errorTitleRequired: "Item name is required.",
       MarketplaceNewItemScreen_errorTitleTooLong: "Item name is too long.",
-      MarketplaceNewItemScreen_errorDescriptionTooLong: "Item description is too long.",
-      MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars: "Description contains too many special characters.",
+      MarketplaceNewItemScreen_errorDescriptionTooLong:
+        "Item description is too long.",
+      MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars:
+        "Description contains too many special characters.",
       MarketplaceEditItemScreen_Header: "Edit an existing item",
 
       MarketplaceEditItemScreen_UpdateSuccess: "Listing updated successfully!",
       MarketplaceEditItemScreen_UpdateFailedTitle: "Update Failed",
-      MarketplaceNewItemScreen_listingCreatedSuccessTitle: "Listing Created Successfully",
-
-
+      MarketplaceNewItemScreen_listingCreatedSuccessTitle:
+        "Listing Created Successfully",
 
       MainMenuNameplate_greetingGoodMorning: "Good Morning",
       MainMenuNameplate_greetingGoodAfternoon: "Good Afternoon",
@@ -148,30 +179,50 @@ const resources = {
       MainMenuNameplate_greetingGoodNight: "Good Night",
       MainMenuNameplate_greetingPunctuation: "!",
 
-
-
       MainMenuScreen_DoneButton: "Done",
-      MainMenuScreen_saveOrderSuccess: "Menu order saved!", MainMenuScreen_saveOrderFailure: "Failed to save order",MainMenuScreen_loadingMenu: "Loading menu…",
-
+      MainMenuScreen_saveOrderSuccess: "Menu order saved!",
+      MainMenuScreen_saveOrderFailure: "Failed to save order",
+      MainMenuScreen_loadingMenu: "Loading menu…",
 
       LoginScreen_loginSuccess: "Logged in successfully",
       LoginScreen_loginErrorTitle: "Error!",
       LoginScreen_loginErrorMessage: "Incorrect username or password!",
-      LoginScreen_phoneNumberLabel: "Phone Number", LoginScreen_passwordLabel: "Password",
+      LoginScreen_phoneNumberLabel: "Phone Number",
+      LoginScreen_passwordLabel: "Password",
       LoginScreen_loginButton: "Login",
 
+      MapScreen_building1Name: "Building One",
+      MapScreen_building1Info:
+        "This is the first building we defined – the entrance building",
+      Permissions_locationPermissionMessage:
+        "Location permission is needed to show position.",
+      Permissions_okButton: "OK.",
+      Permissions_openSettingsButton: "Open Settings.",
+      Permissions_permissionDeniedTitle: "Permission denied.",
+      LocationScreen_locationPermissionLabel: "Location Permission:",
+      LocationScreen_insideBoundaryLabel: "Inside Boundary:",
+      LocationScreen_userLocationLabel: "User Location:",
+      MapScreen_backToMapButton: "Back to Map",
 
-      MapScreen_building1Name: "Building One", MapScreen_building1Info: "This is the first building we defined – the entrance building",Permissions_locationPermissionMessage: "Location permission is needed to show position.", Permissions_okButton: "OK.", Permissions_openSettingsButton: "Open Settings.", Permissions_permissionDeniedTitle: "Permission denied.",
-      LocationScreen_locationPermissionLabel: "Location Permission:", LocationScreen_insideBoundaryLabel: "Inside Boundary:", LocationScreen_userLocationLabel: "User Location:",MapScreen_backToMapButton: "Back to Map",
-
-
-      ImagePicker_selectSourceTitle: "Select Image Source", ImagePicker_selectSourceMessage: "Choose how to select the image", ImagePicker_takePhotoButton: "Take Photo", ImagePicker_chooseFromLibraryButton: "Choose From Library", ImagePicker_cancelButton: "Cancel", ImagePicker_permissionDeniedTitle: "Permission Denied", ImagePicker_libraryPermissionDeniedMessage: "Permission to access photos is required!", ImagePicker_cameraPermissionDeniedMessage: "Camera permission is required!", ImagePicker_errorTitle: "Error", ImagePicker_saveCameraImageFailure: "Could not save camera image.", ImagePicker_saveLibraryImageFailure: "Could not save library image.", ImagePicker_openLibraryFailure: "Could not open image library.",
+      ImagePicker_selectSourceTitle: "Select Image Source",
+      ImagePicker_selectSourceMessage: "Choose how to select the image",
+      ImagePicker_takePhotoButton: "Take Photo",
+      ImagePicker_chooseFromLibraryButton: "Choose From Library",
+      ImagePicker_cancelButton: "Cancel",
+      ImagePicker_permissionDeniedTitle: "Permission Denied",
+      ImagePicker_libraryPermissionDeniedMessage:
+        "Permission to access photos is required!",
+      ImagePicker_cameraPermissionDeniedMessage:
+        "Camera permission is required!",
+      ImagePicker_errorTitle: "Error",
+      ImagePicker_saveCameraImageFailure: "Could not save camera image.",
+      ImagePicker_saveLibraryImageFailure: "Could not save library image.",
+      ImagePicker_openLibraryFailure: "Could not open image library.",
       ImageViewScreen_ErrorNoImage: "No image available",
       MarketplaceScreen_NoItems: "No items found",
       MarketplaceScreen_accordionClose: "Press to close search",
       MarketplaceScreen_accordionOpen: "Press to open search options",
       MarketplaceScreen_title: "Marketplace",
-
 
       NoticeDetailsScreen_loadingDetails: "Loading notice details...",
       NoticeDetailsScreen_categoryLabel: "Category:",
@@ -179,26 +230,35 @@ const resources = {
       Common_backButton: "Go back",
       Common_BackButtonShort: "Back",
       NoticeBoardScreen_boardTitle: "Notice Board",
-      NoticeBoardScreen_filterButton: "Filter", NoticeBoardScreen_all: "All",
+      NoticeBoardScreen_filterButton: "Filter",
+      NoticeBoardScreen_all: "All",
 
       NoticeBoardScreen_filterLabel: "Filter:",
       NoticeBoardScreen_filterCategories: "categoryEngName",
       NoticeBoardScreen_sortOldest: "Oldest",
       NoticeBoardScreen_sortNewest: "Newest",
-      NoticeBoardScreen_noMatchMessage: "No notices match selected filters.", NoticeBoardScreen_noNoticesMessage: "No notices found.",
+      NoticeBoardScreen_noMatchMessage: "No notices match selected filters.",
+      NoticeBoardScreen_noNoticesMessage: "No notices found.",
 
-
-      NoticeFilterModal_modalTitle: "Filter by categories", NoticeFilterModal_selectAll: "Select All", NoticeFilterModal_deselectAll: "Deselect All", NoticeFilterModal_cancelButton: "Cancel", NoticeFilterModal_applyFilter: "Apply Filter",
+      NoticeFilterModal_modalTitle: "Filter by categories",
+      NoticeFilterModal_selectAll: "Select All",
+      NoticeFilterModal_deselectAll: "Deselect All",
+      NoticeFilterModal_cancelButton: "Cancel",
+      NoticeFilterModal_applyFilter: "Apply Filter",
       NoticeCard_dateLabel: "Notice date: ",
       NoticeCard_categoryLabel: "Category: ",
 
-      NewNoticeScreen_errorAllFieldsRequired: "Please fill in title, message, and category.",
-      NewNoticeScreen_errorUserInfoMissing: "User information could not be found. Cannot post notice.",
+      NewNoticeScreen_errorAllFieldsRequired:
+        "Please fill in title, message, and category.",
+      NewNoticeScreen_errorUserInfoMissing:
+        "User information could not be found. Cannot post notice.",
       NewNoticeScreen_successTitle: "Notice Published!",
-      NewNoticeScreen_successMessage: "Your notice has been successfully published.",
+      NewNoticeScreen_successMessage:
+        "Your notice has been successfully published.",
       NewNoticeScreen_broadcastWarnTitle: "Broadcast Warning",
       NewNoticeScreen_broadcastSuccessTitle: "Broadcast Sent",
-      NewNoticeScreen_broadcastSuccessMessage: "Notification sent to {{count}} recipients.", // Note the interpolation
+      NewNoticeScreen_broadcastSuccessMessage:
+        "Notification sent to {{count}} recipients.", // Note the interpolation
       NewNoticeScreen_broadcastErrorTitle: "Broadcast Error",
       NewNoticeScreen_errorSubmitFailed: "Failed to submit the notice.",
       NewNoticeScreen_title: "Publish New Notice",
@@ -209,28 +269,28 @@ const resources = {
 
       NoticesScreen_NewNoticeButton: "New Notice",
 
-
-
       ResidentsSearchScreen_title: "Resident list",
-      ResidentSearchScreen_searchByLabel: "Search by:", ResidentSearchScreen_searchByName: "Name", ResidentSearchScreen_searchByHobby: "Hobby",
-      ResidentSearchScreen_enterNamePlaceholder: "Enter name...", ResidentSearchScreen_enterHobbyPlaceholder: "Enter hobby...",
-      ResidentSearchScreen_noMatchMessage: "No users match your search.", ResidentSearchScreen_noUsersMessage: "No users found.",
+      ResidentSearchScreen_searchByLabel: "Search by:",
+      ResidentSearchScreen_searchByName: "Name",
+      ResidentSearchScreen_searchByHobby: "Hobby",
+      ResidentSearchScreen_enterNamePlaceholder: "Enter name...",
+      ResidentSearchScreen_enterHobbyPlaceholder: "Enter hobby...",
+      ResidentSearchScreen_noMatchMessage: "No users match your search.",
+      ResidentSearchScreen_noUsersMessage: "No users found.",
       ResidentSearchScreen_accordionClose: "Press to open search options",
       ResidentSearchScreen_accordionOpen: "Press to close search field",
 
+      ResidentSearchScreen_selectInterestsButton: "Choose interests to search",
+      ResidentSearchScreen_filteringByLabel: "Filtering by...",
+      ResidentSearchScreen_noInterestsSelected: "No interests selected",
 
-
-
-      ResidentsCommitte_nameUnavailable: "Name Unavailable", ResidentsCommitte_titleUnavailable: "Title Unavailable",
+      ResidentsCommitte_nameUnavailable: "Name Unavailable",
+      ResidentsCommitte_titleUnavailable: "Title Unavailable",
       ResidentsCommittePage_title: "The Committee",
       ResidentsCommittePage_contact: "Contact the Committee",
       ResidentsCommittePage_committeeNotFound: "No committee members found.",
 
-
-
       UserProfileCard_unnamedUser: "Unnamed User",
-
-
 
       Common_viewAllDataButton: "View All Data",
       Common_clearAllDataButton: "Clear All Data",
@@ -248,35 +308,42 @@ const resources = {
 
       LoginScreen_rememberMe: "Remember Me",
 
+      MainMenuScreen_GoodMorningButton: "Good Morning Procedure",
+      GoodMorning_title: "Good Morning!",
+      GoodMorning_signInMe: "Sign In For Me",
+      GoodMorning_signInBoth: "Sign In For Me and My Spouse",
+      GoodMorning_signInSuccessTitle: "Signed In",
+      GoodMorning_signInSuccessMessage:
+        "Your attendance has been recorded. Have a great day!",
     },
   },
-  he: { // Hebrew translations
+  he: {
+    // Hebrew translations
     translation: {
-      SettingsLayoutTabs_FontSettings: 'הגדרות גופן',
-      SettingsLayoutTabs_notificationSettings: 'הגדרות התראות',
-      SettingsLayoutTabs_languageSettings: 'הגדרות משתמש',
-      SettingsLayoutTabs_SaveChanges: 'שמור שינויים',
+      SettingsLayoutTabs_FontSettings: "הגדרות גופן",
+      SettingsLayoutTabs_notificationSettings: "הגדרות התראות",
+      SettingsLayoutTabs_languageSettings: "הגדרות משתמש",
+      SettingsLayoutTabs_SaveChanges: "שמור שינויים",
 
-      FontSettingsPage_header: 'גודל טקסט:',
-      FontSettingsPage_exampleHeader: 'טקסט לדוגמה:',
-      FontSettingsPage_example: "הקוסם מארץ עוץ: דורותי והכלב הקטן שלה טוטו גרו בכפר קטן באמריקה,\nדורותי אהבה מאוד את טוטו, והם היו משחקים אחד עם השניה כל הזמן. יום אחד היה סופת טורנדו נוראית. \"אנחנו חייבים להגיע למרתף, טוטו!\" קראה דורותי. אבל זה היה מאוחר מדי. הרוח החזקה והסוערת הרימה את בית החווה לאוויר ולקחה את דורותי וטוטו לארץ עוץ הנידחת.",
+      FontSettingsPage_header: "גודל טקסט:",
+      FontSettingsPage_exampleHeader: "טקסט לדוגמה:",
+      FontSettingsPage_example:
+        'הקוסם מארץ עוץ: דורותי והכלב הקטן שלה טוטו גרו בכפר קטן באמריקה,\nדורותי אהבה מאוד את טוטו, והם היו משחקים אחד עם השניה כל הזמן. יום אחד היה סופת טורנדו נוראית. "אנחנו חייבים להגיע למרתף, טוטו!" קראה דורותי. אבל זה היה מאוחר מדי. הרוח החזקה והסוערת הרימה את בית החווה לאוויר ולקחה את דורותי וטוטו לארץ עוץ הנידחת.',
 
+      NotificationSettingsPage_header: "הגדרות התראות:",
+      NotificationSettingsPage_both: "קול ורטט",
+      NotificationSettingsPage_sound: "קול",
+      NotificationSettingsPage_vibrate: "רטט",
+      NotificationSettingsPage_silent: "מושתק",
 
-      NotificationSettingsPage_header: 'הגדרות התראות:',
-      NotificationSettingsPage_both: 'קול ורטט',
-      NotificationSettingsPage_sound: 'קול',
-      NotificationSettingsPage_vibrate: 'רטט',
-      NotificationSettingsPage_silent: 'מושתק',
-
-      LanguageSettingsPage_header: 'הגדרות שפה:',
-      LanguageSettingsPage_LogoutHeader: 'הגדרות חשבון:',
-      LanguageSettingsPage_Logout: 'התנתקות',
-      LanguageSettingsPage_LogoutToast: 'התנתקת בהצלחה!',
+      LanguageSettingsPage_header: "הגדרות שפה:",
+      LanguageSettingsPage_LogoutHeader: "הגדרות חשבון:",
+      LanguageSettingsPage_Logout: "התנתקות",
+      LanguageSettingsPage_LogoutToast: "התנתקת בהצלחה!",
       LanguageSettingsPage_he: "עברית",
       LanguageSettingsPage_en: "אנגלית",
 
-
-      ProfileScreen_header: 'פרופיל',
+      ProfileScreen_header: "פרופיל",
       ProfileScreen_partner: "בן/בת זוג",
       ProfileScreen_apartmentNumber: "מספר דירה",
       ProfileScreen_mobilePhone: "טלפון נייד",
@@ -292,37 +359,53 @@ const resources = {
 
       EditProfileScreen_saveButton: "שמור שינויים",
       EditProfileScreen_cancelButton: "ביטול",
-      EditProfileScreen_errorMessagePartner: "שדה 'בן/בת זוג' חייב להכיל רק אותיות בעברית ובאנגלית",
-      EditProfileScreen_errorMessageApartmentNumber: "מספר הדירה חייב להיות מספרי",
-      EditProfileScreen_errorMessageMobilePhone: "הכנס מספר טלפון נייד ישראלי תקין",
+      EditProfileScreen_errorMessagePartner:
+        "שדה 'בן/בת זוג' חייב להכיל רק אותיות בעברית ובאנגלית",
+      EditProfileScreen_errorMessageApartmentNumber:
+        "מספר הדירה חייב להיות מספרי",
+      EditProfileScreen_errorMessageMobilePhone:
+        "הכנס מספר טלפון נייד ישראלי תקין",
       EditProfileScreen_errorMessageEmail: "הכנס כתובת דואר אלקטרוני תקינה",
-      EditProfileScreen_errorMessageArrivalYear: "שנת הגעה חייבת להיות בת 4 ספרות",
-      EditProfileScreen_errorMessageOrigin: "שדה 'מקום מוצא' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
-      EditProfileScreen_errorMessageProfession: "שדה 'מקצוע' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
-      EditProfileScreen_errorMessageInterests: "שדה 'תחומי עניין' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
-      EditProfileScreen_errorMessageAboutMe: "שדה 'קצת על עצמי' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+      EditProfileScreen_errorMessageArrivalYear:
+        "שנת הגעה חייבת להיות בת 4 ספרות",
+      EditProfileScreen_errorMessageOrigin:
+        "שדה 'מקום מוצא' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+      EditProfileScreen_errorMessageProfession:
+        "שדה 'מקצוע' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+      EditProfileScreen_errorMessageInterests:
+        "שדה 'תחומי עניין' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+      EditProfileScreen_errorMessageAboutMe:
+        "שדה 'קצת על עצמי' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
       EditProfileScreen_ProfileUpdated: "פרופיל עודכן בהצלחה!",
       EditProfileScreen_ProfileUpdateCancelled: "עדכון פרופיל בוטל",
       //EditProfileScreen_errorMessageExtraImages: "אנא מלא את שדה 'תמונות נוספות'",
       //EditProfileScreen_errorMessageImage: "אנא מלא את שדה 'תמונה'",
 
+      EditProfileScreen_noInterests: "אין תחומי עניין להציג",
+      EditProfileScreen_editInterestsButton: "לבחירת תחומי עניין",
 
-      MainMenuScreen_ProfileButton: 'פרופיל',
-      MainMenuScreen_ActivitiesAndClassesButton: 'חוגים ופעילויות',
-      MainMenuScreen_MarketplaceButton: 'שוק',
+      interestModal_title: "עריכת תחומי עניין",
+      interestModal_searchPlaceholder: "חיפוש תחום עניין...",
+      interestModal_selectExisting: "בחירה מתחומי עניין קיימים",
+      interestModal_noResults: "לא נמצא תחום עניין",
+      interestModal_addNew: "או שניתן להוסיף חדשים!",
+      interestModal_addPlaceholder: " הכניסו תחום עניין חדש ( עברית בלבד )",
+      interestModal_addButton: "הוספה",
+      interestModal_acceptButton: "אישור",
+
+      MainMenuScreen_ProfileButton: "פרופיל",
+      MainMenuScreen_ActivitiesAndClassesButton: "חוגים ופעילויות",
+      MainMenuScreen_MarketplaceButton: "שוק",
       MainMenuScreen_ResidentsCommitteeButton: "וועד דיירים",
-      MainMenuScreen_ActivityHoursButton: 'שעות פעילות',
-      MainMenuScreen_MapButton: 'מפה',
+      MainMenuScreen_ActivityHoursButton: "שעות פעילות",
+      MainMenuScreen_MapButton: "מפה",
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
 
-
-
-      SettingsPopup_SettingsButton: 'הגדרות',
-      SettingsPopup_HomeButton: 'בית',
-      SettingsPopup_ProfileButton: 'פרופיל',
-      SettingsPopup_ChangeLayoutButton: 'שנה סדר תפריט',
-
+      SettingsPopup_SettingsButton: "הגדרות",
+      SettingsPopup_HomeButton: "בית",
+      SettingsPopup_ProfileButton: "פרופיל",
+      SettingsPopup_ChangeLayoutButton: "שנה סדר תפריט",
 
       MarketplaceScreen_SearchButton: "חפש",
       MarketplaceScreen_NewItemButton: "פריט חדש",
@@ -335,34 +418,35 @@ const resources = {
       MarketplaceSearchItem_SearchButton: "חפש",
       MarketplaceSearchItem_CancelButton: "ביטול",
       MarketplaceSearchItem_SubmitButton: "שלח",
-      MarketplaceScreen_accordionClose:"לחיצה לסגירת החיפוש",
+      MarketplaceScreen_accordionClose: "לחיצה לסגירת החיפוש",
       MarketplaceScreen_accordionOpen: "לחיצה לחיפוש פריטים",
       MarketplaceScreen_title: "שוק",
 
-
-
-      MarketplaceItemScreen_Seller:  "מוכר:",
+      MarketplaceItemScreen_Seller: "מוכר:",
       MarketplaceItemScreen_Description: "תיאור:",
       MarketplaceItemScreen_ContactDetails: "פרטי יצירת קשר",
       MarketplaceItemScreen_CallButton: "התקשר",
       MarketplaceItemScreen_MessageButton: "שלח הודעה בוואטסאפ",
       MarketplaceItemScreen_EmailButton: "שלח מייל",
       MarketplaceItemScreen_PublishedDate: "פורסם בתאריך:",
-      MarketplaceItemScreen_ExtraImage: "תמונה נוספת", MarketplaceItemScreen_DescriptionTitle: "תיאור", MarketplaceItemScreen_SellerTitle: "מוכר", MarketplaceItemScreen_ContactEmail: "דוא״ל", MarketplaceItemScreen_ContactPhone: "טלפון", MarketplaceItemScreen_ContactWhatsApp: "וואטסאפ",
+      MarketplaceItemScreen_ExtraImage: "תמונה נוספת",
+      MarketplaceItemScreen_DescriptionTitle: "תיאור",
+      MarketplaceItemScreen_SellerTitle: "מוכר",
+      MarketplaceItemScreen_ContactEmail: "דוא״ל",
+      MarketplaceItemScreen_ContactPhone: "טלפון",
+      MarketplaceItemScreen_ContactWhatsApp: "וואטסאפ",
       MarketplaceItemScreen_Loading: "טוען פריט...",
       MarketplaceItemScreen_EditButton: "ערוך מודעה",
       MarketplaceItemScreen_DeleteButton: "מחק מודעה",
       MarketplaceItemScreen_DeleteConfirmTitle: "אישור מחיקה",
-      MarketplaceItemScreen_DeleteConfirmMsg: "האם אתה בטוח שברצונך למחוק מודעה זו? לא ניתן לשחזר פעולה זו.",
+      MarketplaceItemScreen_DeleteConfirmMsg:
+        "האם אתה בטוח שברצונך למחוק מודעה זו? לא ניתן לשחזר פעולה זו.",
       MarketplaceItemScreen_DeleteSuccessMsg: "המודעה נמחקה בהצלחה!",
       MarketplaceItemScreen_DeleteErrorMsg: "מחיקת המודעה נכשלה.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "בעיה במחיקת תמונה",
 
-
-
       MarketplaceItemCard_Untitled: "ללא כותרת",
       MarketplaceItemCard_UnknownSeller: "מוכר לא ידוע",
-
 
       MarketplaceNewItemScreen_Header: "רשימת פריט חדש",
       MarketplaceNewItemScreen_NewItem: "פריט חדש",
@@ -375,7 +459,14 @@ const resources = {
       MarketplaceNewItemScreen_ExtraImage: "תמונה נוספת",
       MarketplaceNewItemScreen_ImageOptional: "(אופציונלי)",
       MarketplaceNewItemScreen_ImageTapToChoose: "לחץ לבחירה",
-      MarketplaceNewItemScreen_missingInfoTitle: "מידע חסר", MarketplaceNewItemScreen_missingInfoMessage: "אנא הזן שם פריט.", MarketplaceNewItemScreen_authErrorTitle: "שגיאת אימות", MarketplaceNewItemScreen_authErrorMessage: "המשתמש לא זוהה. אנא התחבר מחדש.", MarketplaceNewItemScreen_errorTitle: "שגיאה", MarketplaceNewItemScreen_userInfoRetrievalError: "לא ניתן לאחזר פרטי משתמש.",
+      MarketplaceNewItemScreen_missingInfoTitle: "מידע חסר",
+      MarketplaceNewItemScreen_missingInfoMessage: "אנא הזן שם פריט.",
+      MarketplaceNewItemScreen_authErrorTitle: "שגיאת אימות",
+      MarketplaceNewItemScreen_authErrorMessage:
+        "המשתמש לא זוהה. אנא התחבר מחדש.",
+      MarketplaceNewItemScreen_errorTitle: "שגיאה",
+      MarketplaceNewItemScreen_userInfoRetrievalError:
+        "לא ניתן לאחזר פרטי משתמש.",
       MarketplaceNewItemScreen_imageUploadFailedTitle: "העלאת התמונה נכשלה",
       MarketplaceNewItemScreen_listingCreationFailedTitle: "יצירת ההצעה נכשלה",
       MarketplaceNewItemScreen_listingCreatedTitle: "ההצעה נוצרה!",
@@ -384,14 +475,13 @@ const resources = {
       MarketplaceEditItemScreen_UpdateFailedTitle: "העדכון נכשל", // אם תוסיף חזרה את הודעת השגיאה
       MarketplaceNewItemScreen_listingCreatedSuccessTitle: "ההצעה נוצרה בהצלחה",
 
-
-
-      MarketplaceNewItemScreen_listingCreatedSuccessMsg: "ההצעה שלך נוצרה בהצלחה!",
+      MarketplaceNewItemScreen_listingCreatedSuccessMsg:
+        "ההצעה שלך נוצרה בהצלחה!",
       MarketplaceNewItemScreen_errorTitleRequired: "חובה להזין שם הפריט.",
       MarketplaceNewItemScreen_errorTitleTooLong: "שם הפריט ארוך מדי.",
       MarketplaceNewItemScreen_errorDescriptionTooLong: "תיאור הפריט ארוך מדי.",
-      MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars: "התיאור מכיל יותר מדי תווים מיוחדים.",
-
+      MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars:
+        "התיאור מכיל יותר מדי תווים מיוחדים.",
 
       MainMenuNameplate_greetingGoodMorning: "בוקר טוב",
       MainMenuNameplate_greetingGoodAfternoon: "אחר הצהריים טובים",
@@ -399,32 +489,44 @@ const resources = {
       MainMenuNameplate_greetingGoodNight: "לילה טוב",
       MainMenuNameplate_greetingPunctuation: "!",
 
-
       MainMenuScreen_DoneButton: "סיימתי",
-      MainMenuScreen_saveOrderSuccess: "סדר התפריט נשמר!", MainMenuScreen_saveOrderFailure: "שמירת הסדר נכשלה", MainMenuScreen_loadingMenu: "טוען תפריט…",
-
+      MainMenuScreen_saveOrderSuccess: "סדר התפריט נשמר!",
+      MainMenuScreen_saveOrderFailure: "שמירת הסדר נכשלה",
+      MainMenuScreen_loadingMenu: "טוען תפריט…",
 
       LoginScreen_loginSuccess: "התחברת בהצלחה",
       LoginScreen_loginErrorTitle: "שגיאה!",
       LoginScreen_loginErrorMessage: "שם משתמש או סיסמה שגויים!",
-      LoginScreen_phoneNumberLabel: "מספר טלפון", LoginScreen_passwordLabel: "סיסמה",
+      LoginScreen_phoneNumberLabel: "מספר טלפון",
+      LoginScreen_passwordLabel: "סיסמה",
       LoginScreen_loginButton: "כניסה",
 
+      MapScreen_building1Name: "בניין מספר אחת",
+      MapScreen_building1Info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",
+      Permissions_locationPermissionMessage: "נדרשת הרשאת מיקום להצגת המיקום.",
+      Permissions_okButton: "אישור.",
+      Permissions_openSettingsButton: "פתח הגדרות.",
+      Permissions_permissionDeniedTitle: "ההרשאה נדחתה.",
+      LocationScreen_locationPermissionLabel: "הרשאת מיקום:",
+      LocationScreen_insideBoundaryLabel: "בתוך הגבול:",
+      LocationScreen_userLocationLabel: "מיקום משתמש:",
+      MapScreen_backToMapButton: "חזרה למפה",
 
-      MapScreen_building1Name: "בניין מספר אחת", MapScreen_building1Info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",Permissions_locationPermissionMessage: "נדרשת הרשאת מיקום להצגת המיקום.", Permissions_okButton: "אישור.", Permissions_openSettingsButton: "פתח הגדרות.", Permissions_permissionDeniedTitle: "ההרשאה נדחתה.",
-      LocationScreen_locationPermissionLabel: "הרשאת מיקום:", LocationScreen_insideBoundaryLabel: "בתוך הגבול:", LocationScreen_userLocationLabel: "מיקום משתמש:",MapScreen_backToMapButton: "חזרה למפה",
-
-
-
-
-
-      ImagePicker_selectSourceTitle: "בחר מקור תמונה", ImagePicker_selectSourceMessage: "בחר כיצד לבחור את התמונה", ImagePicker_takePhotoButton: "צלם תמונה", ImagePicker_chooseFromLibraryButton: "בחר מהספרייה", ImagePicker_cancelButton: "ביטול", ImagePicker_permissionDeniedTitle: "ההרשאה נדחתה", ImagePicker_libraryPermissionDeniedMessage: "נדרשת הרשאה לגישה לתמונות!", ImagePicker_cameraPermissionDeniedMessage: "נדרשת הרשאת מצלמה!", ImagePicker_errorTitle: "שגיאה", ImagePicker_saveCameraImageFailure: "לא ניתן לשמור את תמונת המצלמה.", ImagePicker_saveLibraryImageFailure: "לא ניתן לשמור את תמונת הספרייה.", ImagePicker_openLibraryFailure: "לא ניתן לפתוח את ספריית התמונות.",
+      ImagePicker_selectSourceTitle: "בחר מקור תמונה",
+      ImagePicker_selectSourceMessage: "בחר כיצד לבחור את התמונה",
+      ImagePicker_takePhotoButton: "צלם תמונה",
+      ImagePicker_chooseFromLibraryButton: "בחר מהספרייה",
+      ImagePicker_cancelButton: "ביטול",
+      ImagePicker_permissionDeniedTitle: "ההרשאה נדחתה",
+      ImagePicker_libraryPermissionDeniedMessage: "נדרשת הרשאה לגישה לתמונות!",
+      ImagePicker_cameraPermissionDeniedMessage: "נדרשת הרשאת מצלמה!",
+      ImagePicker_errorTitle: "שגיאה",
+      ImagePicker_saveCameraImageFailure: "לא ניתן לשמור את תמונת המצלמה.",
+      ImagePicker_saveLibraryImageFailure: "לא ניתן לשמור את תמונת הספרייה.",
+      ImagePicker_openLibraryFailure: "לא ניתן לפתוח את ספריית התמונות.",
       ImageViewScreen_ErrorNoImage: "אין תמונה זמינה",
 
-
-
       MarketplaceScreen_NoItems: "לא נמצאו פריטים",
-
 
       NoticeDetailsScreen_loadingDetails: "טוען פרטי הודעה...",
       NoticeDetailsScreen_categoryLabel: "קטגוריה:",
@@ -437,21 +539,27 @@ const resources = {
       NoticeBoardScreen_filterCategories: "categoryHebName",
       NoticeBoardScreen_sortOldest: "הישן ביותר",
       NoticeBoardScreen_sortNewest: "החדש ביותר",
-      NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.", NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
+      NoticeBoardScreen_noMatchMessage: "אין הודעות שתואמות את המסננים שנבחרו.",
+      NoticeBoardScreen_noNoticesMessage: "לא נמצאו הודעות.",
 
       NoticeCard_dateLabel: "תאריך המודעה: ",
       NoticeCard_categoryLabel: "קטגוריה: ",
 
-      NoticeFilterModal_modalTitle: "סנן לפי קטגוריות", NoticeFilterModal_selectAll: "בחר הכל", NoticeFilterModal_deselectAll: "בטל את כל הבחירות", NoticeFilterModal_cancelButton: "ביטול", NoticeFilterModal_applyFilter: "בצע סינון",
-
+      NoticeFilterModal_modalTitle: "סנן לפי קטגוריות",
+      NoticeFilterModal_selectAll: "בחר הכל",
+      NoticeFilterModal_deselectAll: "בטל את כל הבחירות",
+      NoticeFilterModal_cancelButton: "ביטול",
+      NoticeFilterModal_applyFilter: "בצע סינון",
 
       NewNoticeScreen_errorAllFieldsRequired: "אנא מלא כותרת, הודעה וקטגוריה.",
-      NewNoticeScreen_errorUserInfoMissing: "לא ניתן למצוא פרטי משתמש. לא ניתן לפרסם הודעה.",
+      NewNoticeScreen_errorUserInfoMissing:
+        "לא ניתן למצוא פרטי משתמש. לא ניתן לפרסם הודעה.",
       NewNoticeScreen_successTitle: "הודעה פורסמה!",
       NewNoticeScreen_successMessage: "ההודעה שלך פורסמה בהצלחה.",
       NewNoticeScreen_broadcastWarnTitle: "אזהרת שידור",
       NewNoticeScreen_broadcastSuccessTitle: "שידור נשלח",
-      NewNoticeScreen_broadcastSuccessMessage: "התראה נשלחה ל-{{count}} נמענים.",
+      NewNoticeScreen_broadcastSuccessMessage:
+        "התראה נשלחה ל-{{count}} נמענים.",
       NewNoticeScreen_broadcastErrorTitle: "שגיאת שידור",
       NewNoticeScreen_errorSubmitFailed: "שליחת ההודעה נכשלה.",
       NewNoticeScreen_title: "פרסם הודעה חדשה",
@@ -463,25 +571,27 @@ const resources = {
       NoticesScreen_NewNoticeButton: "הודעה חדשה",
 
       ResidentsSearchScreen_title: "רשימת הדיירים",
-      ResidentSearchScreen_searchByLabel: "חפש לפי:", ResidentSearchScreen_searchByName: "שם", ResidentSearchScreen_searchByHobby: "תחביב",
-      ResidentSearchScreen_enterNamePlaceholder: "רשום שם...", ResidentSearchScreen_enterHobbyPlaceholder: "רשום תחביב...",
-      ResidentSearchScreen_noMatchMessage: "אין משתמשים התואמים לחיפוש שלך.", ResidentSearchScreen_noUsersMessage: "לא נמצאו משתמשים.",
+      ResidentSearchScreen_searchByLabel: "חפש לפי:",
+      ResidentSearchScreen_searchByName: "שם",
+      ResidentSearchScreen_searchByHobby: "תחביב",
+      ResidentSearchScreen_enterNamePlaceholder: "רשום שם...",
+      ResidentSearchScreen_enterHobbyPlaceholder: "רשום תחביב...",
+      ResidentSearchScreen_noMatchMessage: "אין משתמשים התואמים לחיפוש שלך.",
+      ResidentSearchScreen_noUsersMessage: "לא נמצאו משתמשים.",
       ResidentSearchScreen_accordionClose: "לחיצה לחיפוש",
       ResidentSearchScreen_accordionOpen: "לחיצה לסגירת החיפוש",
 
+      ResidentSearchScreen_selectInterestsButton: "הזינו תחומי עניין לחיפוש",
+      ResidentSearchScreen_filteringByLabel: "מסנן לפי...",
+      ResidentSearchScreen_noInterestsSelected: "לא נבחרו תחומי עניין",
 
-
-      ResidentsCommitte_nameUnavailable: "שם לא זמין", ResidentsCommitte_titleUnavailable: "תואר לא זמין",
+      ResidentsCommitte_nameUnavailable: "שם לא זמין",
+      ResidentsCommitte_titleUnavailable: "תואר לא זמין",
       ResidentsCommittePage_title: "וועד דיירים",
       ResidentsCommittePage_contact: "צור קשר עם הוועד",
       ResidentsCommittePage_committeeNotFound: "לא נמצאו חברי ועד.",
 
-
-
-
       UserProfileCard_unnamedUser: "משתמש ללא שם",
-
-
 
       Common_viewAllDataButton: "הצג את כל הנתונים",
       Common_clearAllDataButton: "נקה את כל הנתונים",
@@ -500,25 +610,27 @@ const resources = {
 
       LoginScreen_rememberMe: "זכור אותי",
 
-
+      MainMenuScreen_GoodMorningButton: "נוהל בוקר טוב",
+      GoodMorning_title: "בוקר טוב!",
+      GoodMorning_signInMe: "דיווח נוכחות עבורי",
+      GoodMorning_signInBoth: "דיווח נוכחות עבורי ועבור בן/בת הזוג",
+      GoodMorning_signInSuccessTitle: "דיווח בוצע",
+      GoodMorning_signInSuccessMessage: "הנוכחות שלך נרשמה. שיהיה לך יום נהדר!",
     },
-  }
+  },
 };
 
-
-i18next
-  .use(initReactI18next)
-  .init({
-    resources,
-    lng: 'en', // Set a default language synchronously
-    fallbackLng: 'en', // Fallback to English if translation is missing
-    debug: true,
-    interpolation: {
-      escapeValue: false, // React already does escaping
-    },
-    react: {
-        useSuspense: false, // Important for controlling splash screen
-    }
-  })
+i18next.use(initReactI18next).init({
+  resources,
+  lng: "en", // Set a default language synchronously
+  fallbackLng: "en", // Fallback to English if translation is missing
+  debug: true,
+  interpolation: {
+    escapeValue: false, // React already does escaping
+  },
+  react: {
+    useSuspense: false, // Important for controlling splash screen
+  },
+});
 
 export default i18next;

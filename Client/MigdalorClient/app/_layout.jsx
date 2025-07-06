@@ -167,6 +167,20 @@ export default function Layout() {
                         headerShown: false,
                       }}
                     />
+                    <Stack.Screen
+                      name="GoodMorningProcedure"
+                      options={{
+                        title: "Good morning procedure",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="OpeningHours"
+                      options={{
+                        title: "Opening hours",
+                        headerShown: false,
+                      }}
+                    />
                   </Stack>
                 </MarketplaceProvider>
               </BottomSheetProvider>
