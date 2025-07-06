@@ -142,6 +142,9 @@ namespace MigdalorServer.Models
                             //p2.ListingId,
                             //p2.DateTime
                         },
+                    //residentInterests = (from resInterest in db.OhResidentsInterests                                        // Uncomment after getting Entity Framework unstuck
+                    //                     where resInterest.ResidentId == person.PersonId
+                    //                     select new { name = resInterest.InterestName }).ToList()
                 }
             ).FirstOrDefault();
 

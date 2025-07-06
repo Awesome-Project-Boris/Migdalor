@@ -164,7 +164,7 @@ export default function InterestModal({
                 filteredInterests.map((interest) => (
                   <InterestChip
                     key={interest.name}
-                    label={interest.name}
+                    label={interest.name} // Changed to pass the name string
                     isSelected={selectedNames.has(interest.name)}
                     onPress={() => handleSelect(interest.name)}
                   />

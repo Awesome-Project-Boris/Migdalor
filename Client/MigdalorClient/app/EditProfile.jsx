@@ -100,24 +100,28 @@ export default function EditProfile() {
 
   // 2. Add a useEffect to fetch all interests when the component loads
   useEffect(() => {
-    // This assumes you have a function to fetch all interests from the backend
-    // We can reuse the one from our previous mock service for now.
-    const fetchAllInterests = async () => {
-      // In a real app, this would be a fetch call to your API
-      const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
-      const data = await response.json();
-      setAllInterests(data);
+    const fetchAllInterestsFromDB = async () => {
+      try {
+        const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
+        const data = await response.json();
+        // The API returns an array of strings, we need to convert them to objects
+        // for our filtering logic to work consistently.
+        setAllInterests(data ? data.map((name) => ({ name })) : []);
+      } catch (err) {
+        console.error("Failed to fetch all interests:", err);
+      }
     };
+    fetchAllInterestsFromDB();
+  }, []);
 
-    fetchAllInterests();
-  }, []); // Empty array means this runs only once on mount
-
+  // Remember what's been selected
   const { initialSelectedNames, initialNewInterests } = useMemo(() => {
     const allExistingNames = new Set(allInterests.map((i) => i.name));
 
     const selected = userInterests
       .filter((i) => allExistingNames.has(i.name))
       .map((i) => i.name);
+
     const newlyAdded = userInterests
       .filter((i) => !allExistingNames.has(i.name))
       .map((i) => i.name);
@@ -129,10 +133,10 @@ export default function EditProfile() {
   }, [userInterests, allInterests]);
 
   const handleConfirmInterests = ({ selectedNames, newInterests }) => {
-    // Combine the results from the modal into a single list for display and state
     const existingInterestObjects = selectedNames.map((name) => ({ name }));
     const newInterestObjects = newInterests.map((name) => ({ name }));
 
+    // Update the main userInterests state with the new combined list
     setUserInterests([...existingInterestObjects, ...newInterestObjects]);
     setInterestModalVisible(false);
   };
@@ -372,6 +376,10 @@ export default function EditProfile() {
     // Update the form with initialData
     if (initialData) {
       const parsedData = JSON.parse(initialData);
+      if (parsedData.residentInterests) {
+        // May be null until we edit it
+        setUserInterests(parsedData.residentInterests);
+      }
       setForm(parsedData);
     }
     if (initialPics) {
@@ -380,9 +388,6 @@ export default function EditProfile() {
       setAdditionalPic1(pics.additionalPic1);
       setAdditionalPic2(pics.additionalPic2);
     }
-    // if (parsedData.residentInterests) { // May be null until we edit it
-    //   setUserInterests(parsedData.residentInterests);
-    // }
   }, [initialData, initialPics]);
 
   const [profileImage, setProfileImage] = useState(defaultUserImage);
@@ -1237,7 +1242,7 @@ export default function EditProfile() {
         mode="edit"
         allInterests={allInterests}
         initialSelectedNames={initialSelectedNames}
-        initialNewInterests={initialNewInterests} // Pass down the preserved new interests
+        initialNewInterests={initialNewInterests}
         onClose={() => setInterestModalVisible(false)}
         onConfirm={handleConfirmInterests}
       />
