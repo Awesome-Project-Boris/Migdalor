@@ -6,6 +6,8 @@ import { initReactI18next } from "react-i18next";
 const resources = {
   en: { // English translations
     translation: {
+      Common_Loading: 'Loading Page',
+
       SettingsLayoutTabs_FontSettings: 'Font Settings',
       SettingsLayoutTabs_notificationSettings: 'Notification Settings',
       SettingsLayoutTabs_languageSettings: 'User Settings',
@@ -252,6 +254,8 @@ const resources = {
   },
   he: { // Hebrew translations
     translation: {
+      Common_Loading: 'טוען דף',
+
       SettingsLayoutTabs_FontSettings: 'הגדרות גופן',
       SettingsLayoutTabs_notificationSettings: 'הגדרות התראות',
       SettingsLayoutTabs_languageSettings: 'הגדרות משתמש',
