@@ -10,14 +10,18 @@ namespace MigdalorServer.Models
     public partial class OhParticipation
     {
         [Key]
-        [Column("activityID")]
+        [Column("ActivityID")]
         public int ActivityId { get; set; }
         [Key]
-        [Column("participantID")]
+        [Column("ParticipantID")]
         public Guid ParticipantId { get; set; }
         [Key]
-        [Column("participationDate", TypeName = "date")]
-        public DateTime ParticipationDate { get; set; }
+        [Column(TypeName = "date")]
+        public DateTime SessionDate { get; set; }
+        [StringLength(20)]
+        public string ParticipationStatus { get; set; } = null!;
+        [Column(TypeName = "datetime")]
+        public DateTime? RegistrationDate { get; set; }
 
         [ForeignKey("ActivityId")]
         [InverseProperty("OhParticipations")]
