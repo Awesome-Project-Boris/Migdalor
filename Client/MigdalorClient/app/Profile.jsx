@@ -45,9 +45,6 @@ export default function Profile() {
     profession: "",
     interests: "",
     aboutMe: "",
-    // profilePicID: "",
-    // additionalPic1ID: "",
-    // additionalPic2ID: "",
     residentApartmentNumber: "",
   });
 
@@ -56,10 +53,6 @@ export default function Profile() {
     PicName: "",
     PicPath: "",
     PicAlt: "",
-    //UploaderID: "",
-    //PicRole: "",
-    //ListingID: "",
-    //DateTime: "",
   });
 
   const [additionalPic1, setAdditionalPic1] = useState({
@@ -67,10 +60,6 @@ export default function Profile() {
     PicName: "",
     PicPath: "",
     PicAlt: "",
-    //UploaderID: "",
-    //PicRole: "",
-    //ListingID: "",
-    //DateTime: "",
   });
 
   const [additionalPic2, setAdditionalPic2] = useState({
@@ -78,39 +67,9 @@ export default function Profile() {
     PicName: "",
     PicPath: "",
     PicAlt: "",
-    //UploaderID: "",
-    //PicRole: "",
-    //ListingID: "",
-    //DateTime: "",
   });
 
-  // const mainImageUrl = profilePic.PicName.PicPath
-  //     ? `${Globals.API_BASE_URL}${profilePic.PicName.PicPath}`
-  //     : null;
-  // console.log("mainImageUrl", mainImageUrl);
-  // const extraImageUrl = profilePic.extraPicture?.picPath
-  //   ? `${Globals.API_BASE_URL}${profilePic.extraPicture.picPath}`
-  //   : null;
-  // const mainImageSource = mainImageUrl
-  //   ? { uri: mainImageUrl }
-  //   : placeholderImage;
-  // const extraImageSource = extraImageUrl
-  //   ? { uri: extraImageUrl }
-  //   : placeholderImage;
 
-  //const params = useLocalSearchParams();
-  // this is the data passed from the previous screen
-  // useEffect(() => {
-  //   const updated = params.updatedData;
-  //   if (typeof updated === "string") {
-  //     try {
-  //       const parsed = JSON.parse(updated);
-  //       setForm(parsed);
-  //     } catch (err) {
-  //       console.warn("Failed to parse updatedData:", err);
-  //     }
-  //   }
-  // }, [params.updatedData]);
 
   // On mount, try to load the user data from AsyncStorage.
   useFocusEffect(
@@ -162,16 +121,11 @@ export default function Profile() {
               profession: userData.profession,
               interests: userData.interests,
               aboutMe: userData.residentDescription,
-              //profilePicID: userData.profilePicID,
-              //additionalPic1ID: userData.additionalPic1ID,
-              //additionalPic2ID: userData.additionalPic2ID,
-              //residentApartmentNumber: userData.residentApartmentNumber,
               residentApartmentNumber: String(userData.residentApartmentNumber),
             });
 
             setProfilePic({
               PicID: userData.profilePicture?.picId ?? null,
-              //PicID: userData.profilePicture?.picId ?? "",
               PicName: userData.profilePicture?.picName ?? "",
               PicPath: userData.profilePicture?.picPath ?? "",
               PicAlt: userData.profilePicture?.picAlt ?? "",
@@ -179,7 +133,6 @@ export default function Profile() {
 
             setAdditionalPic1({
               PicID: userData.additionalPicture1?.picId ?? null,
-              //PicID: userData.additionalPicture1?.picId ?? "",
               PicName: userData.additionalPicture1?.picName ?? "",
               PicPath: userData.additionalPicture1?.picPath ?? "",
               PicAlt: userData.additionalPicture1?.picAlt ?? "",
@@ -187,7 +140,6 @@ export default function Profile() {
 
             setAdditionalPic2({
               PicID: userData.additionalPicture2?.picId ?? null,
-              //PicID: userData.additionalPicture2?.picId ?? "",
               PicName: userData.additionalPicture2?.picName ?? "",
               PicPath: userData.additionalPicture2?.picPath ?? "",
               PicAlt: userData.additionalPicture2?.picAlt ?? "",
