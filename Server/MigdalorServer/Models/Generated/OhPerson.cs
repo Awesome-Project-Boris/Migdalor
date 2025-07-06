@@ -67,6 +67,8 @@ namespace MigdalorServer.Models
         [ForeignKey("ProfilePicId")]
         [InverseProperty("OhPeople")]
         public virtual OhPicture? ProfilePic { get; set; }
+        [InverseProperty("Person")]
+        public virtual OhPrivacySetting? OhPrivacySetting { get; set; }
         [InverseProperty("Resident")]
         public virtual OhResident? OhResident { get; set; }
         [InverseProperty("User")]
