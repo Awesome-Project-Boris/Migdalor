@@ -18,5 +18,9 @@
         public PictureDto? ProfilePicture { get; set; }
         public PictureDto? AdditionalPicture1 { get; set; }
         public PictureDto? AdditionalPicture2 { get; set; }
+
+        public List<string> InterestNames { get; set; } = new List<string>();
+        public List<string> NewInterestNames { get; set; } = new List<string>();
+
     }
 }

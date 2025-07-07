@@ -2,7 +2,7 @@
 {
     public class PictureDto
     {
-        public int PicId { get; set; }
+        public int PicID { get; set; }
         //public string PicName { get; set; } = "";
         public string PicPath { get; set; } = "";
         public string PicAlt { get; set; } = "";

@@ -118,7 +118,9 @@ export default function Profile() {
               arrivalYear: userData.dateOfArrival,
               origin: userData.homePlace,
               profession: userData.profession,
-              interests: userData.interests,
+              interests: userData.residentInterests.map(
+                (interest) => interest.name
+              ),
               aboutMe: userData.residentDescription,
               residentApartmentNumber: String(userData.residentApartmentNumber),
             });

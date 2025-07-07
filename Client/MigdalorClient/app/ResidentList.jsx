@@ -13,7 +13,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Keyboard,
-  FlatList, // Ensure FlatList is imported if PaginatedListDisplay doesn't handle it internally
+  SafeAreaView,
+  ScrollView,
 } from "react-native";
 
 // Component Imports (ensure paths are correct)
@@ -24,6 +25,7 @@ import FloatingLabelInput from "../components/FloatingLabelInput";
 import SearchAccordion from "@/components/SearchAccordion"; // Assuming path is correct
 import PaginatedListDisplay from "@/components/PaginatedListDisplay"; // Assuming path is correct
 import InterestModal from "@/components/InterestSelectionModal";
+import InterestChip from "@/components/InterestChip";
 
 // Icon and Translation Imports
 import { Ionicons } from "@expo/vector-icons";
@@ -99,19 +101,20 @@ export default function ResidentList() {
 
   // Pulling all the interests !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  //   useEffect(() => {
-  //   const fetchAllInterestsFromDB = async () => {
-  //     try {
-  //       const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`); // EDIT ENDPOINT
-  //       const data = await response.json();
-  //       setAllInterests(data);
-  //     } catch (err) {
-  //       console.error("Failed to fetch all interests:", err);
-  //     }
-  //   };
-
-  //   fetchAllInterestsFromDB();
-  // }, []);
+  useEffect(() => {
+    const fetchAllInterestsFromDB = async () => {
+      try {
+        const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
+        const data = await response.json();
+        // The API returns an array of strings, we need to convert them to objects
+        // for our filtering logic to work consistently.
+        setAllInterests(data ? data.map((name) => ({ name })) : []);
+      } catch (err) {
+        console.error("Failed to fetch all interests:", err);
+      }
+    };
+    fetchAllInterestsFromDB();
+  }, []);
 
   const handleApplyInterestFilter = ({ selectedNames }) => {
     setFilterByInterests(selectedNames);
@@ -231,39 +234,39 @@ export default function ResidentList() {
 
   // Search by interests ///////////////////////////////////////////////////////////////
 
-  // const searchByInterests = async () => {
-  //   if (filterByInterests.length === 0) {
-  //     // Fetches the default list if no interests are selected for filtering
-  //     fetchAllUsersCallback();
-  //     return;
-  //   }
+  const searchByInterests = async () => {
+    if (filterByInterests.length === 0) {
+      // Fetches the default list if no interests are selected for filtering
+      fetchAllUsersCallback();
+      return;
+    }
 
-  //   setIsLoading(true);
-  //   setError(null);
+    setIsLoading(true);
+    setError(null);
 
-  //   const apiUrl = `${Globals.API_BASE_URL}/api/People/SearchByInterests`;
+    const apiUrl = `${Globals.API_BASE_URL}/api/People/SearchByInterests`;
 
-  //   try {
-  //     const response = await fetch(apiUrl, {
-  //       method: 'POST', // 1. Specify the method is POST
-  //       headers: {
-  //         'Content-Type': 'application/json', // 2. Set the content type header
-  //       },
-  //       // 3. Send the array in the request body as a JSON string
-  //       body: JSON.stringify(filterByInterests),
-  //     });
+    try {
+      const response = await fetch(apiUrl, {
+        method: "POST", // 1. Specify the method is POST
+        headers: {
+          "Content-Type": "application/json", // 2. Set the content type header
+        },
+        // 3. Send the array in the request body as a JSON string
+        body: JSON.stringify(filterByInterests),
+      });
 
-  //     if (!response.ok) {
-  //       throw new Error(`HTTP error ${response.status}`);
-  //     }
-  //     const data = await response.json();
-  //     setAllUsers(data || []); // Update the user list with the filtered results
-  //   } catch (err) {
-  //     setError(err.message);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data = await response.json();
+      setAllUsers(data || []); // Update the user list with the filtered results
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -311,141 +314,149 @@ export default function ResidentList() {
   }, [isLoading, error, searchInput, allUsers, filteredUsers, t]); // Dependencies for empty state
 
   // --- Render Component JSX ---
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header />
-      <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
-      <SearchAccordion
-        headerOpenTextKey="ResidentSearchScreen_accordionOpen"
-        headerClosedTextKey="ResidentSearchScreen_accordionClose"
-        containerStyle={styles.accordionContainer}
-        headerStyle={{
-          justifyContent:
-            Globals.userSelectedDirection === "rtl"
-              ? "flex-end"
-              : "space-between",
-          gap: 10,
-        }}
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContentContainer}
+        keyboardShouldPersistTaps="handled"
       >
-        {/* This button to toggle search type remains the same */}
-        <TouchableOpacity
-          onPress={toggleSearchType}
-          style={styles.searchTypeButton}
+        {/* 1. The accordion is at the top of the scrollable area */}
+        <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
+        <SearchAccordion
+          headerOpenTextKey="ResidentSearchScreen_accordionOpen"
+          headerClosedTextKey="ResidentSearchScreen_accordionClose"
+          containerStyle={styles.accordionContainer}
+          headerStyle={{
+            justifyContent:
+              Globals.userSelectedDirection === "rtl"
+                ? "flex-end"
+                : "space-between",
+            gap: 10,
+          }}
         >
-          <Text style={styles.searchTypeText}>
-            {t("ResidentSearchScreen_searchByLabel")}
-            <Text style={{ fontWeight: "bold" }}>
-              {searchType === "name"
-                ? t("ResidentSearchScreen_searchByName")
-                : t("ResidentSearchScreen_searchByHobby")}
-            </Text>
-          </Text>
-        </TouchableOpacity>
-
-        {searchType === "name" ? (
-          // UI for searching by name
-          <FloatingLabelInput
-            label={t("ResidentSearchScreen_enterNamePlaceholder")}
-            value={searchInput}
-            onChangeText={handleSearchInputChange}
-            returnKeyType="search"
-            onSubmitEditing={handleSearchPress}
-            style={styles.searchInputContainer}
-            inputStyle={styles.searchInput}
-            alignRight={Globals.userSelectedDirection === "rtl"}
-          />
-        ) : (
-          // UI for filtering by interest
-          // This is the UI for filtering by interest
-          <View style={styles.filterContainer}>
-            {/* 1. Button to summon the modal */}
-            <FlipButton
-              onPress={() => setInterestModalVisible(true)}
-              style={styles.selectButton}
-            >
-              <Text style={styles.selectButtonText}>
-                {t("ResidentSearchScreen_selectInterestsButton")}
+          {/* All your original accordion content goes here */}
+          <TouchableOpacity
+            onPress={toggleSearchType}
+            style={styles.searchTypeButton}
+          >
+            <Text style={styles.searchTypeText}>
+              {t("ResidentSearchScreen_searchByLabel")}
+              <Text style={{ fontWeight: "bold" }}>
+                {searchType === "name"
+                  ? t("ResidentSearchScreen_searchByName")
+                  : t("ResidentSearchScreen_searchByHobby")}
               </Text>
-            </FlipButton>
-
-            {/* 2. A small area declaring what we're filtering by */}
-            <Text style={styles.filterLabel}>
-              {t("ResidentSearchScreen_filteringByLabel")}
             </Text>
-            <View style={styles.chipDisplayArea}>
-              {filterByInterests.length > 0 ? (
-                filterByInterests.map((name) => (
-                  <InterestChip key={name} mode="display" label={name} />
-                ))
-              ) : (
-                <Text style={styles.noFilterText}>
-                  {t("ResidentSearchScreen_noInterestsSelected")}
-                </Text>
-              )}
-            </View>
-          </View>
-        )}
+          </TouchableOpacity>
 
-        {/* This main search button remains, to submit the search */}
-        <FlipButton
-          onPress={handleSearchPress}
-          style={styles.searchSubmitButton}
-          bgColor="#007bff"
-          textColor="#fff"
-        >
-          <View style={styles.buttonContent}>
-            <Ionicons
-              name="search"
-              size={20}
-              color="white"
-              style={styles.buttonIcon}
+          {searchType === "name" ? (
+            <FloatingLabelInput
+              label={t("ResidentSearchScreen_enterNamePlaceholder")}
+              value={searchInput}
+              onChangeText={handleSearchInputChange}
+              returnKeyType="search"
+              onSubmitEditing={handleSearchPress}
+              style={styles.searchInputContainer}
+              inputStyle={styles.searchInput}
+              alignRight={Globals.userSelectedDirection === "rtl"}
             />
-            <Text style={styles.searchButtonText}>
-              {t("MarketplaceScreen_SearchButton")}
-            </Text>
-          </View>
-        </FlipButton>
-      </SearchAccordion>
-      {/* The PaginatedListDisplay component remains unchanged */}
-      <PaginatedListDisplay
-        items={itemsForCurrentPage}
-        renderItem={renderUserItem}
-        itemKeyExtractor={keyExtractor}
-        isLoading={isLoading && allUsers.length === 0}
-        ListEmptyComponent={CustomEmptyComponent}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={handlePageChange}
-        listContainerStyle={styles.listContainerStyle}
-        flatListRef={flatListRef}
-      />
+          ) : (
+            <View>
+              <FlipButton
+                onPress={() => setInterestModalVisible(true)}
+                style={styles.selectButton}
+              >
+                <Text style={styles.selectButtonText}>
+                  {t("ResidentSearchScreen_selectInterestsButton")}
+                </Text>
+              </FlipButton>
+              <Text style={styles.filterLabel}>
+                {t("ResidentSearchScreen_filteringByLabel")}
+              </Text>
+              <View style={styles.chipDisplayArea}>
+                {filterByInterests.length > 0 ? (
+                  filterByInterests.map((name) => (
+                    <InterestChip key={name} mode="display" label={name} />
+                  ))
+                ) : (
+                  <Text style={styles.noFilterText}>
+                    {t("ResidentSearchScreen_noInterestsSelected")}
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
+
+          <FlipButton
+            onPress={handleSearchPress}
+            style={styles.searchSubmitButton}
+            bgColor="#007bff"
+            textColor="#fff"
+          >
+            <View style={styles.buttonContent}>
+              <Ionicons
+                name="search"
+                size={20}
+                color="white"
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.searchButtonText}>
+                {t("MarketplaceScreen_SearchButton")}
+              </Text>
+            </View>
+          </FlipButton>
+        </SearchAccordion>
+
+        {/* 2. The resident list is below it */}
+        <PaginatedListDisplay
+          items={itemsForCurrentPage}
+          renderItem={renderUserItem}
+          itemKeyExtractor={keyExtractor}
+          isLoading={isLoading && allUsers.length === 0}
+          ListEmptyComponent={CustomEmptyComponent}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={handlePageChange}
+          listContainerStyle={styles.listContainerStyle}
+          flatListRef={flatListRef}
+        />
+      </ScrollView>
 
       <InterestModal
         visible={isInterestModalVisible}
         mode="filter"
         allInterests={allInterests}
-        initialSelectedNames={initialSelectedNamesForModal} // <-- Ensure it uses this stable variable
+        initialSelectedNames={initialSelectedNamesForModal}
         onClose={() => setInterestModalVisible(false)}
         onConfirm={handleApplyInterestFilter}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
+// --- Styles ---
 // --- Styles ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f7f7f7",
+  },
+  scrollContainer: {
     width: "100%",
+    marginTop: 60,
+  },
+  scrollContentContainer: {
     alignItems: "center",
-    paddingBottom: 10,
+    paddingBottom: 50, // Ensures space at the very bottom
   },
   mainTitle: {
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
-    marginTop: 70,
+    marginTop: 20, // Adjusted top margin
     marginBottom: 10,
     color: "#111",
   },
@@ -479,10 +490,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+  selectButton: {
+    marginHorizontal: 15,
+    marginTop: 15,
+    paddingVertical: 12,
+  },
+  selectButtonText: {
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  filterLabel: {
+    marginHorizontal: 15,
+    marginTop: 20,
+    marginBottom: 10,
+    fontSize: 14,
+    color: "#666",
+  },
+  chipDisplayArea: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    marginHorizontal: 15,
+    marginBottom: 10,
+    padding: 5,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#eee",
+    minHeight: 50,
+  },
+  noFilterText: {
+    color: "#999",
+    fontStyle: "italic",
+    padding: 10,
+  },
   searchSubmitButton: {
     paddingVertical: 12,
     marginHorizontal: 15,
     marginBottom: 15,
+    marginTop: 10,
   },
   buttonContent: {
     flexDirection: "row",
@@ -503,15 +550,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   centeredMessage: {
-    // Style for loading indicator container
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    marginTop: 50, // Adjust as needed
+    marginTop: 50,
   },
   infoText: {
-    // Style for 'no results'/'no users' text
     fontSize: 18,
     color: "#666",
     textAlign: "center",
@@ -519,9 +564,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   errorText: {
-    // Style for error text
     fontSize: 18,
-    color: "red", // Make errors stand out
+    color: "red",
     textAlign: "center",
     marginTop: 50,
     paddingHorizontal: 20,

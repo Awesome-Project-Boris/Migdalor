@@ -35,6 +35,7 @@ import { useTranslation } from "react-i18next";
 import LabeledTextInput from "@/components/LabeledTextInput";
 import { Globals } from "@/app/constants/Globals";
 import InterestModal from "@/components/InterestSelectionModal";
+import ImageHistory from "@/components/ImageHistory";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -43,7 +44,9 @@ export default function EditProfile() {
   const navigation = useNavigation();
   const route = useRoute();
 
-  const { initialData, initialPics } = route.params;
+  const isInitialLoad = useRef(true);
+
+  const { initialData, initialPics } = route.params || {};
 
   const router = useRouter();
 
@@ -98,21 +101,101 @@ export default function EditProfile() {
   const [allInterests, setAllInterests] = useState([]); // Fetched on mount
   const [userInterests, setUserInterests] = useState([]); // The single source of truth for the user's choices
 
-  // 2. Add a useEffect to fetch all interests when the component loads
-  useEffect(() => {
-    const fetchAllInterestsFromDB = async () => {
-      try {
-        const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
-        const data = await response.json();
-        // The API returns an array of strings, we need to convert them to objects
-        // for our filtering logic to work consistently.
-        setAllInterests(data ? data.map((name) => ({ name })) : []);
-      } catch (err) {
-        console.error("Failed to fetch all interests:", err);
+  // Image History modal //
+
+  const [isNavigatingBack, setIsNavigatingBack] = useState(false);
+  const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
+  const [historyRole, setHistoryRole] = useState("");
+
+  const openHistoryModal = (role) => {
+    setIsNavigatingBack(true); // TO ELIMINATE RACE CONDITION OF MODAL
+    setHistoryRole(role);
+    setHistoryModalVisible(true);
+  };
+
+  const handleSelectFromHistory = (selectedImage) => {
+    if (historyRole === "Profile picture") {
+      setProfilePic(selectedImage);
+    } else {
+      // Logic to set the correct "extra" picture
+      if (additionalPic1.PicID === null) {
+        setAdditionalPic1(selectedImage);
+      } else {
+        setAdditionalPic2(selectedImage);
       }
-    };
-    fetchAllInterestsFromDB();
-  }, []);
+    }
+    setShowImageViewModal(false);
+    setHistoryModalVisible(false);
+
+    setIsNavigatingBack(false);
+  };
+
+  //
+
+  // 2. Add a useEffect to fetch all interests when the component loads
+
+  // --- Replace your current initial load useEffect with this one ---
+
+  useEffect(() => {
+    // This hook now runs only on the first load and does EVERYTHING needed to set up the page.
+    if (isInitialLoad.current) {
+      // --- Part 1: Your original logic for setting profile data ---
+      if (initialData) {
+        const parsedData = JSON.parse(initialData);
+        if (parsedData.residentInterests) {
+          setUserInterests(parsedData.residentInterests);
+        } else if (parsedData.interests) {
+          setUserInterests(parsedData.interests.map((name) => ({ name })));
+        } else {
+          setUserInterests([]);
+        }
+        setForm(parsedData);
+      }
+      if (initialPics) {
+        const pics = JSON.parse(initialPics);
+        setProfilePic(
+          pics.profilePic || {
+            PicID: null,
+            PicName: "",
+            PicPath: "",
+            PicAlt: "",
+          }
+        );
+        setAdditionalPic1(
+          pics.additionalPic1 || {
+            PicID: null,
+            PicName: "",
+            PicPath: "",
+            PicAlt: "",
+          }
+        );
+        setAdditionalPic2(
+          pics.additionalPic2 || {
+            PicID: null,
+            PicName: "",
+            PicPath: "",
+            PicAlt: "",
+          }
+        );
+      }
+
+      // --- Part 2 (THE FIX): Fetch the list of all possible interests ---
+      const fetchAllInterestsFromDB = async () => {
+        try {
+          const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
+          const data = await response.json();
+          setAllInterests(data ? data.map((name) => ({ name })) : []);
+        } catch (err) {
+          console.error("Failed to fetch all interests:", err);
+          // Optionally, show a toast message here
+        }
+      };
+      fetchAllInterestsFromDB();
+
+      // Flip the flag to false so this block never runs again for this screen instance
+      isInitialLoad.current = false;
+    }
+  }, [initialData, initialPics]); // Dependencies are correct
 
   // Remember what's been selected
   const { initialSelectedNames, initialNewInterests } = useMemo(() => {
@@ -291,14 +374,14 @@ export default function EditProfile() {
     formData.append("picAlts", altText);
     formData.append("uploaderId", uploaderId);
 
-    console.log("imageUri:", imageUri); // Debugging line
-    console.log("role:", role); // Debugging line
-    console.log("fileType:", fileType); // Debugging line
-    console.log("picAlts:", altText); // Debugging line
-    console.log("uploaderId:", uploaderId); // Debugging line
+    // console.log("imageUri:", imageUri); // Debugging line
+    // console.log("role:", role); // Debugging line
+    // console.log("fileType:", fileType); // Debugging line
+    // console.log("picAlts:", altText); // Debugging line
+    // console.log("uploaderId:", uploaderId); // Debugging line
 
-    console.log("FormData:", formData); // Debugging line
-    console.log("ProfilePic", imageUri); // Debugging line
+    // console.log("FormData:", formData); // Debugging line
+    // console.log("ProfilePic", imageUri); // Debugging line
 
     try {
       const uploadResponse = await fetch(
@@ -323,11 +406,15 @@ export default function EditProfile() {
       }
       console.log(`Upload successful for ${role}:`, uploadResults[0]);
       await safeDeleteFile(imageUri); // Clean up local copy after successful upload
+      // --- CORRECTED RETURN STATEMENT ---
       return {
         PicID: uploadResults[0].picId,
-        PicPath: uploadResults[0].serverPath, // This is the server path!
-        PicName: uploadResults[0].originalFileName, // Keep original file name if useful
-        PicAlt: altText, // Keep the alt text
+        PicPath: uploadResults[0].serverPath,
+        PicName: uploadResults[0].originalFileName,
+        PicAlt: altText,
+        UploaderId: uploaderId,
+        PicRole: role,
+        DateTime: new Date().toISOString(),
       };
     } catch (error) {
       console.error(`Image upload failed for ${role}:`, error);
@@ -377,8 +464,14 @@ export default function EditProfile() {
     if (initialData) {
       const parsedData = JSON.parse(initialData);
       if (parsedData.residentInterests) {
-        // May be null until we edit it
+        // If the original object array exists, use it
         setUserInterests(parsedData.residentInterests);
+      } else if (parsedData.interests) {
+        // Otherwise, if the string array exists, convert it back to an object array
+        setUserInterests(parsedData.interests.map((name) => ({ name })));
+      } else {
+        // Fallback to an empty array if neither exists
+        setUserInterests([]);
       }
       setForm(parsedData);
     }
@@ -515,6 +608,8 @@ export default function EditProfile() {
   // --- Image Picker ---
 
   const pickImage = async (type, setFn) => {
+    const role = type === "main" ? "Profile picture" : "Extra picture";
+
     const libraryPermission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (libraryPermission.status !== "granted") {
@@ -548,25 +643,21 @@ export default function EditProfile() {
               quality: 0.5,
             });
             if (!result.canceled && result.assets?.[0]?.uri) {
-              console.log("Camera result:", result);
-              console.log("Camera result.assets[0].uri:", result.assets[0].uri);
               try {
                 const newUri = await copyImageToAppDir(
                   result.assets[0].uri,
                   "camera"
                 );
-                console.log("New URI (camera):", newUri);
                 setFn((prev) => ({ ...prev, PicPath: newUri }));
-                setImageToViewUri(newUri); // Set the URI to view the image
-                //console.log("New URI after copy in camera:", newUri);
-                //setImage(newUri);
+                setImageToViewUri(newUri);
               } catch (copyError) {
                 Alert.alert(
                   t("ImagePicker_errorTitle"),
                   t("ImagePicker_saveCameraImageFailure"),
                   [{ text: t("ImagePicker_cancelButton") }]
                 );
-                setImage(null);
+                // Note: setImage is not defined in the scope, assuming you might remove this line
+                // setImage(null);
               }
             }
           },
@@ -586,10 +677,6 @@ export default function EditProfile() {
                     result.assets[0].uri,
                     "library"
                   );
-                  console.log("New URI (library):", newUri);
-                  console.log("checking: ", newUri);
-                  console.log("checking: ", profilePic.PicPath);
-
                   setFn((prev) => ({ ...prev, PicPath: newUri }));
                   setImageToViewUri(newUri);
                 } catch (copyError) {
@@ -598,7 +685,8 @@ export default function EditProfile() {
                     t("ImagePicker_saveLibraryImageFailure"),
                     [{ text: t("ImagePicker_cancelButton") }]
                   );
-                  setImage(null);
+                  // Note: setImage is not defined in the scope, assuming you might remove this line
+                  // setImage(null);
                 }
               }
             } catch (error) {
@@ -610,6 +698,10 @@ export default function EditProfile() {
             }
           },
         },
+        {
+          text: t("ImagePicker_chooseFromHistoryButton", "History"),
+          onPress: () => openHistoryModal(role), // <-- Changed from navigation.navigate
+        },
         { text: t("ImagePicker_cancelButton"), style: "cancel" },
       ]
     );
@@ -617,24 +709,54 @@ export default function EditProfile() {
     console.log("pickImage: profilePic:", profilePic); // Debugging line
   };
 
-  const viewOrPickImage = (type, currentUri) => {
-    console.log(currentUri === Globals.API_BASE_URL);
-    console.log("currentUri: ", currentUri);
-    console.log(currentUri == "");
-    if (currentUri == "") {
-      // When no image is set
-      // Show add-new option instead of remove
-      setWasDefaultImage(true);
-      setImageToViewUri(""); // no image to show
-      setImageTypeToClear(type);
-      setShowImageViewModal(true);
-    } else {
-      setWasDefaultImage(false);
-      setImageToViewUri(currentUri);
-      setImageTypeToClear(type);
-      setShowImageViewModal(true);
+  // Listening to changes in the ImageHistory page:
+
+  useEffect(() => {
+    // This effect runs when the screen receives new parameters from navigation.
+    if (route.params?.selectedImage && route.params?.targetRole) {
+      const { selectedImage, targetRole } = route.params;
+
+      console.log("Received selected image from history:", selectedImage);
+      console.log("Target role:", targetRole);
+
+      // Update the correct image state based on the target role.
+      if (targetRole === "Profile picture") {
+        setProfilePic(selectedImage);
+      } else if (targetRole === "Extra picture") {
+        // Here, we need to decide which "Extra picture" slot to fill.
+        // A simple approach is to fill the first available one.
+        if (additionalPic1.PicID === null) {
+          setAdditionalPic1(selectedImage);
+        } else {
+          setAdditionalPic2(selectedImage);
+        }
+      }
+
+      // IMPORTANT: Clear the params after using them.
+      // This prevents the effect from re-running with the same old data if the user
+      // navigates away and back to the edit screen.
+      navigation.setParams({ selectedImage: null, targetRole: null });
     }
-  };
+  }, [route.params?.selectedImage, route.params?.targetRole]);
+
+  // const viewOrPickImage = (type, currentUri) => {
+  //   console.log(currentUri === Globals.API_BASE_URL);
+  //   console.log("currentUri: ", currentUri);
+  //   console.log(currentUri == "");
+  //   if (currentUri == "") {
+  //     // When no image is set
+  //     // Show add-new option instead of remove
+  //     setWasDefaultImage(true);
+  //     setImageToViewUri(""); // no image to show
+  //     setImageTypeToClear(type);
+  //     setShowImageViewModal(true);
+  //   } else {
+  //     setWasDefaultImage(false);
+  //     setImageToViewUri(currentUri);
+  //     setImageTypeToClear(type);
+  //     setShowImageViewModal(true);
+  //   }
+  // };
 
   const deletePicture = async (pictureId) => {
     if (!pictureId) return; // No ID to delete
@@ -739,15 +861,17 @@ export default function EditProfile() {
 
       /////////////////////////////////////////////// Interests ////////////////////////////////////////////////////
 
-      // const allExistingNames = new Set(allInterests.map((i) => i.name));
+      // filtering what interests the user chose from the modal, and the new ones to add to the DB.
 
-      // const finalSelectedNames = userInterests
-      //   .filter((i) => allExistingNames.has(i.name))
-      //   .map((i) => i.name);
+      const allExistingNames = new Set(allInterests.map((i) => i.name));
 
-      // const finalNewInterestNames = userInterests
-      //   .filter((i) => !allExistingNames.has(i.name))
-      //   .map((i) => i.name);
+      const finalSelectedNames = userInterests
+        .filter((i) => allExistingNames.has(i.name))
+        .map((i) => i.name);
+
+      const finalNewInterestNames = userInterests
+        .filter((i) => !allExistingNames.has(i.name))
+        .map((i) => i.name);
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -891,8 +1015,8 @@ export default function EditProfile() {
         profilePicture: finalProfilePicData,
         additionalPicture1: finalAdd1PicData,
         additionalPicture2: finalAdd2PicData,
-        // interestNames: finalSelectedNames,                                              !!!INTERESTS!!!
-        // newInterestNames: finalNewInterestNames,                                        !!!INTERESTS!!!
+        interestNames: finalSelectedNames,
+        newInterestNames: finalNewInterestNames,
       };
       console.log("requestBody: ", requestBody);
 
@@ -946,9 +1070,9 @@ export default function EditProfile() {
       console.error("Error getting userID", error);
     }
   };
-  console.log("profilePic", profilePic);
-  console.log("additionalPic1", additionalPic1);
-  console.log("additionalPic2", additionalPic2);
+  // console.log("profilePic", profilePic);
+  // console.log("additionalPic1", additionalPic1);
+  // console.log("additionalPic2", additionalPic2);
 
   return (
     <View style={styles.wrapper}>
@@ -1227,6 +1351,12 @@ export default function EditProfile() {
           </FlipButton>
         </View>
       </ScrollView>
+      <ImageHistory
+        visible={isHistoryModalVisible}
+        picRole={historyRole}
+        onClose={() => setHistoryModalVisible(false)}
+        onSelect={handleSelectFromHistory}
+      />
       <ImageViewModal
         visible={showImageViewModal}
         imageUri={imageToViewUri}
