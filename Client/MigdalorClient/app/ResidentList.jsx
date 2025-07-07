@@ -193,8 +193,6 @@ export default function ResidentList() {
   // --- Callbacks for Rendering List Items ---
   const renderUserItem = useCallback(
     ({ item }) => (
-      console.log(`Rendering user item: ${item}`),
-      console.log(`Rendering user item.userId: ${item.userId}`),
       <UserProfileCard
         data={item}
         onPress={() => {
