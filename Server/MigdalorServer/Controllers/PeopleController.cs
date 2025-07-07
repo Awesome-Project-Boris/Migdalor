@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -145,33 +146,84 @@ namespace MigdalorServer.Controllers
         }
 
         // PUT: api/People/UpdateProfile/{id}
-        // Changed to IActionResult and return NoContent() on success
+
+
         [HttpPut("UpdateProfile/{id}")]
-        public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
+        public async Task<IActionResult> UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
         {
-            using var db = new MigdalorDBContext();
-            var person = db.OhPeople.Find(id);
-            if (person == null)
-                return NotFound(); // Changed: NotFound()
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-            var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
-            if (resident == null)
-                return NotFound(); // Changed: NotFound()
+            try
+            {
+                // Step 1: Find the resident and include their current interests for modification.
+                // All operations will use the `_context` injected into the controller.
+                var resident = await _context.OhResidents
+                                             .Include(r => r.InterestNames)
+                                             .FirstOrDefaultAsync(r => r.ResidentId == id);
 
-            // Update fields
-            person.PhoneNumber = dto.MobilePhone;
-            person.Email = dto.Email;
-            resident.HomePlace = dto.Origin;
-            resident.Profession = dto.Profession;
-            resident.ResidentDescription = dto.AboutMe;
-            resident.ResidentApartmentNumber = dto.ResidentApartmentNumber;
+                if (resident == null)
+                {
+                    return NotFound("Resident not found.");
+                }
 
-            person.ProfilePicId = dto.ProfilePicture?.PicId;
-            resident.AdditionalPic1Id = dto.AdditionalPicture1?.PicId;
-            resident.AdditionalPic2Id = dto.AdditionalPicture2?.PicId;
+                // Step 2: Update simple properties on the resident and person records.
+                var person = await _context.OhPeople.FindAsync(id);
+                if (person != null)
+                {
+                    person.PhoneNumber = dto.MobilePhone;
+                    person.Email = dto.Email;
+                }
 
-            db.SaveChanges();
-            return NoContent(); // Changed: return 204 on success
+                resident.HomePlace = dto.Origin;
+                resident.Profession = dto.Profession;
+                resident.ResidentDescription = dto.AboutMe;
+                resident.ResidentApartmentNumber = dto.ResidentApartmentNumber;
+                person.ProfilePicId = dto.ProfilePicture?.PicId;
+                resident.AdditionalPic1Id = dto.AdditionalPicture1?.PicId;
+                resident.AdditionalPic2Id = dto.AdditionalPicture2?.PicId;
+
+                // Step 3: Add any new interests to the main OH_Interests table.
+                if (dto.NewInterestNames != null && dto.NewInterestNames.Any())
+                {
+                    foreach (var newName in dto.NewInterestNames)
+                    {
+                        if (!await _context.OhInterests.AnyAsync(i => i.InterestName.ToLower() == newName.ToLower()))
+                        {
+                            _context.OhInterests.Add(new OhInterest { InterestName = newName });
+                        }
+                    }
+                }
+
+                // Step 4: Update the links between the resident and their interests.
+                if (dto.InterestNames != null)
+                {
+                    resident.InterestNames.Clear(); // Clear existing links.
+
+                    var allFinalInterestNames = dto.InterestNames.Concat(dto.NewInterestNames).Distinct().ToList();
+
+                    var interestsToLink = await _context.OhInterests
+                                                        .Where(i => allFinalInterestNames.Contains(i.InterestName))
+                                                        .ToListAsync();
+
+                    // Let EF Core manage the junction table by adding the objects to the navigation property.
+                    foreach (var interest in interestsToLink)
+                    {
+                        resident.InterestNames.Add(interest);
+                    }
+                }
+
+                // Step 5: Save all tracked changes to the database in a single transaction.
+                await _context.SaveChangesAsync();
+
+                return NoContent(); // Return 204 No Content on success.
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, $"An error occurred while updating profile: {e.Message}");
+            }
         }
 
         // DELETE: api/People/{id}
