@@ -174,6 +174,34 @@ namespace MigdalorServer.Controllers
             return NoContent(); // Changed: return 204 on success
         }
 
+        // GET: api/People/PrivacySettings/{id}
+        [HttpGet("PrivacySettings/{id}")]
+        public ActionResult<PrivacySettingsDto> GetPrivacySettings(Guid id)
+        {
+            var settings = _context.OhPrivacySettings
+                .AsNoTracking()
+                .FirstOrDefault(ps => ps.PersonId == id);
+            if (settings == null)
+            {
+                return Ok(new PrivacySettingsDto());
+            }
+            var settingsDto = new PrivacySettingsDto
+            {
+                ShowPartner = settings.ShowPartner ?? true,
+                ShowApartmentNumber = settings.ShowApartmentNumber ?? true,
+                ShowMobilePhone = settings.ShowMobilePhone ?? true,
+                ShowEmail = settings.ShowEmail ?? true,
+                ShowArrivalYear = settings.ShowArrivalYear ?? true,
+                ShowOrigin = settings.ShowOrigin ?? true,
+                ShowProfession = settings.ShowProfession ?? true,
+                ShowInterests = settings.ShowInterests ?? true,
+                ShowAboutMe = settings.ShowAboutMe ?? true,
+                ShowProfilePicture = settings.ShowProfilePicture ?? true,
+                ShowAdditionalPictures = settings.ShowAdditionalPictures ?? true,
+            };
+            return Ok(settingsDto);
+        }
+
         // DELETE: api/People/{id}
         // Changed to IActionResult and return NoContent() on delete
         [HttpDelete("{id}")]
