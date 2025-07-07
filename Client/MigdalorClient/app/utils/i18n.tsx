@@ -48,6 +48,11 @@ const resources = {
       ProfileScreen_extraImages: "Extra Images",
       ProfileScreen_editButton: "Edit Profile",
       ProfileScreen_emptyDataField: "No information",
+      ProfileScreen_privateProfile: "This profile is private",
+      ProfileScreen_profileImage: "Profile Image",
+
+      PrivacySettings_savedLocally: "Privacy settings saved locally",
+      PrivacySettings_title: "Privacy Settings",
 
       EditProfileScreen_saveButton: "Save Changes",
       EditProfileScreen_cancelButton: "Cancel",
@@ -360,6 +365,11 @@ const resources = {
       ProfileScreen_extraImages: "תמונות נוספות",
       ProfileScreen_editButton: "עריכת פרופיל",
       ProfileScreen_emptyDataField: "אין מידע",
+      ProfileScreen_privateProfile: "פרופיל זה פרטי",
+      ProfileScreen_profileImage: "תמונת פרופיל",
+
+      PrivacySettings_savedLocally: "הגדרות פרטיות נשמרו במכשיר",
+      PrivacySettings_title: "הגדרות פרטיות",
 
       EditProfileScreen_saveButton: "שמור שינויים",
       EditProfileScreen_cancelButton: "ביטול",

@@ -147,16 +147,25 @@ namespace MigdalorServer.Controllers
         // PUT: api/People/UpdateProfile/{id}
         // Changed to IActionResult and return NoContent() on success
         [HttpPut("UpdateProfile/{id}")]
-        public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
+        // public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto) // changed to the method below to save privacy settings
+        public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileRequestDto dto)
         {
-            using var db = new MigdalorDBContext();
-            var person = db.OhPeople.Find(id);
+            // Changed from db to _context to fix saving privacy settings 
+            //using var db = new MigdalorDBContext();
+            //var person = db.OhPeople.Find(id);
+            var person = _context.OhPeople.Find(id);
             if (person == null)
-                return NotFound(); // Changed: NotFound()
+                return NotFound("Person not found."); // Changed: NotFound()
 
-            var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
+            //var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
+            var resident = _context.OhResidents.SingleOrDefault(r => r.ResidentId == id);
             if (resident == null)
-                return NotFound(); // Changed: NotFound()
+                return NotFound("Resident not found."); // Changed: NotFound()
+
+            if (id != dto.PersonId)    
+            {
+                return BadRequest("Mismatched ID in URL and request body.");
+            }
 
             // Update fields
             person.PhoneNumber = dto.MobilePhone;
@@ -170,7 +179,48 @@ namespace MigdalorServer.Controllers
             resident.AdditionalPic1Id = dto.AdditionalPicture1?.PicId;
             resident.AdditionalPic2Id = dto.AdditionalPicture2?.PicId;
 
-            db.SaveChanges();
+            if (dto.PrivacySettings != null)
+            {
+                var existingSettings = _context.OhPrivacySettings.Find(id);
+                if (existingSettings != null)
+                {
+                    // If settings exist, update them
+                    existingSettings.ShowPartner = dto.PrivacySettings.ShowPartner;
+                    existingSettings.ShowApartmentNumber = dto.PrivacySettings.ShowApartmentNumber;
+                    existingSettings.ShowMobilePhone = dto.PrivacySettings.ShowMobilePhone;
+                    existingSettings.ShowEmail = dto.PrivacySettings.ShowEmail;
+                    existingSettings.ShowArrivalYear = dto.PrivacySettings.ShowArrivalYear;
+                    existingSettings.ShowOrigin = dto.PrivacySettings.ShowOrigin;
+                    existingSettings.ShowProfession = dto.PrivacySettings.ShowProfession;
+                    existingSettings.ShowInterests = dto.PrivacySettings.ShowInterests;
+                    existingSettings.ShowAboutMe = dto.PrivacySettings.ShowAboutMe;
+                    existingSettings.ShowProfilePicture = dto.PrivacySettings.ShowProfilePicture;
+                    existingSettings.ShowAdditionalPictures = dto.PrivacySettings.ShowAdditionalPictures;
+                }
+                else
+                {
+                    // If settings don't exist, create a new record
+                    var newSettings = new OhPrivacySetting
+                    {
+                        PersonId = id,
+                        ShowPartner = dto.PrivacySettings.ShowPartner,
+                        ShowApartmentNumber = dto.PrivacySettings.ShowApartmentNumber,
+                        ShowMobilePhone = dto.PrivacySettings.ShowMobilePhone,
+                        ShowEmail = dto.PrivacySettings.ShowEmail,
+                        ShowArrivalYear = dto.PrivacySettings.ShowArrivalYear,
+                        ShowOrigin = dto.PrivacySettings.ShowOrigin,
+                        ShowProfession = dto.PrivacySettings.ShowProfession,
+                        ShowInterests = dto.PrivacySettings.ShowInterests,
+                        ShowAboutMe = dto.PrivacySettings.ShowAboutMe,
+                        ShowProfilePicture = dto.PrivacySettings.ShowProfilePicture,
+                        ShowAdditionalPictures = dto.PrivacySettings.ShowAdditionalPictures
+                    };
+                    _context.OhPrivacySettings.Add(newSettings);
+                }
+            }
+
+            //db.SaveChanges();
+            _context.SaveChanges();
             return NoContent(); // Changed: return 204 on success
         }
 

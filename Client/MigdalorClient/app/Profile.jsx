@@ -63,6 +63,8 @@ export default function Profile() {
     PicAlt: "",
   });
 
+  const [privacySettings, setPrivacySettings] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [viewingUserId, setViewingUserId] = useState(null);
@@ -142,6 +144,13 @@ export default function Profile() {
             PicAlt: userData.additionalPicture2?.picAlt ?? "",
           });
 
+          setPrivacySettings(userData.privacySettings ?? {
+            showPartner: true, showApartmentNumber: true, showMobilePhone: true,
+            showEmail: true, showArrivalYear: true, showOrigin: true,
+            showProfession: true, showInterests: true, showAboutMe: true,
+            showProfilePicture: true, showAdditionalPictures: true,
+            });
+
           if (Globals.userSelectedLanguage === "he") {
             setForm((prev) => ({
               ...prev,
@@ -168,28 +177,53 @@ export default function Profile() {
       };
     }, [localSearchParams.userId, t, router])
   );
+  const isOwnProfile = loggedInUserId && viewingUserId && (loggedInUserId === viewingUserId);
+  const isVisible = (fieldKey) => {
+    if (isOwnProfile) return true;
+    if (!privacySettings) return true;
+    return privacySettings[fieldKey];
+  };
 
-  const imageUrl = profilePic.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` }
-    : defaultUserImage;
+  // New check to see if the profile is fully private
 
-  const additionalImage1Source = additionalPic1.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` }
-    : defaultUserImage;
+  const isProfilePrivate = privacySettings && !isOwnProfile &&
+    !privacySettings.showProfilePicture &&
+    !privacySettings.showAdditionalPictures &&
+    !privacySettings.showPartner &&
+    !privacySettings.showApartmentNumber &&
+    !privacySettings.showMobilePhone &&
+    !privacySettings.showEmail &&
+    !privacySettings.showArrivalYear &&
+    !privacySettings.showOrigin &&
+    !privacySettings.showProfession &&
+    !privacySettings.showInterests &&
+    !privacySettings.showAboutMe;
 
-  const additionalImage2Source = additionalPic2.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` }
-    : defaultUserImage;
+  // Determine the correct image source based on privacy settings
+  const getImageUrl = (picData, isPicVisible) => {
+      const hasPath = picData && picData.PicPath && picData.PicPath.trim();
+      if (isPicVisible && hasPath) {
+          return { uri: `${Globals.API_BASE_URL}${picData.PicPath}` };
+      }
+      return defaultUserImage;
+  };
+
+  const profileImageSource = getImageUrl(profilePic, isVisible('showProfilePicture'));
+  const additionalImage1Source = getImageUrl(additionalPic1, isVisible('showAdditionalPictures'));
+  const additionalImage2Source = getImageUrl(additionalPic2, isVisible('showAdditionalPictures'));
 
   const handleImagePress = (imageUriToView, altText = "") => {
-    if (!imageUriToView || imageUriToView === Globals.API_BASE_URL) {
-      console.log("handleImagePress: No valid imageUri provided.");
-      return;
-    }
+    // if (!imageUriToView || imageUriToView === Globals.API_BASE_URL) {
+    //   console.log("handleImagePress: No valid imageUri provided.");
+    //   return;
+    // }
+
+    if (!imageUriToView || imageUriToView === defaultUserImage) return; // Don't open modal for default image
     console.log("handleImagePress: imageUriToView:", imageUriToView);
 
     const paramsToPass = {
-      imageUri: imageUriToView,
+      imageUri: imageUriToView.uri, // !! make sure to pass the URI correctly
+      //imageUri: imageUriToView,
       altText: altText,
     };
 
@@ -201,8 +235,6 @@ export default function Profile() {
     });
   };
 
-  const showEditButton = loggedInUserId && viewingUserId && (loggedInUserId === viewingUserId);
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -211,13 +243,47 @@ export default function Profile() {
       </View>
     );
   }
+  // If the profile is fully private, render a special component
+
+  if (isProfilePrivate) {
+    return (
+        <View style={styles.wrapper}>
+            <Header />
+            <ScrollView contentContainerStyle={styles.scroll}>
+                <View style={styles.profileImageContainer}>
+                    <Image source={defaultUserImage} style={styles.profileImage} />
+                </View>
+                <View style={styles.profileNameContainer}>
+                    <Text style={styles.profileName}>
+                        {form.name || t("ProfileScreen_emptyDataField")}
+                    </Text>
+                </View>
+                <Text style={styles.privateText}>{t('ProfileScreen_privateProfile')}</Text>
+            </ScrollView>
+        </View>
+    );
+  }
+
+  const renderField = (fieldKey, label, value) => {
+    if (!isVisible(fieldKey)) return null;
+    return (
+      <>
+        <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+          {label}
+        </Text>
+        <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+          {value || t("ProfileScreen_emptyDataField")}
+        </Text>
+      </>
+    );
+  };
 
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Header />
 
-        {showEditButton && (
+        {isOwnProfile && (
           <FlipButton
             onPress={() =>
               router.push({
@@ -241,290 +307,77 @@ export default function Profile() {
             </Text>
           </FlipButton>
         )}
-
+        {/* This block will now show the default image if the profile picture is private */}
         <View style={styles.profileImageContainer}>
           <BouncyButton
             shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
-                imageUrl.uri,
+                profileImageSource,
                 profilePic.PicAlt
               )
             }
-            disabled={!profilePic.PicPath?.trim()}
+            //disabled={!profilePic.PicPath?.trim()}
+            disabled={profileImageSource === defaultUserImage}
           >
             <Image
               alt={profilePic.PicAlt || "Profile picture"}
-              source={imageUrl}
+              source={profileImageSource }
               style={styles.profileImage}
             />
           </BouncyButton>
         </View>
+        
 
         <View style={styles.profileNameContainer}>
           <Text style={styles.profileName}>
             {form.name || t("ProfileScreen_emptyDataField")}
           </Text>
         </View>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_partner")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.partner || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_apartmentNumber")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.residentApartmentNumber || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_mobilePhone")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.mobilePhone || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_email")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.email || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_arrivalYear")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.arrivalYear || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_origin")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.origin || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_profession")}
-        </Text>
-
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.profession || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_interests")}
-        </Text>
-        <View style={styles.chipContainer}>
-          {form.interests && form.interests.length > 0 ? (
-            form.interests.map((interestName) => (
-              <InterestChip
-                key={interestName}
-                mode="display"
-                label={interestName}
-              />
-            ))
-          ) : (
-            <Text style={styles.noInterestsText}>
-              {t("ProfileScreen_emptyDataField")}
-            </Text>
-          )}
-        </View>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_aboutMe")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.aboutMe || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_extraImages")}
-        </Text>
-        <View style={styles.profileExtraImageContainer}>
-          <BouncyButton
-            shrinkScale={0.95}
-            onPress={() =>
-              handleImagePress(
-                additionalImage1Source.uri,
-                additionalPic1.PicAlt
-              )
-            }
-            disabled={!additionalPic1.PicPath?.trim()}
-          >
-            <Image
-              alt={additionalPic1.PicAlt || "Extra picture 1"}
-              source={additionalImage1Source}
-              style={styles.profileImage}
-            />
-          </BouncyButton>
-
-          <BouncyButton
-            shrinkScale={0.95}
-            onPress={() =>
-              handleImagePress(
-                additionalImage2Source.uri,
-                additionalPic2.PicAlt
-              )
-            }
-            disabled={!additionalPic2.PicPath?.trim()}
-          >
-            <Image
-              alt={additionalPic2.PicAlt || "Extra picture 2"}
-              source={additionalImage2Source}
-              style={styles.profileImage}
-            />
-          </BouncyButton>
-        </View>
+        
+        {renderField('showPartner', t("ProfileScreen_partner"), form.partner)}
+        {renderField('showApartmentNumber', t("ProfileScreen_apartmentNumber"), form.residentApartmentNumber)}
+        {renderField('showMobilePhone', t("ProfileScreen_mobilePhone"), form.mobilePhone)}
+        {renderField('showEmail', t("ProfileScreen_email"), form.email)}
+        {renderField('showArrivalYear', t("ProfileScreen_arrivalYear"), form.arrivalYear)}
+        {renderField('showOrigin', t("ProfileScreen_origin"), form.origin)}
+        {renderField('showProfession', t("ProfileScreen_profession"), form.profession)}
+        {isVisible('showInterests') && (
+            <>
+                <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+                    {t("ProfileScreen_interests")}
+                </Text>
+                <View style={styles.chipContainer}>
+                {form.interests && form.interests.length > 0 ? (
+                    form.interests.map((interestName) => (
+                    <InterestChip key={interestName} mode="display" label={interestName} />
+                    ))
+                ) : (
+                    <Text style={styles.noInterestsText}>{t("ProfileScreen_emptyDataField")}</Text>
+                )}
+                </View>
+            </>
+        )}
+        {renderField('showAboutMe', t("ProfileScreen_aboutMe"), form.aboutMe)}
+        {isVisible('showAdditionalPictures') && (
+            <>
+                <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+                    {t("ProfileScreen_extraImages")}
+                </Text>
+                <View style={styles.profileExtraImageContainer}>
+                  <BouncyButton onPress={() => handleImagePress(additionalImage1Source, additionalPic1.PicAlt)} 
+                  //disabled={!additionalPic1.PicPath?.trim()}
+                  disabled={additionalImage1Source === defaultUserImage}>
+                      <Image alt={additionalPic1.PicAlt || "Extra picture 1"} source={additionalImage1Source} style={styles.profileImage}/>
+                  </BouncyButton>
+                  <BouncyButton onPress={() => handleImagePress(additionalImage2Source, additionalPic2.PicAlt)} 
+                    //disabled={!additionalPic2.PicPath?.trim()}
+                    disabled={additionalImage2Source === defaultUserImage}>
+                      <Image alt={additionalPic2.PicAlt || "Extra picture 2"} source={additionalImage2Source} style={styles.profileImage}/>
+                  </BouncyButton>
+                </View>
+            </>
+        )}
       </ScrollView>
     </View>
   );
@@ -696,5 +549,17 @@ const styles = StyleSheet.create({
     color: "#666",
     fontStyle: "italic",
     padding: 5,
+  },
+  privateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  privateText: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginTop: 20,
+    textAlign: 'center',
   },
 });
