@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 // --- Configuration ---
-const API_BASE_URL = "https://migdalor.azurewebsites.net/api";
+const API_BASE_URL = "http://192.168.0.160:44315/api";
 
 // --- API Service ---
 const api = {

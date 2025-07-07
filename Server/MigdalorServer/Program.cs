@@ -57,6 +57,14 @@ builder
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler());
 
 // ---- JWT Setup ----
+
+// **FIX: Add a check to ensure the JWT Key is not null**
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrEmpty(jwtKey))
+{
+    throw new ArgumentNullException("Jwt:Key", "JWT Key is not configured in appsettings.json. Please add a valid secret key.");
+}
+
 builder
     .Services.AddAuthentication(options =>
     {
@@ -77,7 +85,7 @@ builder
 
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+                Encoding.UTF8.GetBytes(jwtKey) // Use the validated key here
             ),
 
             ValidateLifetime = true,
