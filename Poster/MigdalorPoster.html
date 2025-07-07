@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migdal-Or Project Poster</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Assistant', sans-serif;
+            background-color: #f9f7f3;
+            /* Light cream background */
+        }
+
+        .poster-container {
+            width: 1200px;
+            max-width: 100%;
+            margin: 2rem auto;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        .poster-header {
+            background-color: #A98A4D;
+            /* Gold color from presentation */
+            color: white;
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .poster-header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+        }
+
+        .poster-header .subtitle {
+            font-size: 1.5rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .logos {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .logo-container {
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .logo-container img {
+            height: 80px;
+            margin-bottom: 0.5rem;
+        }
+
+        .poster-body {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+
+        .poster-column {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .poster-section {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .poster-section h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #8b6f41;
+            /* Darker Gold */
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #A98A4D;
+        }
+
+        .poster-section p,
+        .poster-section ul {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #334155;
+        }
+
+        .poster-section ul {
+            list-style-type: disc;
+            padding-right: 1.5rem;
+        }
+
+        .team-info {
+            margin-top: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .team-info p {
+            margin: 0.25rem 0;
+        }
+
+        .phone-mockup {
+            background: #333;
+            border-radius: 2rem;
+            padding: 0.75rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+            margin: 1rem auto;
+            width: 95%;
+        }
+
+        .phone-screen {
+            background-color: #FDFCF8;
+            /* Off-white screen background from slides */
+            border-radius: 1.5rem;
+            aspect-ratio: 9 / 19;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .screen-header {
+            font-weight: 700;
+            text-align: center;
+            padding: 1rem;
+            font-size: 1.2rem;
+            color: #333;
+            background: #FDFCF8;
+            border-bottom: 1px solid #eee;
+        }
+
+        .screen-content {
+            flex-grow: 1;
+            padding: 1rem;
+        }
+
+        .profile-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-info h4 {
+            font-weight: 700;
+            color: #333;
+        }
+
+        .profile-info p {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .timeline {
+            position: relative;
+            padding-right: 20px;
+            margin-top: 1rem;
+        }
+
+        .timeline-item {
+            padding-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .timeline-item:before {
+            content: '';
+            position: absolute;
+            right: -15px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #A98A4D;
+            border: 2px solid white;
+            z-index: 1;
+        }
+
+        .timeline-line {
+            position: absolute;
+            right: -11px;
+            top: 5px;
+            bottom: -5px;
+            width: 2px;
+            background-color: #e2e8f0;
+        }
+
+        .timeline-date {
+            font-weight: 700;
+            color: #8b6f41;
+        }
+
+        .timeline-content {
+            font-size: 1rem;
+        }
+
+        @media (max-width: 1200px) {
+            .poster-body {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .poster-body {
+                grid-template-columns: 1fr;
+            }
+
+            .poster-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .logos {
+                margin-top: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="poster-container">
+        <!-- Poster Header -->
+        <header class="poster-header">
+            <div>
+                <h1>מגדל-אור</h1>
+                <p class="subtitle">אפליקציה חברתית לדיירי מגדלי הים התיכון - נורדיה</p>
+                <div class="team-info">
+                    <p><strong>סטודנטים:</strong> רועי שמשוני, ליאור מסטורוב, טום קובטון</p>
+                    <p><strong>מנחה:</strong> גב' תמי צוקרמן</p>
+                    <p><strong>התמחות:</strong> פיתוח מערכות תוכנה (אפליקציות)</p>
+                </div>
+            </div>
+            <div class="logos">
+                <div class="logo-container">
+                    <img src="./Assets/ruppin.jpg" alt="Ruppin Academic Center Logo">
+                    <p>המרכז האקדמי רופין</p>
+                    <p>המחלקה למדעי המחשב</p>
+                </div>
+                <div class="logo-container">
+                    <img src="./Assets/migdalei.jpg" alt="Migdalei Hayam Hatichon Logo">
+                    <p>מגדלי הים התיכון</p>
+                    <p>28 ביולי 2025</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Poster Body -->
+        <main class="poster-body">
+            <!-- Column 1 -->
+            <div class="poster-column">
+                <section class="poster-section">
+                    <h2>הצורך והמטרה</h2>
+                    <p>
+                        כיום, התקשורת בקהילת "מגדלי הים התיכון" מפוזרת בין פלטפורמות רבות (קבוצות וואטסאפ, לוחות
+                        מודעות), מה שמקשה על העברת מסרים, הרשמה לאירועים, ויוצר קשיי השתלבות לדיירים חדשים.
+                    </p>
+                    <br>
+                    <p>
+                        <strong>מטרת הפרויקט</strong> היא ליצור פלטפורמה דיגיטלית אחת, "מגדל-אור", שתאחד את כלל השירותים
+                        והמידע. האפליקציה שואפת לשפר את התקשורת, לחזק את הקהילה, ולהוות מקור מידע מרכזי ונוח לשימוש עבור
+                        הדיירים וההנהלה כאחד.
+                    </p>
+                </section>
+
+                <section class="poster-section">
+                    <h2>עיצוב ונגישות</h2>
+                    <p>
+                        האפליקציה עוצבה ותוכננה תוך מחשבה מעמיקה על צרכי הגיל השלישי.
+                    </p>
+                    <ul>
+                        <li><strong>עיצוב מונחה נגישות:</strong> הממשק פותח בהתאם למדריך של מערך הדיגיטל הלאומי לעיצוב
+                            מוצרים דיגיטליים לבני 65+.</li>
+                        <li><strong>התאמה אישית:</strong> המשתמשים יכולים לשנות את גודל הגופן ולהתאים את המראה לצרכיהם.
+                        </li>
+                        <li><strong>ייעוץ מומחים:</strong> הפרויקט נעשה בליווי ד"ר נופר כצמן, מומחית לתכנון ממשק וחווית
+                            משתמש, כדי להבטיח עמידה בקריטריונים הגבוהים ביותר של נגישות.</li>
+                    </ul>
+                </section>
+
+                <section class="poster-section">
+                    <h2>אתגרים ופתרונות</h2>
+                    <p>במהלך הפיתוח התמודדנו עם מספר אתגרים מרכזיים:</p>
+                    <ul>
+                        <li><strong>ריכוז מידע:</strong> איסוף המידע ממקורות מבוזרים והצגתו במקום אחד, נגיש ונוח.</li>
+                        <li><strong>צרכי הדיירים:</strong> קיום ישיבות עם נציגי הדיירים כדי להבין את צרכיהם המדויקים
+                            ולקבל פידבק שוטף.</li>
+                        <li><strong>מגבלות רגולטוריות:</strong> עבודה צמודה עם הנהלת המקום להבנת והטמעת כללי پرטיות
+                            ואבטחת מידע הנדרשים.</li>
+                    </ul>
+                </section>
+            </div>
+
+            <!-- Column 2 -->
+            <div class="poster-column">
+                <section class="poster-section">
+                    <h2>מסכים מרכזיים</h2>
+                    <div class="phone-mockup">
+                        <div class="phone-screen">
+                            <div class="screen-header">דיירים</div>
+                            <div class="screen-content">
+                                <div class="profile-card">
+                                    <img src="https://placehold.co/100x100/c7d2fe/3730a3?text=Y" alt="Yehoshua"
+                                        class="profile-pic">
+                                    <div class="profile-info">
+                                        <h4>יהושוע גמלמן</h4>
+                                        <p>חובב כדורת</p>
+                                    </div>
+                                </div>
+                                <div class="profile-card">
+                                    <img src="https://placehold.co/100x100/fecaca/991b1b?text=R" alt="Rory"
+                                        class="profile-pic">
+                                    <div class="profile-info">
+                                        <h4>רורי לייזר</h4>
+                                        <p>מדריך טיולים לשעבר</p>
+                                    </div>
+                                </div>
+                                <div class="profile-card">
+                                    <img src="https://placehold.co/100x100/bbf7d0/166534?text=S" alt="Shimrit"
+                                        class="profile-pic">
+                                    <div class="profile-info">
+                                        <h4>שמרית פרחזרן</h4>
+                                        <p>סופרת ועיתונאית לשעבר</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="phone-mockup">
+                        <div class="phone-screen">
+                            <div class="screen-header">הגדרות</div>
+                            <div class="screen-content text-center">
+                                <div class="mb-6">
+                                    <label class="font-bold text-lg">גודל טקסט</label>
+                                    <div class="flex items-center justify-center gap-4 mt-2">
+                                        <span class="text-lg">א</span>
+                                        <input type="range" min="1" max="5" value="3" class="w-2/3">
+                                        <span class="text-3xl">א</span>
+                                    </div>
+                                </div>
+                                <div class="mb-6">
+                                    <label class="font-bold text-lg">בחירת שפה</label>
+                                    <div class="mt-2 p-2 border-2 border-gray-400 rounded-lg bg-white">עברית</div>
+                                </div>
+                                <div class="mb-6">
+                                    <label class="font-bold text-lg">ניהול התראות</label>
+                                    <div class="mt-2 p-2 border-2 border-gray-400 rounded-lg bg-white">שמע ורטט</div>
+                                    <div class="mt-2 p-2 border-2 border-black rounded-lg bg-black text-white">רטט בלבד
+                                    </div>
+                                    <div class="mt-2 p-2 border-2 border-gray-400 rounded-lg bg-white">השתק</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Column 3 -->
+            <div class="poster-column">
+                <section class="poster-section">
+                    <h2>אלמנט חכם: סוכן AI</h2>
+                    <p>
+                        כדי להפוך את האפליקציה לקלה ואינטואיטיבית ככל האפשר, שילבנו <strong>סוכן חכם מבוסס בינה
+                            מלאכותית</strong>.
+                    </p>
+                    <p>
+                        הסוכן מאפשר למשתמשים לתקשר עם האפליקציה בשפה טבעית. לדוגמה, דייר יכול לשאול "מתי מתקיים חוג
+                        היוגה?" או "הצג לי את פרטי הקשר של משה כהן", והמערכת תציג לו את המידע הרלוונטי באופן מיידי.
+                    </p>
+                    <p>
+                        אלמנט זה מוריד את חסם הכניסה הטכנולוגי ומאפשר גם למשתמשים שאינם מנוסים להפיק את המרב מהפלטפורמה.
+                    </p>
+                </section>
+
+                <section class="poster-section">
+                    <h2>לוח זמנים</h2>
+                    <div class="timeline">
+                        <div class="timeline-line"></div>
+                        <div class="timeline-item">
+                            <p class="timeline-date">פברואר</p>
+                            <p class="timeline-content">איפיון DB</p>
+                        </div>
+                        <div class="timeline-item">
+                            <p class="timeline-date">מרץ</p>
+                            <p class="timeline-content">פיתוח צד שרת</p>
+                        </div>
+                        <div class="timeline-item">
+                            <p class="timeline-date">אפריל</p>
+                            <p class="timeline-content">סיום פיתוח צד שרת, תחילת פיתוח צד לקוח</p>
+                        </div>
+                        <div class="timeline-item">
+                            <p class="timeline-date">מאי</p>
+                            <p class="timeline-content">סוף פיתוח צד לקוח</p>
+                        </div>
+                        <div class="timeline-item">
+                            <p class="timeline-date">יוני</p>
+                            <p class="timeline-content">שיפורים ותוספות, סיום פיתוח</p>
+                        </div>
+                        <div class="timeline-item" style="padding-bottom: 0;">
+                            <p class="timeline-date">יולי</p>
+                            <p class="timeline-content">בדיקות ובקרת איכות</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
