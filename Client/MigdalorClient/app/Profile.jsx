@@ -70,7 +70,12 @@ export default function Profile() {
     PicAlt: "",
   });
 
-  // On mount, try to load the user data from AsyncStorage.
+  const [privacySettings, setPrivacySettings] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
+  const [viewingUserId, setViewingUserId] = useState(null);
+
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -132,33 +137,40 @@ export default function Profile() {
               PicAlt: userData.profilePicture?.picAlt ?? "",
             });
 
-            setAdditionalPic1({
-              PicID: userData.additionalPicture1?.picId ?? null,
-              PicName: userData.additionalPicture1?.picName ?? "",
-              PicPath: userData.additionalPicture1?.picPath ?? "",
-              PicAlt: userData.additionalPicture1?.picAlt ?? "",
+
+          setAdditionalPic1({
+            PicID: userData.additionalPicture1?.picId ?? null,
+            PicName: userData.additionalPicture1?.picName ?? "",
+            PicPath: userData.additionalPicture1?.picPath ?? "",
+            PicAlt: userData.additionalPicture1?.picAlt ?? "",
+          });
+
+          setAdditionalPic2({
+            PicID: userData.additionalPicture2?.picId ?? null,
+            PicName: userData.additionalPicture2?.picName ?? "",
+            PicPath: userData.additionalPicture2?.picPath ?? "",
+            PicAlt: userData.additionalPicture2?.picAlt ?? "",
+          });
+
+          setPrivacySettings(userData.privacySettings ?? {
+            showPartner: true, showApartmentNumber: true, showMobilePhone: true,
+            showEmail: true, showArrivalYear: true, showOrigin: true,
+            showProfession: true, showInterests: true, showAboutMe: true,
+            showProfilePicture: true, showAdditionalPictures: true,
             });
 
-            setAdditionalPic2({
-              PicID: userData.additionalPicture2?.picId ?? null,
-              PicName: userData.additionalPicture2?.picName ?? "",
-              PicPath: userData.additionalPicture2?.picPath ?? "",
-              PicAlt: userData.additionalPicture2?.picAlt ?? "",
-            });
-
-            if (Globals.userSelectedLanguage === "he") {
-              setForm((prev) => ({
-                ...prev,
-                name: userData.hebName,
-                partner: userData.spouseHebName,
-              }));
-            } else if (Globals.userSelectedLanguage === "en") {
-              setForm((prev) => ({
-                ...prev,
-                name: userData.engName,
-                partner: userData.spouseEngName,
-              }));
-            }
+          if (Globals.userSelectedLanguage === "he") {
+            setForm((prev) => ({
+              ...prev,
+              name: userData.hebName || "",
+              partner: userData.spouseHebName || "",
+            }));
+          } else if (Globals.userSelectedLanguage === "en") {
+            setForm((prev) => ({
+              ...prev,
+              name: userData.engName || "",
+              partner: userData.spouseEngName || "",
+            }));
           }
         } catch (error) {
           console.error("Error loading user data from storage", error);
@@ -173,25 +185,48 @@ export default function Profile() {
       };
     }, [])
   );
+  const isOwnProfile = loggedInUserId && viewingUserId && (loggedInUserId === viewingUserId);
+  const isVisible = (fieldKey) => {
+    if (isOwnProfile) return true;
+    if (!privacySettings) return true;
+    return privacySettings[fieldKey];
+  };
 
-  // Construct the full image URL if mainImagePath exists, otherwise use placeholder
-  const imageUrl = profilePic.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` }
-    : defaultUserImage;
+  // New check to see if the profile is fully private
 
-  const additionalImage1 = additionalPic1.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` }
-    : defaultUserImage;
+  const isProfilePrivate = privacySettings && !isOwnProfile &&
+    !privacySettings.showProfilePicture &&
+    !privacySettings.showAdditionalPictures &&
+    !privacySettings.showPartner &&
+    !privacySettings.showApartmentNumber &&
+    !privacySettings.showMobilePhone &&
+    !privacySettings.showEmail &&
+    !privacySettings.showArrivalYear &&
+    !privacySettings.showOrigin &&
+    !privacySettings.showProfession &&
+    !privacySettings.showInterests &&
+    !privacySettings.showAboutMe;
 
-  const additionalImage2 = additionalPic2.PicPath?.trim()
-    ? { uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` }
-    : defaultUserImage;
+  // Determine the correct image source based on privacy settings
+  const getImageUrl = (picData, isPicVisible) => {
+      const hasPath = picData && picData.PicPath && picData.PicPath.trim();
+      if (isPicVisible && hasPath) {
+          return { uri: `${Globals.API_BASE_URL}${picData.PicPath}` };
+      }
+      return defaultUserImage;
+  };
+
+  const profileImageSource = getImageUrl(profilePic, isVisible('showProfilePicture'));
+  const additionalImage1Source = getImageUrl(additionalPic1, isVisible('showAdditionalPictures'));
+  const additionalImage2Source = getImageUrl(additionalPic2, isVisible('showAdditionalPictures'));
 
   const handleImagePress = (imageUriToView, altText = "") => {
-    if (!imageUriToView) {
-      console.log("handleImagePress: No valid imageUri provided.");
-      return;
-    }
+    // if (!imageUriToView || imageUriToView === Globals.API_BASE_URL) {
+    //   console.log("handleImagePress: No valid imageUri provided.");
+    //   return;
+    // }
+
+    if (!imageUriToView || imageUriToView === defaultUserImage) return; // Don't open modal for default image
     console.log("handleImagePress: imageUriToView:", imageUriToView);
 
     if (imageUriToView === Globals.API_BASE_URL) {
@@ -200,7 +235,8 @@ export default function Profile() {
     }
 
     const paramsToPass = {
-      imageUri: imageUriToView,
+      imageUri: imageUriToView.uri, // !! make sure to pass the URI correctly
+      //imageUri: imageUriToView,
       altText: altText,
     };
 
@@ -212,34 +248,79 @@ export default function Profile() {
     });
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text>{t("Common_Loading")}</Text>
+      </View>
+    );
+  }
+  // If the profile is fully private, render a special component
+
+  if (isProfilePrivate) {
+    return (
+        <View style={styles.wrapper}>
+            <Header />
+            <ScrollView contentContainerStyle={styles.scroll}>
+                <View style={styles.profileImageContainer}>
+                    <Image source={defaultUserImage} style={styles.profileImage} />
+                </View>
+                <View style={styles.profileNameContainer}>
+                    <Text style={styles.profileName}>
+                        {form.name || t("ProfileScreen_emptyDataField")}
+                    </Text>
+                </View>
+                <Text style={styles.privateText}>{t('ProfileScreen_privateProfile')}</Text>
+            </ScrollView>
+        </View>
+    );
+  }
+
+  const renderField = (fieldKey, label, value) => {
+    if (!isVisible(fieldKey)) return null;
+    return (
+      <>
+        <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+          {label}
+        </Text>
+        <Text style={[styles.box, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+          {value || t("ProfileScreen_emptyDataField")}
+        </Text>
+      </>
+    );
+  };
+
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Header />
-        {/* !! Add check if profileID == userID */}
-        <FlipButton
-          onPress={() =>
-            router.push({
-              pathname: "./EditProfile",
-              params: {
-                initialData: JSON.stringify(form),
-                initialPics: JSON.stringify({
-                  profilePic,
-                  additionalPic1,
-                  additionalPic2,
-                }),
-              },
-            })
-          }
-          bgColor="white"
-          textColor="black"
-          style={styles.editProfileButton}
-        >
-          <Text style={styles.editProfileButtonText}>
-            {t("ProfileScreen_editButton")}
-          </Text>
-        </FlipButton>
 
+        {isOwnProfile && (
+          <FlipButton
+            onPress={() =>
+              router.push({
+                pathname: "./EditProfile",
+                params: {
+                  initialData: JSON.stringify(form),
+                  initialPics: JSON.stringify({
+                    profilePic,
+                    additionalPic1,
+                    additionalPic2,
+                  }),
+                },
+              })
+            }
+            bgColor="white"
+            textColor="black"
+            style={styles.editProfileButton}
+          >
+            <Text style={styles.editProfileButtonText}>
+              {t("ProfileScreen_editButton")}
+            </Text>
+          </FlipButton>
+        )}
+        {/* This block will now show the default image if the profile picture is private */}
         <View style={styles.profileImageContainer}>
           {/* !! Change this to users profile picture */}
 
@@ -247,26 +328,21 @@ export default function Profile() {
             shrinkScale={0.95}
             onPress={() =>
               handleImagePress(
-                Globals.API_BASE_URL + profilePic.PicPath,
+                profileImageSource,
                 profilePic.PicAlt
               )
             }
-            disabled={!(Globals.API_BASE_URL + profilePic.PicPath)}
+            //disabled={!profilePic.PicPath?.trim()}
+            disabled={profileImageSource === defaultUserImage}
           >
             <Image
-              alt={profilePic.PicAlt}
-              // source={{
-              //   uri: profilePic.PicPath?.trim()
-              //     ? Globals.API_BASE_URL + profilePic.PicPath
-              //     : defaultUserImage,
-              //     //q: fix the pathing here
-              //     //a:
-              // }}
-              source={imageUrl}
+              alt={profilePic.PicAlt || "Profile picture"}
+              source={profileImageSource }
               style={styles.profileImage}
             />
           </BouncyButton>
         </View>
+        
 
         <View style={styles.profileNameContainer}>
           {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
@@ -276,281 +352,50 @@ export default function Profile() {
             {form.name || t("ProfileScreen_emptyDataField")}
           </Text>
         </View>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_partner")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.partner || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_apartmentNumber")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.residentApartmentNumber || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_mobilePhone")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.mobilePhone || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_email")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.email || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_arrivalYear")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.arrivalYear || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_origin")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.origin || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_profession")}
-        </Text>
-
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.profession || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_interests")}
-        </Text>
-        <View style={styles.chipContainer}>
-          {form.interests && form.interests.length > 0 ? (
-            form.interests.map((interestName) => (
-              <InterestChip
-                key={interestName}
-                mode="display"
-                label={interestName}
-              />
-            ))
-          ) : (
-            <Text style={styles.noInterestsText}>
-              {t("ProfileScreen_emptyDataField")}
-            </Text>
-          )}
-        </View>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_aboutMe")}
-        </Text>
-        <Text
-          style={[
-            styles.box,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {form.aboutMe || t("ProfileScreen_emptyDataField")}
-        </Text>
-
-        <Text
-          style={[
-            styles.label,
-            {
-              textAlign:
-                Globals.userSelectedDirection === "rtl" ? "right" : "left",
-            },
-          ]}
-        >
-          {t("ProfileScreen_extraImages")}
-        </Text>
-        <View style={styles.profileExtraImageContainer}>
-          {/* <Image
-            source={{
-              uri: form.additionalPic1ID?.trim()
-                ? form.additionalPic1ID
-                : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-            }}
-            style={styles.extraImage}
-          /> */}
-          <BouncyButton
-            shrinkScale={0.95}
-            onPress={() =>
-              handleImagePress(
-                Globals.API_BASE_URL + additionalPic1.PicPath,
-                additionalPic1.PicAlt
-              )
-            }
-            disabled={!(Globals.API_BASE_URL + additionalPic1.PicPath)}
-          >
-            <Image
-              alt={additionalPic1.PicAlt}
-              source={additionalImage1}
-              style={styles.profileImage}
-            />
-          </BouncyButton>
-          {/* <Image
-            source={{
-              uri: form.additionalPic2ID?.trim()
-                ? form.additionalPic2ID
-                : "https://static.vecteezy.com/system/resources/thumbnails/026/266/484/small_2x/default-avatar-profile-icon-social-media-user-photo-image-vector.jpg",
-            }}
-            style={styles.extraImage}
-          /> */}
-
-          <BouncyButton
-            shrinkScale={0.95}
-            onPress={() =>
-              handleImagePress(
-                Globals.API_BASE_URL + additionalPic2.PicPath,
-                additionalPic2.PicAlt
-              )
-            }
-            disabled={!(Globals.API_BASE_URL + additionalPic2.PicPath)}
-          >
-            <Image
-              alt={additionalPic2.PicAlt}
-              source={additionalImage2}
-              style={styles.profileImage}
-            />
-          </BouncyButton>
-        </View>
+        
+        {renderField('showPartner', t("ProfileScreen_partner"), form.partner)}
+        {renderField('showApartmentNumber', t("ProfileScreen_apartmentNumber"), form.residentApartmentNumber)}
+        {renderField('showMobilePhone', t("ProfileScreen_mobilePhone"), form.mobilePhone)}
+        {renderField('showEmail', t("ProfileScreen_email"), form.email)}
+        {renderField('showArrivalYear', t("ProfileScreen_arrivalYear"), form.arrivalYear)}
+        {renderField('showOrigin', t("ProfileScreen_origin"), form.origin)}
+        {renderField('showProfession', t("ProfileScreen_profession"), form.profession)}
+        {isVisible('showInterests') && (
+            <>
+                <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+                    {t("ProfileScreen_interests")}
+                </Text>
+                <View style={styles.chipContainer}>
+                {form.interests && form.interests.length > 0 ? (
+                    form.interests.map((interestName) => (
+                    <InterestChip key={interestName} mode="display" label={interestName} />
+                    ))
+                ) : (
+                    <Text style={styles.noInterestsText}>{t("ProfileScreen_emptyDataField")}</Text>
+                )}
+                </View>
+            </>
+        )}
+        {renderField('showAboutMe', t("ProfileScreen_aboutMe"), form.aboutMe)}
+        {isVisible('showAdditionalPictures') && (
+            <>
+                <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+                    {t("ProfileScreen_extraImages")}
+                </Text>
+                <View style={styles.profileExtraImageContainer}>
+                  <BouncyButton onPress={() => handleImagePress(additionalImage1Source, additionalPic1.PicAlt)} 
+                  //disabled={!additionalPic1.PicPath?.trim()}
+                  disabled={additionalImage1Source === defaultUserImage}>
+                      <Image alt={additionalPic1.PicAlt || "Extra picture 1"} source={additionalImage1Source} style={styles.profileImage}/>
+                  </BouncyButton>
+                  <BouncyButton onPress={() => handleImagePress(additionalImage2Source, additionalPic2.PicAlt)} 
+                    //disabled={!additionalPic2.PicPath?.trim()}
+                    disabled={additionalImage2Source === defaultUserImage}>
+                      <Image alt={additionalPic2.PicAlt || "Extra picture 2"} source={additionalImage2Source} style={styles.profileImage}/>
+                  </BouncyButton>
+                </View>
+            </>
+        )}
       </ScrollView>
     </View>
   );
@@ -725,5 +570,17 @@ const styles = StyleSheet.create({
     color: "#666",
     fontStyle: "italic",
     padding: 5,
+  },
+  privateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  privateText: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    marginTop: 20,
+    textAlign: 'center',
   },
 });

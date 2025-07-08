@@ -36,6 +36,7 @@ import LabeledTextInput from "@/components/LabeledTextInput";
 import { Globals } from "@/app/constants/Globals";
 import InterestModal from "@/components/InterestSelectionModal";
 import ImageHistory from "@/components/ImageHistory";
+import PrivacySettingsModal from "@/components/PrivacySettingsModal";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -59,8 +60,22 @@ export default function EditProfile() {
     profession: "",
     interests: "",
     aboutMe: "",
-
     residentApartmentNumber: null,
+  });
+
+  const [isPrivacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [privacySettings, setPrivacySettings] = useState({
+    showPartner: true,
+    showApartmentNumber: true,
+    showMobilePhone: true,
+    showEmail: true,
+    showArrivalYear: true,
+    showOrigin: true,
+    showProfession: true,
+    showInterests: true,
+    showAboutMe: true,
+    showProfilePicture: true,
+    showAdditionalPictures: true,
   });
 
   const [profilePic, setProfilePic] = useState({
@@ -520,6 +535,37 @@ export default function EditProfile() {
       setAdditionalImage2(defaultUserImage);
     }
   }, [additionalPic2.PicPath]);
+
+  // Fetch privacy settings on component load
+  useEffect(() => {
+    const fetchPrivacySettings = async () => {
+      try {
+        const storedUserID = await AsyncStorage.getItem("userID");
+        if (!storedUserID) return;
+
+        const response = await fetch(`${Globals.API_BASE_URL}/api/People/PrivacySettings/${storedUserID}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPrivacySettings(data);
+        } else {
+          console.log("No custom privacy settings found for user, using defaults.");
+        }
+      } catch (error) {
+        console.error("Failed to fetch privacy settings:", error);
+      }
+    };
+
+    fetchPrivacySettings();
+  }, []);
+
+  const handleSavePrivacySettings = (newSettings) => {
+    setPrivacySettings(newSettings);
+    // Toast.show({
+    //     type: "info",
+    //     text1: t("PrivacySettings_savedLocally"),
+    //     position: "top",
+    // });
+  };
 
   // Helper function to get the current URI based on type
   // This function should return the *display-ready* URI (local or full server URL)
@@ -1012,11 +1058,13 @@ export default function EditProfile() {
       const requestBody = {
         // your cleaned form fields
         ...cleanedForm,
+        PersonId: storedUserID,
         profilePicture: finalProfilePicData,
         additionalPicture1: finalAdd1PicData,
         additionalPicture2: finalAdd2PicData,
         interestNames: finalSelectedNames,
         newInterestNames: finalNewInterestNames,
+        privacySettings: privacySettings,
       };
       console.log("requestBody: ", requestBody);
 
@@ -1327,6 +1375,16 @@ export default function EditProfile() {
             </BouncyButton>
           </View>
         </View>
+
+        <View style={styles.privacyButtonContainer}>
+            <FlipButton
+                onPress={() => setPrivacyModalVisible(true)}
+                style={styles.privacyButton}
+            >
+                <Text style={styles.privacyButtonText}>{t('PrivacySettings_title')}</Text>
+            </FlipButton>
+        </View>
+
         <View style={styles.buttonRow}>
           <FlipButton
             onPress={handleSave}
@@ -1375,6 +1433,13 @@ export default function EditProfile() {
         initialNewInterests={initialNewInterests}
         onClose={() => setInterestModalVisible(false)}
         onConfirm={handleConfirmInterests}
+      />
+
+      <PrivacySettingsModal
+        visible={isPrivacyModalVisible}
+        onClose={() => setPrivacyModalVisible(false)}
+        initialSettings={privacySettings}
+        onSave={handleSavePrivacySettings}
       />
     </View>
   );
@@ -1596,5 +1661,23 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+  },
+
+  privacyButtonContainer: {
+    width: '85%',
+    alignSelf: 'center',
+    marginTop: 40,
+  },
+  privacyButton: {
+    paddingVertical: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: '#6c757d', // A neutral, secondary button color
+  },
+  privacyButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#ffffff'
   },
 });
