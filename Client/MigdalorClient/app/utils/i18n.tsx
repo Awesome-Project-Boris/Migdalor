@@ -8,12 +8,10 @@ const resources = {
   en: {
     // English translations
     translation: {
-      Common_Loading: 'Loading Page',
-
-      SettingsLayoutTabs_FontSettings: 'Font Settings',
-      SettingsLayoutTabs_notificationSettings: 'Notification Settings',
-      SettingsLayoutTabs_languageSettings: 'User Settings',
-      SettingsLayoutTabs_SaveChanges: 'Save Changes',
+      SettingsLayoutTabs_FontSettings: "Font Settings",
+      SettingsLayoutTabs_notificationSettings: "Notification Settings",
+      SettingsLayoutTabs_languageSettings: "User Settings",
+      SettingsLayoutTabs_SaveChanges: "Save Changes",
 
       FontSettingsPage_header: "Font Settings:",
       FontSettingsPage_exampleHeader: "Sample Text:",
@@ -81,9 +79,10 @@ const resources = {
       interestModal_selectExisting: "Select from existing",
       interestModal_noResults: "No interests found.",
       interestModal_addNew: "Or add a new one",
-      interestModal_addPlaceholder: "Type a new interest ( Hebrew only )",
+      interestModal_addPlaceholder: "Type a new interest ( Hebrew )",
       interestModal_addButton: "Add",
       interestModal_acceptButton: "Accept",
+      interestModa_newlyAdded: "Newly added interests",
 
       MainMenuScreen_ProfileButton: "Profile",
       MainMenuScreen_ActivitiesAndClassesButton: "Activities and Classes",
@@ -220,6 +219,8 @@ const resources = {
       ImagePicker_saveCameraImageFailure: "Could not save camera image.",
       ImagePicker_saveLibraryImageFailure: "Could not save library image.",
       ImagePicker_openLibraryFailure: "Could not open image library.",
+      ImagePicker_chooseFromHistoryButton: "History",
+
       ImageViewScreen_ErrorNoImage: "No image available",
       MarketplaceScreen_NoItems: "No items found",
       MarketplaceScreen_accordionClose: "Press to close search",
@@ -322,12 +323,10 @@ const resources = {
   he: {
     // Hebrew translations
     translation: {
-      Common_Loading: 'טוען דף',
-
-      SettingsLayoutTabs_FontSettings: 'הגדרות גופן',
-      SettingsLayoutTabs_notificationSettings: 'הגדרות התראות',
-      SettingsLayoutTabs_languageSettings: 'הגדרות משתמש',
-      SettingsLayoutTabs_SaveChanges: 'שמור שינויים',
+      SettingsLayoutTabs_FontSettings: "הגדרות גופן",
+      SettingsLayoutTabs_notificationSettings: "הגדרות התראות",
+      SettingsLayoutTabs_languageSettings: "הגדרות משתמש",
+      SettingsLayoutTabs_SaveChanges: "שמור שינויים",
 
       FontSettingsPage_header: "גודל טקסט:",
       FontSettingsPage_exampleHeader: "טקסט לדוגמה:",
@@ -393,9 +392,10 @@ const resources = {
       interestModal_selectExisting: "בחירה מתחומי עניין קיימים",
       interestModal_noResults: "לא נמצא תחום עניין",
       interestModal_addNew: "או שניתן להוסיף חדשים!",
-      interestModal_addPlaceholder: " הכניסו תחום עניין חדש ( עברית בלבד )",
+      interestModal_addPlaceholder: " הכניסו תחום עניין חדש ( עברית )",
       interestModal_addButton: "הוספה",
       interestModal_acceptButton: "אישור",
+      interestModa_newlyAdded: "תחומי עניין חדשים",
 
       MainMenuScreen_ProfileButton: "פרופיל",
       MainMenuScreen_ActivitiesAndClassesButton: "חוגים ופעילויות",
@@ -529,6 +529,7 @@ const resources = {
       ImagePicker_saveLibraryImageFailure: "לא ניתן לשמור את תמונת הספרייה.",
       ImagePicker_openLibraryFailure: "לא ניתן לפתוח את ספריית התמונות.",
       ImageViewScreen_ErrorNoImage: "אין תמונה זמינה",
+      ImagePicker_chooseFromHistoryButton: "היסטוריה",
 
       MarketplaceScreen_NoItems: "לא נמצאו פריטים",
 

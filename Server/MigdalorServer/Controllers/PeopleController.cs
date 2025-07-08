@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -149,16 +150,27 @@ namespace MigdalorServer.Controllers
         [HttpPut("UpdateProfile/{id}")]
         public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto)
         {
+
+            // --- ADD THIS LOGGING BLOCK ---
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            Console.WriteLine("--- RECEIVED UpdateProfile DTO ---");
+            Console.WriteLine(JsonSerializer.Serialize(dto, options));
+            Console.WriteLine("----------------------------------");
+            // --- END LOGGING BLOCK ---
+
             using var db = new MigdalorDBContext();
+
             var person = db.OhPeople.Find(id);
             if (person == null)
-                return NotFound(); // Changed: NotFound()
+                return NotFound("Person not found.");
 
-            var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
+            var resident = db.OhResidents
+                             .Include(r => r.InterestNames)
+                             .SingleOrDefault(r => r.ResidentId == id);
             if (resident == null)
-                return NotFound(); // Changed: NotFound()
+                return NotFound("Resident not found.");
 
-            // Update fields
+            // --- Update Standard Fields ---
             person.PhoneNumber = dto.MobilePhone;
             person.Email = dto.Email;
             resident.HomePlace = dto.Origin;
@@ -166,12 +178,99 @@ namespace MigdalorServer.Controllers
             resident.ResidentDescription = dto.AboutMe;
             resident.ResidentApartmentNumber = dto.ResidentApartmentNumber;
 
-            person.ProfilePicId = dto.ProfilePicture?.PicId;
-            resident.AdditionalPic1Id = dto.AdditionalPicture1?.PicId;
-            resident.AdditionalPic2Id = dto.AdditionalPicture2?.PicId;
+            person.ProfilePicId = dto.ProfilePicture?.PicID;
+            resident.AdditionalPic1Id = dto.AdditionalPicture1?.PicID;
+            resident.AdditionalPic2Id = dto.AdditionalPicture2?.PicID;
 
+            // --- ✅ CORRECTED: Handle Interests Conditionally ---
+
+            // Only modify interests if the client actually sent data for them.
+            bool interestsWereEdited = (dto.InterestNames != null && dto.InterestNames.Any()) ||
+                                       (dto.NewInterestNames != null && dto.NewInterestNames.Any());
+
+            if (interestsWereEdited)
+            {
+                // 1. Add any new interests to the main OH_Interests table
+                if (dto.NewInterestNames != null && dto.NewInterestNames.Any())
+                {
+                    foreach (var newName in dto.NewInterestNames)
+                    {
+                        if (!db.OhInterests.Any(i => i.InterestName == newName))
+                        {
+                            db.OhInterests.Add(new OhInterest { InterestName = newName });
+                        }
+                    }
+                    db.SaveChanges();
+                }
+
+                // 2. Clear the user's existing interests
+                resident.InterestNames.Clear();
+
+                // 3. Link all selected interests (both old and new) to the user
+                var allSelectedNames = (dto.InterestNames ?? new List<string>())
+                                        .Concat(dto.NewInterestNames ?? new List<string>())
+                                        .Distinct()
+                                        .ToList();
+
+                if (allSelectedNames.Any())
+                {
+                    var interestsToLink = db.OhInterests
+                                            .Where(i => allSelectedNames.Contains(i.InterestName))
+                                            .ToList();
+
+                    foreach (var interest in interestsToLink)
+                    {
+                        resident.InterestNames.Add(interest);
+                    }
+                }
+            }
+
+            // --- Save All Changes ---
             db.SaveChanges();
-            return NoContent(); // Changed: return 204 on success
+            return NoContent();
+        }
+
+        [HttpPost("SearchByInterests")]
+        public async Task<IActionResult> SearchByInterests([FromBody] List<string> interestNames)
+        {
+            using var db = new MigdalorDBContext();
+
+            // If the list is null or empty, return all active residents.
+            if (interestNames == null || !interestNames.Any())
+            {
+                var allDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
+                return Ok(allDigests);
+            }
+
+            // ✅ STEP 1: Fetch all residents and their interests into memory first.
+            // This is the key change. .ToList() executes the query and avoids the translation error.
+            var allResidentsWithInterests = db.OhResidents
+                .Include(r => r.InterestNames)
+                .ToList();
+
+            // ✅ STEP 2: Now, filter the in-memory list using standard C#.
+            // This logic is the same as before, but now it runs on the C# list, not against the database.
+            var residentIds = allResidentsWithInterests
+                .Where(resident => interestNames.All(requiredName =>
+                    resident.InterestNames.Any(residentInterest => residentInterest.InterestName == requiredName)
+                ))
+                .Select(resident => resident.ResidentId)
+                .ToList();
+
+            // If no residents match, return an empty list.
+            if (!residentIds.Any())
+            {
+                return Ok(new List<ResidentDigest>());
+            }
+
+            // ✅ STEP 3: Proceed as before.
+            // Fetch the digests and filter them by the IDs you found.
+            var allActiveDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
+            var filteredDigests = allActiveDigests
+                                    .Where(digest => residentIds.Contains(digest.UserId))
+                                    .ToList();
+
+            return Ok(filteredDigests);
         }
 
         // DELETE: api/People/{id}
