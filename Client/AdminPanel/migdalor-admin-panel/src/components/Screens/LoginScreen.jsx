@@ -38,7 +38,7 @@ const LoginScreen = () => {
       </div>
       <div className="relative w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
         <div className="text-center">
-          <span className="w-12 h-12 mx-auto text-blue-600">🛡️</span>
+          <span className="w-128 h-128 mx-auto text-blue-600">🛡️</span>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
             פאנל ניהול מגדלור
           </h2>
