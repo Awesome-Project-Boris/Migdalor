@@ -103,7 +103,7 @@ namespace MigdalorServer.Controllers
                 {
                     return BadRequest("Invalid user ID in token.");
                 }
-
+                
                 var data = OhPerson.GetPersonByIDForProfile(userId);
                 return Ok(data);
             }
@@ -147,6 +147,37 @@ namespace MigdalorServer.Controllers
         }
 
         // --- Other existing methods ---
+
+        [HttpGet("AdminDetails")]
+        [Authorize]
+        public async Task<ActionResult<OhPerson>> GetAdminDetails()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("Invalid token.");
+                }
+
+                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return BadRequest("Invalid user ID in token.");
+                }
+
+                var data = OhPerson.GetUserByID(userId);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "User not found")
+                    return NotFound("User Not Found");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
+        }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OhPerson>>> GetAllPeople()

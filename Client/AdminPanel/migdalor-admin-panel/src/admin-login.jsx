@@ -129,7 +129,7 @@ const AuthProvider = ({ children }) => {
       const adminStatus = await api.get("/People/IsAdmin", currentToken);
       if (adminStatus) {
         setIsAdmin(true);
-        const userDetails = await api.get("/People/details", currentToken);
+        const userDetails = await api.get("/People/AdminDetails", currentToken);
         setUser(userDetails);
       } else {
         throw new Error("User is not an admin.");
