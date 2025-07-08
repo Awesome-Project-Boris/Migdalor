@@ -149,6 +149,7 @@ namespace MigdalorServer.Controllers
         // --- Other existing methods ---
 
         [HttpGet]
+        //[Authorize]
         public async Task<ActionResult<IEnumerable<OhPerson>>> GetAllPeople()
         {
             var people = await _context.OhPeople.ToListAsync();

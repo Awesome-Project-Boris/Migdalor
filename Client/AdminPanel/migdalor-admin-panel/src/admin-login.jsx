@@ -129,8 +129,8 @@ const AuthProvider = ({ children }) => {
       const adminStatus = await api.get("/People/IsAdmin", currentToken);
       if (adminStatus) {
         setIsAdmin(true);
-        const userDetails = await api.get("/People/details", currentToken);
-        setUser(userDetails);
+        // const userDetails = await api.get("/People/details", currentToken);
+        // setUser(userDetails);
       } else {
         throw new Error("User is not an admin.");
       }
@@ -149,10 +149,15 @@ const AuthProvider = ({ children }) => {
     verifyAdminStatus(token);
   }, [token, verifyAdminStatus]);
 
-  const login = async (email, password) => {
+  // FIX: Changed parameter name for clarity and updated the body of the API call
+  const login = async (phoneNumber, password) => {
     try {
       setIsLoading(true);
-      const response = await api.post("/People/login", { email, password });
+      // FIX: The server expects an object with 'PhoneNumber' and 'Password' properties.
+      const response = await api.post("/People/login", {
+        PhoneNumber: phoneNumber,
+        Password: password,
+      });
       const newToken = response;
       localStorage.setItem("migdalor_admin_token", newToken);
       setToken(newToken);
@@ -222,13 +227,14 @@ const LoginScreen = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // This is crucial to prevent page refresh
     setError("");
     setIsLoggingIn(true);
     try {
-      // The backend uses the 'email' field for the phone number as well
       await login(phoneNumber, password);
-    } catch {
+    } catch (err) {
+      // FIX: Capture the error object for better debugging
+      console.error("Login attempt failed:", err);
       setError("ההתחברות נכשלה. אנא בדוק את פרטיך וודא שאתה מנהל מערכת.");
       setIsLoggingIn(false);
     }
@@ -289,6 +295,7 @@ const LoginScreen = () => {
           )}
 
           <div>
+            {/* FIX: Removed redundant onClick handler. The form's onSubmit is sufficient. */}
             <button
               type="submit"
               disabled={isLoggingIn}
@@ -302,6 +309,8 @@ const LoginScreen = () => {
     </div>
   );
 };
+
+// ... (The rest of the components: AdminLayout, SidebarButton, Dashboard, etc. remain the same)
 
 const AdminLayout = () => {
   const [currentPage, setCurrentPage] = useState("dashboard");

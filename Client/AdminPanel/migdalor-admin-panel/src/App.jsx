@@ -1,10 +1,31 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useContext, useEffect } from "react";
+import { useState } from "react";
+import AuthProvider from "./components/Auth/AuthProvider";
+import AuthContext from "./components/Auth/AuthContext";
+import LoadingScreen from "./components/Screens/LoadingScreen";
+import LoginScreen from "./components/Screens/LoginScreen";
+import AdminLayout from "./components/Layout/AdminLayout";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const { isAdmin, isLoading } = useContext(AuthContext);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    document.documentElement.lang = "he";
+    document.documentElement.dir = "rtl";
+    document.body.classList.add("font-he");
+  }, []);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!isAdmin) {
+    return <LoginScreen />;
+  }
 
   return (
     <>
@@ -28,8 +49,22 @@ function App() {
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
+      <AdminLayout />
     </>
-  )
+  );
 }
 
-export default App
+export default function MigdalorAdminPanel() {
+  return (
+    <>
+      <style>{`
+        body.font-he {
+          font-family: Calibri, sans-serif;
+        }
+      `}</style>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </>
+  );
+}
