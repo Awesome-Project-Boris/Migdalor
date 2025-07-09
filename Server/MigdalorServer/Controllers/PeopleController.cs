@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
@@ -17,102 +22,195 @@ namespace MigdalorServer.Controllers
     public class PeopleController : ControllerBase
     {
         private readonly MigdalorDBContext _context;
+        private readonly IConfiguration _configuration;
 
-        public PeopleController(MigdalorDBContext context)
+        // Injected IConfiguration to access JWT settings from appsettings.json
+        public PeopleController(MigdalorDBContext context, IConfiguration configuration)
         {
             _context = context;
-        }
-
-        // GET: api/People
-        // Changed from minimal API style to classic Web API: returns ActionResult<IEnumerable<OhPerson>>
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<OhPerson>>> GetAllPeople()
-        {
-            var people = await _context.OhPeople.ToListAsync();
-            return Ok(people); // Changed: use Ok() to wrap result
-        }
-
-        // GET: api/People/GetPersonByIDForProfile/{id}
-        // Kept signature similar but return type is IActionResult for classic style
-        [HttpGet("GetPersonByIDForProfile/{id}")]
-        public IActionResult GetPersonByIDForProfile(Guid id)
-        {
-            try
-            {
-                var data = OhPerson.GetPersonByIDForProfile(id);
-                return Ok(data); // Changed: use Ok() for 200
-            }
-            catch (Exception e)
-            {
-                if (e.Message == "User not found")
-                    return NotFound("User Not Found"); // Changed: return NotFound() for 404
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
-                ); // Changed: classic error handling
-            }
-        }
-
-        // POST: api/People/register
-        // Changed to IActionResult and uses Ok() for result
-        [HttpPost("register")]
-        public IActionResult Register([FromBody] UserRegister user)
-        {
-            try
-            {
-                var newUser = OhPerson.AddUser(user);
-                return Ok(newUser); // Changed: wrap in Ok()
-            }
-            catch (Exception e)
-            {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    $"Error Registering User: {e.InnerException?.Message ?? e.Message}"
-                ); // Changed: classic error
-            }
+            _configuration = configuration;
         }
 
         // POST: api/People/login
-        // Changed to return IActionResult for conventional API
+        // This method now authenticates the user and returns a JWT.
         [HttpPost("login")]
         public IActionResult Login([FromBody] UserLogin userLogin)
         {
             try
             {
                 OhPerson user = OhPerson.AuthenticateUser(userLogin);
-                return Ok(
-                    new
-                    {
-                        user.PersonId,
-                        user.HebFirstName,
-                        user.HebLastName,
-                        user.EngFirstName,
-                        user.EngLastName,
-                    }
-                ); // Changed: Ok() with object result
+                var token = GenerateJwtToken(user);
+                return Ok(token); // Return the token string directly
             }
             catch (Exception e)
             {
                 if (e.Message == "User not found")
-                    return NotFound("User Not Found"); // Changed: NotFound()
+                    return NotFound("User Not Found");
                 if (e.Message == "Wrong password")
-                    return Unauthorized("Wrong Password"); // Changed: Unauthorized()
+                    return Unauthorized("Wrong Password");
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
                     $"Error Logging In: {e.InnerException?.Message ?? e.Message}"
-                ); // Changed: classic error
+                );
             }
         }
 
-        // GET: api/People/ActiveDigests
-        // Changed signature to ActionResult<IEnumerable<ResidentDigest>> and use Ok()
+        // GET: api/People/IsAdmin
+        // This endpoint is now protected and checks the role of the authenticated user.
+        [HttpGet("IsAdmin")]
+        [Authorize] // Ensures only authenticated users can access this
+        public IActionResult IsAdmin()
+        {
+            try
+            {
+                // Get the user ID from the claims inside the JWT
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("Invalid token: Missing user identifier.");
+                }
+
+                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return BadRequest("Invalid user ID format in token.");
+                }
+
+                return Ok(OhPerson.IsAdmin(userId));
+            }
+            catch (Exception e)
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error Checking Admin Status: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
+        }
+
+        // GET: api/People/details
+        // This endpoint gets details for the currently logged-in user from their token.
+        [HttpGet("details")]
+        [Authorize]
+        public IActionResult GetPersonDetailsForProfile()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("Invalid token.");
+                }
+
+                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return BadRequest("Invalid user ID in token.");
+                }
+                
+                var data = OhPerson.GetPersonByIDForProfile(userId);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "User not found")
+                    return NotFound("User Not Found");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
+        }
+
+        // Helper method to generate the JWT
+        private string GenerateJwtToken(OhPerson user)
+        {
+            var securityKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"])
+            );
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.PersonId.ToString()),
+                new Claim(ClaimTypes.Name, user.PhoneNumber),
+                new Claim(ClaimTypes.GivenName, user.EngFirstName ?? ""),
+                new Claim(ClaimTypes.Surname, user.EngLastName ?? ""),
+                new Claim(ClaimTypes.Role, user.PersonRole ?? "User"), // Add role claim, default to "User"
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddHours(8), // Set token expiration
+                signingCredentials: credentials
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // --- Other existing methods ---
+
+        [HttpGet("AdminDetails")]
+        [Authorize]
+        public IActionResult GetAdminDetails()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("Invalid token.");
+                }
+
+                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return BadRequest("Invalid user ID in token.");
+                }
+
+                var data = OhPerson.GetUserByID(userId);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "User not found")
+                    return NotFound("User Not Found");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<OhPerson>>> GetAllPeople()
+        {
+            var people = await _context.OhPeople.ToListAsync();
+            return Ok(people);
+        }
+
+        [HttpPost("register")]
+        public IActionResult Register([FromBody] UserRegister user)
+        {
+            try
+            {
+                var newUser = OhPerson.AddUser(user);
+                return Ok(newUser);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error Registering User: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
+        }
+
         [HttpGet("ActiveDigests")]
         public async Task<ActionResult<IEnumerable<ResidentDigest>>> GetActiveResidentDigests()
         {
             try
             {
                 var digests = await OhPerson.GetActiveResidentDigestsAsync(_context);
-                return Ok(digests); // Changed: Ok() result
+                return Ok(digests);
             }
             catch (Exception ex)
             {
@@ -123,30 +221,10 @@ namespace MigdalorServer.Controllers
                         message = "An error occurred while fetching resident digests.",
                         error = ex.Message,
                     }
-                ); // Changed: classic error
+                );
             }
         }
 
-        // GET: api/People/isadmin/{userId}
-        // Changed to IActionResult and use Ok() to return boolean
-        [HttpGet("isadmin/{userId}")]
-        public IActionResult IsAdmin(Guid userId)
-        {
-            try
-            {
-                return Ok(OhPerson.IsAdmin(userId)); // Changed: Ok() with boolean
-            }
-            catch (Exception e)
-            {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    $"Error Checking Admin Status: {e.InnerException?.Message ?? e.Message}"
-                ); // Changed: classic error
-            }
-        }
-
-        // PUT: api/People/UpdateProfile/{id}
-        // Changed to IActionResult and return NoContent() on success
         [HttpPut("UpdateProfile/{id}")]
         // public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto) // changed to the method below to save privacy settings
         public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileRequestDto dto)
@@ -353,17 +431,86 @@ namespace MigdalorServer.Controllers
             return Ok(settingsDto);
         }
 
-        // DELETE: api/People/{id}
-        // Changed to IActionResult and return NoContent() on delete
+        [HttpPost("SearchByInterests")]
+        public async Task<IActionResult> SearchByInterests([FromBody] List<string> interestNames)
+        {
+            using var db = new MigdalorDBContext();
+
+            // If the list is null or empty, return all active residents.
+            if (interestNames == null || !interestNames.Any())
+            {
+                var allDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
+                return Ok(allDigests);
+            }
+
+            // ✅ STEP 1: Fetch all residents and their interests into memory first.
+            // This is the key change. .ToList() executes the query and avoids the translation error.
+            var allResidentsWithInterests = db.OhResidents
+                .Include(r => r.InterestNames)
+                .ToList();
+
+            // ✅ STEP 2: Now, filter the in-memory list using standard C#.
+            // This logic is the same as before, but now it runs on the C# list, not against the database.
+            var residentIds = allResidentsWithInterests
+                .Where(resident => interestNames.All(requiredName =>
+                    resident.InterestNames.Any(residentInterest => residentInterest.InterestName == requiredName)
+                ))
+                .Select(resident => resident.ResidentId)
+                .ToList();
+
+            // If no residents match, return an empty list.
+            if (!residentIds.Any())
+            {
+                return Ok(new List<ResidentDigest>());
+            }
+
+            // ✅ STEP 3: Proceed as before.
+            // Fetch the digests and filter them by the IDs you found.
+            var allActiveDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
+            var filteredDigests = allActiveDigests
+                                    .Where(digest => residentIds.Contains(digest.UserId))
+                                    .ToList();
+
+            return Ok(filteredDigests);
+        }
+
+        // GET: api/People/PrivacySettings/{id}
+        [HttpGet("PrivacySettings/{id}")]
+        public ActionResult<PrivacySettingsDto> GetPrivacySettings(Guid id)
+        {
+            var settings = _context.OhPrivacySettings
+                .AsNoTracking()
+                .FirstOrDefault(ps => ps.PersonId == id);
+            if (settings == null)
+            {
+                return Ok(new PrivacySettingsDto());
+            }
+            var settingsDto = new PrivacySettingsDto
+            {
+                ShowPartner = settings.ShowPartner ?? true,
+                ShowApartmentNumber = settings.ShowApartmentNumber ?? true,
+                ShowMobilePhone = settings.ShowMobilePhone ?? true,
+                ShowEmail = settings.ShowEmail ?? true,
+                ShowArrivalYear = settings.ShowArrivalYear ?? true,
+                ShowOrigin = settings.ShowOrigin ?? true,
+                ShowProfession = settings.ShowProfession ?? true,
+                ShowInterests = settings.ShowInterests ?? true,
+                ShowAboutMe = settings.ShowAboutMe ?? true,
+                ShowProfilePicture = settings.ShowProfilePicture ?? true,
+                ShowAdditionalPictures = settings.ShowAdditionalPictures ?? true,
+            };
+            return Ok(settingsDto);
+        }
+
         [HttpDelete("{id}")]
         public IActionResult Delete(Guid id)
         {
             var person = _context.OhPeople.Find(id);
             if (person == null)
-                return NotFound(); // Changed: NotFound()
+                return NotFound();
             _context.OhPeople.Remove(person);
             _context.SaveChanges();
-            return NoContent(); // Changed: return 204
+            return NoContent();
         }
     }
 }
