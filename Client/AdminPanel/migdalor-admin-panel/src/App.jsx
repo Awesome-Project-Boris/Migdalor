@@ -1,35 +1,34 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+// /src/App.jsx
 
+import React, { useEffect } from "react";
+import { useAuth } from "./auth/AuthContext";
+import AdminLayout from "./components/layout/AdminLayout";
+import LoginScreen from "./pages/LoginScreen";
+import LoadingScreen from "./components/common/LoadingScreen";
+
+/**
+ * The main application component.
+ * It acts as a router, displaying the appropriate screen based on
+ * the user's authentication status.
+ */
 function App() {
-  const [count, setCount] = useState(0)
+  const { isAdmin, isLoading } = useAuth();
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+  // Set document language and direction for RTL support.
+  // This effect runs once when the component mounts.
+  useEffect(() => {
+    document.documentElement.lang = "he";
+    document.documentElement.dir = "rtl";
+    document.body.classList.add("font-he");
+  }, []);
+
+  // Display a loading screen while authentication status is being checked.
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  // Render the AdminLayout if the user is an admin, otherwise show the LoginScreen.
+  return isAdmin ? <AdminLayout /> : <LoginScreen />;
 }
 
-export default App
+export default App;
