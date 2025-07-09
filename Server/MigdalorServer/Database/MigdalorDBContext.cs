@@ -8,6 +8,7 @@ namespace MigdalorServer.Database
 {
     public partial class MigdalorDBContext : DbContext
     {
+
         public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
             : base(options)
         {
@@ -16,6 +17,7 @@ namespace MigdalorServer.Database
         public virtual DbSet<OhActivity> OhActivities { get; set; } = null!;
         public virtual DbSet<OhCategory> OhCategories { get; set; } = null!;
         public virtual DbSet<OhClass> OhClasses { get; set; } = null!;
+        public virtual DbSet<OhDailyAttendance> OhDailyAttendances { get; set; } = null!;
         public virtual DbSet<OhInterest> OhInterests { get; set; } = null!;
         public virtual DbSet<OhListing> OhListings { get; set; } = null!;
         public virtual DbSet<OhNotice> OhNotices { get; set; } = null!;
@@ -71,6 +73,14 @@ namespace MigdalorServer.Database
                     .HasForeignKey<OhClass>(d => d.ClassId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_Classes_Activities");
+            });
+
+            modelBuilder.Entity<OhDailyAttendance>(entity =>
+            {
+                entity.HasOne(d => d.Resident)
+                    .WithMany(p => p.OhDailyAttendances)
+                    .HasForeignKey(d => d.ResidentId)
+                    .HasConstraintName("FK_OH_DailyAttendance_OH_Residents");
             });
 
             modelBuilder.Entity<OhInterest>(entity =>

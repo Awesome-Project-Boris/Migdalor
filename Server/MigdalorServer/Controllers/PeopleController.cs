@@ -360,49 +360,6 @@ namespace MigdalorServer.Controllers
             return NoContent(); // Changed: return 204 on success
         }
 
-        [HttpPost("SearchByInterests")]
-        public async Task<IActionResult> SearchByInterests([FromBody] List<string> interestNames)
-        {
-            using var db = new MigdalorDBContext();
-
-            // If the list is null or empty, return all active residents.
-            if (interestNames == null || !interestNames.Any())
-            {
-                var allDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
-                return Ok(allDigests);
-            }
-
-            // ✅ STEP 1: Fetch all residents and their interests into memory first.
-            // This is the key change. .ToList() executes the query and avoids the translation error.
-            var allResidentsWithInterests = db.OhResidents
-                .Include(r => r.InterestNames)
-                .ToList();
-
-            // ✅ STEP 2: Now, filter the in-memory list using standard C#.
-            // This logic is the same as before, but now it runs on the C# list, not against the database.
-            var residentIds = allResidentsWithInterests
-                .Where(resident => interestNames.All(requiredName =>
-                    resident.InterestNames.Any(residentInterest => residentInterest.InterestName == requiredName)
-                ))
-                .Select(resident => resident.ResidentId)
-                .ToList();
-
-            // If no residents match, return an empty list.
-            if (!residentIds.Any())
-            {
-                return Ok(new List<ResidentDigest>());
-            }
-
-            // ✅ STEP 3: Proceed as before.
-            // Fetch the digests and filter them by the IDs you found.
-            var allActiveDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
-            var filteredDigests = allActiveDigests
-                                    .Where(digest => residentIds.Contains(digest.UserId))
-                                    .ToList();
-
-            return Ok(filteredDigests);
-        }
-
         // GET: api/People/PrivacySettings/{id}
         [HttpGet("PrivacySettings/{id}")]
         public ActionResult<PrivacySettingsDto> GetPrivacySettings(Guid id)
@@ -472,34 +429,6 @@ namespace MigdalorServer.Controllers
                                     .ToList();
 
             return Ok(filteredDigests);
-        }
-
-        // GET: api/People/PrivacySettings/{id}
-        [HttpGet("PrivacySettings/{id}")]
-        public ActionResult<PrivacySettingsDto> GetPrivacySettings(Guid id)
-        {
-            var settings = _context.OhPrivacySettings
-                .AsNoTracking()
-                .FirstOrDefault(ps => ps.PersonId == id);
-            if (settings == null)
-            {
-                return Ok(new PrivacySettingsDto());
-            }
-            var settingsDto = new PrivacySettingsDto
-            {
-                ShowPartner = settings.ShowPartner ?? true,
-                ShowApartmentNumber = settings.ShowApartmentNumber ?? true,
-                ShowMobilePhone = settings.ShowMobilePhone ?? true,
-                ShowEmail = settings.ShowEmail ?? true,
-                ShowArrivalYear = settings.ShowArrivalYear ?? true,
-                ShowOrigin = settings.ShowOrigin ?? true,
-                ShowProfession = settings.ShowProfession ?? true,
-                ShowInterests = settings.ShowInterests ?? true,
-                ShowAboutMe = settings.ShowAboutMe ?? true,
-                ShowProfilePicture = settings.ShowProfilePicture ?? true,
-                ShowAdditionalPictures = settings.ShowAdditionalPictures ?? true,
-            };
-            return Ok(settingsDto);
         }
 
         [HttpDelete("{id}")]
