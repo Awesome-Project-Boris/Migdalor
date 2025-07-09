@@ -150,7 +150,7 @@ namespace MigdalorServer.Controllers
 
         [HttpGet("AdminDetails")]
         [Authorize]
-        public async Task<ActionResult<OhPerson>> GetAdminDetails()
+        public IActionResult GetAdminDetails()
         {
             try
             {
