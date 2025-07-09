@@ -83,6 +83,9 @@ export default function EditProfile() {
     PicName: "",
     PicPath: "",
     PicAlt: "",
+    //DateTime: "",
+    //UploaderId: "",
+    //PicRole: "Profile picture",
   });
 
   const [additionalPic1, setAdditionalPic1] = useState({
@@ -121,31 +124,74 @@ export default function EditProfile() {
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
   const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
   const [historyRole, setHistoryRole] = useState("");
+  const [historyTargetSlot, setHistoryTargetSlot] = useState(null); // 'main', 'add1', or 'add2'
 
-  const openHistoryModal = (role) => {
+
+  const openHistoryModal = (role, target) => {
     setIsNavigatingBack(true); // TO ELIMINATE RACE CONDITION OF MODAL
     setHistoryRole(role);
+    setHistoryTargetSlot(target); // Set the specific target slot
     setHistoryModalVisible(true);
   };
+  useEffect(() => {
+  // This will run AFTER the component re-renders with the new state
+  console.log("The profilePic state has now been updated to:", profilePic);
+}, [profilePic]);
+
+  // const handleSelectFromHistory = (selectedImage) => {
+  //   // console.log("Selected image is:", selectedImage);
+  //   if (historyRole === "Profile picture") {
+  //     // console.log("setting profilePic:", profilePic);
+  //     setProfilePic(selectedImage);
+  //     // console.log("afterwards profilePic:", profilePic);
+  //   } else {
+  //     // console.log("Current additionalPic1:", additionalPic1);
+  //     // console.log("Current additionalPic2:", additionalPic2);
+  //     if (!additionalPic1.PicId || !additionalPic1.PicID ) { // !!
+  //       // console.log("Setting additionalPic1...");
+  //       setAdditionalPic1(selectedImage);
+  //       // console.log("afterwards additionalPic1:", additionalPic1);
+  //     } else {
+  //       // console.log("Setting additionalPic2...");
+  //       setAdditionalPic2(selectedImage);
+  //       // console.log("afterwards additionalPic2:", additionalPic2);
+  //     }
+  //   }
+  //   setShowImageViewModal(false);
+  //   setHistoryModalVisible(false);
+
+  //   setIsNavigatingBack(false);
+  // };
+  useEffect(() => {
+  console.log("3. The 'additionalPic1' state was updated to:", JSON.stringify(additionalPic1, null, 2));
+}, [additionalPic1]);
 
   const handleSelectFromHistory = (selectedImage) => {
-    if (historyRole === "Profile picture") {
-      setProfilePic(selectedImage);
-    } else {
-      // Logic to set the correct "extra" picture
-      if (additionalPic1.PicID === null) {
+    console.log("2. Received in EditProfile:", JSON.stringify(selectedImage, null, 2));
+    // Use the new state to know exactly which image to set
+    switch (historyTargetSlot) {
+      case 'main':
+        setProfilePic(selectedImage);
+        break;
+      case 'add1':
         setAdditionalPic1(selectedImage);
-      } else {
+        break;
+      case 'add2':
         setAdditionalPic2(selectedImage);
-      }
+        break;
+      default:
+        // Fallback in case something goes wrong
+        console.error("Unknown history target slot:", historyTargetSlot);
+        Toast.show({ type: "error", text1: "Could not select image." });
+        break;
     }
-    setShowImageViewModal(false);
+
+    // Close the modal and reset states
+    // setShowImageViewModal(false);
     setHistoryModalVisible(false);
-
     setIsNavigatingBack(false);
+    setHistoryTargetSlot(null); // Reset for next time
   };
-
-  //
 
   // 2. Add a useEffect to fetch all interests when the component loads
 
@@ -169,27 +215,27 @@ export default function EditProfile() {
       if (initialPics) {
         const pics = JSON.parse(initialPics);
         setProfilePic(
-          pics.profilePic || {
-            PicID: null,
-            PicName: "",
-            PicPath: "",
-            PicAlt: "",
+          {
+            PicId: pics.profilePic?.picId || null,
+            PicName: pics.profilePic?.picName || "",
+            PicPath: pics.profilePic?.picPath || "",
+            PicAlt: pics.profilePic?.picAlt || "",
           }
         );
         setAdditionalPic1(
-          pics.additionalPic1 || {
-            PicID: null,
-            PicName: "",
-            PicPath: "",
-            PicAlt: "",
+          {
+            PicId: pics.additionalPic1?.picId || null,
+            PicName: pics.additionalPic1?.picName || "",
+            PicPath: pics.additionalPic1?.picPath || "",
+            PicAlt: pics.additionalPic1?.picAlt || "",
           }
         );
         setAdditionalPic2(
-          pics.additionalPic2 || {
-            PicID: null,
-            PicName: "",
-            PicPath: "",
-            PicAlt: "",
+          {
+            PicId: pics.additionalPic2?.picId || null,
+            PicName: pics.additionalPic2?.picName || "",
+            PicPath: pics.additionalPic2?.picPath || "",
+            PicAlt: pics.additionalPic2?.picAlt || "",
           }
         );
       }
@@ -326,28 +372,29 @@ export default function EditProfile() {
   };
 
   const handleRemoveImage = async () => {
-    const uriToDelete = imageToViewUri;
+    const type = imageTypeToClear; // Get the type ('main', 'add1', or 'add2')
 
-    if (imageTypeToClear === "main") {
-      setClearedPics((prev) => ({ ...prev, profile: true }));
+    if (type === "main") {
+      // Check if there was actually a picture to remove
+      if (profilePic.PicID || profilePic.PicId) {
+        setClearedPics((prev) => ({ ...prev, profile: true }));
+      }
       setProfilePic({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
     }
-    if (imageTypeToClear === "add1") {
-      setClearedPics((prev) => ({ ...prev, add1: true }));
+    if (type === "add1") {
+      if (additionalPic1.PicID || additionalPic1.PicId) {
+        setClearedPics((prev) => ({ ...prev, add1: true }));
+      }
       setAdditionalPic1({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
     }
-    if (imageTypeToClear === "add2") {
-      setClearedPics((prev) => ({ ...prev, add2: true }));
+    if (type === "add2") {
+      if (additionalPic2.PicID || additionalPic2.PicId) {
+        setClearedPics((prev) => ({ ...prev, add2: true }));
+      }
       setAdditionalPic2({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
     }
 
-    if (uriToDelete.startsWith("file://")) {
-      await safeDeleteFile(uriToDelete);
-    }
-
     setShowImageViewModal(false);
-    setImageToViewUri(null);
-    setImageTypeToClear(null);
   };
 
   const handleAddImage = async () => {
@@ -474,29 +521,29 @@ export default function EditProfile() {
     }
   };
 
-  useEffect(() => {
-    // Update the form with initialData
-    if (initialData) {
-      const parsedData = JSON.parse(initialData);
-      if (parsedData.residentInterests) {
-        // If the original object array exists, use it
-        setUserInterests(parsedData.residentInterests);
-      } else if (parsedData.interests) {
-        // Otherwise, if the string array exists, convert it back to an object array
-        setUserInterests(parsedData.interests.map((name) => ({ name })));
-      } else {
-        // Fallback to an empty array if neither exists
-        setUserInterests([]);
-      }
-      setForm(parsedData);
-    }
-    if (initialPics) {
-      const pics = JSON.parse(initialPics);
-      setProfilePic(pics.profilePic);
-      setAdditionalPic1(pics.additionalPic1);
-      setAdditionalPic2(pics.additionalPic2);
-    }
-  }, [initialData, initialPics]);
+  // useEffect(() => {
+  //   // Update the form with initialData
+  //   if (initialData) {
+  //     const parsedData = JSON.parse(initialData);
+  //     if (parsedData.residentInterests) {
+  //       // If the original object array exists, use it
+  //       setUserInterests(parsedData.residentInterests);
+  //     } else if (parsedData.interests) {
+  //       // Otherwise, if the string array exists, convert it back to an object array
+  //       setUserInterests(parsedData.interests.map((name) => ({ name })));
+  //     } else {
+  //       // Fallback to an empty array if neither exists
+  //       setUserInterests([]);
+  //     }
+  //     setForm(parsedData);
+  //   }
+  //   if (initialPics) {
+  //     const pics = JSON.parse(initialPics);
+  //     setProfilePic(pics.profilePic);
+  //     setAdditionalPic1(pics.additionalPic1);
+  //     setAdditionalPic2(pics.additionalPic2);
+  //   }
+  // }, [initialData, initialPics]);
 
   const [profileImage, setProfileImage] = useState(defaultUserImage);
   const [additionalImage1, setAdditionalImage1] = useState(defaultUserImage);
@@ -694,7 +741,19 @@ export default function EditProfile() {
                   result.assets[0].uri,
                   "camera"
                 );
-                setFn((prev) => ({ ...prev, PicPath: newUri }));
+                //setFn((prev) => ({ ...prev, PicPath: newUri }));
+                // --- NEW, CORRECTED CODE ---
+                let defaultAlt = "Extra picture"; // A fallback
+                if (type === "main") {
+                    defaultAlt = "Profile picture";
+                } else if (type === "add1") {
+                    defaultAlt = "Extra picture 1";
+                } else if (type === "add2") {
+                    defaultAlt = "Extra picture 2";
+                }
+
+                // Set both the path and the alt text in the state
+                setFn((prev) => ({ ...prev, PicPath: newUri, PicAlt: defaultAlt }));
                 setImageToViewUri(newUri);
               } catch (copyError) {
                 Alert.alert(
@@ -723,7 +782,19 @@ export default function EditProfile() {
                     result.assets[0].uri,
                     "library"
                   );
-                  setFn((prev) => ({ ...prev, PicPath: newUri }));
+                  //setFn((prev) => ({ ...prev, PicPath: newUri }));
+                  // --- NEW, CORRECTED CODE ---
+                  let defaultAlt = "Extra picture"; // A fallback
+                  if (type === "main") {
+                      defaultAlt = "Profile picture";
+                  } else if (type === "add1") {
+                      defaultAlt = "Extra picture 1";
+                  } else if (type === "add2") {
+                      defaultAlt = "Extra picture 2";
+                  }
+
+                  // Set both the path and the alt text in the state
+                  setFn((prev) => ({ ...prev, PicPath: newUri, PicAlt: defaultAlt }));
                   setImageToViewUri(newUri);
                 } catch (copyError) {
                   Alert.alert(
@@ -746,7 +817,11 @@ export default function EditProfile() {
         },
         {
           text: t("ImagePicker_chooseFromHistoryButton", "History"),
-          onPress: () => openHistoryModal(role), // <-- Changed from navigation.navigate
+          //onPress: () => openHistoryModal(role), // <-- Changed from navigation.navigate
+          onPress: () => {
+            setShowImageViewModal(false); // 1. Close the current modal first
+            openHistoryModal(role, type);   // 2. Then open the history modal
+          },
         },
         { text: t("ImagePicker_cancelButton"), style: "cancel" },
       ]
@@ -757,34 +832,37 @@ export default function EditProfile() {
 
   // Listening to changes in the ImageHistory page:
 
-  useEffect(() => {
-    // This effect runs when the screen receives new parameters from navigation.
-    if (route.params?.selectedImage && route.params?.targetRole) {
-      const { selectedImage, targetRole } = route.params;
+  // useEffect(() => {
+  //   // This effect runs when the screen receives new parameters from navigation.
+  //   if (route.params?.selectedImage && route.params?.targetRole) {
+  //     const { selectedImage, targetRole } = route.params;
 
-      console.log("Received selected image from history:", selectedImage);
-      console.log("Target role:", targetRole);
+  //     console.log("Received selected image from history:", selectedImage);
+  //     console.log("Target role:", targetRole);
 
-      // Update the correct image state based on the target role.
-      if (targetRole === "Profile picture") {
-        setProfilePic(selectedImage);
-      } else if (targetRole === "Extra picture") {
-        // Here, we need to decide which "Extra picture" slot to fill.
-        // A simple approach is to fill the first available one.
-        if (additionalPic1.PicID === null) {
-          setAdditionalPic1(selectedImage);
-        } else {
-          setAdditionalPic2(selectedImage);
-        }
-      }
+  //     // Update the correct image state based on the target role.
+  //     if (targetRole === "Profile picture") {
+  //       setProfilePic(selectedImage);
+  //     } else if (targetRole === "Extra picture") {
+  //       // Here, we need to decide which "Extra picture" slot to fill.
+  //       // A simple approach is to fill the first available one.
+  //       if (!additionalPic1.PicId || !additionalPic1.PicID) { // !!
+  //         setAdditionalPic1(selectedImage);
+  //       } else {
+  //         setAdditionalPic2(selectedImage);
+  //       }
+  //     }
 
-      // IMPORTANT: Clear the params after using them.
-      // This prevents the effect from re-running with the same old data if the user
-      // navigates away and back to the edit screen.
-      navigation.setParams({ selectedImage: null, targetRole: null });
-    }
-  }, [route.params?.selectedImage, route.params?.targetRole]);
+  //     // IMPORTANT: Clear the params after using them.
+  //     // This prevents the effect from re-running with the same old data if the user
+  //     // navigates away and back to the edit screen.
+  //     navigation.setParams({ selectedImage: null, targetRole: null });
+  //   }
+  // }, [route.params?.selectedImage, route.params?.targetRole]);
 
+
+
+  
   // const viewOrPickImage = (type, currentUri) => {
   //   console.log(currentUri === Globals.API_BASE_URL);
   //   console.log("currentUri: ", currentUri);
@@ -826,13 +904,14 @@ export default function EditProfile() {
       console.log(`Successfully deleted picture ID: ${pictureId} via API.`);
       // No need to delete local file here, as it's an existing server file
     } catch (err) {
-      console.error(`Failed to delete picture ID ${pictureId}:`, err);
+      // console.error(`Failed to delete picture ID ${pictureId}:`, err);
       // Log error, maybe show a non-blocking warning to user?
-      Toast.show({
-        type: "warning",
-        text1: t("MarketplaceItemScreen_PicDeleteErrorTitle"),
-        text2: err.message,
-      });
+
+      // Toast.show({
+      //   type: "warning",
+      //   text1: t("MarketplaceItemScreen_PicDeleteErrorTitle"),
+      //   text2: err.message,
+      // });
       // Don't necessarily stop the whole edit process if old pic deletion fails
     }
   };
@@ -882,8 +961,6 @@ export default function EditProfile() {
 
     //console.log(cleanedForm.residentApartmentNumber)
 
-    // !! Add API call to save the data here
-    console.log("Saving data to API...");
     try {
       const storedUserID = await AsyncStorage.getItem("userID");
       console.log("Stored user ID:", storedUserID); // Debugging line
@@ -901,9 +978,6 @@ export default function EditProfile() {
       );
       console.log("form.residentApartmentNumber", form.residentApartmentNumber);
 
-      // !! for testing, change later
-      //form.residentApartmentNumber = parseInt(22222);
-      //cleanedForm.residentApartmentNumber = parseInt(22222);
 
       /////////////////////////////////////////////// Interests ////////////////////////////////////////////////////
 
@@ -924,6 +998,7 @@ export default function EditProfile() {
       console.log("cleanedform ", cleanedForm);
 
       const uploadAndWrap = async (imageObj, role, altText, uploaderId) => {
+        console.log("entering uploadAndWrap with imageObj:", imageObj);
         const imageUri = imageObj.PicPath;
         // Only upload if it's a new local file (starts with file://)
         if (imageUri?.startsWith("file://")) {
@@ -933,6 +1008,7 @@ export default function EditProfile() {
             altText,
             uploaderId
           );
+          console.log("uploadAndWrap returned:", uploadedPicData);
           return uploadedPicData; // Returns { PicID, PicPath (serverPath), PicName, PicAlt }
         }
         // If it's an existing server path (not a local file), return the existing object
@@ -947,85 +1023,51 @@ export default function EditProfile() {
       // This logic determines the FINAL state of each picture (null, or server data)
       // and handles deletions of old server images if replaced or removed.
 
-      let finalProfilePicData = null;
-      // Scenario 1: A new local image was picked (either replacing an old one or adding to an empty slot)
-      if (profilePic.PicPath?.startsWith("file://")) {
-        // If there was an old server image (before the current edit session), delete it
-        if (initialPics.profilePic?.PicID) {
-          // Use initialPics to check for original server image
-          await deletePicture(initialPics.profilePic.PicID);
-        }
-        finalProfilePicData = await uploadAndWrap(
-          profilePic,
-          "profile_picture",
-          "Profile picture",
-          storedUserID
-        );
-      }
-      // Scenario 2: Image was cleared (removed) AND no new local image was picked
-      else if (clearedPics.profile) {
-        // If there was an old server image, delete it
-        if (initialPics.profilePic?.PicID) {
-          await deletePicture(initialPics.profilePic.PicID);
-        }
-        finalProfilePicData = null; // Truly cleared
-      }
-      // Scenario 3: Image was an existing server image and was NOT cleared or replaced
-      else if (
-        profilePic.PicID &&
-        profilePic.PicPath?.trim().startsWith("/Images/")
-      ) {
-        finalProfilePicData = profilePic; // Keep the existing server image data
-      }
-      // Else, it remains null (e.g., if it was always null or an invalid path)
 
-      let finalAdd1PicData = null;
-      if (additionalPic1.PicPath?.startsWith("file://")) {
-        if (initialPics.additionalPic1?.PicID) {
-          await deletePicture(initialPics.additionalPic1.PicID);
-        }
-        finalAdd1PicData = await uploadAndWrap(
-          additionalPic1,
-          "secondary_profile",
-          "Extra picture 1",
-          storedUserID
-        );
-      } else if (clearedPics.add1) {
-        if (initialPics.additionalPic1?.PicID) {
-          await deletePicture(initialPics.additionalPic1.PicID);
-        }
-        finalAdd1PicData = null;
-      } else if (
-        additionalPic1.PicID &&
-        additionalPic1.PicPath?.trim().startsWith("/Images/")
-      ) {
-        finalAdd1PicData = additionalPic1;
-      }
+      const initialPicsParsed = JSON.parse(initialPics);
 
-      let finalAdd2PicData = null;
-      if (additionalPic2.PicPath?.startsWith("file://")) {
-        if (initialPics.additionalPic2?.PicID) {
-          await deletePicture(initialPics.additionalPic2.PicID);
+      // Helper function to process each image cleanly
+      const processImage = async (currentPic, initialPic, clearedFlag, role, altText) => {
+        // Case 1: A new local file was picked to upload.
+        if (currentPic.PicPath?.startsWith("file://")) {
+          // If there was an old server image, delete it now.
+          if (initialPic?.picId) { 
+            await deletePicture(initialPic.picId, role);
+          }
+          return await uploadAndWrap(currentPic, role, currentPic.PicAlt || altText, storedUserID);
         }
-        finalAdd2PicData = await uploadAndWrap(
-          additionalPic2,
-          "secondary_profile",
-          "Extra picture 2",
-          storedUserID
-        );
-      } else if (clearedPics.add2) {
-        if (initialPics.additionalPic2?.PicID) {
-          await deletePicture(initialPics.additionalPic2.PicID);
+        
+        // Case 2: An existing server image is present.
+        // This correctly handles images from initial load AND images selected from history.
+        if (currentPic.PicPath?.startsWith("/Images/")) {
+          // Check if the picture was replaced from history.
+          if (initialPic?.picId && initialPic.picId !== (currentPic.PicID || currentPic.PicId)) {
+            await deletePicture(initialPic.picId, role);
+          }
+          return currentPic;
         }
-        finalAdd2PicData = null;
-      } else if (
-        additionalPic2.PicID &&
-        additionalPic2.PicPath?.trim().startsWith("/Images/")
-      ) {
-        finalAdd2PicData = additionalPic2;
-      }
 
+        // Case 3: The slot was explicitly cleared.
+        if (clearedFlag) {
+          if (initialPic?.picId) {
+            await deletePicture(initialPic.picId, role);
+          }
+          return null;
+        }
+
+        // Default: The slot is and remains empty.
+        return null;
+      };
+
+      // Process all three images using the robust helper function
+      const finalProfilePicData = await processImage(profilePic, initialPicsParsed.profilePic, clearedPics.profile, "profile_picture", "Profile picture");
+      const finalAdd1PicData = await processImage(additionalPic1, initialPicsParsed.additionalPic1, clearedPics.add1, "secondary_profile", "Extra picture 1");
+      const finalAdd2PicData = await processImage(additionalPic2, initialPicsParsed.additionalPic2, clearedPics.add2, "secondary_profile", "Extra picture 2");
+
+
+      
       // --- CRITICAL: Update the component's state with the new server paths and IDs ---
+      console.log("Final Profile Pic Data is:", finalProfilePicData);
       setProfilePic(
         finalProfilePicData || {
           PicID: null,
@@ -1121,6 +1163,26 @@ export default function EditProfile() {
   // console.log("profilePic", profilePic);
   // console.log("additionalPic1", additionalPic1);
   // console.log("additionalPic2", additionalPic2);
+
+  // 1. Create the array of in-use picture IDs right before rendering the modal
+  const picturesInUse = [
+    profilePic.PicID || profilePic.PicId,
+    additionalPic1.PicID || additionalPic1.PicId,
+    additionalPic2.PicID || additionalPic2.PicId,
+  ].filter(Boolean); // .filter(Boolean) removes any null or empty values
+
+  // Get the IDs of pictures that have been cleared in this session
+  const initialPicsParsed = JSON.parse(initialPics);
+  const clearedPictureIds = [];
+  if (clearedPics.profile && initialPicsParsed.profilePic) {
+    clearedPictureIds.push(initialPicsParsed.profilePic.picId);
+  }
+  if (clearedPics.add1 && initialPicsParsed.additionalPic1) {
+    clearedPictureIds.push(initialPicsParsed.additionalPic1.picId);
+  }
+  if (clearedPics.add2 && initialPicsParsed.additionalPic2) {
+    clearedPictureIds.push(initialPicsParsed.additionalPic2.picId);
+  }
 
   return (
     <View style={styles.wrapper}>
@@ -1414,6 +1476,8 @@ export default function EditProfile() {
         picRole={historyRole}
         onClose={() => setHistoryModalVisible(false)}
         onSelect={handleSelectFromHistory}
+        picturesInUse={picturesInUse}
+        clearedPictureIds={clearedPictureIds}
       />
       <ImageViewModal
         visible={showImageViewModal}

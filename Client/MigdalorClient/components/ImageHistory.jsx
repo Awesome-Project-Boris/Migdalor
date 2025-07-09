@@ -17,7 +17,8 @@ import FlipButton from "@/components/FlipButton"; // Using default import
 import { Globals } from "../app/constants/Globals";
 import * as ImagePicker from "expo-image-picker";
 
-export default function ImageHistory({ visible, picRole, onClose, onSelect }) {
+// 1. Add 'clearedPictureIds' to the list of props.
+export default function ImageHistory({ visible, picRole, onClose, onSelect, picturesInUse = [], clearedPictureIds = [] }) {
   const [pictures, setPictures] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState("");
@@ -55,6 +56,7 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect }) {
         throw new Error(`Server responded with status: ${response.status}`);
 
       const data = await response.json();
+      // console.log("Data received from /api/Picture/history:", data);
       const picturesWithFullPaths = data.map((pic) => ({
         ...pic,
         url: `${Globals.API_BASE_URL}${pic.picPath}`,
@@ -102,13 +104,18 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect }) {
         );
 
       const updatedPicture = await response.json();
-      onSelect({
-        // Pass data back to EditProfile
+      const objectToSend = { // Create the object first
         PicID: updatedPicture.picId,
         PicPath: updatedPicture.picPath,
         PicName: updatedPicture.picName,
         PicAlt: updatedPicture.picAlt,
-      });
+        UploaderId: updatedPicture.uploaderId,
+        PicRole: updatedPicture.picRole,
+        DateTime: updatedPicture.dateTime,
+      };
+      console.log("1. Sending from History Modal:", JSON.stringify(objectToSend, null, 2));
+      onSelect(objectToSend);
+      
     } catch (error) {
       Toast.show({
         type: "error",
@@ -118,7 +125,25 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect }) {
     }
   };
 
+  // 2. Replace your entire handleDelete function with this new, smart version.
   const handleDelete = (pictureId) => {
+    // --- START: NEW SMART LOGIC ---
+    // A picture is "in use" ONLY if it's in the picturesInUse list
+    // AND it has NOT been staged for removal (is not in clearedPictureIds).
+    const isCurrentlyInUse = picturesInUse.includes(pictureId) && !clearedPictureIds.includes(pictureId);
+
+    if (isCurrentlyInUse) {
+      Toast.show({
+        type: 'warning',
+        text1: 'Cannot Delete',
+        text2: 'This picture is currently in use on your profile edit screen.',
+        duration: 4000
+      });
+      return; // Stop the deletion process.
+    }
+    // --- END: NEW SMART LOGIC ---
+
+    // If the check passes, the picture is safe to delete. Proceed with confirmation.
     Alert.alert(
       "Confirm Deletion",
       "Are you sure you want to permanently delete this picture?",
@@ -145,17 +170,24 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect }) {
                   }),
                 }
               );
-              if (!response.ok)
-                throw new Error(
-                  `Server responded with status ${response.status}`
-                );
+
+              if (!response.ok) {
+                 const errorData = await response.json();
+                 throw new Error(errorData.message || `Server error: ${response.status}`);
+              }
+
+              // After successful deletion, also update the client-side `clearedPics` state
+              // This part requires passing a new callback from EditProfile, or handling it differently.
+              // For now, we'll just remove it from the history UI.
               setPictures((prev) => prev.filter((p) => p.picId !== pictureId));
+
               Toast.show({ type: "success", text1: "Picture Deleted" });
             } catch (error) {
               Toast.show({
                 type: "error",
                 text1: "Deletion Failed",
-                text2: error.message,
+                text2: "The picture is currently in use",
+                //text2: error.message,
               });
             }
           },

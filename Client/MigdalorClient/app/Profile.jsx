@@ -8,6 +8,7 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback } from "react";
@@ -35,6 +36,7 @@ export default function Profile() {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const router = useRouter();
+  const localSearchParams = useLocalSearchParams();
 
   const [form, setForm] = useState({
     name: "",
@@ -79,111 +81,73 @@ export default function Profile() {
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
-
       const loadUserProfileData = async () => {
+        setLoading(true); // Set loading at the start
         try {
           const storedUserID = await AsyncStorage.getItem("userID");
-          console.log("Stored user ID:", storedUserID); // Debugging line
-          if (storedUserID) {
-            //const apiurl = `${Globals.API_BASE_URL}/api/People/{id}`;
-            const apiurl = `${Globals.API_BASE_URL}/api/People/GetPersonByIDForProfile/${storedUserID}`; // !! check this is the  correct endpoint
-            const response = await fetch(apiurl, {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              //body: JSON.stringify({ phoneNumber, password }),
-            });
-
-            if (!response.ok) {
-              // You can throw an error or handle it with an error message.
-              throw new Error(`Login failed: HTTP ${response.status}`);
-            }
-
-            const userData = await response.json();
-
-            console.log("User data:", userData);
-
-            if (!isActive) return;
-            // populate form & pics exactly as before…
-            if (userData.residentApartmentNumber === null) {
-              userData.residentApartmentNumber = "";
-            }
-
-            // if(userData.phoneNumber === null) {
-            //   userData.phoneNumber = "";
-            // }
-
-            // !! now to load the data into the form
-            setForm({
-              //apartmentNumber: userData.apartmentNumber,
-              mobilePhone: userData.phoneNumber,
-              email: userData.email,
-              //arrivalYear: new Date(userData.dateOfArrival).getFullYear(),
-              arrivalYear: userData.dateOfArrival,
-              origin: userData.homePlace,
-              profession: userData.profession,
-              interests: userData.residentInterests.map(
-                (interest) => interest.name
-              ),
-              aboutMe: userData.residentDescription,
-              residentApartmentNumber: String(userData.residentApartmentNumber),
-            });
-
-            setProfilePic({
-              PicID: userData.profilePicture?.picId ?? null,
-              PicName: userData.profilePicture?.picName ?? "",
-              PicPath: userData.profilePicture?.picPath ?? "",
-              PicAlt: userData.profilePicture?.picAlt ?? "",
-            });
-
-
-          setAdditionalPic1({
-            PicID: userData.additionalPicture1?.picId ?? null,
-            PicName: userData.additionalPicture1?.picName ?? "",
-            PicPath: userData.additionalPicture1?.picPath ?? "",
-            PicAlt: userData.additionalPicture1?.picAlt ?? "",
+          if (isActive) {
+            setLoggedInUserId(storedUserID);
+          }
+          const userIdToFetch = localSearchParams.userId || storedUserID;
+          if (!userIdToFetch) {
+            console.warn("No user ID to fetch profile for.");
+            if (isActive) setLoading(false);
+            return;
+          }
+          if (isActive) {
+            setViewingUserId(userIdToFetch);
+          }
+          const apiurl = `${Globals.API_BASE_URL}/api/People/GetPersonByIDForProfile/${userIdToFetch}`;
+          const response = await fetch(apiurl, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
           });
-
-          setAdditionalPic2({
-            PicID: userData.additionalPicture2?.picId ?? null,
-            PicName: userData.additionalPicture2?.picName ?? "",
-            PicPath: userData.additionalPicture2?.picPath ?? "",
-            PicAlt: userData.additionalPicture2?.picAlt ?? "",
+          if (!response.ok) {
+            throw new Error(`Failed to fetch profile: HTTP ${response.status}`);
+          }
+          const userData = await response.json();
+          if (!isActive) return;
+          setForm({
+            mobilePhone: userData.phoneNumber || "",
+            email: userData.email || "",
+            arrivalYear: userData.dateOfArrival || "",
+            origin: userData.homePlace || "",
+            profession: userData.profession || "",
+            interests: userData.residentInterests?.map(interest => interest.name) || [],
+            aboutMe: userData.residentDescription || "",
+            residentApartmentNumber: String(userData.residentApartmentNumber || ""),
           });
-
+          console.log("userData.profilePicture looking for image:", userData.profilePicture);
+          setProfilePic(userData.profilePicture ?? { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+          setAdditionalPic1(userData.additionalPicture1 ?? { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+          setAdditionalPic2(userData.additionalPicture2 ?? { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+          
           setPrivacySettings(userData.privacySettings ?? {
             showPartner: true, showApartmentNumber: true, showMobilePhone: true,
             showEmail: true, showArrivalYear: true, showOrigin: true,
             showProfession: true, showInterests: true, showAboutMe: true,
             showProfilePicture: true, showAdditionalPictures: true,
-            });
+          });
 
           if (Globals.userSelectedLanguage === "he") {
-            setForm((prev) => ({
-              ...prev,
-              name: userData.hebName || "",
-              partner: userData.spouseHebName || "",
-            }));
+            setForm((prev) => ({ ...prev, name: userData.hebName || "", partner: userData.spouseHebName || "" }));
           } else if (Globals.userSelectedLanguage === "en") {
-            setForm((prev) => ({
-              ...prev,
-              name: userData.engName || "",
-              partner: userData.spouseEngName || "",
-            }));
+            setForm((prev) => ({ ...prev, name: userData.engName || "", partner: userData.spouseEngName || "" }));
           }
         } catch (error) {
-          console.error("Error loading user data from storage", error);
+          console.error("Error loading user data:", error);
         } finally {
-          setLoading(false);
+          if (isActive) {
+            setLoading(false);
+          }
         }
       };
 
-      loadUserProfileData(); // Call the function to load user data
+      loadUserProfileData();
       return () => {
         isActive = false;
       };
-    }, [])
+    }, [localSearchParams.userId])
   );
   const isOwnProfile = loggedInUserId && viewingUserId && (loggedInUserId === viewingUserId);
   const isVisible = (fieldKey) => {
@@ -209,9 +173,9 @@ export default function Profile() {
 
   // Determine the correct image source based on privacy settings
   const getImageUrl = (picData, isPicVisible) => {
-      const hasPath = picData && picData.PicPath && picData.PicPath.trim();
+      const hasPath = picData && picData.picPath && picData.picPath.trim();
       if (isPicVisible && hasPath) {
-          return { uri: `${Globals.API_BASE_URL}${picData.PicPath}` };
+          return { uri: `${Globals.API_BASE_URL}${picData.picPath}` };
       }
       return defaultUserImage;
   };
@@ -229,11 +193,10 @@ export default function Profile() {
     if (!imageUriToView || imageUriToView === defaultUserImage) return; // Don't open modal for default image
     console.log("handleImagePress: imageUriToView:", imageUriToView);
 
-    if (imageUriToView === Globals.API_BASE_URL) {
-      console.log("handleImagePress: No valid imageUri provided.");
-      return;
-    }
-
+    // if (imageUriToView === Globals.API_BASE_URL) {
+    //   console.log("handleImagePress: No valid imageUri provided.");
+    //   return;
+    // }
     const paramsToPass = {
       imageUri: imageUriToView.uri, // !! make sure to pass the URI correctly
       //imageUri: imageUriToView,
@@ -404,6 +367,12 @@ export default function Profile() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
+    backgroundColor: "#fef1e6",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: "#fef1e6",
   },
   topBar: {

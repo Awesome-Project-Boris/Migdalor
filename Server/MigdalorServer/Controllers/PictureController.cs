@@ -186,9 +186,25 @@ namespace MigdalorServer.Controllers
             try
             {
                 var pictureToDelete = await _context.OhPictures.FirstOrDefaultAsync(p => p.PicId == request.PicId);
+
                 if (pictureToDelete == null) return NoContent();
                 if (pictureToDelete.UploaderId != request.UserId) return Forbid("You do not have permission to delete this picture.");
 
+                // --- START: FINAL CORRECTED CHECK ---
+                // Check both tables to see if the picture is in use.
+                bool isUsedAsProfilePic = await _context.OhPeople.AnyAsync(p => p.ProfilePicId == request.PicId);
+                bool isUsedAsAdditionalPic = await _context.OhResidents
+                    .AnyAsync(r => r.AdditionalPic1Id == request.PicId || r.AdditionalPic2Id == request.PicId);
+
+                // If the picture is used in either table, skip the deletion.
+                if (isUsedAsProfilePic || isUsedAsAdditionalPic)
+                {
+                    Console.WriteLine($"INFO: Deletion skipped for picture ID {request.PicId} because it is currently in use.");
+                    return Conflict(new { message = "This picture cannot be deleted because it is currently in use." });
+                }
+                // --- END: FINAL CORRECTED CHECK ---
+
+                // If not in use, proceed with deletion.
                 _context.OhPictures.Remove(pictureToDelete);
                 await _context.SaveChangesAsync();
                 await TryDeletePhysicalFile(pictureToDelete.PicPath);
@@ -254,17 +270,47 @@ namespace MigdalorServer.Controllers
             };
             if (limit == 0) return;
 
+            // Get all pictures for this role, sorted with the oldest ones first.
             var pictures = await _context.OhPictures
                 .Where(p => p.UploaderId == userId && p.PicRole == role)
-                .OrderBy(p => p.DateTime) // Oldest first
+                .OrderBy(p => p.DateTime)
                 .ToListAsync();
 
+            // Only run if the number of pictures is at or over the limit.
             if (pictures.Count >= limit)
             {
-                var oldestPicture = pictures.First();
-                _context.OhPictures.Remove(oldestPicture);
-                await _context.SaveChangesAsync();
-                await TryDeletePhysicalFile(oldestPicture.PicPath);
+                int attempts = 0;
+                const int maxAttempts = 3; 
+
+                // Loop through the oldest pictures.
+                foreach (var picToDelete in pictures)
+                {
+                    if (attempts >= maxAttempts)
+                    {
+                        Console.WriteLine($"INFO: Halting history cleanup after {maxAttempts} attempts as all candidates were in use.");
+                        break; // Stop after 3 tries.
+                    }
+
+                    attempts++; // Count this as an attempt.
+
+                    // Check if the picture is currently in use in either table.
+                    bool isUsedAsProfilePic = await _context.OhPeople.AnyAsync(p => p.ProfilePicId == picToDelete.PicId);
+                    bool isUsedAsAdditionalPic = await _context.OhResidents.AnyAsync(r => r.AdditionalPic1Id == picToDelete.PicId || r.AdditionalPic2Id == picToDelete.PicId);
+
+                    // If the picture is NOT in use, delete it and stop.
+                    if (!isUsedAsProfilePic && !isUsedAsAdditionalPic)
+                    {
+                        _context.OhPictures.Remove(picToDelete);
+                        await _context.SaveChangesAsync();
+                        await TryDeletePhysicalFile(picToDelete.PicPath);
+                        Console.WriteLine($"SUCCESS: History limit enforced by deleting unused picture ID {picToDelete.PicId} on attempt #{attempts}.");
+                        return; // Exit successfully after deleting one picture.
+                    }
+                    else
+                    {
+                        Console.WriteLine($"INFO: Attempt #{attempts}: Could not delete picture ID {picToDelete.PicId} because it is in use.");
+                    }
+                }
             }
         }
     }

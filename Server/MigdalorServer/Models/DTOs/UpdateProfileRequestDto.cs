@@ -26,5 +26,9 @@ namespace MigdalorServer.Models.DTOs
         // Privacy settings 
         public Guid PersonId { get; set; }
         public PrivacySettingsDto? PrivacySettings { get; set; }
+
+        // Interest settings
+        public List<string> InterestNames { get; set; } = new List<string>();
+        public List<string> NewInterestNames { get; set; } = new List<string>();
     }
 }

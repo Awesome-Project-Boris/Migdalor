@@ -45,18 +45,18 @@ namespace MigdalorServer.Models
             var result = (
                 from person in db.OhPeople
 
-                // 1) find their resident record
+                    // 1) find their resident record
                 join resident in db.OhResidents on person.PersonId equals resident.ResidentId
 
                 // 2) left‑join into OhPeople again for the spouse
                 join spouse in db.OhPeople on resident.SpouseId equals spouse.PersonId into spGroup
                 from s in spGroup.DefaultIfEmpty()
 
-                // LEFT JOIN to privacy settings
+                    // LEFT JOIN to privacy settings
                 join privacy in db.OhPrivacySettings on person.PersonId equals privacy.PersonId into privacyGroup
                 from ps in privacyGroup.DefaultIfEmpty()
 
-                // 3) filter to the one you want
+                    // 3) filter to the one you want
                 where person.PersonId == ID
 
                 // join into profile picture (left)
@@ -65,19 +65,19 @@ namespace MigdalorServer.Models
                     into profPicGroup
                 from pp in profPicGroup.DefaultIfEmpty()
 
-                // join into additional picture 1 (left)
+                    // join into additional picture 1 (left)
                 join add1 in db.OhPictures
                     on resident.AdditionalPic1Id equals add1.PicId
                     into add1Group
                 from p1 in add1Group.DefaultIfEmpty()
 
-                // join into additional picture 2 (left)
+                    // join into additional picture 2 (left)
                 join add2 in db.OhPictures
                     on resident.AdditionalPic2Id equals add2.PicId
                     into add2Group
                 from p2 in add2Group.DefaultIfEmpty()
 
-                // 4) project everything you need, including spouse names
+                    // 4) project everything you need, including spouse names
                 select new
                 {
                     // --- from OH_People ---
@@ -147,24 +147,24 @@ namespace MigdalorServer.Models
                             //p2.DateTime
                         },
 
-                    residentInterests = resident.InterestNames.Select(i => new { name = i.InterestName }).ToList()
+                    residentInterests = resident.InterestNames.Select(i => new { name = i.InterestName }).ToList(),
                     // Project the privacy settings. If 'ps' is null (no record exists),
                     // create a new DTO with default values. Otherwise, use the value from 'ps',
                     // providing 'true' as a fallback if any individual property is null.
                     privacySettings = ps == null ? new PrivacySettingsDto() : new PrivacySettingsDto
-                        {
-                            ShowPartner = ps.ShowPartner ?? true,
-                            ShowApartmentNumber = ps.ShowApartmentNumber ?? true,
-                            ShowMobilePhone = ps.ShowMobilePhone ?? true,
-                            ShowEmail = ps.ShowEmail ?? true,
-                            ShowArrivalYear = ps.ShowArrivalYear ?? true,
-                            ShowOrigin = ps.ShowOrigin ?? true,
-                            ShowProfession = ps.ShowProfession ?? true,
-                            ShowInterests = ps.ShowInterests ?? true,
-                            ShowAboutMe = ps.ShowAboutMe ?? true,
-                            ShowProfilePicture = ps.ShowProfilePicture ?? true,
-                            ShowAdditionalPictures = ps.ShowAdditionalPictures ?? true
-                        },
+                    {
+                        ShowPartner = ps.ShowPartner ?? true,
+                        ShowApartmentNumber = ps.ShowApartmentNumber ?? true,
+                        ShowMobilePhone = ps.ShowMobilePhone ?? true,
+                        ShowEmail = ps.ShowEmail ?? true,
+                        ShowArrivalYear = ps.ShowArrivalYear ?? true,
+                        ShowOrigin = ps.ShowOrigin ?? true,
+                        ShowProfession = ps.ShowProfession ?? true,
+                        ShowInterests = ps.ShowInterests ?? true,
+                        ShowAboutMe = ps.ShowAboutMe ?? true,
+                        ShowProfilePicture = ps.ShowProfilePicture ?? true,
+                        ShowAdditionalPictures = ps.ShowAdditionalPictures ?? true
+                    },
                 }
             ).FirstOrDefault();
 

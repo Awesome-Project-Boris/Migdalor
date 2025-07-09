@@ -49,6 +49,10 @@ const resources = {
       ProfileScreen_privateProfile: "This profile is private",
       ProfileScreen_profileImage: "Profile Image",
 
+      Common_Loading: "Loading...",
+
+      interestModal_newlyAdded: "Newly Added Interests",
+
       PrivacySettings_savedLocally: "Privacy settings saved locally",
       PrivacySettings_title: "Privacy Settings",
 
@@ -366,6 +370,10 @@ const resources = {
       ProfileScreen_emptyDataField: "אין מידע",
       ProfileScreen_privateProfile: "פרופיל זה פרטי",
       ProfileScreen_profileImage: "תמונת פרופיל",
+
+      Common_Loading: "טוען...",
+
+      interestModal_newlyAdded: "תחומי עניין חדשים",
 
       PrivacySettings_savedLocally: "הגדרות פרטיות נשמרו במכשיר",
       PrivacySettings_title: "הגדרות פרטיות",
