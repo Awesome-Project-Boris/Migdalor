@@ -29,6 +29,14 @@ namespace MigdalorServer.Models
                 return user;
         }
 
+        public static OhPerson GetUserByID(Guid id)
+        {
+            using var db = new MigdalorDBContext();
+            OhPerson result = db.OhPeople.Find(id)!;
+            if (result == null) throw new Exception("User not found");
+            return result;
+        }
+
         //public static OhPerson GetPersonByIDForProfile(Guid ID)
         public static dynamic GetPersonByIDForProfile(Guid ID)
         {
@@ -45,14 +53,18 @@ namespace MigdalorServer.Models
             var result = (
                 from person in db.OhPeople
 
-                // 1) find their resident record
+                    // 1) find their resident record
                 join resident in db.OhResidents on person.PersonId equals resident.ResidentId
 
                 // 2) left‑join into OhPeople again for the spouse
                 join spouse in db.OhPeople on resident.SpouseId equals spouse.PersonId into spGroup
                 from s in spGroup.DefaultIfEmpty()
 
-                // 3) filter to the one you want
+                    // LEFT JOIN to privacy settings
+                join privacy in db.OhPrivacySettings on person.PersonId equals privacy.PersonId into privacyGroup
+                from ps in privacyGroup.DefaultIfEmpty()
+
+                    // 3) filter to the one you want
                 where person.PersonId == ID
 
                 // join into profile picture (left)
@@ -61,19 +73,19 @@ namespace MigdalorServer.Models
                     into profPicGroup
                 from pp in profPicGroup.DefaultIfEmpty()
 
-                // join into additional picture 1 (left)
+                    // join into additional picture 1 (left)
                 join add1 in db.OhPictures
                     on resident.AdditionalPic1Id equals add1.PicId
                     into add1Group
                 from p1 in add1Group.DefaultIfEmpty()
 
-                // join into additional picture 2 (left)
+                    // join into additional picture 2 (left)
                 join add2 in db.OhPictures
                     on resident.AdditionalPic2Id equals add2.PicId
                     into add2Group
                 from p2 in add2Group.DefaultIfEmpty()
 
-                // 4) project everything you need, including spouse names
+                    // 4) project everything you need, including spouse names
                 select new
                 {
                     // --- from OH_People ---
@@ -143,7 +155,24 @@ namespace MigdalorServer.Models
                             //p2.DateTime
                         },
 
-                    residentInterests = resident.InterestNames.Select(i => new { name = i.InterestName }).ToList()
+                    residentInterests = resident.InterestNames.Select(i => new { name = i.InterestName }).ToList(),
+                    // Project the privacy settings. If 'ps' is null (no record exists),
+                    // create a new DTO with default values. Otherwise, use the value from 'ps',
+                    // providing 'true' as a fallback if any individual property is null.
+                    privacySettings = ps == null ? new PrivacySettingsDto() : new PrivacySettingsDto
+                    {
+                        ShowPartner = ps.ShowPartner ?? true,
+                        ShowApartmentNumber = ps.ShowApartmentNumber ?? true,
+                        ShowMobilePhone = ps.ShowMobilePhone ?? true,
+                        ShowEmail = ps.ShowEmail ?? true,
+                        ShowArrivalYear = ps.ShowArrivalYear ?? true,
+                        ShowOrigin = ps.ShowOrigin ?? true,
+                        ShowProfession = ps.ShowProfession ?? true,
+                        ShowInterests = ps.ShowInterests ?? true,
+                        ShowAboutMe = ps.ShowAboutMe ?? true,
+                        ShowProfilePicture = ps.ShowProfilePicture ?? true,
+                        ShowAdditionalPictures = ps.ShowAdditionalPictures ?? true
+                    },
                 }
             ).FirstOrDefault();
 
@@ -155,6 +184,67 @@ namespace MigdalorServer.Models
 
             return result;
         }
+
+        public static async Task UpdateProfileAndPrivacyAsync(UpdateProfileRequestDto request)
+
+        {
+            using var db = new MigdalorDBContext();
+            var person = await db.OhPeople.FindAsync(request.PersonId);
+            var resident = await db.OhResidents.FindAsync(request.PersonId);
+            if (person == null || resident == null)
+            {
+                throw new Exception("Person or Resident not found");
+            }
+            // Update person and resident fields from the DTO
+            person.Email = request.Email;
+            resident.ResidentApartmentNumber = request.ResidentApartmentNumber;
+            resident.HomePlace = request.Origin;
+            resident.Profession = request.Profession;
+            resident.ResidentDescription = request.AboutMe;
+            // Add any other fields you need to update here...
+            // Handle the "Upsert" (Update or Insert) logic for privacy settings
+            if (request.PrivacySettings != null)
+            {
+                var existingSettings = await db.OhPrivacySettings.FindAsync(request.PersonId);
+                if (existingSettings != null)
+                {
+                    // If settings exist, update them
+                    existingSettings.ShowPartner = request.PrivacySettings.ShowPartner;
+                    existingSettings.ShowApartmentNumber = request.PrivacySettings.ShowApartmentNumber;
+                    existingSettings.ShowMobilePhone = request.PrivacySettings.ShowMobilePhone;
+                    existingSettings.ShowEmail = request.PrivacySettings.ShowEmail;
+                    existingSettings.ShowArrivalYear = request.PrivacySettings.ShowArrivalYear;
+                    existingSettings.ShowOrigin = request.PrivacySettings.ShowOrigin;
+                    existingSettings.ShowProfession = request.PrivacySettings.ShowProfession;
+                    existingSettings.ShowInterests = request.PrivacySettings.ShowInterests;
+                    existingSettings.ShowAboutMe = request.PrivacySettings.ShowAboutMe;
+                    existingSettings.ShowProfilePicture = request.PrivacySettings.ShowProfilePicture;
+                    existingSettings.ShowAdditionalPictures = request.PrivacySettings.ShowAdditionalPictures;
+                }
+                else
+                {
+                    // If settings don't exist, create a new record
+                    var newSettings = new OhPrivacySetting
+                    {
+                        PersonId = request.PersonId,
+                        ShowPartner = request.PrivacySettings.ShowPartner,
+                        ShowApartmentNumber = request.PrivacySettings.ShowApartmentNumber,
+                        ShowMobilePhone = request.PrivacySettings.ShowMobilePhone,
+                        ShowEmail = request.PrivacySettings.ShowEmail,
+                        ShowArrivalYear = request.PrivacySettings.ShowArrivalYear,
+                        ShowOrigin = request.PrivacySettings.ShowOrigin,
+                        ShowProfession = request.PrivacySettings.ShowProfession,
+                        ShowInterests = request.PrivacySettings.ShowInterests,
+                        ShowAboutMe = request.PrivacySettings.ShowAboutMe,
+                        ShowProfilePicture = request.PrivacySettings.ShowProfilePicture,
+                        ShowAdditionalPictures = request.PrivacySettings.ShowAdditionalPictures
+                    };
+                    db.OhPrivacySettings.Add(newSettings);
+                }
+            }
+            await db.SaveChangesAsync();
+        }
+
 
         public static async Task<List<ResidentDigest>> GetActiveResidentDigestsAsync(
     MigdalorDBContext context

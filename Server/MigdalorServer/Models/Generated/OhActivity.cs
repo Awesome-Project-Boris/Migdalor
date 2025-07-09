@@ -10,11 +10,6 @@ namespace MigdalorServer.Models
     [Index("ActivityName", Name = "UQ__OH_Activ__BD8CC0A98C74AE38", IsUnique = true)]
     public partial class OhActivity
     {
-        public OhActivity()
-        {
-            OhParticipations = new HashSet<OhParticipation>();
-        }
-
         [Key]
         [Column("activityID")]
         public int ActivityId { get; set; }
@@ -31,6 +26,8 @@ namespace MigdalorServer.Models
         public string? Location { get; set; }
         [Column("PicID")]
         public int? PicId { get; set; }
+        [Column("endDate", TypeName = "datetime")]
+        public DateTime? EndDate { get; set; }
 
         [ForeignKey("HostId")]
         [InverseProperty("OhActivities")]
@@ -38,9 +35,5 @@ namespace MigdalorServer.Models
         [ForeignKey("PicId")]
         [InverseProperty("OhActivities")]
         public virtual OhPicture? Pic { get; set; }
-        [InverseProperty("Class")]
-        public virtual OhClass? OhClass { get; set; }
-        [InverseProperty("Activity")]
-        public virtual ICollection<OhParticipation> OhParticipations { get; set; }
     }
 }

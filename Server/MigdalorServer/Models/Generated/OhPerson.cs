@@ -15,7 +15,6 @@ namespace MigdalorServer.Models
             OhActivities = new HashSet<OhActivity>();
             OhListings = new HashSet<OhListing>();
             OhNotices = new HashSet<OhNotice>();
-            OhParticipations = new HashSet<OhParticipation>();
             OhPictures = new HashSet<OhPicture>();
             PermissionNames = new HashSet<OhPermission>();
         }
@@ -79,8 +78,6 @@ namespace MigdalorServer.Models
         public virtual ICollection<OhListing> OhListings { get; set; }
         [InverseProperty("Sender")]
         public virtual ICollection<OhNotice> OhNotices { get; set; }
-        [InverseProperty("Participant")]
-        public virtual ICollection<OhParticipation> OhParticipations { get; set; }
         [InverseProperty("Uploader")]
         public virtual ICollection<OhPicture> OhPictures { get; set; }
 

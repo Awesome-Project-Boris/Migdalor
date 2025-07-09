@@ -12,6 +12,7 @@ namespace MigdalorServer.Models
         public OhResident()
         {
             InverseSpouse = new HashSet<OhResident>();
+            OhBokerTovs = new HashSet<OhBokerTov>();
             InterestNames = new HashSet<OhInterest>();
         }
 
@@ -70,6 +71,8 @@ namespace MigdalorServer.Models
         public virtual OhResident? Spouse { get; set; }
         [InverseProperty("Spouse")]
         public virtual ICollection<OhResident> InverseSpouse { get; set; }
+        [InverseProperty("Resident")]
+        public virtual ICollection<OhBokerTov> OhBokerTovs { get; set; }
 
         [ForeignKey("ResidentId")]
         [InverseProperty("Residents")]

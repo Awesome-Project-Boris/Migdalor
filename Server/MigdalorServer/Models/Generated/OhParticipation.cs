@@ -7,27 +7,22 @@ using Microsoft.EntityFrameworkCore;
 namespace MigdalorServer.Models
 {
     [Table("OH_Participation")]
+    [Index("InstanceId", "ParticipantId", Name = "UQ_Attendance_Instance_Participant", IsUnique = true)]
     public partial class OhParticipation
     {
         [Key]
-        [Column("ActivityID")]
-        public int ActivityId { get; set; }
-        [Key]
+        [Column("AttendanceID")]
+        public int AttendanceId { get; set; }
+        [Column("InstanceID")]
+        public int InstanceId { get; set; }
         [Column("ParticipantID")]
         public Guid ParticipantId { get; set; }
-        [Key]
-        [Column(TypeName = "date")]
-        public DateTime SessionDate { get; set; }
-        [StringLength(20)]
-        public string ParticipationStatus { get; set; } = null!;
-        [Column(TypeName = "datetime")]
-        public DateTime? RegistrationDate { get; set; }
+        public DateTime? SignInTime { get; set; }
+        [StringLength(50)]
+        public string Status { get; set; } = null!;
 
-        [ForeignKey("ActivityId")]
+        [ForeignKey("InstanceId")]
         [InverseProperty("OhParticipations")]
-        public virtual OhActivity Activity { get; set; } = null!;
-        [ForeignKey("ParticipantId")]
-        [InverseProperty("OhParticipations")]
-        public virtual OhPerson Participant { get; set; } = null!;
+        public virtual OhEventInstance Instance { get; set; } = null!;
     }
 }
