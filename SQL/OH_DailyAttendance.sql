@@ -1,6 +1,6 @@
 -- This script creates the OH_DailyAttendance table with all necessary constraints.
 
-CREATE TABLE [dbo].[OH_DailyAttendance] (
+CREATE TABLE [dbo].[OH_BokerTov] (
     -- Primary Key for the table, automatically increments.
     [Id]             INT           IDENTITY (1, 1) NOT NULL,
 
