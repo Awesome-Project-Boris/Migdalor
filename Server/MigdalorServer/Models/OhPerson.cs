@@ -29,14 +29,6 @@ namespace MigdalorServer.Models
                 return user;
         }
 
-        public static OhPerson GetUserByID(Guid id)
-        {
-            using var db = new MigdalorDBContext();
-            OhPerson result = db.OhPeople.Find(id)!;
-            if (result == null) throw new Exception("User not found");
-            return result;
-        }
-
         //public static OhPerson GetPersonByIDForProfile(Guid ID)
         public static dynamic GetPersonByIDForProfile(Guid ID)
         {

@@ -1,12 +1,11 @@
 import React, { createContext, useEffect, useState, useContext } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ActivityIndicator } from "react-native";
 import { Globals } from "../app/constants/Globals";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-
 // Create the AuthContext with a default value
 const AuthContext = createContext({
   user: null,
-  token: null, // Add token to the context
   login: async (phoneNumber, password) => {},
   logout: async () => {},
   setUser: () => {},
@@ -19,51 +18,37 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null); // State to hold the JWT
   const [loading, setLoading] = useState(true);
   const { expoPushToken } = usePushNotifications();
 
-  // On mount, try to load the token and validate it.
+  // On mount, try to load the user data from AsyncStorage.
   useEffect(() => {
     const loadUserFromStorage = async () => {
       try {
-        const storedToken = await AsyncStorage.getItem("jwt");
-        if (storedToken) {
-          setToken(storedToken);
-          // Fetch user details using the stored token to validate it
-          const userDetailsResponse = await fetch(
-            `${Globals.API_BASE_URL}/api/People/details`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${storedToken}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (userDetailsResponse.ok) {
-            const userData = await userDetailsResponse.json();
-            // The server returns a dynamic object, let's map it to a consistent user object
-            const formattedUser = {
-              personId: userData.id,
-              hebFirstName: userData.hebName?.split(" ")[0] || "",
-              hebLastName:
-                userData.hebName?.split(" ").slice(1).join(" ") || "",
-              engFirstName: userData.engName?.split(" ")[0] || "",
-              engLastName:
-                userData.engName?.split(" ").slice(1).join(" ") || "",
-              ...userData, // include other fields from the response
-            };
-            setUser(formattedUser);
-          } else {
-            // Token is invalid or expired, clear it
-            await logout();
-          }
+        const storedUserID = await AsyncStorage.getItem("userID");
+        if (storedUserID) {
+          // Optionally, you could retrieve more information from storage.
+          AsyncStorage.multiGet([
+            "userHebFirstName",
+            "userHebLastName",
+            "userEngFirstName",
+            "userEngLastName",
+          ]).then((values) => {
+            const userHebFirstName = values[0][1];
+            const userHebLastName = values[1][1];
+            const userEngFirstName = values[2][1];
+            const userEngLastName = values[3][1];
+            setUser({
+              userID: storedUserID,
+              userHebFirstName,
+              userHebLastName,
+              userEngFirstName,
+              userEngLastName,
+            });
+          });
         }
       } catch (error) {
         console.error("Error loading user data from storage", error);
-        // In case of network error on startup, don't log the user out
       } finally {
         setLoading(false);
       }
@@ -74,8 +59,8 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (phoneNumber, password) => {
     try {
-      const apiUrl = `${Globals.API_BASE_URL}/api/People/login`;
-      const response = await fetch(apiUrl, {
+      const apiurl = `${Globals.API_BASE_URL}/api/People/login`;
+      const response = await fetch(apiurl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,84 +69,57 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (!response.ok) {
+        // You can throw an error or handle it with an error message.
         throw new Error(`Login failed: HTTP ${response.status}`);
       }
 
-      // The response body is the raw JWT string
-      const receivedToken = await response.text();
-
-      // Store the token
-      await AsyncStorage.setItem("jwt", receivedToken);
-      setToken(receivedToken);
-
-      // Fetch user details with the new token
-      const userDetailsResponse = await fetch(
-        `${Globals.API_BASE_URL}/api/People/details`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${receivedToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!userDetailsResponse.ok) {
-        throw new Error("Failed to fetch user details after login.");
-      }
-
-      const userData = await userDetailsResponse.json();
-      const formattedUser = {
-        personId: userData.id,
-        hebFirstName: userData.hebName?.split(" ")[0] || "",
-        hebLastName: userData.hebName?.split(" ").slice(1).join(" ") || "",
-        engFirstName: userData.engName?.split(" ")[0] || "",
-        engLastName: userData.engName?.split(" ").slice(1).join(" ") || "",
-        ...userData,
-      };
+      const data = await response.json();
 
       // Save the necessary user data to AsyncStorage.
       await AsyncStorage.multiSet([
-        ["userID", formattedUser.personId],
-        ["userHebFirstName", formattedUser.hebFirstName],
-        ["userHebLastName", formattedUser.hebLastName],
-        ["userEngFirstName", formattedUser.engFirstName],
-        ["userEngLastName", formattedUser.engLastName],
+        ["userID", data.personId],
+        ["userHebFirstName", data.hebFirstName],
+        ["userHebLastName", data.hebLastName],
+        ["userEngFirstName", data.engFirstName],
+        ["userEngLastName", data.engLastName],
       ]);
 
-      // Set the user information in state
-      setUser(formattedUser);
-
-      // Post push token to server
-      if (expoPushToken?.data) {
-        const registerTokenUrl = `${Globals.API_BASE_URL}/api/Notifications/registerToken`;
-        await fetch(registerTokenUrl, {
+      //Post push token to server
+      console.log("Token from login", expoPushToken);
+      if (expoPushToken.data) {
+        const apiurl = `${Globals.API_BASE_URL}/api/Notifications/registerToken`;
+        const response = await fetch(apiurl, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${receivedToken}`, // Use token for this request too if secured
           },
           body: JSON.stringify({
-            personId: formattedUser.personId,
+            personId: data.personId,
             pushToken: expoPushToken.data,
           }),
         });
+        if (!response.ok) {
+          throw new Error(
+            `Failed to register push token: HTTP ${response.status}`
+          );
+        } else {
+          console.log("Push token registered successfully from login");
+        }
       }
 
-      return formattedUser;
+      // Set the user information in state.
+      setUser(data);
+      return data;
     } catch (error) {
       console.error("Authentication error:", error);
-      // Clear potentially bad token
-      await logout();
       throw error;
     }
   };
 
+  // logout function that clears the stored authentication info.
   const logout = async () => {
     try {
-      // Remove the JWT and any other user data
       await AsyncStorage.multiRemove([
-        "jwt",
         "userID",
         "userHebFirstName",
         "userHebLastName",
@@ -169,7 +127,6 @@ export const AuthProvider = ({ children }) => {
         "userEngLastName",
       ]);
       setUser(null);
-      setToken(null);
     } catch (error) {
       console.error("Error during logout:", error);
     }
@@ -181,7 +138,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, login, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
