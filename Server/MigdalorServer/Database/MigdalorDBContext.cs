@@ -15,9 +15,10 @@ namespace MigdalorServer.Database
         }
 
         public virtual DbSet<OhActivity> OhActivities { get; set; } = null!;
+        public virtual DbSet<OhBokerTov> OhBokerTovs { get; set; } = null!;
         public virtual DbSet<OhCategory> OhCategories { get; set; } = null!;
-        public virtual DbSet<OhClass> OhClasses { get; set; } = null!;
-        public virtual DbSet<OhDailyAttendance> OhDailyAttendances { get; set; } = null!;
+        public virtual DbSet<OhEvent> OhEvents { get; set; } = null!;
+        public virtual DbSet<OhEventInstance> OhEventInstances { get; set; } = null!;
         public virtual DbSet<OhInterest> OhInterests { get; set; } = null!;
         public virtual DbSet<OhListing> OhListings { get; set; } = null!;
         public virtual DbSet<OhNotice> OhNotices { get; set; } = null!;
@@ -51,6 +52,14 @@ namespace MigdalorServer.Database
                     .HasConstraintName("FK_Activities_Pic");
             });
 
+            modelBuilder.Entity<OhBokerTov>(entity =>
+            {
+                entity.HasOne(d => d.Resident)
+                    .WithMany(p => p.OhBokerTovs)
+                    .HasForeignKey(d => d.ResidentId)
+                    .HasConstraintName("FK_OH_DailyAttendance_OH_Residents");
+            });
+
             modelBuilder.Entity<OhCategory>(entity =>
             {
                 entity.HasKey(e => e.CategoryHebName)
@@ -59,28 +68,21 @@ namespace MigdalorServer.Database
                 entity.Property(e => e.CategoryColor).HasDefaultValueSql("('#FFFFFF')");
             });
 
-            modelBuilder.Entity<OhClass>(entity =>
+            modelBuilder.Entity<OhEvent>(entity =>
             {
-                entity.HasKey(e => e.ClassId)
-                    .HasName("PK__OH_Class__7577345EE5751577");
-
-                entity.Property(e => e.ClassId).ValueGeneratedNever();
-
-                entity.Property(e => e.IsRecurring).HasDefaultValueSql("((0))");
-
-                entity.HasOne(d => d.Class)
-                    .WithOne(p => p.OhClass)
-                    .HasForeignKey<OhClass>(d => d.ClassId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Classes_Activities");
+                entity.HasKey(e => e.EventId)
+                    .HasName("PK__Events__7944C87002AC49E8");
             });
 
-            modelBuilder.Entity<OhDailyAttendance>(entity =>
+            modelBuilder.Entity<OhEventInstance>(entity =>
             {
-                entity.HasOne(d => d.Resident)
-                    .WithMany(p => p.OhDailyAttendances)
-                    .HasForeignKey(d => d.ResidentId)
-                    .HasConstraintName("FK_OH_DailyAttendance_OH_Residents");
+                entity.HasKey(e => e.InstanceId)
+                    .HasName("PK__Event_In__5C51996F892A97D0");
+
+                entity.HasOne(d => d.Event)
+                    .WithMany(p => p.OhEventInstances)
+                    .HasForeignKey(d => d.EventId)
+                    .HasConstraintName("FK_EventInstances_Events");
             });
 
             modelBuilder.Entity<OhInterest>(entity =>
@@ -134,24 +136,15 @@ namespace MigdalorServer.Database
 
             modelBuilder.Entity<OhParticipation>(entity =>
             {
-                entity.HasKey(e => new { e.ActivityId, e.ParticipantId, e.SessionDate })
-                    .HasName("PK__OH_Parti__37559D1561FDA4F1");
+                entity.HasKey(e => e.AttendanceId)
+                    .HasName("PK__Attendan__8B69263C2091BD1F");
 
-                entity.Property(e => e.ParticipationStatus).HasDefaultValueSql("('Registered')");
+                entity.Property(e => e.Status).HasDefaultValueSql("('Attended')");
 
-                entity.Property(e => e.RegistrationDate).HasDefaultValueSql("(getdate())");
-
-                entity.HasOne(d => d.Activity)
+                entity.HasOne(d => d.Instance)
                     .WithMany(p => p.OhParticipations)
-                    .HasForeignKey(d => d.ActivityId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Participation_Activity");
-
-                entity.HasOne(d => d.Participant)
-                    .WithMany(p => p.OhParticipations)
-                    .HasForeignKey(d => d.ParticipantId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_Participation_Person");
+                    .HasForeignKey(d => d.InstanceId)
+                    .HasConstraintName("FK_Attendance_EventInstances");
             });
 
             modelBuilder.Entity<OhPermission>(entity =>

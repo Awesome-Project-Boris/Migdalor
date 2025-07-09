@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MigdalorServer.Models
 {
-    [Table("OH_Participation")]
+    [Table("Attendance")]
     [Index("InstanceId", "ParticipantId", Name = "UQ_Attendance_Instance_Participant", IsUnique = true)]
-    public partial class OhParticipation
+    public partial class Attendance
     {
         [Key]
         [Column("AttendanceID")]
@@ -22,7 +22,7 @@ namespace MigdalorServer.Models
         public string Status { get; set; } = null!;
 
         [ForeignKey("InstanceId")]
-        [InverseProperty("OhParticipations")]
-        public virtual OhEventInstance Instance { get; set; } = null!;
+        [InverseProperty("Attendances")]
+        public virtual EventInstance Instance { get; set; } = null!;
     }
 }
