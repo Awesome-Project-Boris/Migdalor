@@ -1,12 +1,4 @@
-/* /src/styles/global.css */
-
-/*
- * This class is applied to the body to set the default font
- * for the Hebrew language parts of the application.
- */
- body.font-he {
+@import "tailwindcss";
+body.font-he {
     font-family: 'Segoe UI', 'Calibri', sans-serif;
   }
-  
-  /* You can add other global styles here as needed. */
-  
