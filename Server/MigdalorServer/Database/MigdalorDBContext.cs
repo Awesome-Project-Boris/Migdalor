@@ -125,7 +125,7 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhOpeningHour>(entity =>
             {
                 entity.HasKey(e => e.HourId)
-                    .HasName("PK__OH_Openi__18DFA33E5924A6B4");
+                    .HasName("PK__OH_Openi__18DFA33EB8BA19C2");
 
                 entity.HasOne(d => d.Service)
                     .WithMany(p => p.OhOpeningHours)
@@ -302,7 +302,7 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhScheduleOverride>(entity =>
             {
                 entity.HasKey(e => e.OverrideId)
-                    .HasName("PK__OH_Sched__37B513C44E0C35B2");
+                    .HasName("PK__OH_Sched__37B513C41ACA4C17");
 
                 entity.HasOne(d => d.Service)
                     .WithMany(p => p.OhScheduleOverrides)
@@ -314,9 +314,14 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhService>(entity =>
             {
                 entity.HasKey(e => e.ServiceId)
-                    .HasName("PK__OH_Servi__C51BB0EAD289B183");
+                    .HasName("PK__OH_Servi__C51BB0EA7F14E7D3");
 
                 entity.Property(e => e.IsActive).HasDefaultValueSql("((1))");
+
+                entity.HasOne(d => d.ParentServiceNavigation)
+                    .WithMany(p => p.InverseParentServiceNavigation)
+                    .HasForeignKey(d => d.ParentService)
+                    .HasConstraintName("FK_Service_Parent");
 
                 entity.HasOne(d => d.Picture)
                     .WithMany(p => p.OhServices)

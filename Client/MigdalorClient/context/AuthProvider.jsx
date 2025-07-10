@@ -1,4 +1,10 @@
-import React, { createContext, useEffect, useState, useContext } from "react";
+import React, {
+  createContext,
+  useEffect,
+  useState,
+  useContext,
+  useCallback,
+} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "../app/constants/Globals";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
@@ -6,10 +12,13 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 // Create the AuthContext with a default value
 const AuthContext = createContext({
   user: null,
-  token: null, // Add token to the context
+  token: null,
+  loading: true,
   login: async (phoneNumber, password) => {},
   logout: async () => {},
   setUser: () => {},
+  refreshToken: async () => {},
+  loadUserSession: async () => {},
 });
 
 // Export a custom hook for easy access to the context
@@ -19,145 +28,11 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null); // State to hold the JWT
+  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const { expoPushToken } = usePushNotifications();
 
-  // On mount, try to load the token and validate it.
-  useEffect(() => {
-    const loadUserFromStorage = async () => {
-      try {
-        const storedToken = await AsyncStorage.getItem("jwt");
-        if (storedToken) {
-          setToken(storedToken);
-          // Fetch user details using the stored token to validate it
-          const userDetailsResponse = await fetch(
-            `${Globals.API_BASE_URL}/api/People/details`,
-            {
-              method: "GET",
-              headers: {
-                Authorization: `Bearer ${storedToken}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (userDetailsResponse.ok) {
-            const userData = await userDetailsResponse.json();
-            // The server returns a dynamic object, let's map it to a consistent user object
-            const formattedUser = {
-              personId: userData.id,
-              hebFirstName: userData.hebName?.split(" ")[0] || "",
-              hebLastName:
-                userData.hebName?.split(" ").slice(1).join(" ") || "",
-              engFirstName: userData.engName?.split(" ")[0] || "",
-              engLastName:
-                userData.engName?.split(" ").slice(1).join(" ") || "",
-              ...userData, // include other fields from the response
-            };
-            setUser(formattedUser);
-          } else {
-            // Token is invalid or expired, clear it
-            await logout();
-          }
-        }
-      } catch (error) {
-        console.error("Error loading user data from storage", error);
-        // In case of network error on startup, don't log the user out
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUserFromStorage();
-  }, []);
-
-  const login = async (phoneNumber, password) => {
-    try {
-      const apiUrl = `${Globals.API_BASE_URL}/api/People/login`;
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ phoneNumber, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Login failed: HTTP ${response.status}`);
-      }
-
-      // The response body is the raw JWT string
-      const receivedToken = await response.text();
-
-      // Store the token
-      await AsyncStorage.setItem("jwt", receivedToken);
-      setToken(receivedToken);
-
-      // Fetch user details with the new token
-      const userDetailsResponse = await fetch(
-        `${Globals.API_BASE_URL}/api/People/details`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${receivedToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!userDetailsResponse.ok) {
-        throw new Error("Failed to fetch user details after login.");
-      }
-
-      const userData = await userDetailsResponse.json();
-      const formattedUser = {
-        personId: userData.id,
-        hebFirstName: userData.hebName?.split(" ")[0] || "",
-        hebLastName: userData.hebName?.split(" ").slice(1).join(" ") || "",
-        engFirstName: userData.engName?.split(" ")[0] || "",
-        engLastName: userData.engName?.split(" ").slice(1).join(" ") || "",
-        ...userData,
-      };
-
-      // Save the necessary user data to AsyncStorage.
-      await AsyncStorage.multiSet([
-        ["userID", formattedUser.personId],
-        ["userHebFirstName", formattedUser.hebFirstName],
-        ["userHebLastName", formattedUser.hebLastName],
-        ["userEngFirstName", formattedUser.engFirstName],
-        ["userEngLastName", formattedUser.engLastName],
-      ]);
-
-      // Set the user information in state
-      setUser(formattedUser);
-
-      // Post push token to server
-      if (expoPushToken?.data) {
-        const registerTokenUrl = `${Globals.API_BASE_URL}/api/Notifications/registerToken`;
-        await fetch(registerTokenUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${receivedToken}`, // Use token for this request too if secured
-          },
-          body: JSON.stringify({
-            personId: formattedUser.personId,
-            pushToken: expoPushToken.data,
-          }),
-        });
-      }
-
-      return formattedUser;
-    } catch (error) {
-      console.error("Authentication error:", error);
-      // Clear potentially bad token
-      await logout();
-      throw error;
-    }
-  };
-
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       // Remove the JWT and any other user data
       await AsyncStorage.multiRemove([
@@ -173,15 +48,155 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Error during logout:", error);
     }
-  };
+  }, []);
 
-  // While checking AsyncStorage, optionally render a loader or nothing.
-  if (loading) {
-    return null; // or a splash screen / ActivityIndicator
-  }
+  const refreshToken = useCallback(async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem("jwt");
+      if (!storedToken) {
+        console.log("No token found to refresh.");
+        return;
+      }
+
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/People/refresh-token`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.ok) {
+        const newToken = await response.text();
+        await AsyncStorage.setItem("jwt", newToken);
+        setToken(newToken);
+        console.log("JWT token was updated.");
+      } else {
+        console.log(
+          "Failed to refresh token. The existing token might be invalid."
+        );
+        // We will proceed, and loadUserSession will likely fail and trigger a logout.
+      }
+    } catch (error) {
+      console.error("An error occurred while refreshing token:", error);
+    }
+  }, []);
+
+  const loadUserSession = useCallback(async () => {
+    try {
+      const sessionToken = await AsyncStorage.getItem("jwt");
+      if (!sessionToken) {
+        // If there's no token, we're done loading. The user is not logged in.
+        setLoading(false);
+        return;
+      }
+
+      setToken(sessionToken);
+
+      const userDetailsResponse = await fetch(
+        `${Globals.API_BASE_URL}/api/People/details`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${sessionToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (userDetailsResponse.ok) {
+        const userData = await userDetailsResponse.json();
+        const formattedUser = {
+          personId: userData.id,
+          hebFirstName: userData.hebName?.split(" ")[0] || "",
+          hebLastName: userData.hebName?.split(" ").slice(1).join(" ") || "",
+          engFirstName: userData.engName?.split(" ")[0] || "",
+          engLastName: userData.engName?.split(" ").slice(1).join(" ") || "",
+          ...userData,
+        };
+        setUser(formattedUser);
+
+        // Store user details in AsyncStorage
+        await AsyncStorage.multiSet([
+          ["userID", formattedUser.personId],
+          ["userHebFirstName", formattedUser.hebFirstName],
+          ["userHebLastName", formattedUser.hebLastName],
+          ["userEngFirstName", formattedUser.engFirstName],
+          ["userEngLastName", formattedUser.engLastName],
+        ]);
+      } else {
+        await logout();
+      }
+    } catch (error) {
+      console.error("Error loading user session:", error);
+      await logout();
+    } finally {
+      setLoading(false);
+    }
+  }, [logout]);
+
+  const login = useCallback(
+    async (phoneNumber, password) => {
+      try {
+        const apiUrl = `${Globals.API_BASE_URL}/api/People/login`;
+        const response = await fetch(apiUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ phoneNumber, password }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Login failed: HTTP ${response.status}`);
+        }
+
+        const receivedToken = await response.text();
+        await AsyncStorage.setItem("jwt", receivedToken);
+
+        // After successful login, load the user session, which will also store user details
+        await loadUserSession();
+
+        // Post push token to server after user session is loaded
+        if (expoPushToken?.data && user?.personId) {
+          const registerTokenUrl = `${Globals.API_BASE_URL}/api/Notifications/registerToken`;
+          await fetch(registerTokenUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${receivedToken}`,
+            },
+            body: JSON.stringify({
+              personId: user.personId,
+              pushToken: expoPushToken.data,
+            }),
+          });
+        }
+      } catch (error) {
+        console.error("Authentication error:", error);
+        await logout();
+        throw error;
+      }
+    },
+    [logout, expoPushToken, loadUserSession, user]
+  );
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, setUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        login,
+        logout,
+        setUser,
+        refreshToken,
+        loadUserSession,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
