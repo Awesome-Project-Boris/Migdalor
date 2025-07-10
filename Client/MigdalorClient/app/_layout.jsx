@@ -175,9 +175,16 @@ export default function Layout() {
                       }}
                     />
                     <Stack.Screen
-                      name="OpeningHours"
+                      name="PublicServices"
                       options={{
-                        title: "Opening hours",
+                        title: "Public services",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="PublicServicesFocus"
+                      options={{
+                        title: "public services details",
                         headerShown: false,
                       }}
                     />

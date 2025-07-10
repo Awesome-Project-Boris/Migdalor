@@ -1,5 +1,6 @@
 CREATE TABLE OH_Services (
     ServiceID INT IDENTITY(1,1) PRIMARY KEY,
+    ParentService INT NULL,
     HebrewName NVARCHAR(100) NOT NULL,
     EnglishName NVARCHAR(100) NULL,
     HebrewDescription NVARCHAR(500) NULL,
@@ -9,5 +10,6 @@ CREATE TABLE OH_Services (
     LocationID INT NULL, 
     PictureID INT NULL, 
     IsActive BIT NOT NULL DEFAULT 1,
-    CONSTRAINT FK_Service_Picture FOREIGN KEY (PictureID) REFERENCES OH_Pictures(PicID)
+    CONSTRAINT FK_Service_Picture FOREIGN KEY (PictureID) REFERENCES OH_Pictures(PicID),
+    CONSTRAINT FK_Service_Parent FOREIGN KEY (ParentService) REFERENCES OH_Services(ServiceID)
 );

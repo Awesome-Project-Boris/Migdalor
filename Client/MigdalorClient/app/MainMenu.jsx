@@ -89,7 +89,7 @@ export default function Index() {
     {
       key: "menu6",
       name: t("MainMenuScreen_ActivityHoursButton"),
-      destination: "OpeningHours",
+      destination: "PublicServices",
     },
     { key: "menu7", name: t("MainMenuScreen_MapButton"), destination: "Map" },
     {
