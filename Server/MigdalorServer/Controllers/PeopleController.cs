@@ -175,14 +175,14 @@ namespace MigdalorServer.Controllers
                 new Claim(ClaimTypes.Name, user.PhoneNumber),
                 new Claim(ClaimTypes.GivenName, user.EngFirstName ?? ""),
                 new Claim(ClaimTypes.Surname, user.EngLastName ?? ""),
-                new Claim(ClaimTypes.Role, user.PersonRole ?? "user"), // Add role claim, default to "User"
+                new Claim(ClaimTypes.Role, user.PersonRole ?? "User"), // Add role claim, default to "User"
             };
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(168), // Set token expiration
+                expires: DateTime.Now.AddHours(168), // Set token expiration to 7 days
                 signingCredentials: credentials
             );
 
