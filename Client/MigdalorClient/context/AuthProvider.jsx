@@ -118,6 +118,15 @@ export const AuthProvider = ({ children }) => {
           ...userData,
         };
         setUser(formattedUser);
+
+        // Store user details in AsyncStorage
+        await AsyncStorage.multiSet([
+          ["userID", formattedUser.personId],
+          ["userHebFirstName", formattedUser.hebFirstName],
+          ["userHebLastName", formattedUser.hebLastName],
+          ["userEngFirstName", formattedUser.engFirstName],
+          ["userEngLastName", formattedUser.engLastName],
+        ]);
       } else {
         await logout();
       }
@@ -148,7 +157,7 @@ export const AuthProvider = ({ children }) => {
         const receivedToken = await response.text();
         await AsyncStorage.setItem("jwt", receivedToken);
 
-        // After successful login, load the user session
+        // After successful login, load the user session, which will also store user details
         await loadUserSession();
 
         // Post push token to server after user session is loaded
