@@ -55,6 +55,48 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        // POST: api/People/refresh-token
+        // Refreshes the JWT for an authenticated user.
+        [HttpPost("refresh-token")]
+        [Authorize] // Ensures only users with a valid token can access this
+        public IActionResult RefreshToken()
+        {
+            try
+            {
+                // Get the user ID from the claims inside the existing JWT
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("Invalid token: Missing user identifier.");
+                }
+
+                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return BadRequest("Invalid user ID format in token.");
+                }
+
+                // Fetch the user from the database to ensure they still exist and are valid
+                var user = OhPerson.GetUserByID(userId);
+                if (user == null)
+                {
+                    // This case handles if the user was deleted after the token was issued.
+                    return Unauthorized("User not found.");
+                }
+
+                // Generate a new token with a new expiration date
+                var newToken = GenerateJwtToken(user);
+                return Ok(newToken);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error refreshing token: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
+        }
+
+
         // GET: api/People/IsAdmin
         // This endpoint is now protected and checks the role of the authenticated user.
         [HttpGet("IsAdmin")]
@@ -104,7 +146,7 @@ namespace MigdalorServer.Controllers
                 {
                     return BadRequest("Invalid user ID in token.");
                 }
-                
+
                 var data = OhPerson.GetPersonByIDForProfile(userId);
                 return Ok(data);
             }
@@ -133,14 +175,14 @@ namespace MigdalorServer.Controllers
                 new Claim(ClaimTypes.Name, user.PhoneNumber),
                 new Claim(ClaimTypes.GivenName, user.EngFirstName ?? ""),
                 new Claim(ClaimTypes.Surname, user.EngLastName ?? ""),
-                new Claim(ClaimTypes.Role, user.PersonRole ?? "User"), // Add role claim, default to "User"
+                new Claim(ClaimTypes.Role, user.PersonRole ?? "user"), // Add role claim, default to "User"
             };
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(8), // Set token expiration
+                expires: DateTime.Now.AddHours(168), // Set token expiration
                 signingCredentials: credentials
             );
 
@@ -251,7 +293,7 @@ namespace MigdalorServer.Controllers
             if (resident == null)
                 return NotFound("Resident not found."); // Changed: NotFound()
 
-            if (id != dto.PersonId)    
+            if (id != dto.PersonId)
             {
                 return BadRequest("Mismatched ID in URL and request body.");
             }
