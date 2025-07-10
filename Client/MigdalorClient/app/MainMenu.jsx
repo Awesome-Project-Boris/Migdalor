@@ -22,7 +22,7 @@ import { useTranslation } from "react-i18next";
 
 const ASYNC_STORAGE_KEY = "mainMenuOrder";
 
-const showDevButton = false;
+const showDevButton = true;
 
 const viewAllData = async () => {
   try {
