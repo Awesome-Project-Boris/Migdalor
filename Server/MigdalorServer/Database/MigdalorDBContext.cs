@@ -8,6 +8,9 @@ namespace MigdalorServer.Database
 {
     public partial class MigdalorDBContext : DbContext
     {
+        public MigdalorDBContext()
+        {
+        }
 
         public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
             : base(options)
@@ -125,7 +128,7 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhOpeningHour>(entity =>
             {
                 entity.HasKey(e => e.HourId)
-                    .HasName("PK__OH_Openi__18DFA33E9240D054");
+                    .HasName("PK__OH_Openi__18DFA33E5924A6B4");
 
                 entity.HasOne(d => d.Service)
                     .WithMany(p => p.OhOpeningHours)
@@ -302,7 +305,7 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhScheduleOverride>(entity =>
             {
                 entity.HasKey(e => e.OverrideId)
-                    .HasName("PK__OH_Sched__37B513C4C49A7C86");
+                    .HasName("PK__OH_Sched__37B513C44E0C35B2");
 
                 entity.HasOne(d => d.Service)
                     .WithMany(p => p.OhScheduleOverrides)
@@ -314,7 +317,7 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhService>(entity =>
             {
                 entity.HasKey(e => e.ServiceId)
-                    .HasName("PK__OH_Servi__C51BB0EAC9B72128");
+                    .HasName("PK__OH_Servi__C51BB0EAD289B183");
 
                 entity.Property(e => e.IsActive).HasDefaultValueSql("((1))");
 

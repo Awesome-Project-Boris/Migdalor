@@ -23,8 +23,11 @@ namespace MigdalorServer.Models
         [StringLength(100)]
         public string? EnglishName { get; set; }
         [StringLength(500)]
-        public string? Description { get; set; }
-        public string? Addendum { get; set; }
+        public string? HebrewDescription { get; set; }
+        [StringLength(500)]
+        public string? EnglishDescription { get; set; }
+        public string? HebrewAddendum { get; set; }
+        public string? EnglishAddendum { get; set; }
         [Column("LocationID")]
         public int? LocationId { get; set; }
         [Column("PictureID")]
