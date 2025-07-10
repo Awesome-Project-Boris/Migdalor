@@ -1,196 +1,223 @@
-﻿//using ClosedXML.Excel;
-//using Microsoft.AspNetCore.Hosting;
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.Extensions.DependencyInjection;
-//using Microsoft.Extensions.Hosting;
-//using Microsoft.Extensions.Logging;
-//using MigdalorServer.Database;
-//using MigdalorServer.Models;
-//using System;
-//using System.IO;
-//using System.Linq;
-//using System.Threading;
-//using System.Threading.Tasks;
+﻿using ClosedXML.Excel;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using MigdalorServer.Database;
+using MigdalorServer.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
-//namespace MigdalorServer.Services
-//{
-//    /// <summary>
-//    /// A background service that runs daily tasks at a scheduled time (4 AM).
-//    /// 1. Generates an Excel report for the previous day's attendance.
-//    /// 2. Prepares blank attendance records for the current day for all active residents.
-//    /// </summary>
-//    public class DailyTasksService : IHostedService, IDisposable
-//    {
-//        private Timer? _timer;
-//        private readonly IServiceProvider _serviceProvider;
-//        private readonly ILogger<DailyTasksService> _logger;
-//        private readonly IWebHostEnvironment _hostingEnvironment;
+namespace MigdalorServer.Services
+{
+    /// <summary>
+    /// A background service that runs daily tasks at a scheduled time.
+    /// 1. Generates an Excel report from all existing attendance data.
+    /// 2. Rolls over the existing data for the new day and adds any new residents.
+    /// </summary>
+    public class DailyTasksService : IHostedService, IDisposable
+    {
+        private Timer? _timer;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly ILogger<DailyTasksService> _logger;
+        private readonly IWebHostEnvironment _hostingEnvironment;
 
-//        public DailyTasksService(
-//            IServiceProvider serviceProvider,
-//            ILogger<DailyTasksService> logger,
-//            IWebHostEnvironment hostingEnvironment)
-//        {
-//            _serviceProvider = serviceProvider;
-//            _logger = logger;
-//            _hostingEnvironment = hostingEnvironment;
-//        }
+        public DailyTasksService(
+            IServiceProvider serviceProvider,
+            ILogger<DailyTasksService> logger,
+            IWebHostEnvironment hostingEnvironment)
+        {
+            _serviceProvider = serviceProvider;
+            _logger = logger;
+            _hostingEnvironment = hostingEnvironment;
+        }
 
-//        /// <summary>
-//        /// Called when the application starts. Schedules the timer.
-//        /// </summary>
-//        public Task StartAsync(CancellationToken cancellationToken)
-//        {
-//            _logger.LogInformation("Daily Tasks Service is starting.");
+        /// <summary>
+        /// Called when the application starts. Schedules the timer for the daily run.
+        /// </summary>
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Daily Tasks Service is starting.");
 
-//            var now = DateTime.Now;
-//            var nextRunTime = DateTime.Today.AddDays(1).AddHours(4); // Schedule for 4 AM tomorrow
-//            if (now.Hour < 4)
-//            {
-//                nextRunTime = DateTime.Today.AddHours(4); // If it's before 4 AM, schedule for today
-//            }
+            const int TargetHour = 12;
+            const int TargetMinute = 58;
 
-//            var initialDelay = nextRunTime - now;
+            var now = DateTime.Now;
+            var nextRunTime = DateTime.Today.AddHours(TargetHour).AddMinutes(TargetMinute);
 
-//            _logger.LogInformation("Next daily task will run at: {runTime}", nextRunTime);
-//            _timer = new Timer(DoWork, null, initialDelay, TimeSpan.FromHours(24));
+            if (now > nextRunTime)
+            {
+                nextRunTime = nextRunTime.AddDays(1);
+            }
 
-//            return Task.CompletedTask;
-//        }
+            var initialDelay = nextRunTime - now;
 
-//        /// <summary>
-//        /// The main work method called by the timer.
-//        /// </summary>
-//        private async void DoWork(object? state)
-//        {
-//            _logger.LogInformation("Daily Tasks Service is executing its work.");
+            _logger.LogInformation("Next daily task will run at: {runTime}", nextRunTime);
+            _timer = new Timer(DoWork, null, initialDelay, TimeSpan.FromHours(24));
 
-//            // Create a new dependency injection scope to resolve scoped services like DbContext
-//            using (var scope = _serviceProvider.CreateScope())
-//            {
-//                var dbContext = scope.ServiceProvider.GetRequiredService<MigdalorDBContext>();
-//                try
-//                {
-//                    // Task 1: Generate and save the attendance report for the previous day.
-//                    await GenerateYesterdayReport(dbContext);
+            return Task.CompletedTask;
+        }
 
-//                    // Task 2: Prepare blank attendance records for the new day.
-//                    await PrepareTodayAttendance(dbContext);
-//                }
-//                catch (Exception ex)
-//                {
-//                    _logger.LogError(ex, "A critical error occurred within the Daily Tasks Service.");
-//                }
-//            }
-//        }
+        /// <summary>
+        /// The main work method that performs the daily report and rollover process.
+        /// </summary>
+        private async void DoWork(object? state)
+        {
+            _logger.LogInformation("Daily Tasks Service is executing its work.");
 
-//        /// <summary>
-//        /// Generates an Excel report from yesterday's attendance data and saves it to the server.
-//        /// </summary>
-//        private async Task GenerateYesterdayReport(MigdalorDBContext dbContext)
-//        {
-//            var yesterday = DateOnly.FromDateTime(DateTime.Now.AddDays(-1));
-//            _logger.LogInformation("Generating attendance report for {yesterday}", yesterday);
+            using (var scope = _serviceProvider.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<MigdalorDBContext>();
+                try
+                {
+                    var recordsToProcess = await dbContext.OhBokerTovs.ToListAsync();
 
-//            var reportData = await dbContext.OhDailyAttendances
-//                .Where(a => a.AttendanceDate == yesterday)
-//                .Include(a => a.Resident!.Person) // Eager load related data to prevent N+1 queries
-//                .Select(a => new
-//                {
-//                    a.ResidentId,
-//                    FullName = a.Resident!.Person!.FirstName + " " + a.Resident.Person.LastName,
-//                    HasSignedIn = a.HasSignedIn ? "Yes" : "No",
-//                    SignInTime = a.SignInTime.HasValue ? a.SignInTime.Value.ToLocalTime().ToString("g") : "N/A"
-//                })
-//                .ToListAsync();
+                    if (recordsToProcess.Any())
+                    {
+                        await GenerateReportFromData(recordsToProcess, dbContext);
+                    }
+                    else
+                    {
+                        _logger.LogInformation("No Boker Tov data found to report on. Skipping report generation.");
+                    }
 
-//            if (!reportData.Any())
-//            {
-//                _logger.LogInformation("No attendance data found for {yesterday}. Skipping report generation.", yesterday);
-//                return;
-//            }
+                    var today = DateTime.Now.Date;
+                    foreach (var record in recordsToProcess)
+                    {
+                        record.AttendanceDate = today;
+                        record.HasSignedIn = false;
+                        record.SignInTime = null;
+                    }
+                    _logger.LogInformation("Rolled over {count} existing records for the new day.", recordsToProcess.Count);
 
-//            using (var workbook = new XLWorkbook())
-//            {
-//                var worksheet = workbook.Worksheets.Add($"Attendance {yesterday:yyyy-MM-dd}");
-//                worksheet.Cell("A1").Value = "Resident ID";
-//                worksheet.Cell("B1").Value = "Full Name";
-//                worksheet.Cell("C1").Value = "Signed In?";
-//                worksheet.Cell("D1").Value = "Sign-In Time (Local)";
+                    var processedResidentIds = recordsToProcess.Select(r => r.ResidentId).ToHashSet();
+                    var newResidents = await dbContext.OhResidents
+                        .Where(r => r.IsActive == true && !processedResidentIds.Contains(r.ResidentId))
+                        .Select(r => r.ResidentId)
+                        .ToListAsync();
 
-//                worksheet.Row(1).Style.Font.Bold = true;
-//                worksheet.Cell("A2").InsertData(reportData);
-//                worksheet.Columns().AdjustToContents();
+                    if (newResidents.Any())
+                    {
+                        var newRecords = newResidents.Select(residentId => new OhBokerTov
+                        {
+                            ResidentId = residentId,
+                            AttendanceDate = today,
+                            HasSignedIn = false,
+                            SignInTime = null
+                        });
+                        await dbContext.OhBokerTovs.AddRangeAsync(newRecords);
+                        _logger.LogInformation("Created {count} new Boker Tov records for new residents.", newRecords.Count());
+                    }
 
-//                // Build the path relative to the application's root directory
-//                var contentRootPath = _hostingEnvironment.ContentRootPath;
-//                var dailyAttendancePath = Path.Combine(contentRootPath, "Reports", "Daily Attendance");
+                    await dbContext.SaveChangesAsync();
+                    _logger.LogInformation("Boker Tov rollover process complete.");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "A critical error occurred within the Daily Tasks Service.");
+                }
+            }
+        }
 
-//                // Check if the pre-configured directory exists. Do NOT create it.
-//                if (!Directory.Exists(dailyAttendancePath))
-//                {
-//                    _logger.LogCritical("Report directory does not exist and will not be created. Please ensure the folder exists at: {path}", dailyAttendancePath);
-//                    return; // Stop the report generation process.
-//                }
+        /// <summary>
+        /// Generates an Excel report from a given list of attendance records.
+        /// </summary>
+        private async Task GenerateReportFromData(List<OhBokerTov> records, MigdalorDBContext dbContext)
+        {
+            var reportDate = DateTime.Now.AddDays(-1).Date;
+            _logger.LogInformation("Generating Boker Tov report for date: {reportDate}", reportDate);
 
-//                var filePath = Path.Combine(dailyAttendancePath, $"Daily_Attendance_{yesterday:yyyy-MM-dd}.xlsx");
+            var residentIds = records.Select(r => r.ResidentId).ToList();
+            var personData = await (
+                from resident in dbContext.OhResidents
+                where residentIds.Contains(resident.ResidentId)
+                join person in dbContext.OhPeople on resident.ResidentId equals person.PersonId
+                select new { resident.ResidentId, FullName = string.Join(" ", person.HebFirstName, person.HebLastName), person.PhoneNumber }
+            ).ToDictionaryAsync(p => p.ResidentId, p => new { p.FullName, p.PhoneNumber });
 
-//                workbook.SaveAs(filePath);
-//                _logger.LogInformation("Report saved successfully to {filePath}", filePath);
-//            }
-//        }
+            var reportData = records.Select(r =>
+            {
+                var pData = personData.GetValueOrDefault(r.ResidentId);
+                return new
+                {
+                    FullName = pData?.FullName ?? "Unknown Resident",
+                    PhoneNumber = pData?.PhoneNumber ?? "N/A",
+                    HasSignedIn = r.HasSignedIn ? "כן" : "לא",
+                    SignInTime = r.HasSignedIn && r.SignInTime.HasValue ? r.SignInTime.Value.ToLocalTime().ToString("HH:mm") : "N/A"
+                };
+            }).ToList();
 
-//        /// <summary>
-//        /// Creates blank attendance records for the current day for any active resident who doesn't have one.
-//        /// </summary>
-//        private async Task PrepareTodayAttendance(MigdalorDBContext dbContext)
-//        {
-//            var today = DateOnly.FromDateTime(DateTime.Now);
-//            _logger.LogInformation("Preparing attendance records for {today}", today);
+            using (var workbook = new XLWorkbook())
+            {
+                var reportDateFormatted = reportDate.ToString("dd-MM-yyyy");
+                var worksheet = workbook.Worksheets.Add($"דוח בוקר טוב {reportDateFormatted}");
 
-//            // Find all active residents who do NOT already have an attendance record for today.
-//            // This prevents creating duplicate records if the service is run manually.
-//            var residentsWithoutRecord = await dbContext.OhResidents
-//                .Where(r => r.IsActive && !dbContext.OhDailyAttendances.Any(a => a.ResidentId == r.Id && a.AttendanceDate == today))
-//                .Select(r => r.Id)
-//                .ToListAsync();
+                worksheet.RightToLeft = true;
 
-//            if (!residentsWithoutRecord.Any())
-//            {
-//                _logger.LogInformation("All active residents already have attendance records for today.");
-//                return;
-//            }
+                // Insert the data as a formal Excel table
+                var table = worksheet.Cell("A1").InsertTable(reportData);
 
-//            var newAttendanceRecords = residentsWithoutRecord.Select(residentId => new OhDailyAttendance
-//            {
-//                ResidentId = residentId,
-//                AttendanceDate = today,
-//                HasSignedIn = false,
-//                SignInTime = null
-//            });
+                // Rename the headers of the newly created table
+                table.Field(0).Name = "שם מלא";
+                table.Field(1).Name = "מספר טלפון";
+                table.Field(2).Name = "האם נרשם/ה";
+                table.Field(3).Name = "זמן רישום";
 
-//            await dbContext.OhDailyAttendances.AddRangeAsync(newAttendanceRecords);
-//            await dbContext.SaveChangesAsync();
+                // Apply a style to the table (optional, but looks nice)
+                table.Theme = XLTableTheme.TableStyleLight16;
 
-//            _logger.LogInformation("Created {count} new attendance records for today.", newAttendanceRecords.Count());
-//        }
+                worksheet.Columns().AdjustToContents();
 
-//        /// <summary>
-//        /// Called when the application is shutting down. Stops the timer.
-//        /// </summary>
-//        public Task StopAsync(CancellationToken cancellationToken)
-//        {
-//            _logger.LogInformation("Daily Tasks Service is stopping.");
-//            _timer?.Change(Timeout.Infinite, 0); // Stop the timer from firing again
-//            return Task.CompletedTask;
-//        }
+                int totalCount = records.Count;
+                int signedInCount = records.Count(r => r.HasSignedIn);
+                var summaryText = $"בתאריך {reportDateFormatted} נרשמו {signedInCount} מתוך {totalCount}";
 
-//        /// <summary>
-//        /// Disposes the timer resource.
-//        /// </summary>
-//        public void Dispose()
-//        {
-//            _timer?.Dispose();
-//        }
-//    }
-//}
+                int lastRow = worksheet.LastRowUsed().RowNumber();
+                var summaryCell = worksheet.Cell(lastRow + 2, 1);
+                summaryCell.Value = summaryText;
+                summaryCell.Style.Font.Bold = true;
+                summaryCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                worksheet.Range(summaryCell, worksheet.Cell(lastRow + 2, 4)).Merge();
+
+
+                var contentRootPath = _hostingEnvironment.ContentRootPath;
+                var dailyAttendancePath = Path.Combine(contentRootPath, "Reports", "Daily Attendance");
+
+                if (!Directory.Exists(dailyAttendancePath))
+                {
+                    _logger.LogCritical("Report directory does not exist. Please ensure the folder exists at: {path}", dailyAttendancePath);
+                    return;
+                }
+
+                var filePath = Path.Combine(dailyAttendancePath, $"BokerTov_Report_{reportDateFormatted}.xlsx");
+                workbook.SaveAs(filePath);
+                _logger.LogInformation("Report saved successfully to {filePath}", filePath);
+            }
+        }
+
+        /// <summary>
+        /// Called when the application is shutting down. Stops the timer.
+        /// </summary>
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("Daily Tasks Service is stopping.");
+            _timer?.Change(Timeout.Infinite, 0);
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Disposes the timer resource.
+        /// </summary>
+        public void Dispose()
+        {
+            _timer?.Dispose();
+        }
+    }
+}
+
+

@@ -9,7 +9,9 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using MigdalorServer.BL;
 using MigdalorServer.Database;
+using MigdalorServer.Services;
 using YourApp.PushNotifications.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +57,8 @@ builder.Services.AddDbContext<MigdalorDBContext>(options =>
 builder
     .Services.AddHttpClient<ExpoPushService>() // HttpClient injected into ExpoPushService
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler());
+
+builder.Services.AddHostedService<DailyTasksService>();
 
 // ---- JWT Setup ----
 
