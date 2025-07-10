@@ -11,6 +11,7 @@ namespace MigdalorServer.Models
     {
         public OhService()
         {
+            InverseParentServiceNavigation = new HashSet<OhService>();
             OhOpeningHours = new HashSet<OhOpeningHour>();
             OhScheduleOverrides = new HashSet<OhScheduleOverride>();
         }
@@ -18,6 +19,7 @@ namespace MigdalorServer.Models
         [Key]
         [Column("ServiceID")]
         public int ServiceId { get; set; }
+        public int? ParentService { get; set; }
         [StringLength(100)]
         public string HebrewName { get; set; } = null!;
         [StringLength(100)]
@@ -35,9 +37,14 @@ namespace MigdalorServer.Models
         [Required]
         public bool? IsActive { get; set; }
 
+        [ForeignKey("ParentService")]
+        [InverseProperty("InverseParentServiceNavigation")]
+        public virtual OhService? ParentServiceNavigation { get; set; }
         [ForeignKey("PictureId")]
         [InverseProperty("OhServices")]
         public virtual OhPicture? Picture { get; set; }
+        [InverseProperty("ParentServiceNavigation")]
+        public virtual ICollection<OhService> InverseParentServiceNavigation { get; set; }
         [InverseProperty("Service")]
         public virtual ICollection<OhOpeningHour> OhOpeningHours { get; set; }
         [InverseProperty("Service")]
