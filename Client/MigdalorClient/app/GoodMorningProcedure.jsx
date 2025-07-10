@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,96 +7,130 @@ import {
   Animated,
   Easing,
   ActivityIndicator,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTranslation } from 'react-i18next';
-import { Globals } from './constants/Globals';
-import FlipButton from '../components/FlipButton';
-import Header from '@/components/Header';
+} from "react-native";
+import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTranslation } from "react-i18next";
+import { Toast } from "toastify-react-native";
+import { Globals } from "./constants/Globals";
+import FlipButton from "../components/FlipButton";
+import Header from "@/components/Header";
 
 // Assuming sun.png is in assets/images
-const sunImage = require('../assets/images/sun.png');
+const sunImage = require("../assets/images/sun.png");
 
 export default function GoodMorningProcedure() {
   const { t } = useTranslation();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [hasSpouse, setHasSpouse] = useState(false);
-  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isPrimarySignedIn, setIsPrimarySignedIn] = useState(false);
   const [isSpouseSignedIn, setIsSpouseSignedIn] = useState(false);
+  const [userId, setUserId] = useState(null);
 
   // Animation value
   const sunAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Start the sun rising animation
     Animated.timing(sunAnimation, {
       toValue: 1,
-      duration: 3000, // 3 seconds for the animation
+      duration: 3000,
       easing: Easing.out(Easing.ease),
       useNativeDriver: true,
     }).start();
 
-    // Fetch spouse information
-    const fetchSpouseData = async () => {
+    const fetchUserData = async () => {
       try {
-        const userId = await AsyncStorage.getItem('userID');
-        if (!userId) {
-          throw new Error('User ID not found');
+        const storedToken = await AsyncStorage.getItem("jwt");
+        const storedUserId = await AsyncStorage.getItem("userID");
+
+        if (!storedToken || !storedUserId) {
+          Toast.show({
+            type: "error",
+            text1: t("Common_Error"),
+            text2: "Authentication session not found.",
+          });
+          router.replace("/LoginScreen");
+          return;
         }
 
-        // --- API Call to check for a spouse ---
+        setUserId(storedUserId);
+
         const response = await fetch(
-          `${Globals.API_BASE_URL}/api/People/GetPersonByIDForProfile/${userId}`
+          `${Globals.API_BASE_URL}/api/People/details`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${storedToken}`,
+              "Content-Type": "application/json",
+            },
+          }
         );
-        const userData = await response.json();
 
-        // Check if spouseId exists and is not null
-        if (userData && userData.spouseId) {
-          setHasSpouse(true);
-        }
+        if (!response.ok) throw new Error(await response.text());
+        const userData = await response.json();
+        if (userData && userData.spouseId) setHasSpouse(true);
       } catch (error) {
-        console.error('Failed to fetch spouse data:', error);
+        Toast.show({
+          type: "error",
+          text1: t("Common_Error"),
+          text2: "Could not retrieve your profile details.",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchSpouseData();
+    fetchUserData();
   }, [sunAnimation]);
 
   const handleSignIn = async (includeSpouse) => {
     setIsLoading(true);
     try {
-        const userId = await AsyncStorage.getItem('userID');
-        // --- API Call to sign in ---
-        const response = await fetch(`${Globals.API_BASE_URL}/api/Attendance/SignIn`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                residentId: userId,
-                includeSpouse: includeSpouse,
-            }),
-        });
+      const storedToken = await AsyncStorage.getItem("jwt");
+      if (!storedToken || !userId)
+        throw new Error("User session information is missing.");
 
-        if (!response.ok) {
-            throw new Error('Sign-in failed');
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/BokerTov/SignIn`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${storedToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            residentId: userId,
+            includeSpouse: includeSpouse,
+          }),
         }
+      );
 
-        setIsSignedIn(true);
-        if (includeSpouse) {
-            setIsSpouseSignedIn(true);
-        }
+      if (!response.ok) throw new Error(await response.text());
 
-        Alert.alert(t('GoodMorning_signInSuccessTitle'), t('GoodMorning_signInSuccessMessage'));
+      // Update state to disable buttons based on the action
+      setIsPrimarySignedIn(true);
+      if (includeSpouse) {
+        setIsSpouseSignedIn(true);
+      }
 
+      Toast.show({
+        type: "success",
+        text1: t("GoodMorning_signInSuccessTitle"),
+        text2: t("GoodMorning_signInSuccessMessage"),
+        position: "top",
+        visibilityTime: 4000,
+      });
     } catch (error) {
-        console.error('Sign-in error:', error);
-        Alert.alert(t('Common_Error'), error.message);
+      Toast.show({
+        type: "error",
+        text1: t("Common_Error"),
+        text2: error.message,
+        position: "top",
+        visibilityTime: 5000,
+      });
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -104,7 +138,6 @@ export default function GoodMorningProcedure() {
     inputRange: [0, 1],
     outputRange: [200, 0],
   });
-
   const sunOpacity = sunAnimation.interpolate({
     inputRange: [0, 0.5, 1],
     outputRange: [0, 0.5, 1],
@@ -117,17 +150,14 @@ export default function GoodMorningProcedure() {
         <Animated.View
           style={[
             styles.sunContainer,
-            {
-              transform: [{ translateY: sunTranslateY }],
-              opacity: sunOpacity,
-            },
+            { transform: [{ translateY: sunTranslateY }], opacity: sunOpacity },
           ]}
         >
           <Image source={sunImage} style={styles.sun} />
         </Animated.View>
 
         <View style={styles.titleContainer}>
-            <Text style={styles.title}>{t('GoodMorning_title')}</Text>
+          <Text style={styles.title}>{t("GoodMorning_title")}</Text>
         </View>
 
         {isLoading ? (
@@ -136,23 +166,25 @@ export default function GoodMorningProcedure() {
           <View style={styles.buttonContainer}>
             <FlipButton
               onPress={() => handleSignIn(false)}
-              disabled={isSignedIn || isLoading}
+              disabled={isPrimarySignedIn || isLoading} // Only disabled if primary is signed in
               style={styles.button}
               bgColor="#fbbf24"
               textColor="black"
             >
-              <Text style={styles.buttonText}>{t('GoodMorning_signInMe')}</Text>
+              <Text style={styles.buttonText}>{t("GoodMorning_signInMe")}</Text>
             </FlipButton>
 
             {hasSpouse && (
               <FlipButton
                 onPress={() => handleSignIn(true)}
-                disabled={isSignedIn || isSpouseSignedIn || isLoading}
+                disabled={isSpouseSignedIn || isLoading} // CORRECTED: Only disabled if spouse is signed in
                 style={styles.button}
                 bgColor="#fca5a5"
                 textColor="black"
               >
-                <Text style={styles.buttonText}>{t('GoodMorning_signInBoth')}</Text>
+                <Text style={styles.buttonText}>
+                  {t("GoodMorning_signInBoth")}
+                </Text>
               </FlipButton>
             )}
           </View>
@@ -165,46 +197,46 @@ export default function GoodMorningProcedure() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#87CEEB',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#87CEEB",
+    alignItems: "center",
+    justifyContent: "center",
     paddingTop: 80,
   },
   sunContainer: {
-    position: 'absolute',
-    top: '20%',
+    position: "absolute",
+    top: "20%",
   },
   sun: {
     width: 200,
     height: 200,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
   titleContainer: {
-    position: 'absolute',
-    top: '50%',
-    alignItems: 'center',
+    position: "absolute",
+    top: "50%",
+    alignItems: "center",
   },
   title: {
-      fontSize: 32,
-      fontWeight: 'bold',
-      color: 'white',
-      textShadowColor: 'rgba(0, 0, 0, 0.5)',
-      textShadowOffset: { width: 1, height: 1 },
-      textShadowRadius: 2,
+    fontSize: 32,
+    fontWeight: "bold",
+    color: "white",
+    textShadowColor: "rgba(0, 0, 0, 0.5)",
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
   },
   buttonContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 80,
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     gap: 20,
   },
   button: {
-    width: '80%',
+    width: "80%",
     paddingVertical: 20,
   },
   buttonText: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
