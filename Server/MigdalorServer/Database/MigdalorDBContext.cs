@@ -8,7 +8,6 @@ namespace MigdalorServer.Database
 {
     public partial class MigdalorDBContext : DbContext
     {
-
         public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
             : base(options)
         {
@@ -19,6 +18,7 @@ namespace MigdalorServer.Database
         public virtual DbSet<OhCategory> OhCategories { get; set; } = null!;
         public virtual DbSet<OhEvent> OhEvents { get; set; } = null!;
         public virtual DbSet<OhEventInstance> OhEventInstances { get; set; } = null!;
+        public virtual DbSet<OhEventRegistration> OhEventRegistrations { get; set; } = null!;
         public virtual DbSet<OhInterest> OhInterests { get; set; } = null!;
         public virtual DbSet<OhListing> OhListings { get; set; } = null!;
         public virtual DbSet<OhNotice> OhNotices { get; set; } = null!;
@@ -83,6 +83,21 @@ namespace MigdalorServer.Database
                     .WithMany(p => p.OhEventInstances)
                     .HasForeignKey(d => d.EventId)
                     .HasConstraintName("FK_EventInstances_Events");
+            });
+
+            modelBuilder.Entity<OhEventRegistration>(entity =>
+            {
+                entity.HasKey(e => e.RegistrationId)
+                    .HasName("PK__Event_Re__6EF588300181CCBB");
+
+                entity.Property(e => e.RegistrationDate).HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Status).HasDefaultValueSql("('Active')");
+
+                entity.HasOne(d => d.Event)
+                    .WithMany(p => p.OhEventRegistrations)
+                    .HasForeignKey(d => d.EventId)
+                    .HasConstraintName("FK_EventRegistrations_Events");
             });
 
             modelBuilder.Entity<OhInterest>(entity =>
