@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
     // The value provided to consuming components.
     const value = { token, isAdmin, user, isLoading, login, logout };
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return  <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 /**

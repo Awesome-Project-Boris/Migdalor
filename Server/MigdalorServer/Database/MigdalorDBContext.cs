@@ -19,6 +19,7 @@ namespace MigdalorServer.Database
         public virtual DbSet<OhCategory> OhCategories { get; set; } = null!;
         public virtual DbSet<OhEvent> OhEvents { get; set; } = null!;
         public virtual DbSet<OhEventInstance> OhEventInstances { get; set; } = null!;
+        public virtual DbSet<OhEventRegistration> OhEventRegistrations { get; set; } = null!;
         public virtual DbSet<OhInterest> OhInterests { get; set; } = null!;
         public virtual DbSet<OhListing> OhListings { get; set; } = null!;
         public virtual DbSet<OhNotice> OhNotices { get; set; } = null!;
@@ -77,12 +78,29 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhEventInstance>(entity =>
             {
                 entity.HasKey(e => e.InstanceId)
-                    .HasName("PK__Event_In__5C51996F892A97D0");
+                    .HasName("PK__OH_Event__5C51996F1ECEB6DC");
+
+                entity.Property(e => e.Status).HasDefaultValueSql("('Scheduled')");
 
                 entity.HasOne(d => d.Event)
                     .WithMany(p => p.OhEventInstances)
                     .HasForeignKey(d => d.EventId)
                     .HasConstraintName("FK_EventInstances_Events");
+            });
+
+            modelBuilder.Entity<OhEventRegistration>(entity =>
+            {
+                entity.HasKey(e => e.RegistrationId)
+                    .HasName("PK__Event_Re__6EF588300181CCBB");
+
+                entity.Property(e => e.RegistrationDate).HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Status).HasDefaultValueSql("('Active')");
+
+                entity.HasOne(d => d.Event)
+                    .WithMany(p => p.OhEventRegistrations)
+                    .HasForeignKey(d => d.EventId)
+                    .HasConstraintName("FK_EventRegistrations_Events");
             });
 
             modelBuilder.Entity<OhInterest>(entity =>
@@ -137,7 +155,7 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhParticipation>(entity =>
             {
                 entity.HasKey(e => e.AttendanceId)
-                    .HasName("PK__Attendan__8B69263C2091BD1F");
+                    .HasName("PK__OH_Parti__8B69263CF56B6605");
 
                 entity.Property(e => e.Status).HasDefaultValueSql("('Attended')");
 
