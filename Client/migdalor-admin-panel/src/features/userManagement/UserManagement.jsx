@@ -48,11 +48,15 @@ const UserManagement = () => {
   const handleSave = async (updatedUserData) => {
     if (!editingUser) return;
     try {
-      await api.put(`/Resident/${editingUser.id}`, updatedUserData, token);
+      updatedUserData.gender = updatedUserData.gender == "זכר" ? "M" : "F";
+      await api.put(
+        `/Resident/UpdateProfile/${editingUser.id}`,
+        updatedUserData,
+        token
+      );
       setEditingUser(null);
       fetchUsers(); // Refresh the user list after saving.
     } catch (err) {
-      // In a real app, you might use a more robust notification system.
       alert(`שגיאה בעדכון משתמש: ${err.message}`);
       console.error("Failed to save user:", err);
     }
