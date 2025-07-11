@@ -8,7 +8,6 @@ import React, {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "../app/constants/Globals";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
-
 // Create the AuthContext with a default value
 const AuthContext = createContext({
   user: null,
@@ -97,7 +96,7 @@ export const AuthProvider = ({ children }) => {
       setToken(sessionToken);
 
       const userDetailsResponse = await fetch(
-        `${Globals.API_BASE_URL}/api/People/details`,
+        `${Globals.API_BASE_URL}/api/People/LoginDetails`,
         {
           method: "GET",
           headers: {

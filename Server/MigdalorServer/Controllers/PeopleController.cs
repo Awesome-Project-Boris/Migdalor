@@ -130,8 +130,9 @@ namespace MigdalorServer.Controllers
 
         // GET: api/People/details
         // This endpoint gets details for the currently logged-in user from their token.
-        [HttpGet("details/{userId}")]
-        public IActionResult GetPersonDetailsForProfile([FromRoute] Guid userId)
+        [HttpGet("LoginDetails")]
+        [Authorize]
+        public IActionResult GetPersonDetailsForLogin()
         {
             try
             {
