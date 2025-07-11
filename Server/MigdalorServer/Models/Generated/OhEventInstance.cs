@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 namespace MigdalorServer.Models
 {
     [Table("OH_EventInstances")]
-    [Index("StartTime", Name = "IX_EventInstances_StartTime")]
     public partial class OhEventInstance
     {
         public OhEventInstance()
@@ -22,6 +21,10 @@ namespace MigdalorServer.Models
         public int EventId { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
+        [StringLength(50)]
+        public string Status { get; set; } = null!;
+        [StringLength(500)]
+        public string? Notes { get; set; }
 
         [ForeignKey("EventId")]
         [InverseProperty("OhEventInstances")]

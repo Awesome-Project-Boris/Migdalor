@@ -8,6 +8,10 @@ namespace MigdalorServer.Database
 {
     public partial class MigdalorDBContext : DbContext
     {
+        public MigdalorDBContext()
+        {
+        }
+
         public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
             : base(options)
         {
@@ -77,7 +81,9 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhEventInstance>(entity =>
             {
                 entity.HasKey(e => e.InstanceId)
-                    .HasName("PK__Event_In__5C51996F892A97D0");
+                    .HasName("PK__OH_Event__5C51996F1ECEB6DC");
+
+                entity.Property(e => e.Status).HasDefaultValueSql("('Scheduled')");
 
                 entity.HasOne(d => d.Event)
                     .WithMany(p => p.OhEventInstances)
@@ -152,7 +158,7 @@ namespace MigdalorServer.Database
             modelBuilder.Entity<OhParticipation>(entity =>
             {
                 entity.HasKey(e => e.AttendanceId)
-                    .HasName("PK__Attendan__8B69263C2091BD1F");
+                    .HasName("PK__OH_Parti__8B69263CF56B6605");
 
                 entity.Property(e => e.Status).HasDefaultValueSql("('Attended')");
 
