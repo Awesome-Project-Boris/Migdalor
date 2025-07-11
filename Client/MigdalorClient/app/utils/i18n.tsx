@@ -343,6 +343,45 @@ const resources = {
       Days_Thursday: "Thursday",
       Days_Friday: "Friday",
       Days_Saturday: "Saturday",
+
+      // Events
+
+      Events_ClassesTitle: "Classes",
+      Events_ActivitiesTitle: "Activities",
+      Common_SearchPlaceholder: "Search by name...",
+      Common_Cancel: "Cancel",
+      Common_Register: "Register",
+      Common_Attended: "Attended",
+      Common_Absent: "Absent",
+      Common_Success: "Success",
+      Common_NotFound: "Not found.",
+      Errors_Event_Fetch: "Could not fetch events.",
+      Errors_Participant_Fetch: "Could not fetch participants.",
+      Errors_Auth_NoUser:
+        "Could not identify the current user. Please log in again.",
+      EventCard_Registered: " Registered",
+      EventCard_MoreDetails: "Click for more details",
+      Classes_NoClasses: "No classes available at the moment.",
+      Activities_NoActivities: "No activities available at the moment.",
+      EventFocus_Date: "Date",
+      EventFocus_Time: "Time",
+      EventFocus_Location: "Location",
+      EventFocus_Host: "Host",
+      EventFocus_Capacity: "Capacity",
+      EventFocus_MarkAttendance: "Click to Mark Attendance",
+      EventFocus_MarkingNotAvailable:
+        "Attendance marking can only occur on the day of the event or later.",
+      EventFocus_NoParticipants: "No one has registered yet.",
+      EventFocus_YouAreRegistered: "You are registered!",
+      EventFocus_ActivityFull: "This activity is full.",
+      EventFocus_ConfirmRegistrationTitle: "Confirm Registration",
+      EventFocus_ConfirmRegistrationMsg:
+        "Do you want to register for this activity?",
+      EventFocus_RegistrationSuccess: "You have been registered!",
+      EventCard_SpacesAvailable:
+        "There are {{count}} empty spaces - registration inside!",
+      EventFocus_SpacesAvailable:
+        "There are {{count}} empty spaces - registration below!",
     },
   },
   he: {
@@ -671,6 +710,42 @@ const resources = {
       Days_Thursday: "יום חמישי",
       Days_Friday: "יום שישי",
       Days_Saturday: "יום שבת",
+
+      // Events
+      Events_ClassesTitle: "חוגים",
+      Events_ActivitiesTitle: "פעילויות",
+      Common_SearchPlaceholder: "חיפוש לפי שם...",
+      Common_Cancel: "ביטול",
+      Common_Register: "הירשם",
+      Common_Attended: "נכח/ה",
+      Common_Absent: "נעדר/ה",
+      Common_Success: "הצלחה",
+      Common_NotFound: "לא נמצא.",
+      Errors_Event_Fetch: "לא ניתן היה לטעון את האירועים.",
+      Errors_Participant_Fetch: "לא ניתן היה לטעון את המשתתפים.",
+      Errors_Auth_NoUser: "לא ניתן היה לזהות את המשתמש. יש להתחבר מחדש.",
+      EventCard_Registered: " רשומים",
+      EventCard_MoreDetails: "לחץ לפרטים נוספים",
+      Classes_NoClasses: "אין חוגים זמינים כרגע.",
+      Activities_NoActivities: "אין פעילויות זמינות כרגע.",
+      EventFocus_Date: "תאריך",
+      EventFocus_Time: "שעה",
+      EventFocus_Location: "מיקום",
+      EventFocus_Host: "יזם/ית",
+      EventFocus_Capacity: "קיבולת",
+      EventFocus_MarkAttendance: "לחץ לסימון נוכחות",
+      EventFocus_MarkingNotAvailable:
+        "סימון נוכחות אפשרי רק ביום האירוע או לאחריו.",
+      EventFocus_NoParticipants: "אף אחד עדיין לא נרשם.",
+      EventFocus_YouAreRegistered: "נרשמת לפעילות!",
+      EventFocus_ActivityFull: "הפעילות מלאה.",
+      EventFocus_ConfirmRegistrationTitle: "אישור הרשמה",
+      EventFocus_ConfirmRegistrationMsg: "האם ברצונך להירשם לפעילות זו?",
+      EventFocus_RegistrationSuccess: "נרשמת בהצלחה!",
+      EventCard_SpacesAvailable:
+        "נותרו {{count}} מקומות פנויים - ההרשמה בפנים!",
+      EventFocus_SpacesAvailable:
+        "נותרו {{count}} מקומות פנויים - להרשמה למטה!",
     },
   },
 };

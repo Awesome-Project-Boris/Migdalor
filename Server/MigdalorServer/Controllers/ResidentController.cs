@@ -22,7 +22,6 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                // This static method should ideally be moved into a service that uses _context
                 var residents = await OhResident.GetAllResidentsDetailsAsync();
                 return Ok(residents);
             }

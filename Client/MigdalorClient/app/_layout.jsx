@@ -178,6 +178,13 @@ export default function Layout() {
                       }}
                     />
                     <Stack.Screen
+                      name="EventFocus"
+                      options={{
+                        title: "Event Page",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
                       name="GoodMorningProcedure"
                       options={{
                         title: "Good morning procedure",
