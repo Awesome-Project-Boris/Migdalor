@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using MigdalorServer.Models.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MigdalorServer.Controllers
 {
@@ -145,6 +146,55 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        // --- NEW METHOD FOR ADMIN PANEL UPLOAD ---
+        [HttpPost("UploadAdmin")]
+        [Authorize] // Ensure only authenticated users can upload
+        public async Task<IActionResult> UploadAdminPicture([FromForm] IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { message = "No file provided or file is empty." });
+            }
+
+            // Get the ID of the logged-in user (the admin) from the token claims
+            var uploaderIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!Guid.TryParse(uploaderIdString, out Guid uploaderId))
+            {
+                return Unauthorized(new { message = "Invalid user identifier in token." });
+            }
+
+            // Use the same file-saving logic as your existing Post method for consistency
+            string uploadsFolderPath = Path.Combine(_hostingEnvironment.ContentRootPath, "uploadedFiles");
+            Directory.CreateDirectory(uploadsFolderPath); // Ensure the directory exists
+
+            try
+            {
+                string uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                string physicalFilePath = Path.Combine(uploadsFolderPath, uniqueFileName);
+                string relativeWebPath = $"/Images/{uniqueFileName}";
+
+                // Save the physical file
+                using (var stream = new FileStream(physicalFilePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                // Create the database record
+                // For an admin upload, we can set default role and alt text
+                string picRole = "profile_picture";
+                string picAlt = $"Profile picture uploaded by admin on {DateTime.UtcNow:yyyy-MM-dd}";
+
+                OhPicture savedPicture = await OhPicture.CreatePictureRecordAsync(_context, uniqueFileName, relativeWebPath, picRole, picAlt, uploaderId);
+
+                // Return the ID of the new picture, which the frontend needs
+                return Ok(savedPicture.PicId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UploadAdminPicture: {ex.Message}");
+                return StatusCode(500, new { message = "An internal server error occurred during file upload." });
+            }
+        }
 
         private async Task TryDeletePhysicalFile(string relativeWebPath)
         {

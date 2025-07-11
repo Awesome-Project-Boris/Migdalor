@@ -128,10 +128,41 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        [HttpGet("LoginDetails")]
+        [Authorize]
+        public IActionResult GetPersonDetailsForLogin()
+        {
+            try
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized("Invalid token.");
+                }
+
+                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
+                {
+                    return BadRequest("Invalid user ID in token.");
+                }
+
+                var data = OhPerson.GetPersonByIDForProfile(userId);
+                return Ok(data);
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "User not found")
+                    return NotFound("User Not Found");
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
+                );
+            }
+        }
+
         // GET: api/People/details
         // This endpoint gets details for the currently logged-in user from their token.
         [HttpGet("details/{userId}")]
-        public IActionResult GetPersonDetailsForProfile([FromRoute] Guid userId)
+        public IActionResult GetPersonDetailsForLogin(Guid userId)
         {
             try
             {

@@ -78,9 +78,9 @@ namespace MigdalorServer.Models
             // Update OhResident properties if new values are provided in the DTO.
             if (!string.IsNullOrEmpty(residentDto.BranchName)) resident.BranchName = residentDto.BranchName;
             if (residentDto.IsBokerTov.HasValue) resident.IsBokerTov = residentDto.IsBokerTov.Value;
-            if (residentDto.CanInitActivity != resident.CanInitActivity) resident.CanInitActivity = residentDto.CanInitActivity;
+            if (residentDto.CanInitActivity != resident.CanInitActivity) resident.CanInitActivity = (bool)residentDto.CanInitActivity;
             if (residentDto.SpouseId.HasValue) resident.SpouseId = residentDto.SpouseId;
-            if (residentDto.DateOfArrival != default) resident.DateOfArrival = residentDto.DateOfArrival;
+            if (residentDto.DateOfArrival != default) resident.DateOfArrival = (DateTime)residentDto.DateOfArrival;
             if (!string.IsNullOrEmpty(residentDto.HomePlace)) resident.HomePlace = residentDto.HomePlace;
             if (!string.IsNullOrEmpty(residentDto.Profession)) resident.Profession = residentDto.Profession;
             if (!string.IsNullOrEmpty(residentDto.ResidentDescription)) resident.ResidentDescription = residentDto.ResidentDescription;
