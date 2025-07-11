@@ -10,6 +10,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* CSS rule for printing to a specific page size */
+        @page {
+            size: 70cm 100cm;
+            margin: 1cm;
+        }
+
         body {
             font-family: 'Assistant', sans-serif;
             background-color: #f9f7f3;
@@ -18,30 +24,37 @@
 
         .poster-container {
             width: 1200px;
+            /* REMOVED fixed height to allow for flexible scaling during print */
             max-width: 100%;
             margin: 2rem auto;
             background: white;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             border: 1px solid #e2e8f0;
+            /* Use flexbox to ensure content fills the available height */
+            display: flex;
+            flex-direction: column;
         }
 
         .poster-header {
             background-color: #A98A4D;
             /* Gold color from presentation */
             color: white;
-            padding: 2rem;
+            padding: 2.5rem;
+            /* Increased padding */
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .poster-header h1 {
-            font-size: 3.5rem;
+            font-size: 4.5rem;
+            /* Increased font size */
             font-weight: 700;
         }
 
         .poster-header .subtitle {
-            font-size: 1.5rem;
+            font-size: 1.75rem;
+            /* Increased font size */
             font-weight: 400;
             opacity: 0.9;
         }
@@ -54,20 +67,24 @@
 
         .logo-container {
             text-align: center;
-            font-size: 1rem;
+            font-size: 1.2rem;
+            /* Increased font size */
             font-weight: 600;
         }
 
         .logo-container img {
-            height: 80px;
+            height: 90px;
+            /* Increased logo size */
             margin-bottom: 0.5rem;
         }
 
         .poster-body {
             padding: 2rem;
             display: grid;
-            grid-template-columns: 1fr 1.5fr 1fr;
+            grid-template-columns: 1fr 2.95fr 1fr;
             gap: 2rem;
+            /* Make the main content area grow to fill the available space */
+            flex-grow: 1;
         }
 
         .poster-column {
@@ -82,11 +99,13 @@
             border-radius: 0.75rem;
             padding: 1.5rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            /* Allow sections to grow and fill the column height */
             flex-grow: 1;
         }
 
         .poster-section h2 {
-            font-size: 1.75rem;
+            font-size: 2rem;
+            /* Increased font size */
             font-weight: 700;
             color: #8b6f41;
             /* Darker Gold */
@@ -97,8 +116,10 @@
 
         .poster-section p,
         .poster-section ul {
-            font-size: 1.1rem;
-            line-height: 1.6;
+            font-size: 1.2rem;
+            /* Increased font size */
+            line-height: 1.7;
+            /* Increased line height */
             color: #334155;
         }
 
@@ -109,7 +130,8 @@
 
         .team-info {
             margin-top: 1rem;
-            font-size: 1.1rem;
+            font-size: 1.25rem;
+            /* Increased font size */
         }
 
         .team-info p {
@@ -119,18 +141,14 @@
         .phone-mockup {
             background: #333;
             border-radius: 1.5rem;
-            /* Adjusted for a tighter look */
             padding: 0.5rem;
-            /* Adjusted for a tighter look */
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
             width: 100%;
         }
 
         .phone-screen {
             background-color: #FDFCF8;
-            /* Off-white screen background from slides */
             border-radius: 1.2rem;
-            /* Adjusted for a tighter look */
             aspect-ratio: 9 / 19;
             display: flex;
             flex-direction: column;
@@ -146,13 +164,20 @@
             background-color: #e2e8f0;
         }
 
-        @media (max-width: 1200px) {
+        /* Styles for screen media (default) */
+        @media screen and (max-width: 1200px) {
+            .poster-container {
+                width: 95%;
+                height: auto;
+                /* Allow height to be flexible on smaller screens */
+            }
+
             .poster-body {
                 grid-template-columns: 1fr;
             }
         }
 
-        @media (max-width: 768px) {
+        @media screen and (max-width: 768px) {
             .poster-header {
                 flex-direction: column;
                 text-align: center;
@@ -160,6 +185,32 @@
 
             .logos {
                 margin-top: 1rem;
+            }
+        }
+
+        /* Styles specifically for printing */
+        @media print {
+
+            body,
+            html {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                -webkit-print-color-adjust: exact;
+                /* Ensures background colors print in Chrome/Safari */
+                print-color-adjust: exact;
+                /* Standard */
+            }
+
+            .poster-container {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                border: none;
+                max-width: none;
             }
         }
     </style>
@@ -258,14 +309,14 @@
                 </section>
 
                 <section class="poster-section">
-                    <h2>אלמנט חכם: סוכן AI</h2>
+                    <h2>אלמנט חכם: מחולל ביוגרפיה</h2>
                     <p>
-                        כדי להפוך את האפליקציה לקלה ואינטואיטיבית ככל האפשר, שילבנו <strong>סוכן חכם מבוסס בינה
-                            מלאכותית</strong>.
+                        כדי לעודד את מילוי הפרופילים האישיים ולשבור את הקרח, שילבנו במערכת <strong>מחולל ביוגרפיה
+                            ידידותי מבוסס AI</strong>.
                     </p>
                     <p>
-                        הסוכן מאפשר למשתמשים לתקשר עם האפליקציה בשפה טבעית. לדוגמה, דייר יכול לשאול "מתי מתקיים חוג
-                        היוגה?" או "הצג לי את פרטי הקשר של משה כהן", והמערכת תציג לו את המידע הרלוונטי באופן מיידי.
+                        הכלי מסייע לדיירים המתקשים להתמודד עם "דף ריק" ומציע הצעות לכתיבת תיאור אישי קצר. תכונה זו הופכת
+                        את תהליך יצירת הפרופיל למהנה ונגיש יותר, ומסייעת בחיזוק הקשרים החברתיים בקהילה.
                     </p>
                 </section>
             </div>
