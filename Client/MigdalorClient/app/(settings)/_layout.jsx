@@ -10,10 +10,10 @@ import FlipButton from "@/components/FlipButton";
 export default function SettingsLayout() {
   const { t } = useTranslation();
 
-  const handleSave = () => {
-    // TODO: persist your Globals (or dispatch a context/action) here
-    console.log("Saving settings…");
-  };
+  // const handleSave = () => {
+  //   // TODO: persist your Globals (or dispatch a context/action) here
+  //   console.log("Saving settings…");
+  // };
 
   return (
     <View style={{ flex: 1 }}>

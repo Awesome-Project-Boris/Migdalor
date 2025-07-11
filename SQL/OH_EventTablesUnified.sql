@@ -68,7 +68,7 @@ CREATE TABLE [dbo].[OH_Events] (
 --     "SELECT * FROM Event_Instances WHERE StartTime >= '2025-07-01' AND StartTime < '2025-08-01'"
 --     This makes calendar queries extremely fast and simple.
 -- ==========================================================================================
-CREATE TABLE [dbo].[Event_Instances] (
+CREATE TABLE [dbo].[OH_EventInstances] (
     [InstanceID]    INT IDENTITY(1,1) PRIMARY KEY,
     [EventID]       INT NOT NULL,
     [StartTime]     DATETIME2 NOT NULL,
@@ -102,7 +102,7 @@ CREATE TABLE [dbo].[Event_Instances] (
 --   - To get a list of all attendees for a specific class session, you would query:
 --     "SELECT * FROM Attendance WHERE InstanceID = @YourInstanceID"
 -- ==========================================================================================
-CREATE TABLE [dbo].[OH_Attendance] (
+CREATE TABLE [dbo].[OH_Participation] (
     [AttendanceID]     INT IDENTITY(1,1) PRIMARY KEY,
     [InstanceID]       INT NOT NULL,
     [ParticipantID]    UNIQUEIDENTIFIER NOT NULL, -- Assuming this links to your 'Residents' or 'Users' table

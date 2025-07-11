@@ -84,7 +84,6 @@ export default function Profile() {
       const loadUserProfileData = async () => {
         setLoading(true); // Set loading at the start
         try {
-          const storedToken = await AsyncStorage.getItem("jwt");
           const storedUserID = await AsyncStorage.getItem("userID");
           if (isActive) {
             setLoggedInUserId(storedUserID);
@@ -98,11 +97,11 @@ export default function Profile() {
           if (isActive) {
             setViewingUserId(userIdToFetch);
           }
-          const apiurl = `${Globals.API_BASE_URL}/api/People/GetPersonByIDForProfile/${userIdToFetch}`;
+          const apiurl = `${Globals.API_BASE_URL}/api/People/details/${userIdToFetch}`;
+          console.log("Attempting to fetch from URL:", apiurl);
           const response = await fetch(apiurl, {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${storedToken}`,
               "Content-Type": "application/json",
             },
           });

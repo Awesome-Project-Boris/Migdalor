@@ -80,6 +80,16 @@ export default function Layout() {
                       }}
                     />
                     <Stack.Screen
+                      name="(events)"
+                      options={{
+                        title: "Classes and Activities",
+                        headerShown: false,
+                        // headerRight: () => (
+                        //   <Ionicons name="" size={24} color="#ccc" />
+                        // ),
+                      }}
+                    />
+                    <Stack.Screen
                       name="Marketplace"
                       options={{
                         title: "Marketplace",

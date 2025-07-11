@@ -74,7 +74,7 @@ export default function Index() {
     {
       key: "menu3",
       name: t("MainMenuScreen_ActivitiesAndClassesButton"),
-      destination: "",
+      destination: "Classes",
     },
     {
       key: "menu4",

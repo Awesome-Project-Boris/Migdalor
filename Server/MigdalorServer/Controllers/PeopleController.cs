@@ -130,22 +130,11 @@ namespace MigdalorServer.Controllers
 
         // GET: api/People/details
         // This endpoint gets details for the currently logged-in user from their token.
-        [HttpGet("details")]
-        [Authorize]
-        public IActionResult GetPersonDetailsForProfile()
+        [HttpGet("details/{userId}")]
+        public IActionResult GetPersonDetailsForProfile([FromRoute] Guid userId)
         {
             try
             {
-                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
-                {
-                    return Unauthorized("Invalid token.");
-                }
-
-                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
-                {
-                    return BadRequest("Invalid user ID in token.");
-                }
 
                 var data = OhPerson.GetPersonByIDForProfile(userId);
                 return Ok(data);
