@@ -19,6 +19,8 @@ import { EditToggleButton } from "../components/MainMenuFinishEditButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/context/AuthProvider";
+import InstructorMainMenu from "./InstructorMainMenu";
 
 const ASYNC_STORAGE_KEY = "mainMenuOrder";
 
@@ -53,6 +55,7 @@ const clearAllData = async () => {
 
 export default function Index() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [buttonData, setButtonData] = useState([]);
   const [isLoadingOrder, setIsLoadingOrder] = useState(true);
   const { editing, setEditing } = useMainMenuEdit();
@@ -133,8 +136,13 @@ export default function Index() {
         console.log("Finished loading menu order.");
       }
     };
-    loadOrder();
-  }, []);
+    console.log("Checking user role:", user?.personRole);
+    if (user?.personRole !== "Instructor") {
+      loadOrder();
+    } else {
+      setIsLoadingOrder(false);
+    }
+  }, [user]);
 
   useEffect(() => {
     return () => {
@@ -187,6 +195,10 @@ export default function Index() {
         <Text>{t("MainMenuScreen_loadingMenu")}</Text>
       </View>
     );
+  }
+
+  if (user?.personRole === "instructor") {
+    return <InstructorMainMenu />;
   }
 
   return (

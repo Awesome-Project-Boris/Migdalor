@@ -102,6 +102,8 @@ const resources = {
       MainMenuScreen_NoticeBoardButton: "Notice Board",
       MainMenuScreen_ResidentListButton: "Resident List",
 
+      InstructorMainMenu_EventsButton: "Events",
+
       SettingsPopup_SettingsButton: "Settings",
       SettingsPopup_HomeButton: "Home",
       SettingsPopup_ProfileButton: "Profile",
@@ -439,6 +441,8 @@ const resources = {
       MainMenuScreen_MapButton: "מפה",
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
+
+      InstructorMainMenu_EventsButton: "אירועים",
 
       SettingsPopup_SettingsButton: "הגדרות",
       SettingsPopup_HomeButton: "בית",

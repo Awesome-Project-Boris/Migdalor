@@ -150,6 +150,20 @@ export default function Layout() {
                       }}
                     />
                     <Stack.Screen
+                      name="InstructorMainMenu"
+                      options={{
+                        title: "Instructor Main Menu",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="Events"
+                      options={{
+                        title: "Events",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
                       name="Notices"
                       options={{
                         title: "Notices",
