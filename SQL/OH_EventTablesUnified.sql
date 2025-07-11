@@ -31,7 +31,7 @@ IF OBJECT_ID('dbo.OH_Activities', 'U') IS NOT NULL
 --        - 'FREQ=MONTHLY;BYDAY=FR;BYSETPOS=-1' -> The last Friday of every month.
 --      - Your application logic will need to read this rule and generate the individual records in the [Event_Instances] table.
 -- ==========================================================================================
-CREATE TABLE [dbo].[Events] (
+CREATE TABLE [dbo].[OH_Events] (
     [EventID]          INT IDENTITY(1,1) PRIMARY KEY,
     [EventName]        NVARCHAR(100) NOT NULL,
     [Description]      NVARCHAR(MAX) NULL,
@@ -69,20 +69,18 @@ CREATE TABLE [dbo].[Events] (
 --     This makes calendar queries extremely fast and simple.
 -- ==========================================================================================
 CREATE TABLE [dbo].[Event_Instances] (
-    [InstanceID]       INT IDENTITY(1,1) PRIMARY KEY,
-    [EventID]          INT NOT NULL,
-    [StartTime]        DATETIME2 NOT NULL,
-    [EndTime]          DATETIME2 NOT NULL,
+    [InstanceID]    INT IDENTITY(1,1) PRIMARY KEY,
+    [EventID]       INT NOT NULL,
+    [StartTime]     DATETIME2 NOT NULL,
+    [EndTime]       DATETIME2 NOT NULL,
+    -- Add these two new columns
+    [Status]        NVARCHAR(50) NOT NULL DEFAULT 'Scheduled', -- e.g., 'Scheduled', 'Cancelled', 'Postponed'
+    [Notes]         NVARCHAR(500) NULL, -- Optional: For explaining the change, e.g., "Cancelled due to instructor illness."
 
     CONSTRAINT [FK_EventInstances_Events] FOREIGN KEY ([EventID])
         REFERENCES [dbo].[Events]([EventID])
-        ON DELETE CASCADE -- If the parent event is deleted, all its instances are deleted.
+        ON DELETE CASCADE
 );
-GO
-
--- Create an index for faster lookups by start time, which is common for calendars.
-CREATE INDEX IX_EventInstances_StartTime ON dbo.Event_Instances(StartTime);
-GO
 
 -- ==========================================================================================
 -- 3. Attendance Table
@@ -104,7 +102,7 @@ GO
 --   - To get a list of all attendees for a specific class session, you would query:
 --     "SELECT * FROM Attendance WHERE InstanceID = @YourInstanceID"
 -- ==========================================================================================
-CREATE TABLE [dbo].[Attendance] (
+CREATE TABLE [dbo].[OH_Attendance] (
     [AttendanceID]     INT IDENTITY(1,1) PRIMARY KEY,
     [InstanceID]       INT NOT NULL,
     [ParticipantID]    UNIQUEIDENTIFIER NOT NULL, -- Assuming this links to your 'Residents' or 'Users' table
@@ -113,7 +111,7 @@ CREATE TABLE [dbo].[Attendance] (
 
     -- Defines the foreign key relationship to the Event_Instances table.
     CONSTRAINT [FK_Attendance_EventInstances] FOREIGN KEY ([InstanceID])
-        REFERENCES [dbo].[Event_Instances]([InstanceID])
+        REFERENCES [dbo].[OH_Event_Instances]([InstanceID])
         ON DELETE CASCADE, -- If an event instance is deleted, the attendance record is also deleted.
 
     -- Example Foreign Key to a residents/users table (uncomment and adapt)
@@ -121,5 +119,43 @@ CREATE TABLE [dbo].[Attendance] (
 
     -- Ensures a participant can only be marked once for any given event instance.
     CONSTRAINT [UQ_Attendance_Instance_Participant] UNIQUE ([InstanceID], [ParticipantID])
+);
+GO
+
+-- ==========================================================================================
+-- 4. Event_Registrations Table
+-- This table tracks which participants are registered for a recurring event series (the "core members").
+-- It links a participant directly to an 'Event' template.
+--
+-- HOW TO USE THIS TABLE:
+--
+--  - When a resident decides to join a weekly class (e.g., "Weekly Yoga"):
+--    1. Your application will create ONE record in this table, linking the resident's ID
+--       to the 'Weekly Yoga' EventID.
+--    2. This signifies they are enrolled in the entire series.
+--
+--  - To get a list of all registered members for a class, you would query:
+--    "SELECT * FROM Event_Registrations WHERE EventID = @YourEventID AND Status = 'Active'"
+--
+--  - If a member drops the class, you simply update their record's [Status] to 'Cancelled'
+--    or delete the record. This is much cleaner than managing dozens of 'Attendance' records.
+-- ==========================================================================================
+CREATE TABLE [dbo].[OH_EventRegistrations] (
+    [RegistrationID]   INT IDENTITY(1,1) PRIMARY KEY,
+    [EventID]          INT NOT NULL,
+    [ParticipantID]    UNIQUEIDENTIFIER NOT NULL, -- Links to your 'Residents' or 'Users' table
+    [RegistrationDate] DATETIME2 NOT NULL DEFAULT GETDATE(),
+    [Status]           NVARCHAR(50) NOT NULL DEFAULT 'Active', -- e.g., 'Active', 'Cancelled', 'Waitlisted'
+
+    -- Foreign key to the main Events table.
+    CONSTRAINT [FK_EventRegistrations_Events] FOREIGN KEY ([EventID])
+        REFERENCES [dbo].[OH_Events]([EventID])
+        ON DELETE CASCADE, -- If the event is deleted, all registrations are automatically removed.
+
+    -- Example Foreign Key to a residents/users table (uncomment and adapt)
+    -- CONSTRAINT [FK_EventRegistrations_Residents] FOREIGN KEY ([ParticipantID]) REFERENCES [dbo].[OH_Residents]([residentID]),
+
+    -- Ensures a participant can only register for the same event once.
+    CONSTRAINT [UQ_Registration_Event_Participant] UNIQUE ([EventID], [ParticipantID])
 );
 GO
