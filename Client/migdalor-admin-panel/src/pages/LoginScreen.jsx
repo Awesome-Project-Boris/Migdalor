@@ -51,7 +51,7 @@ const LoginScreen = () => {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
       <div className="mb-8">
         <img
-          src="https://placehold.co/320x100/003366/FFFFFF?text=Migdalor+Logo"
+          src="./src/assets/migdalei.png"
           alt="Migdalor Logo"
           className="rounded-lg max-w-80 h-auto"
         />

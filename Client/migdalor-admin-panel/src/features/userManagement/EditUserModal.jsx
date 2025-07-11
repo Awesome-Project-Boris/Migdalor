@@ -1,24 +1,57 @@
-// /src/features/userManagement/EditUserModal.jsx
-
 import React, { useState, useMemo } from "react";
-import { X } from "lucide-react";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
+  Grid,
+  Box,
+  Typography,
+  Avatar,
+  IconButton,
+  FormControl,
+  InputLabel,
+  CircularProgress,
+} from "@mui/material";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { CacheProvider } from "@emotion/react";
+import createCache from "@emotion/cache";
+import rtlPlugin from "stylis-plugin-rtl";
+import { Close as CloseIcon } from "@mui/icons-material";
 import { api } from "../../api/apiService";
 import { useAuth } from "../../auth/AuthContext";
 import { API_BASE_URL } from "../../config";
-import InputField from "../../components/common/InputField";
-import CheckboxField from "../../components/common/CheckboxField";
+
+// NOTE: For MUI's RTL support to work correctly, you should configure this at the root of your application (e.g., in your App.js or index.js).
+// This local setup is for demonstration purposes.
+const cacheRtl = createCache({
+  key: "muirtl",
+  stylisPlugins: [rtlPlugin],
+});
+
+const theme = createTheme({
+  direction: "rtl",
+});
 
 /**
- * A modal form for editing the details of a user.
- * It includes fields for personal information, resident-specific data, and profile picture uploads.
+ * A modal form for editing user details, rebuilt with MUI components.
  * @param {object} props
  * @param {object} props.user - The user object being edited.
  * @param {Array} props.allUsers - The list of all users, for spouse selection.
  * @param {Function} props.onClose - Function to call to close the modal.
  * @param {Function} props.onSave - Function to call to save the changes.
+ * @param {boolean} [props.open=false] - Controls if the modal is open.
  */
-const EditUserModal = ({ user, allUsers, onClose, onSave }) => {
+const EditUserModal = ({ user, allUsers, onClose, onSave, open }) => {
   const { token } = useAuth();
+  // In a real app, you'd likely use a global Snackbar context instead of managing state here.
+  // const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [formData, setFormData] = useState({
     hebFirstName: user.hebFirstName || "",
     hebLastName: user.hebLastName || "",
@@ -34,7 +67,7 @@ const EditUserModal = ({ user, allUsers, onClose, onSave }) => {
     branchName: user.branchName || "נורדיה",
     isBokerTov: user.isBokerTov ?? true,
     canInitActivity: user.canInitActivity ?? false,
-    spouseId: user.spouseId || null,
+    spouseId: user.spouseId || "",
     dateOfArrival: user.dateOfArrival
       ? new Date(user.dateOfArrival).toISOString().split("T")[0]
       : "",
@@ -44,7 +77,6 @@ const EditUserModal = ({ user, allUsers, onClose, onSave }) => {
     profilePicId: user.profilePicId || null,
   });
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState("");
   const [spouseSearch, setSpouseSearch] = useState("");
 
   const handleChange = (e) => {
@@ -60,7 +92,6 @@ const EditUserModal = ({ user, allUsers, onClose, onSave }) => {
     if (!file) return;
 
     setIsUploading(true);
-    setUploadError("");
     const formPayload = new FormData();
     formPayload.append("file", file);
 
@@ -70,8 +101,10 @@ const EditUserModal = ({ user, allUsers, onClose, onSave }) => {
         ...prev,
         profilePicId: parseInt(pictureId, 10),
       }));
+      // In a real app, you'd call your snackbar context here.
+      // setSnackbar({ open: true, message: 'תמונה הועלתה בהצלחה!', severity: 'success' });
     } catch (err) {
-      setUploadError(`שגיאת העלאה: ${err.message}`);
+      // setSnackbar({ open: true, message: `שגיאת העלאה: ${err.message}`, severity: 'error' });
       console.error("File upload failed:", err);
     } finally {
       setIsUploading(false);
@@ -80,16 +113,12 @@ const EditUserModal = ({ user, allUsers, onClose, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Filter out empty strings to avoid sending them, letting the backend handle defaults.
     const payload = Object.fromEntries(
       Object.entries(formData).filter(([_, v]) => v !== "" && v !== null)
     );
-    // Ensure boolean values are always sent.
     payload.isBokerTov = formData.isBokerTov;
     payload.canInitActivity = formData.canInitActivity;
-    // Ensure spouseId is sent as null if empty.
     payload.spouseId = formData.spouseId ? Number(formData.spouseId) : null;
-
     onSave(payload);
   };
 
@@ -105,234 +134,260 @@ const EditUserModal = ({ user, allUsers, onClose, onSave }) => {
 
   const profilePicUrl = formData.profilePicId
     ? `${API_BASE_URL}/Picture/${formData.profilePicId}`
-    : "https://placehold.co/150x150/E2E8F0/64748B?text=Profile";
+    : "";
+  const avatarText = `${formData.hebFirstName?.[0] || ""}${
+    formData.hebLastName?.[0] || ""
+  }`;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-xl font-bold text-gray-900">
+    <CacheProvider value={cacheRtl}>
+      <ThemeProvider theme={theme}>
+        <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth dir="rtl">
+          <DialogTitle sx={{ m: 0, p: 2 }}>
             עריכת פרטי דייר: {user.fullName}
-          </h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-800"
-          >
-            <X size={24} />
-          </button>
-        </div>
-        <form
-          onSubmit={handleSubmit}
-          className="overflow-y-auto p-6 text-right"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Column 1: Personal Details */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-lg border-b pb-2">
-                פרטים אישיים
-              </h4>
-              <InputField
-                label="שם פרטי (עברית)"
-                name="hebFirstName"
-                value={formData.hebFirstName}
-                onChange={handleChange}
-              />
-              <InputField
-                label="שם משפחה (עברית)"
-                name="hebLastName"
-                value={formData.hebLastName}
-                onChange={handleChange}
-              />
-              <InputField
-                label="שם פרטי (אנגלית)"
-                name="engFirstName"
-                value={formData.engFirstName}
-                onChange={handleChange}
-              />
-              <InputField
-                label="שם משפחה (אנגלית)"
-                name="engLastName"
-                value={formData.engLastName}
-                onChange={handleChange}
-              />
-              <InputField
-                label="אימייל"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-              />
-              <InputField
-                label="טלפון"
-                name="phoneNumber"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-              />
-              <InputField
-                label="תאריך לידה"
-                name="dateOfBirth"
-                type="date"
-                value={formData.dateOfBirth}
-                onChange={handleChange}
-              />
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  מין
-                </label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-                >
-                  <option value="">בחר...</option>
-                  <option value="זכר">זכר</option>
-                  <option value="נקבה">נקבה</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Column 2: Resident Details */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-lg border-b pb-2">פרטי דייר</h4>
-              <InputField
-                label="סניף"
-                name="branchName"
-                value={formData.branchName}
-                onChange={handleChange}
-              />
-              <InputField
-                label="תאריך הגעה"
-                name="dateOfArrival"
-                type="date"
-                value={formData.dateOfArrival}
-                onChange={handleChange}
-              />
-              <InputField
-                label="מקום מגורים קודם"
-                name="homePlace"
-                value={formData.homePlace}
-                onChange={handleChange}
-              />
-              <InputField
-                label="מקצוע"
-                name="profession"
-                value={formData.profession}
-                onChange={handleChange}
-              />
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  תיאור
-                </label>
-                <textarea
-                  name="residentDescription"
-                  value={formData.residentDescription}
-                  onChange={handleChange}
-                  rows="3"
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-                ></textarea>
-              </div>
-              <div className="flex items-center space-x-4 space-x-reverse">
-                <CheckboxField
-                  label="בוקר טוב"
-                  name="isBokerTov"
-                  checked={formData.isBokerTov}
-                  onChange={handleChange}
-                />
-                <CheckboxField
-                  label="יכול ליזום פעילות"
-                  name="canInitActivity"
-                  checked={formData.canInitActivity}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  בן/בת זוג
-                </label>
-                <input
-                  type="search"
-                  placeholder="חיפוש בן/בת זוג..."
-                  value={spouseSearch}
-                  onChange={(e) => setSpouseSearch(e.target.value)}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm mb-2"
-                />
-                <select
-                  name="spouseId"
-                  value={formData.spouseId || ""}
-                  onChange={handleChange}
-                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-                >
-                  <option value="">ללא</option>
-                  {filteredSpouses.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.fullName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Column 3: Picture Upload */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-lg border-b pb-2">
-                תמונת פרופיל
-              </h4>
-              <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                <img
-                  key={profilePicUrl} /* Add key to force re-render on change */
-                  src={profilePicUrl}
-                  alt="Profile"
-                  className="w-32 h-32 rounded-full object-cover mb-4"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src =
-                      "https://placehold.co/150x150/E2E8F0/64748B?text=Error";
-                  }}
-                />
-                <input
-                  type="file"
-                  id="file-upload"
-                  className="hidden"
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  disabled={isUploading}
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 disabled:bg-blue-300"
-                >
-                  {isUploading ? "מעלה..." : "בחר תמונה"}
-                </label>
-                {uploadError && (
-                  <p className="text-red-500 text-sm mt-2">{uploadError}</p>
-                )}
-                {formData.profilePicId && !uploadError && (
-                  <p className="text-green-600 text-sm mt-2">
-                    תמונה הועלתה בהצלחה!
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-end items-center p-4 border-t mt-6 space-x-4 space-x-reverse">
-            <button
-              type="button"
+            <IconButton
+              aria-label="close"
               onClick={onClose}
-              className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300"
+              sx={{
+                position: "absolute",
+                left: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
             >
-              ביטול
-            </button>
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Box component="form" id="edit-user-form" onSubmit={handleSubmit}>
+              <Grid container spacing={3}>
+                {/* Column 1: Personal Details */}
+                <Grid item xs={12} md={4}>
+                  <Typography variant="h6" gutterBottom>
+                    פרטים אישיים
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    label="שם פרטי (עברית)"
+                    name="hebFirstName"
+                    value={formData.hebFirstName}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="שם משפחה (עברית)"
+                    name="hebLastName"
+                    value={formData.hebLastName}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="שם פרטי (אנגלית)"
+                    name="engFirstName"
+                    value={formData.engFirstName}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="שם משפחה (אנגלית)"
+                    name="engLastName"
+                    value={formData.engLastName}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="אימייל"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="טלפון"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="תאריך לידה"
+                    name="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    margin="normal"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <FormControl fullWidth margin="normal">
+                    <InputLabel>מין</InputLabel>
+                    <Select
+                      name="gender"
+                      value={formData.gender}
+                      label="מין"
+                      onChange={handleChange}
+                    >
+                      <MenuItem value="זכר">זכר</MenuItem>
+                      <MenuItem value="נקבה">נקבה</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Column 2: Resident Details */}
+                <Grid item xs={12} md={4}>
+                  <Typography variant="h6" gutterBottom>
+                    פרטי דייר
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    label="סניף"
+                    name="branchName"
+                    value={formData.branchName}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="תאריך הגעה"
+                    name="dateOfArrival"
+                    type="date"
+                    value={formData.dateOfArrival}
+                    onChange={handleChange}
+                    margin="normal"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="מקום מגורים קודם"
+                    name="homePlace"
+                    value={formData.homePlace}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="מקצוע"
+                    name="profession"
+                    value={formData.profession}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <TextField
+                    fullWidth
+                    label="תיאור"
+                    name="residentDescription"
+                    multiline
+                    rows={3}
+                    value={formData.residentDescription}
+                    onChange={handleChange}
+                    margin="normal"
+                  />
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          name="isBokerTov"
+                          checked={formData.isBokerTov}
+                          onChange={handleChange}
+                        />
+                      }
+                      label="בוקר טוב"
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          name="canInitActivity"
+                          checked={formData.canInitActivity}
+                          onChange={handleChange}
+                        />
+                      }
+                      label="יכול ליזום פעילות"
+                    />
+                  </Box>
+                  <FormControl fullWidth margin="normal">
+                    <TextField
+                      fullWidth
+                      label="חיפוש בן/בת זוג..."
+                      value={spouseSearch}
+                      onChange={(e) => setSpouseSearch(e.target.value)}
+                      sx={{ mb: 2 }}
+                    />
+                    <InputLabel id="spouse-select-label">בן/בת זוג</InputLabel>
+                    <Select
+                      labelId="spouse-select-label"
+                      name="spouseId"
+                      value={formData.spouseId}
+                      label="בן/בת זוג"
+                      onChange={handleChange}
+                    >
+                      <MenuItem value="">
+                        <em>ללא</em>
+                      </MenuItem>
+                      {filteredSpouses.map((s) => (
+                        <MenuItem key={s.id} value={s.id}>
+                          {s.fullName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+
+                {/* Column 3: Picture Upload */}
+                <Grid item xs={12} md={4}>
+                  <Typography variant="h6" gutterBottom>
+                    תמונת פרופיל
+                  </Typography>
+                  <Box
+                    sx={{
+                      p: 2,
+                      border: "2px dashed grey",
+                      borderRadius: 2,
+                      textAlign: "center",
+                    }}
+                  >
+                    <Avatar
+                      src={profilePicUrl}
+                      sx={{ width: 128, height: 128, margin: "auto", mb: 2 }}
+                    >
+                      {avatarText}
+                    </Avatar>
+                    <Button
+                      variant="contained"
+                      component="label"
+                      disabled={isUploading}
+                    >
+                      {isUploading ? (
+                        <CircularProgress size={24} />
+                      ) : (
+                        "בחר תמונה"
+                      )}
+                      <input
+                        type="file"
+                        hidden
+                        onChange={handleFileChange}
+                        accept="image/*"
+                      />
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={onClose}>ביטול</Button>
+            <Button type="submit" form="edit-user-form" variant="contained">
               שמור שינויים
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </ThemeProvider>
+    </CacheProvider>
   );
 };
 

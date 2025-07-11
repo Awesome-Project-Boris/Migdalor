@@ -13,6 +13,7 @@ namespace MigdalorServer.Models
         public OhEvent()
         {
             OhEventInstances = new HashSet<OhEventInstance>();
+            OhEventRegistrations = new HashSet<OhEventRegistration>();
         }
 
         [Key]
@@ -35,5 +36,7 @@ namespace MigdalorServer.Models
 
         [InverseProperty("Event")]
         public virtual ICollection<OhEventInstance> OhEventInstances { get; set; }
+        [InverseProperty("Event")]
+        public virtual ICollection<OhEventRegistration> OhEventRegistrations { get; set; }
     }
 }
