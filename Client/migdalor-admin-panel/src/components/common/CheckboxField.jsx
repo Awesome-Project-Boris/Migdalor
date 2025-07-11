@@ -15,7 +15,7 @@ const CheckboxField = ({ label, ...props }) => (
       type="checkbox"
       className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
     />
-    <label className="mr-2 block text-sm text-gray-900">{label}</label>
+    <label className="mx-2 block text-sm text-gray-900">{label}</label>
   </div>
 );
 

@@ -66,7 +66,7 @@
         .poster-body {
             padding: 2rem;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: 1fr 1.5fr 1fr;
             gap: 2rem;
         }
 
@@ -82,6 +82,7 @@
             border-radius: 0.75rem;
             padding: 1.5rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            flex-grow: 1;
         }
 
         .poster-section h2 {
@@ -117,119 +118,41 @@
 
         .phone-mockup {
             background: #333;
-            border-radius: 2rem;
-            padding: 0.75rem;
+            border-radius: 1.5rem;
+            /* Adjusted for a tighter look */
+            padding: 0.5rem;
+            /* Adjusted for a tighter look */
             box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
-            margin: 1rem auto;
-            width: 95%;
+            width: 100%;
         }
 
         .phone-screen {
             background-color: #FDFCF8;
             /* Off-white screen background from slides */
-            border-radius: 1.5rem;
+            border-radius: 1.2rem;
+            /* Adjusted for a tighter look */
             aspect-ratio: 9 / 19;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-        }
-
-        .screen-header {
-            font-weight: 700;
-            text-align: center;
-            padding: 1rem;
-            font-size: 1.2rem;
-            color: #333;
-            background: #FDFCF8;
-            border-bottom: 1px solid #eee;
-        }
-
-        .screen-content {
-            flex-grow: 1;
-            padding: 1rem;
-        }
-
-        .profile-card {
-            background: white;
-            border-radius: 0.75rem;
-            padding: 0.75rem;
-            margin-bottom: 0.75rem;
-            display: flex;
+            justify-content: center;
             align-items: center;
-            gap: 0.75rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
-        .profile-pic {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+        .screen-image {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
-        }
-
-        .profile-info h4 {
-            font-weight: 700;
-            color: #333;
-        }
-
-        .profile-info p {
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .timeline {
-            position: relative;
-            padding-right: 20px;
-            margin-top: 1rem;
-        }
-
-        .timeline-item {
-            padding-bottom: 1.5rem;
-            position: relative;
-        }
-
-        .timeline-item:before {
-            content: '';
-            position: absolute;
-            right: -15px;
-            top: 5px;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background-color: #A98A4D;
-            border: 2px solid white;
-            z-index: 1;
-        }
-
-        .timeline-line {
-            position: absolute;
-            right: -11px;
-            top: 5px;
-            bottom: -5px;
-            width: 2px;
             background-color: #e2e8f0;
-        }
-
-        .timeline-date {
-            font-weight: 700;
-            color: #8b6f41;
-        }
-
-        .timeline-content {
-            font-size: 1rem;
         }
 
         @media (max-width: 1200px) {
             .poster-body {
-                grid-template-columns: repeat(2, 1fr);
+                grid-template-columns: 1fr;
             }
         }
 
         @media (max-width: 768px) {
-            .poster-body {
-                grid-template-columns: 1fr;
-            }
-
             .poster-header {
                 flex-direction: column;
                 text-align: center;
@@ -257,12 +180,12 @@
             </div>
             <div class="logos">
                 <div class="logo-container">
-                    <img src="./Assets/ruppin.jpg" alt="Ruppin Academic Center Logo">
+                    <img src="https://i.ibb.co/6g22g72/ruppin-logo-white.png" alt="Ruppin Academic Center Logo">
                     <p>המרכז האקדמי רופין</p>
                     <p>המחלקה למדעי המחשב</p>
                 </div>
                 <div class="logo-container">
-                    <img src="./Assets/migdalei.jpg" alt="Migdalei Hayam Hatichon Logo">
+                    <img src="https://i.ibb.co/k3HwVzW/migdalei-logo-white.png" alt="Migdalei Hayam Hatichon Logo">
                     <p>מגדלי הים התיכון</p>
                     <p>28 ביולי 2025</p>
                 </div>
@@ -271,7 +194,29 @@
 
         <!-- Poster Body -->
         <main class="poster-body">
-            <!-- Column 1 -->
+            <!-- Column 1: Main Screens -->
+            <div class="poster-column">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <img src="./Assets/screen1.png" alt="App Screen 1" class="screen-image"
+                            onerror="this.src='https://placehold.co/270x585/e2e8f0/475569?text=Screen+1'">
+                    </div>
+                </div>
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <img src="./Assets/screen2.png" alt="App Screen 2" class="screen-image"
+                            onerror="this.src='https://placehold.co/270x585/e2e8f0/475569?text=Screen+2'">
+                    </div>
+                </div>
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <img src="./Assets/screen3.png" alt="App Screen 3" class="screen-image"
+                            onerror="this.src='https://placehold.co/270x585/e2e8f0/475569?text=Screen+3'">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 2: Text Content -->
             <div class="poster-column">
                 <section class="poster-section">
                     <h2>הצורך והמטרה</h2>
@@ -288,99 +233,30 @@
                 </section>
 
                 <section class="poster-section">
-                    <h2>עיצוב ונגישות</h2>
-                    <p>
-                        האפליקציה עוצבה ותוכננה תוך מחשבה מעמיקה על צרכי הגיל השלישי.
-                    </p>
+                    <h2>מאפייני המערכת</h2>
                     <ul>
-                        <li><strong>עיצוב מונחה נגישות:</strong> הממשק פותח בהתאם למדריך של מערך הדיגיטל הלאומי לעיצוב
-                            מוצרים דיגיטליים לבני 65+.</li>
-                        <li><strong>התאמה אישית:</strong> המשתמשים יכולים לשנות את גודל הגופן ולהתאים את המראה לצרכיהם.
-                        </li>
-                        <li><strong>ייעוץ מומחים:</strong> הפרויקט נעשה בליווי ד"ר נופר כצמן, מומחית לתכנון ממשק וחווית
-                            משתמש, כדי להבטיח עמידה בקריטריונים הגבוהים ביותר של נגישות.</li>
+                        <li><strong>פרופילים וספר טלפונים:</strong> יצירת פרופיל אישי וגישה נוחה לפרטי קשר של כלל
+                            הדיירים.</li>
+                        <li><strong>לוח מודעות ויוזמות:</strong> פרסום והרשמה לחוגים, אירועים ופעילויות קהילתיות.</li>
+                        <li><strong>מרקטפלייס קהילתי:</strong> זירת מסחר פנימית למכירה, קנייה ומסירה של פריטים.</li>
+                        <li><strong>נוהל "בוקר טוב":</strong> מנגנון יומי פשוט לבדיקת שלומם של הדיירים.</li>
+                        <li><strong>כלים ניהוליים:</strong> ממשק ייעודי לוועד המאפשר פרסום הודעות, ניהול פעילויות והפקת
+                            דוחות.</li>
                     </ul>
                 </section>
 
                 <section class="poster-section">
-                    <h2>אתגרים ופתרונות</h2>
-                    <p>במהלך הפיתוח התמודדנו עם מספר אתגרים מרכזיים:</p>
+                    <h2>מבנה הפרויקט</h2>
                     <ul>
-                        <li><strong>ריכוז מידע:</strong> איסוף המידע ממקורות מבוזרים והצגתו במקום אחד, נגיש ונוח.</li>
-                        <li><strong>צרכי הדיירים:</strong> קיום ישיבות עם נציגי הדיירים כדי להבין את צרכיהם המדויקים
-                            ולקבל פידבק שוטף.</li>
-                        <li><strong>מגבלות רגולטוריות:</strong> עבודה צמודה עם הנהלת המקום להבנת והטמעת כללי پرטיות
-                            ואבטחת מידע הנדרשים.</li>
+                        <li><strong>צד לקוח (Frontend):</strong> אפליקציית מובייל שפותחה באמצעות React Native ו-Expo,
+                            המאפשרת תאימות למערכות הפעלה iOS ו-Android.</li>
+                        <li><strong>צד שרת (Backend):</strong> שרת API שנבנה על גבי ASP.NET Core, האחראי על הלוגיקה
+                            העסקית, ניהול המידע והתקשורת עם בסיס הנתונים.</li>
+                        <li><strong>בסיס נתונים (Database):</strong> מערכת MS SQL Server לאחסון מאובטח ומהימן של כלל
+                            נתוני המערכת.</li>
                     </ul>
                 </section>
-            </div>
 
-            <!-- Column 2 -->
-            <div class="poster-column">
-                <section class="poster-section">
-                    <h2>מסכים מרכזיים</h2>
-                    <div class="phone-mockup">
-                        <div class="phone-screen">
-                            <div class="screen-header">דיירים</div>
-                            <div class="screen-content">
-                                <div class="profile-card">
-                                    <img src="https://placehold.co/100x100/c7d2fe/3730a3?text=Y" alt="Yehoshua"
-                                        class="profile-pic">
-                                    <div class="profile-info">
-                                        <h4>יהושוע גמלמן</h4>
-                                        <p>חובב כדורת</p>
-                                    </div>
-                                </div>
-                                <div class="profile-card">
-                                    <img src="https://placehold.co/100x100/fecaca/991b1b?text=R" alt="Rory"
-                                        class="profile-pic">
-                                    <div class="profile-info">
-                                        <h4>רורי לייזר</h4>
-                                        <p>מדריך טיולים לשעבר</p>
-                                    </div>
-                                </div>
-                                <div class="profile-card">
-                                    <img src="https://placehold.co/100x100/bbf7d0/166534?text=S" alt="Shimrit"
-                                        class="profile-pic">
-                                    <div class="profile-info">
-                                        <h4>שמרית פרחזרן</h4>
-                                        <p>סופרת ועיתונאית לשעבר</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="phone-mockup">
-                        <div class="phone-screen">
-                            <div class="screen-header">הגדרות</div>
-                            <div class="screen-content text-center">
-                                <div class="mb-6">
-                                    <label class="font-bold text-lg">גודל טקסט</label>
-                                    <div class="flex items-center justify-center gap-4 mt-2">
-                                        <span class="text-lg">א</span>
-                                        <input type="range" min="1" max="5" value="3" class="w-2/3">
-                                        <span class="text-3xl">א</span>
-                                    </div>
-                                </div>
-                                <div class="mb-6">
-                                    <label class="font-bold text-lg">בחירת שפה</label>
-                                    <div class="mt-2 p-2 border-2 border-gray-400 rounded-lg bg-white">עברית</div>
-                                </div>
-                                <div class="mb-6">
-                                    <label class="font-bold text-lg">ניהול התראות</label>
-                                    <div class="mt-2 p-2 border-2 border-gray-400 rounded-lg bg-white">שמע ורטט</div>
-                                    <div class="mt-2 p-2 border-2 border-black rounded-lg bg-black text-white">רטט בלבד
-                                    </div>
-                                    <div class="mt-2 p-2 border-2 border-gray-400 rounded-lg bg-white">השתק</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            <!-- Column 3 -->
-            <div class="poster-column">
                 <section class="poster-section">
                     <h2>אלמנט חכם: סוכן AI</h2>
                     <p>
@@ -391,41 +267,29 @@
                         הסוכן מאפשר למשתמשים לתקשר עם האפליקציה בשפה טבעית. לדוגמה, דייר יכול לשאול "מתי מתקיים חוג
                         היוגה?" או "הצג לי את פרטי הקשר של משה כהן", והמערכת תציג לו את המידע הרלוונטי באופן מיידי.
                     </p>
-                    <p>
-                        אלמנט זה מוריד את חסם הכניסה הטכנולוגי ומאפשר גם למשתמשים שאינם מנוסים להפיק את המרב מהפלטפורמה.
-                    </p>
                 </section>
+            </div>
 
-                <section class="poster-section">
-                    <h2>לוח זמנים</h2>
-                    <div class="timeline">
-                        <div class="timeline-line"></div>
-                        <div class="timeline-item">
-                            <p class="timeline-date">פברואר</p>
-                            <p class="timeline-content">איפיון DB</p>
-                        </div>
-                        <div class="timeline-item">
-                            <p class="timeline-date">מרץ</p>
-                            <p class="timeline-content">פיתוח צד שרת</p>
-                        </div>
-                        <div class="timeline-item">
-                            <p class="timeline-date">אפריל</p>
-                            <p class="timeline-content">סיום פיתוח צד שרת, תחילת פיתוח צד לקוח</p>
-                        </div>
-                        <div class="timeline-item">
-                            <p class="timeline-date">מאי</p>
-                            <p class="timeline-content">סוף פיתוח צד לקוח</p>
-                        </div>
-                        <div class="timeline-item">
-                            <p class="timeline-date">יוני</p>
-                            <p class="timeline-content">שיפורים ותוספות, סיום פיתוח</p>
-                        </div>
-                        <div class="timeline-item" style="padding-bottom: 0;">
-                            <p class="timeline-date">יולי</p>
-                            <p class="timeline-content">בדיקות ובקרת איכות</p>
-                        </div>
+            <!-- Column 3: Main Screens -->
+            <div class="poster-column">
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <img src="./Assets/screen4.png" alt="App Screen 4" class="screen-image"
+                            onerror="this.src='https://placehold.co/270x585/e2e8f0/475569?text=Screen+4'">
                     </div>
-                </section>
+                </div>
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <img src="./Assets/screen5.png" alt="App Screen 5" class="screen-image"
+                            onerror="this.src='https://placehold.co/270x585/e2e8f0/475569?text=Screen+5'">
+                    </div>
+                </div>
+                <div class="phone-mockup">
+                    <div class="phone-screen">
+                        <img src="./Assets/screen6.png" alt="App Screen 6" class="screen-image"
+                            onerror="this.src='https://placehold.co/270x585/e2e8f0/475569?text=Screen+6'">
+                    </div>
+                </div>
             </div>
         </main>
     </div>
