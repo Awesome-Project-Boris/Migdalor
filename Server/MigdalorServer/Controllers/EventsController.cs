@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,9 +36,7 @@ namespace MigdalorServer.Controllers
                 var events = await _context.OhEvents
                     .AsNoTracking()
                     .Where(e =>
-                        // Activities: One-time events in the future.
                         (e.IsRecurring == false && e.StartDate > now) ||
-                        // Classes: Recurring events where the series has not yet ended.
                         (e.IsRecurring == true && e.EndDate > now)
                     )
                     .Select(e => new EventDto
@@ -48,7 +48,9 @@ namespace MigdalorServer.Controllers
                         IsRecurring = e.IsRecurring,
                         StartDate = e.StartDate,
                         EndDate = e.EndDate,
-                        Capacity = e.Capacity
+                        Capacity = e.Capacity,
+                        // This line counts the registrations for each event
+                        ParticipantsCount = e.OhEventRegistrations.Count()
                     }).ToListAsync();
 
                 var result = new
@@ -242,6 +244,61 @@ namespace MigdalorServer.Controllers
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, $"Error during registration: {ex.Message}");
+            }
+        }
+
+        // Inside the EventsController class
+
+        [HttpPost("CreateActivity")]
+        [Authorize] // Ensure only authenticated users can create events
+        public async Task<IActionResult> CreateActivity([FromBody] NewActivityDto eventDto)
+        {
+            // --- Security Check: User can only create an event for themselves ---
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null || eventDto.HostId.ToString() != userIdClaim)
+            {
+                return Forbid("You can only create events for yourself.");
+            }
+            // --- End Security Check ---
+
+            // --- Permission Check (as implemented before) ---
+            var canInitiate = await _context.OhResidents
+                                            .Where(r => r.ResidentId == eventDto.HostId)
+                                            .Select(r => r.CanInitActivity)
+                                            .FirstOrDefaultAsync();
+
+            if (!canInitiate)
+            {
+                return Forbid("You do not have permission to initiate new activities.");
+            }
+            // --- End Permission Check ---
+
+            var newEvent = new OhEvent
+            {
+                EventName = eventDto.EventName,
+                Description = eventDto.Description,
+                HostId = eventDto.HostId,
+                Location = eventDto.Location,
+                PictureId = eventDto.PictureId,
+                Capacity = eventDto.Capacity,
+                IsRecurring = false, // Always false for this form
+                RecurrenceRule = null,
+                StartDate = eventDto.StartDate,
+                EndDate = eventDto.EndDate,
+            };
+
+            try
+            {
+                _context.OhEvents.Add(newEvent);
+                await _context.SaveChangesAsync();
+
+                // Return the created event, including its new ID
+                return CreatedAtAction(nameof(GetEventById), new { id = newEvent.EventId }, newEvent);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception ex
+                return StatusCode(500, "An internal server error occurred while creating the event.");
             }
         }
     }

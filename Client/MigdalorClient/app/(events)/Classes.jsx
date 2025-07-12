@@ -13,14 +13,14 @@ import EventCard from "@/components/EventCard";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Header from "@/components/Header";
-import { i18n } from "i18next";
 
 const ITEMS_PER_PAGE = 5;
 
 export default function ClassesScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const flatListRef = useRef(null);
+  const isRtl = i18n.dir() === "rtl";
 
   const [allClasses, setAllClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +77,21 @@ export default function ClassesScreen() {
     }
   };
 
+  const ListHeader = () => (
+    <>
+      <Text style={styles.mainTitle}>
+        {t("Events_ClassesTitle", "Classes")}
+      </Text>
+      <FloatingLabelInput
+        label={t("Common_SearchPlaceholder", "Search by name...")}
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+        style={styles.searchContainer}
+        alignRight={isRtl}
+      />
+    </>
+  );
+
   if (isLoading && !allClasses.length) {
     return (
       <View style={styles.container}>
@@ -102,46 +117,32 @@ export default function ClassesScreen() {
   return (
     <View style={styles.container}>
       <Header />
-      <Text style={styles.mainTitle}>
-        {t("Events_ClassesTitle", "Classes")}
-      </Text>
-      <View style={styles.content}>
-        <FloatingLabelInput
-          label={t("Common_SearchPlaceholder", "Search by name...")}
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          style={styles.searchContainer}
-          alignRight={Globals.userSelectedDirection === "rtl"}
-        />
-        <PaginatedListDisplay
-          flatListRef={flatListRef}
-          items={itemsForCurrentPage}
-          contentContainerStyle={styles.listContentContainer}
-          listContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <EventCard
-              event={item}
-              onPress={() =>
-                router.push({
-                  pathname: "/EventFocus",
-                  params: { eventId: item.eventId },
-                })
-              }
-            />
-          )}
-          itemKeyExtractor={(item) => item.eventId.toString()}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          ListEmptyComponent={() => (
-            <View style={styles.centered}>
-              <Text>
-                {t("Classes_NoClasses", "No classes available at the moment.")}
-              </Text>
-            </View>
-          )}
-        />
-      </View>
+      <PaginatedListDisplay
+        flatListRef={flatListRef}
+        items={itemsForCurrentPage}
+        ListHeaderComponent={ListHeader}
+        listContainerStyle={styles.listContainer}
+        renderItem={({ item }) => (
+          <EventCard
+            event={item}
+            onPress={() =>
+              router.push({
+                pathname: "/EventFocus",
+                params: { eventId: item.eventId },
+              })
+            }
+          />
+        )}
+        itemKeyExtractor={(item) => item.eventId.toString()}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        ListEmptyComponent={() => (
+          <View style={styles.centered}>
+            <Text>{t("Classes_NoClasses", "No classes available.")}</Text>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -149,6 +150,7 @@ export default function ClassesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fef1e6", // Added background color
   },
   content: {
     flex: 1,
@@ -159,7 +161,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   searchContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   centered: {
     flex: 1,
@@ -175,11 +177,14 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
-    color: "#111",
-    marginTop: 75,
+    color: "#333",
+    marginBottom: 20,
   },
   listContainer: {
-    alignSelf: "center", // Center the list container itself
-    width: "95%", // Set a width to be slightly less than the screen
+    paddingTop: 75,
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+    alignSelf: "center",
+    width: "95%",
   },
 });

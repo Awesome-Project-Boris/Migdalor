@@ -17,7 +17,7 @@ import AttendanceDrawer from "@/components/AttendanceDrawer";
 import FlipButton from "@/components/FlipButton";
 import Header from "@/components/Header";
 
-const placeholderImage = require("../assets/images/ServicesPlaceholder.png");
+const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
 const formatTime = (dateString) => {
   if (!dateString) return "";
@@ -166,7 +166,8 @@ export default function EventFocusScreen() {
   const isRegistered = participants.some(
     (p) => p.participantId === currentUserId
   );
-  const isFull = participants.length >= event.capacity;
+  const isFull =
+    event.capacity !== null && participants.length >= event.capacity;
   const canMarkAttendance = new Date(event.startDate) <= new Date();
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
   const startTime = formatTime(event.startDate);
@@ -235,15 +236,23 @@ export default function EventFocusScreen() {
           <DetailRow
             icon="people-outline"
             label={t("EventFocus_Capacity", "Capacity")}
-            value={`${participants.length} / ${event.capacity}`}
+            value={
+              event.capacity !== null
+                ? `${participants.length} / ${event.capacity}`
+                : t("EventFocus_Unlimited", "Unlimited")
+            }
+            isLast={true}
           />
         </View>
 
-        {!isCreator && !isRegistered && remainingSpots > 0 && (
-          <Text style={styles.spotsAvailableText}>
-            {t("EventFocus_SpacesAvailable", { count: remainingSpots })}
-          </Text>
-        )}
+        {!isCreator &&
+          !isRegistered &&
+          event.capacity !== null &&
+          remainingSpots > 0 && (
+            <Text style={styles.spotsAvailableText}>
+              {t("EventFocus_SpacesAvailable", { count: remainingSpots })}
+            </Text>
+          )}
         {!event.isRecurring && (
           <>
             {isCreator && (
@@ -283,83 +292,110 @@ export default function EventFocusScreen() {
 }
 
 const styles = StyleSheet.create({
+  // Main container styles, inspired by PublicServicesFocus
   scrollContainer: {
-    padding: 16,
-    paddingBottom: 50,
-    backgroundColor: "#f8f9fa",
-    marginTop: 60, // Margin for the absolute positioned Header
+    paddingTop: 80, // Matches PublicServicesFocus for space below Header
+    paddingBottom: 40,
+    alignItems: "center",
+    paddingHorizontal: 16,
+    backgroundColor: "#fef1e6", // Warmer background color
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#fef1e6",
   },
   errorText: {
     color: "red",
-    fontSize: 16,
+    fontSize: 18,
+    textAlign: "center",
   },
+  // Visual content styles
   image: {
     width: "100%",
     height: 220,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    marginBottom: 8,
-    color: "#212529",
+    color: "#333",
+    marginBottom: 12,
+    textAlign: "center",
   },
   description: {
     fontSize: 18,
     lineHeight: 26,
-    color: "#495057",
+    color: "#555",
+    textAlign: "center",
     marginBottom: 24,
   },
+  // Details container, now more integrated
   detailsContainer: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
+    width: "100%",
+    backgroundColor: "#fff8f0", // Softer white
+    borderRadius: 10,
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: "#dee2e6",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderColor: "#e0c4a2",
   },
   detailRow: {
+    flexDirection: "row", // Base direction
     alignItems: "center",
-    marginBottom: 18,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
+  // Last row should not have a border below it
+  detailRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f5eadd",
+  },
+  detailRow: (isLast = false) => ({
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: isLast ? 0 : 1, // No border for the last item
+    borderBottomColor: "#f5eadd",
+  }),
   iconLtr: {
     marginRight: 15,
+    color: "#8c7a6b",
   },
   iconRtl: {
     marginLeft: 15,
+    color: "#8c7a6b",
   },
   detailLabel: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#343a40",
+    color: "#5c4b33",
   },
   detailValue: {
     fontSize: 18,
-    color: "#495057",
+    color: "#333",
     flex: 1,
+    // Note: The dynamic textAlign is now applied inline in the component
   },
+  // Action styles
   registerButton: {
-    paddingVertical: 15, // FlipButton has its own padding, setting to 0 to avoid double padding
+    paddingVertical: 0, // Let FlipButton handle padding
     borderRadius: 8,
     marginTop: 10,
-    marginBottom: 20,
+    width: "100%",
   },
   buttonText: {
-    fontSize: 28,
+    fontSize: 22, // Slightly smaller for better fit
     fontWeight: "bold",
   },
   statusText: {
+    width: "100%",
     textAlign: "center",
     fontSize: 18,
     color: "#28a745",
@@ -370,10 +406,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   spotsAvailableText: {
-    fontSize: 16,
-    color: "#28a745", // Green color to indicate availability
-    fontWeight: "bold",
+    fontSize: 17,
+    color: "#28a745",
+    fontWeight: "600", // Not as bold as the button text
     textAlign: "center",
-    marginBottom: 20, // Add some space before the registration button
+    marginBottom: 15,
   },
 });

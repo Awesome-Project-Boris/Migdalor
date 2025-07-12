@@ -8,25 +8,66 @@ import React, {
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { Globals } from "@/app/constants/Globals";
 import EventCard from "@/components/EventCard";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Header from "@/components/Header";
-import { i18n } from "i18next";
+import FlipButton from "@/components/FlipButton";
 
 const ITEMS_PER_PAGE = 5;
 
 export default function ActivitiesScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const flatListRef = useRef(null);
+  const isRtl = i18n.dir() === "rtl";
 
   const [allActivities, setAllActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [canInitiate, setCanInitiate] = useState(false);
+  const [isPermissionLoading, setIsPermissionLoading] = useState(true);
+
+  const checkInitiatePermission = useCallback(async () => {
+    setIsPermissionLoading(true);
+    try {
+      const storedToken = await AsyncStorage.getItem("jwt");
+      const storedUserId = await AsyncStorage.getItem("userID");
+
+      if (!storedToken || !storedUserId) {
+        setCanInitiate(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${
+          Globals.API_BASE_URL
+        }/api/Resident/CanInitiateActivity/${storedUserId.replace(/"/g, "")}`,
+        {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCanInitiate(data.canInitiate);
+      } else {
+        setCanInitiate(false);
+      }
+    } catch (err) {
+      console.error("Failed to check activity initiation permission:", err);
+      setCanInitiate(false);
+    } finally {
+      setIsPermissionLoading(false);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -45,7 +86,8 @@ export default function ActivitiesScreen() {
         }
       };
       fetchEvents();
-    }, [t])
+      checkInitiatePermission();
+    }, [t, checkInitiatePermission])
   );
 
   const filteredActivities = useMemo(() => {
@@ -75,6 +117,41 @@ export default function ActivitiesScreen() {
     }
   };
 
+  const ListHeader = () => (
+    <>
+      <Text style={styles.mainTitle}>
+        {t("Events_ActivitiesTitle", "Activities")}
+      </Text>
+
+      {!isPermissionLoading && canInitiate && (
+        <FlipButton
+          onPress={() => router.push("/NewActivity")} // Will navigate to the new page later
+          style={styles.newActivityButton}
+          bgColor="#28a745"
+          textColor="#fff"
+        >
+          <Ionicons
+            name="add-circle-outline"
+            size={22}
+            color="white"
+            style={{ marginRight: 8 }}
+          />
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+            {t("Activities_AddNew", "Add a new activity")}
+          </Text>
+        </FlipButton>
+      )}
+
+      <FloatingLabelInput
+        label={t("Common_SearchPlaceholder", "Search by name...")}
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+        style={styles.searchContainer}
+        alignRight={i18n.dir() === "rtl"}
+      />
+    </>
+  );
+
   if (isLoading && !allActivities.length) {
     return (
       <View style={styles.container}>
@@ -100,49 +177,34 @@ export default function ActivitiesScreen() {
   return (
     <View style={styles.container}>
       <Header />
-      <Text style={styles.mainTitle}>
-        {t("Events_ActivitiesTitle", "Activities")}
-      </Text>
-      <View style={styles.content}>
-        <FloatingLabelInput
-          label={t("Common_SearchPlaceholder", "Search by name...")}
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          style={styles.searchContainer}
-          alignRight={Globals.userSelectedDirection === "rtl"}
-        />
-        <PaginatedListDisplay
-          flatListRef={flatListRef}
-          items={itemsForCurrentPage}
-          contentContainerStyle={styles.listContentContainer}
-          listContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <EventCard
-              event={item}
-              onPress={() =>
-                router.push({
-                  pathname: "/EventFocus",
-                  params: { eventId: item.eventId },
-                })
-              }
-            />
-          )}
-          itemKeyExtractor={(item) => item.eventId.toString()}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          ListEmptyComponent={() => (
-            <View style={styles.centered}>
-              <Text>
-                {t(
-                  "Activities_NoActivities",
-                  "No activities available at the moment."
-                )}
-              </Text>
-            </View>
-          )}
-        />
-      </View>
+      <PaginatedListDisplay
+        flatListRef={flatListRef}
+        items={itemsForCurrentPage}
+        ListHeaderComponent={ListHeader}
+        listContainerStyle={styles.listContainer}
+        renderItem={({ item }) => (
+          <EventCard
+            event={item}
+            onPress={() =>
+              router.push({
+                pathname: "/EventFocus",
+                params: { eventId: item.eventId },
+              })
+            }
+          />
+        )}
+        itemKeyExtractor={(item) => item.eventId.toString()}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        ListEmptyComponent={() => (
+          <View style={styles.centered}>
+            <Text>
+              {t("Activities_NoActivities", "No activities available.")}
+            </Text>
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -150,6 +212,7 @@ export default function ActivitiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fef1e6", // Added background color
   },
   content: {
     flex: 1,
@@ -157,7 +220,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   searchContainer: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   centered: {
     flex: 1,
@@ -173,14 +236,25 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
-    color: "#111",
-    marginTop: 60,
+    color: "#333",
+    marginBottom: 20,
   },
   listContentContainer: {
     alignItems: "center",
   },
   listContainer: {
-    alignSelf: "center", // Center the list container itself
-    width: "95%", // Set a width to be slightly less than the screen
+    paddingTop: 75, // Top padding to account for the Header
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+    alignSelf: "center",
+    width: "95%",
+  },
+  newActivityButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 20,
   },
 });

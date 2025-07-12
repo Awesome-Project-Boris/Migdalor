@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef } from 'react';
+import React, { useMemo, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
-  Dimensions
-} from 'react-native';
-import { useTranslation } from 'react-i18next';
+  Dimensions,
+} from "react-native";
+import { useTranslation } from "react-i18next";
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 // Props:
 // - items: Array of items for the CURRENT page. REQUIRED.
@@ -31,6 +31,7 @@ export default function PaginatedListDisplay({
   itemKeyExtractor,
   isLoading = false, // Default to false, assuming parent handles main load state
   ListEmptyComponent = null,
+  ListHeaderComponent = null,
   currentPage,
   totalPages,
   onPageChange,
@@ -59,13 +60,13 @@ export default function PaginatedListDisplay({
   }, [currentPage, totalPages]);
 
   const DefaultListEmptyComponent = () => (
-     <View style={styles.centeredMessage}>
-        {isLoading ? (
-             <ActivityIndicator size="large" color="#0000ff" />
-        ) : (
-             <Text style={styles.infoText}>{t("PaginatedList_noItems")}</Text>
-        )}
-     </View>
+    <View style={styles.centeredMessage}>
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <Text style={styles.infoText}>{t("PaginatedList_noItems")}</Text>
+      )}
+    </View>
   );
 
   return (
@@ -75,42 +76,65 @@ export default function PaginatedListDisplay({
         data={items}
         renderItem={renderItem}
         keyExtractor={itemKeyExtractor}
+        ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={ListEmptyComponent || DefaultListEmptyComponent}
         contentContainerStyle={[styles.listContainer, listContainerStyle]}
         // Optional: Show footer loading only if isLoading prop is true
-        ListFooterComponent={isLoading && items?.length > 0 ? <ActivityIndicator size="small" color="#888" /> : null}
+        ListFooterComponent={
+          isLoading && items?.length > 0 ? (
+            <ActivityIndicator size="small" color="#888" />
+          ) : null
+        }
       />
 
       {/* Pagination Controls - Render only if totalPages > 1 */}
       {totalPages > 1 && (
         <View style={[styles.paginationContainer, paginationContainerStyle]}>
           <TouchableOpacity
-            style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}
+            style={[
+              styles.paginationButton,
+              currentPage === 1 && styles.disabledButton,
+            ]}
             onPress={() => onPageChange(currentPage - 1)} // Call prop handler
             disabled={currentPage === 1 || isLoading} // Disable if loading
           >
-            <Text style={styles.paginationButtonText}>{t("PaginatedList_PreviousButton")}</Text>
+            <Text style={styles.paginationButtonText}>
+              {t("PaginatedList_PreviousButton")}
+            </Text>
           </TouchableOpacity>
 
           {pagesToShow.map((p) => (
             <TouchableOpacity
               key={p}
-              style={[styles.paginationButton, p === currentPage && styles.activePaginationButton]}
+              style={[
+                styles.paginationButton,
+                p === currentPage && styles.activePaginationButton,
+              ]}
               onPress={() => onPageChange(p)} // Call prop handler
               disabled={p === currentPage || isLoading} // Disable if loading
             >
-              <Text style={[styles.paginationButtonText, p === currentPage && styles.activePaginationButtonText]}>
+              <Text
+                style={[
+                  styles.paginationButtonText,
+                  p === currentPage && styles.activePaginationButtonText,
+                ]}
+              >
                 {p}
               </Text>
             </TouchableOpacity>
           ))}
 
           <TouchableOpacity
-            style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
+            style={[
+              styles.paginationButton,
+              currentPage === totalPages && styles.disabledButton,
+            ]}
             onPress={() => onPageChange(currentPage + 1)} // Call prop handler
             disabled={currentPage === totalPages || isLoading} // Disable if loading
           >
-            <Text style={styles.paginationButtonText}>{t("PaginatedList_NextButton")}</Text>
+            <Text style={styles.paginationButtonText}>
+              {t("PaginatedList_NextButton")}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -121,11 +145,11 @@ export default function PaginatedListDisplay({
 // Styles are the same as the previous PaginatedList component
 const styles = StyleSheet.create({
   wrapper: {
-      flex: 1, // Allow the component to fill space
+    flex: 1, // Allow the component to fill space
   },
   listContainer: {
     paddingBottom: 16,
-    width: SCREEN_WIDTH * 0.95
+    width: SCREEN_WIDTH * 0.95,
   },
   centeredMessage: {
     flex: 1, // Make it take space if list is empty

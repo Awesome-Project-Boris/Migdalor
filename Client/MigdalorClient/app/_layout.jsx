@@ -185,6 +185,14 @@ export default function Layout() {
                       }}
                     />
                     <Stack.Screen
+                      name="NewActivity"
+                      options={{
+                        title: "New Activity",
+                        headerShown: false,
+                        presentation: "modal",
+                      }}
+                    />
+                    <Stack.Screen
                       name="GoodMorningProcedure"
                       options={{
                         title: "Good morning procedure",

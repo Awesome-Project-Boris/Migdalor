@@ -382,6 +382,39 @@ const resources = {
         "There are {{count}} empty spaces - registration inside!",
       EventFocus_SpacesAvailable:
         "There are {{count}} empty spaces - registration below!",
+
+      // New Activity
+
+      NewActivity_Title: "Create a New Activity",
+      NewActivity_Name: "Activity Name",
+      NewActivity_Name_Error_Required: "Activity name is required.",
+      NewActivity_Name_Error_TooLong: "Name cannot exceed 100 characters.",
+      NewActivity_Description: "Description",
+      NewActivity_Description_Error_TooLong:
+        "Description cannot exceed 500 characters.",
+      NewActivity_Location: "Location",
+      NewActivity_Capacity: "Capacity (Number of participants)",
+      NewActivity_Capacity_Error_Required: "Capacity is required.",
+      NewActivity_Capacity_Error_Invalid: "Please enter a valid number.",
+      NewActivity_Image: "Activity Image",
+      NewActivity_Image_Optional: "Optional",
+      NewActivity_Image_TapToChoose: "Tap to choose",
+      NewActivity_SelectDate: "Select Date",
+      NewActivity_SelectStartTime: "Start Time",
+      NewActivity_SelectEndTime: "End Time",
+      NewActivity_CreateButton: "Create Activity",
+      NewActivity_CancelButton: "Cancel",
+      NewActivity_SuccessTitle: "Activity Created!",
+      NewActivity_SuccessMessage:
+        "Your new activity has been successfully created.",
+      NewActivity_CancelPromptTitle: "Discard Changes?",
+      NewActivity_CancelPromptMessage:
+        "Are you sure you want to discard this new activity?",
+      NewActivity_ConfirmDiscard: "Yes, Discard",
+      NewActivity_KeepEditing: "Keep Editing",
+      NewActivity_Capacity_Optional:
+        "Capacity (optional, leave blank for unlimited)",
+      EventFocus_Unlimited: "Unlimited",
     },
   },
   he: {
@@ -746,6 +779,37 @@ const resources = {
         "נותרו {{count}} מקומות פנויים - ההרשמה בפנים!",
       EventFocus_SpacesAvailable:
         "נותרו {{count}} מקומות פנויים - להרשמה למטה!",
+
+      // New Activity
+
+      NewActivity_Title: "יצירת פעילות חדשה",
+      NewActivity_Name: "שם הפעילות",
+      NewActivity_Name_Error_Required: "שם הפעילות הוא שדה חובה.",
+      NewActivity_Name_Error_TooLong: "השם לא יכול לעלות על 100 תווים.",
+      NewActivity_Description: "תיאור",
+      NewActivity_Description_Error_TooLong:
+        "התיאור לא יכול לעלות על 500 תווים.",
+      NewActivity_Location: "מיקום",
+      NewActivity_Capacity: "כמות משתתפים",
+      NewActivity_Capacity_Error_Required: "כמות המשתתפים היא שדה חובה.",
+      NewActivity_Capacity_Error_Invalid: "יש להזין מספר תקין.",
+      NewActivity_Image: "תמונת הפעילות",
+      NewActivity_Image_Optional: "אופציונלי",
+      NewActivity_Image_TapToChoose: "לחץ לבחירה",
+      NewActivity_SelectDate: "בחר תאריך",
+      NewActivity_SelectStartTime: "שעת התחלה",
+      NewActivity_SelectEndTime: "שעת סיום",
+      NewActivity_CreateButton: "צור פעילות",
+      NewActivity_CancelButton: "ביטול",
+      NewActivity_SuccessTitle: "הפעילות נוצרה!",
+      NewActivity_SuccessMessage: "הפעילות החדשה שלך נוצרה בהצלחה.",
+      NewActivity_CancelPromptTitle: "לבטל שינויים?",
+      NewActivity_CancelPromptMessage: "האם ברצונך לבטל את יצירת הפעילות?",
+      NewActivity_ConfirmDiscard: "כן, בטל",
+      NewActivity_KeepEditing: "המשך לערוך",
+      NewActivity_Capacity_Optional:
+        "כמות משתתפים (אופציונלי, השאר ריק ללא הגבלה)",
+      EventFocus_Unlimited: "ללא הגבלה",
     },
   },
 };

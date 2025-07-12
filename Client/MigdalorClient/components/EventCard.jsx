@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Text, Image } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 
-const placeholderImage = require("../assets/images/ServicesPlaceholder.png");
+const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
 const EventCard = ({ event, onPress }) => {
   const { i18n, t } = useTranslation();
@@ -51,7 +51,7 @@ const EventCard = ({ event, onPress }) => {
             >
               <Ionicons name="people-outline" size={24} color="#555" />
               <Text style={[styles.registrationText, textStyle]}>
-                {`${registeredCount} / ${event.capacity} ${t(
+                {`${event.participantsCount} / ${event.capacity ?? "∞"} ${t(
                   "EventCard_Registered",
                   "Registered"
                 )}`}
