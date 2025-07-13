@@ -7,7 +7,7 @@ import InputField from "../../components/common/InputField";
 import CheckboxField from "../../components/common/CheckboxField";
 
 /**
- * A modal form for editing user details, built with the same principles as the ConfirmationModal.
+ * A modal form for editing user details.
  * @param {object} props
  * @param {object} props.user - The user object being edited.
  * @param {Array} props.allUsers - The list of all users, for spouse selection.
@@ -25,6 +25,20 @@ const EditUserModal = ({
   backdropOpacity = 0.5,
 }) => {
   const { token } = useAuth();
+
+  // Helper function to format dates correctly for input fields
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    // The date from the server might be treated as local time by the browser,
+    // causing it to shift by the timezone offset (e.g., showing the previous day).
+    // By ensuring the date string is treated as UTC (by appending 'Z' if not present),
+    // we can reliably get the correct YYYY-MM-DD format.
+    const date = new Date(
+      dateString.endsWith("Z") ? dateString : dateString + "Z"
+    );
+    return date.toISOString().split("T")[0];
+  };
+
   const [formData, setFormData] = useState({
     hebFirstName: user.hebFirstName || "",
     hebLastName: user.hebLastName || "",
@@ -32,23 +46,20 @@ const EditUserModal = ({
     engLastName: user.engLastName || "",
     email: user.email || "",
     phoneNumber: user.phoneNumber || "",
-    dateOfBirth: user.dateOfBirth
-      ? new Date(user.dateOfBirth).toISOString().split("T")[0]
-      : "",
-    gender: user.gender == "M" ? "זכר" : "נקבה",
+    dateOfBirth: formatDateForInput(user.dateOfBirth),
+    gender: user.gender === "M" ? "זכר" : "נקבה",
     personRole: user.personRole || "Resident",
     branchName: user.branchName || "נורדיה",
     isBokerTov: user.isBokerTov ?? true,
     canInitActivity: user.canInitActivity ?? false,
     spouseId: user.spouseId || null,
-    dateOfArrival: user.dateOfArrival
-      ? new Date(user.dateOfArrival).toISOString().split("T")[0]
-      : "",
+    dateOfArrival: formatDateForInput(user.dateOfArrival),
     homePlace: user.homePlace || "",
     profession: user.profession || "",
     residentDescription: user.residentDescription || "",
     profilePicId: user.profilePicId || null,
   });
+
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [spouseSearch, setSpouseSearch] = useState("");
@@ -127,14 +138,12 @@ const EditUserModal = ({
   };
 
   return (
-    // The backdrop now has overflow-y-auto to allow the whole page to scroll if the modal is too tall
     <div
       className="fixed inset-0 bg-black flex justify-center items-start z-50 p-4 transition-colors duration-300 ease-in-out overflow-y-auto"
       style={backdropStyle}
       dir="rtl"
       onClick={handleBackdropClick}
     >
-      {/* The modal is wider (max-w-6xl) and has no max-height, allowing it to grow vertically */}
       <div
         className={`relative my-8 bg-white rounded-2xl shadow-xl w-full max-w-6xl flex flex-col transform transition-all duration-300 ease-in-out ${
           isShowing ? "scale-100 opacity-100" : "scale-95 opacity-0"
@@ -302,7 +311,7 @@ const EditUserModal = ({
             </div>
 
             {/* Column 3: Picture Upload */}
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               <h4 className="font-semibold text-lg border-b pb-2">
                 תמונת פרופיל
               </h4>
@@ -341,7 +350,7 @@ const EditUserModal = ({
                   </p>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="flex justify-end items-center p-4 border-t mt-6 sticky bottom-0 bg-white rounded-b-2xl">
             <button
