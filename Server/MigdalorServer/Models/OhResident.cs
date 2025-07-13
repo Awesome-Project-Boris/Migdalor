@@ -49,7 +49,7 @@ namespace MigdalorServer.Models
                                               Profession = resident.Profession,
                                               ResidentDescription = resident.ResidentDescription,
                                               PhoneNumber = person.PhoneNumber,
-                                              RoomNumber = resident.ResidentApartmentNumber,
+                                              ResidentApartmentNumber = resident.ResidentApartmentNumber,
                                               IsActive = resident.IsActive,
                                               DateOfArrival = resident.DateOfArrival
                                           }).ToListAsync();

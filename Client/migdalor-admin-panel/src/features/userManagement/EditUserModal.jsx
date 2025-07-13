@@ -107,6 +107,7 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
         homePlace: user.homePlace || "",
         profession: user.profession || "",
         residentDescription: user.residentDescription || "",
+        residentApartmentNumber: user.roomNumber || "",
       });
     }
   }, [user]);
@@ -125,12 +126,9 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const payload = Object.fromEntries(
-      Object.entries(formData).filter(([_, v]) => v != null && v !== "")
-    );
-    payload.isBokerTov = formData.isBokerTov;
-    payload.canInitActivity = formData.canInitActivity;
-    payload.spouseId = formData.spouseId ? Number(formData.spouseId) : null;
+    const payload = { ...formData };
+
+    payload.spouseId = payload.spouseId || null;
 
     onSave(user.id, payload);
     onClose();
@@ -221,6 +219,12 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
               label="סניף"
               name="branchName"
               value={formData.branchName}
+              onChange={handleChange}
+            />
+            <InputField
+              label="מספר דירה"
+              name="residentApartmentNumber"
+              value={formData.residentApartmentNumber}
               onChange={handleChange}
             />
             <div>
