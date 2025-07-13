@@ -17,6 +17,7 @@ import { Globals } from "@/app/constants/Globals";
 import AttendanceDrawer from "@/components/AttendanceDrawer";
 import FlipButton from "@/components/FlipButton";
 import Header from "@/components/Header";
+import { Image as ExpoImage } from "expo-image"; // Use Expo Image for better performance and caching
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
@@ -141,8 +142,10 @@ export default function EventFocusScreen() {
   };
 
   const handleHostPress = () => {
+    // This function is now correctly placed before the return statement.
     if (!event?.host?.hostId || event.host.role === "Admin") return;
 
+    // This logic correctly determines where to navigate.
     const pathname = event.isRecurring ? "/InstructorProfile" : "/Profile";
     router.push({
       pathname,
@@ -164,6 +167,7 @@ export default function EventFocusScreen() {
       </View>
     );
   }
+
   if (!event) {
     return (
       <View style={styles.centered}>
@@ -182,9 +186,11 @@ export default function EventFocusScreen() {
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
   const startTime = formatTime(event.startDate);
   const endTime = formatTime(event.endDate);
-  const remainingSpots = event.capacity
-    ? event.capacity - participants.length
-    : null;
+  const remainingSpots =
+    event.capacity !== null ? event.capacity - participants.length : Infinity;
+  const imageUrl = event.picturePath
+    ? { uri: `${Globals.API_BASE_URL}${event.picturePath}` }
+    : placeholderImage;
 
   const DetailRow = ({
     icon,
@@ -225,13 +231,11 @@ export default function EventFocusScreen() {
     <View style={{ flex: 1, backgroundColor: "#fef1e6" }}>
       <Header />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Image source={placeholderImage} style={styles.image} />
-        <Text style={[styles.title, { textAlign: isRtl ? "right" : "left" }]}>
+        <ExpoImage source={imageUrl} style={styles.image} contentFit="cover" />
+        <Text style={[styles.title, { textAlign: "center" }]}>
           {event.eventName}
         </Text>
-        <Text
-          style={[styles.description, { textAlign: isRtl ? "right" : "left" }]}
-        >
+        <Text style={[styles.description, { textAlign: "center" }]}>
           {event.description}
         </Text>
 
@@ -258,7 +262,7 @@ export default function EventFocusScreen() {
               value={hostName}
               onPress={handleHostPress}
               isLink={!!event.host?.hostId && event.host.role !== "Admin"}
-              isLast={event.isRecurring} // No border if it's the last item for a class
+              isLast={event.isRecurring}
             />
           )}
           {!event.isRecurring && (
@@ -287,7 +291,7 @@ export default function EventFocusScreen() {
             )}
             {!isCreator && (
               <>
-                {remainingSpots > 0 && (
+                {remainingSpots > 0 && event.capacity !== null && (
                   <Text style={styles.spotsAvailableText}>
                     {t("EventFocus_SpacesAvailable", { count: remainingSpots })}
                   </Text>
@@ -353,13 +357,13 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: 12,
     marginBottom: 20,
+    backgroundColor: "#e0e0e0",
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     color: "#333",
     marginBottom: 12,
-    textAlign: "center",
   },
   description: {
     fontSize: 18,
@@ -373,7 +377,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff8f0",
     borderRadius: 10,
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 8,
     borderWidth: 1,
     borderColor: "#e0c4a2",
   },
@@ -408,7 +412,8 @@ const styles = StyleSheet.create({
   },
   actionContainer: {
     width: "100%",
-    paddingBottom: 30, // Padding for phone navigation buttons
+    marginTop: 10,
+    paddingBottom: 30,
   },
   registerButton: {
     paddingVertical: 0,
@@ -434,7 +439,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   fullText: {
-    color: "#dc3545", // A red color for "full"
+    color: "#721c24",
   },
   spotsAvailableText: {
     fontSize: 17,

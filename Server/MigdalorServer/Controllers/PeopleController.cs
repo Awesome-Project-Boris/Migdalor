@@ -166,7 +166,6 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-
                 var data = OhPerson.GetPersonByIDForProfile(userId);
                 return Ok(data);
             }

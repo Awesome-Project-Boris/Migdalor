@@ -78,6 +78,7 @@ export default function ActivitiesScreen() {
           if (!response.ok)
             throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
           const data = await response.json();
+          console;
           setAllActivities(data.activities || []);
         } catch (err) {
           setError(err.message);
@@ -124,22 +125,29 @@ export default function ActivitiesScreen() {
       </Text>
 
       {!isPermissionLoading && canInitiate && (
-        <FlipButton
-          onPress={() => router.push("/NewActivity")} // Will navigate to the new page later
-          style={styles.newActivityButton}
-          bgColor="#28a745"
-          textColor="#fff"
-        >
-          <Ionicons
-            name="add-circle-outline"
-            size={22}
-            color="white"
-            style={{ marginRight: 8 }}
-          />
-          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-            {t("Activities_AddNew", "Add a new activity")}
-          </Text>
-        </FlipButton>
+        <>
+          <FlipButton
+            onPress={() => router.push("/NewActivity")}
+            style={styles.newActivityButton}
+            bgColor="#ffffff"
+            textColor="#000000"
+          >
+            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+              {t("Activities_AddNew", "Add a new activity")}
+            </Text>
+          </FlipButton>
+
+          <FlipButton
+            onPress={() => console.log("Push!")} // Will navigate to the new page later
+            style={styles.newActivityButton}
+            bgColor="#ffffff"
+            textColor="#000000"
+          >
+            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+              {t("Activities_MyCreatedActivities", "My Created Activities")}
+            </Text>
+          </FlipButton>
+        </>
       )}
 
       <FloatingLabelInput

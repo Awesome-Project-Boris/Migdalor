@@ -226,7 +226,6 @@ const ManualAdditionModal = ({ visible, onClose, item, isRtl, t }) => (
     onRequestClose={onClose}
   >
     <View style={styles.modalContainer}>
-      <Header />
       <ScrollView contentContainerStyle={styles.modalScrollContainer}>
         <View style={styles.modalHeader}>
           <FlipButton onPress={onClose} isFlipped={true}>

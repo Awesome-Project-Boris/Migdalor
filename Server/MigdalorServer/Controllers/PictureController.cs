@@ -235,34 +235,42 @@ namespace MigdalorServer.Controllers
         {
             try
             {
+                // 1. Fetch the picture to check its role first
                 var pictureToDelete = await _context.OhPictures.FirstOrDefaultAsync(p => p.PicId == request.PicId);
 
                 if (pictureToDelete == null) return NoContent();
                 if (pictureToDelete.UploaderId != request.UserId) return Forbid("You do not have permission to delete this picture.");
 
-                // --- START: FINAL CORRECTED CHECK ---
-                // Check both tables to see if the picture is in use.
-                bool isUsedAsProfilePic = await _context.OhPeople.AnyAsync(p => p.ProfilePicId == request.PicId);
-                bool isUsedAsAdditionalPic = await _context.OhResidents
-                    .AnyAsync(r => r.AdditionalPic1Id == request.PicId || r.AdditionalPic2Id == request.PicId);
+                // --- START: NEW ROLE-AWARE CHECK ---
 
-                // If the picture is used in either table, skip the deletion.
-                if (isUsedAsProfilePic || isUsedAsAdditionalPic)
+                // 2. Only check for profile usage IF the picture's role is relevant to profiles.
+                if (pictureToDelete.PicRole == "profile_picture" || pictureToDelete.PicRole == "secondary_profile")
                 {
-                    Console.WriteLine($"INFO: Deletion skipped for picture ID {request.PicId} because it is currently in use.");
-                    return Conflict(new { message = "This picture cannot be deleted because it is currently in use." });
-                }
-                // --- END: FINAL CORRECTED CHECK ---
+                    bool isUsedAsProfilePic = await _context.OhPeople.AnyAsync(p => p.ProfilePicId == request.PicId);
+                    bool isUsedAsAdditionalPic = await _context.OhResidents
+                        .AnyAsync(r => r.AdditionalPic1Id == request.PicId || r.AdditionalPic2Id == request.PicId);
 
-                // If not in use, proceed with deletion.
+                    // If the picture is used in either profile slot, block deletion.
+                    if (isUsedAsProfilePic || isUsedAsAdditionalPic)
+                    {
+                        Console.WriteLine($"INFO: Deletion skipped for picture ID {request.PicId} because it is currently in use on a profile.");
+                        return Conflict(new { message = "This picture cannot be deleted because it is currently in use." });
+                    }
+                }
+                // --- END: NEW ROLE-AWARE CHECK ---
+
+                // 3. For all other roles (like 'marketplace') or if the profile-related check passes,
+                // proceed with deletion.
                 _context.OhPictures.Remove(pictureToDelete);
                 await _context.SaveChangesAsync();
                 await TryDeletePhysicalFile(pictureToDelete.PicPath);
 
-                return NoContent();
+                return NoContent(); // Success
             }
             catch (Exception ex)
             {
+                // It's good practice to log the full exception
+                Console.WriteLine($"ERROR in DeletePicture: {ex.ToString()}");
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }

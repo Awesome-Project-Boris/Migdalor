@@ -347,6 +347,7 @@ const resources = {
 
       // Events
 
+      Activities_MyCreatedActivities: "My created activities",
       Activities_AddNew: "Suggest a new acitivity",
       Events_ClassesTitle: "Classes",
       Events_ActivitiesTitle: "Activities",
@@ -762,6 +763,7 @@ const resources = {
 
       // Events
 
+      Activities_MyCreatedActivities: "פעילויות שיצרתי",
       Activities_AddNew: "להצעת פעילות חדשה",
       Events_ClassesTitle: "חוגים",
       Events_ActivitiesTitle: "פעילויות",

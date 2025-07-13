@@ -50,14 +50,15 @@ export default function AddNewItem() {
   const [formErrors, setFormErrors] = useState({}); // Do we have any errors?
 
   const [originalMainPicId, setOriginalMainPicId] = useState(null); // Store original ID for deletion check
-  const [originalExtraPicId, setOriginalExtraPicId] = useState(null); 
+  const [originalExtraPicId, setOriginalExtraPicId] = useState(null);
 
   const params = useLocalSearchParams(); // Are we on edit or new item mode?
   const API = Globals.API_BASE_URL;
 
   const isEditMode = params.mode === "edit";
 
-  const initialData = useMemo(() => { // Do we have initial data ( are we editing a listing )?
+  const initialData = useMemo(() => {
+    // Do we have initial data ( are we editing a listing )?
     if (!params.listingData) {
       return null;
     }
@@ -82,7 +83,8 @@ export default function AddNewItem() {
   const DESCRIPTION_LIMIT = 300;
   const ESCAPED_DESCRIPTION_LIMIT = 400;
 
-  const copyImageToAppDir = async (sourceUri, prefix) => { // Copying a temporary image before server upload to a local library
+  const copyImageToAppDir = async (sourceUri, prefix) => {
+    // Copying a temporary image before server upload to a local library
     try {
       const filename = `${prefix}-${Date.now()}-${sourceUri.split("/").pop()}`;
       const destinationUri = FileSystem.documentDirectory + filename;
@@ -96,7 +98,8 @@ export default function AddNewItem() {
     }
   };
 
-  useEffect(() => { // if we're editing a listing, we populate the variables for the form
+  useEffect(() => {
+    // if we're editing a listing, we populate the variables for the form
     if (isEditMode && initialData) {
       console.log("Edit Mode: Pre-filling form with:", initialData);
       setItemName(initialData.title || "");
@@ -118,7 +121,6 @@ export default function AddNewItem() {
     }
   }, [isEditMode, initialData]);
 
-  
   // Helper to delete local files when they're not needed anymore ( cancelled / uploaded to server already)
   const safeDeleteFile = async (uri) => {
     if (!uri || !uri.startsWith("file://")) return;
@@ -132,7 +134,8 @@ export default function AddNewItem() {
   };
 
   // Image Picker - Image library or a new photo
-  const pickImage = async (setImage) => { // Step 3 : this setImage is a Hook Setter - the uri value we pass into it is the new photo candidate
+  const pickImage = async (setImage) => {
+    // Step 3 : this setImage is a Hook Setter - the uri value we pass into it is the new photo candidate
     const libraryPermission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (libraryPermission.status !== "granted") {
@@ -224,7 +227,7 @@ export default function AddNewItem() {
 
   // Field verification - we're escaping special characters ( in the serverside ) to avoid SQL attacks. This calculates length with escapes.
   const validateField = (name, value) => {
-    const trimmedValue = value; 
+    const trimmedValue = value;
     switch (name) {
       case "itemName":
         if (!trimmedValue.trim()) {
@@ -294,28 +297,40 @@ export default function AddNewItem() {
     setOriginalExtraPicId(null);
   };
 
-  // Cancel Logic 
+  // Cancel Logic
   const handleCancel = async () => {
     if (isEditMode) {
       router.back();
       return;
     }
-   if (hasUnsavedChanges()) { setShowConfirm(true); }
-   else { await resetState(); router.back(); }
- };
+    if (hasUnsavedChanges()) {
+      setShowConfirm(true);
+    } else {
+      await resetState();
+      router.back();
+    }
+  };
 
- const confirmCancel = async () => { setShowConfirm(false); await resetState(); router.back(); };
- const hasUnsavedChanges = () => itemName.trim() !== (initialData?.title || "") || itemDescription.trim() !== (initialData?.description || "") || (mainImage && mainImage.startsWith('file://')) || (extraImage && extraImage.startsWith('file://')) || (isEditMode && mainImage === null && originalMainPicId !== null) || (isEditMode && extraImage === null && originalExtraPicId !== null);
-
-
+  const confirmCancel = async () => {
+    setShowConfirm(false);
+    await resetState();
+    router.back();
+  };
+  const hasUnsavedChanges = () =>
+    itemName.trim() !== (initialData?.title || "") ||
+    itemDescription.trim() !== (initialData?.description || "") ||
+    (mainImage && mainImage.startsWith("file://")) ||
+    (extraImage && extraImage.startsWith("file://")) ||
+    (isEditMode && mainImage === null && originalMainPicId !== null) ||
+    (isEditMode && extraImage === null && originalExtraPicId !== null);
 
   // --- Image Viewing/Removal Logic ---
   const [showImageViewModal, setShowImageViewModal] = useState(false);
-  const [imageToViewUri, setImageToViewUri] = useState(null); // Image currently being viewed 
+  const [imageToViewUri, setImageToViewUri] = useState(null); // Image currently being viewed
   const [imageTypeToClear, setImageTypeToClear] = useState(null); // Are we clearing the main or extra?
 
-
-  const viewOrPickImage = (type) => { // Step 2 : after user clicks the card, we check if type is main or not. if it is and there's a URI, it's of the main's image.
+  const viewOrPickImage = (type) => {
+    // Step 2 : after user clicks the card, we check if type is main or not. if it is and there's a URI, it's of the main's image.
     const currentImageUri = type === "main" ? mainImage : extraImage;
     if (currentImageUri) {
       setImageToViewUri(currentImageUri);
@@ -403,8 +418,21 @@ export default function AddNewItem() {
     if (!pictureId) return;
     console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
     try {
-      const response = await fetch(`${API}/api/Picture/${pictureId}`, {
-        method: "DELETE",
+      // You need the user's ID to send in the request body
+      const userId = await AsyncStorage.getItem("userID");
+      if (!userId) {
+        throw new Error("User ID not found. Cannot proceed with deletion.");
+      }
+
+      const response = await fetch(`${API}/api/Picture/delete`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          PicId: pictureId,
+          UserId: userId,
+        }),
       });
 
       if (!response.ok) {
@@ -481,104 +509,144 @@ export default function AddNewItem() {
 
     try {
       // Step 1a: Main Picture
-      if (mainImage && mainImage.startsWith('file://')) { // New photo selected, temp from device
-          if (isEditMode && originalMainPicId) picsToDeleteOnSuccess.push(originalMainPicId); // Mark old one for deletion if we're in edit mode
-          const altText = `Main photo for ${trimmedItemName}`; // Alt text for photo
-          finalMainPicId = await uploadImage(mainImage, 'marketplace', altText, currentUserId); // uploading the new Photo to ther server and getting its ID
-      } else if (mainImage === null && isEditMode && originalMainPicId) { // main photo was removed in edit mode
-          picsToDeleteOnSuccess.push(originalMainPicId);
-          finalMainPicId = null;
+      if (mainImage && mainImage.startsWith("file://")) {
+        // New photo selected, temp from device
+        if (isEditMode && originalMainPicId)
+          picsToDeleteOnSuccess.push(originalMainPicId); // Mark old one for deletion if we're in edit mode
+        const altText = `Main photo for ${trimmedItemName}`; // Alt text for photo
+        finalMainPicId = await uploadImage(
+          mainImage,
+          "marketplace",
+          altText,
+          currentUserId
+        ); // uploading the new Photo to ther server and getting its ID
+      } else if (mainImage === null && isEditMode && originalMainPicId) {
+        // main photo was removed in edit mode
+        picsToDeleteOnSuccess.push(originalMainPicId);
+        finalMainPicId = null;
       }
 
       // Step 2a: Handle Extra Image - same as Main
-      if (extraImage && extraImage.startsWith('file://')) {
-          if (isEditMode && originalExtraPicId) picsToDeleteOnSuccess.push(originalExtraPicId);
-          const altText = `Extra photo for ${trimmedItemName}`;
-          finalExtraPicId = await uploadImage(extraImage, 'marketplace_extra', altText, currentUserId);
-      } else if (extraImage === null && isEditMode && originalExtraPicId) {
+      if (extraImage && extraImage.startsWith("file://")) {
+        if (isEditMode && originalExtraPicId)
           picsToDeleteOnSuccess.push(originalExtraPicId);
-          finalExtraPicId = null;
+        const altText = `Extra photo for ${trimmedItemName}`;
+        finalExtraPicId = await uploadImage(
+          extraImage,
+          "marketplace_extra",
+          altText,
+          currentUserId
+        );
+      } else if (extraImage === null && isEditMode && originalExtraPicId) {
+        picsToDeleteOnSuccess.push(originalExtraPicId);
+        finalExtraPicId = null;
       }
 
       // Step 3a: Create or Update Listing
       if (isEditMode) {
-          const currentListingId = initialData?.listingId;
-           if (!currentListingId) { // Safety check
-             throw new Error("Missing Listing ID for update.");
-         }
-          const updateDto = {
-              Title: trimmedItemName,
-              Description: trimmedItemDescription,
-              MainPicId: finalMainPicId,
-              ExtraPicId: finalExtraPicId,
-          };
-          console.log(`Attempting to update listing ID: ${currentListingId} with data:`, updateDto);
+        const currentListingId = initialData?.listingId;
+        if (!currentListingId) {
+          // Safety check
+          throw new Error("Missing Listing ID for update.");
+        }
+        const updateDto = {
+          Title: trimmedItemName,
+          Description: trimmedItemDescription,
+          MainPicId: finalMainPicId,
+          ExtraPicId: finalExtraPicId,
+        };
+        console.log(
+          `Attempting to update listing ID: ${currentListingId} with data:`,
+          updateDto
+        );
 
-          const updateResponse = await fetch(`${API}/api/Listings/${currentListingId}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' /* Add Auth */ },
-              body: JSON.stringify(updateDto)
-          });
-
-          if (!updateResponse.ok) {
-              let errorData = {}; try { errorData = await updateResponse.json(); } catch {}
-              throw new Error(errorData?.message || `Failed to update listing (HTTP ${updateResponse.status})`);
+        const updateResponse = await fetch(
+          `${API}/api/Listings/${currentListingId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" /* Add Auth */ },
+            body: JSON.stringify(updateDto),
           }
+        );
 
-          Toast.show({ type: 'success', text1: t("MarketplaceEditItemScreen_UpdateSuccess") });
-          // Here we delete old pictures *after* a successful update
-          // Use Promise.allSettled to attempt all deletions even if one fails
-          const deleteResults = await Promise.allSettled(
-              picsToDeleteOnSuccess.map(picId => deletePicture(picId))
+        if (!updateResponse.ok) {
+          let errorData = {};
+          try {
+            errorData = await updateResponse.json();
+          } catch {}
+          throw new Error(
+            errorData?.message ||
+              `Failed to update listing (HTTP ${updateResponse.status})`
           );
-          deleteResults.forEach(result => {
-              if (result.status === 'rejected') {
-                  console.error("Failed to delete an old picture during update:", result.reason);
-              }
-          });
-          router.back(); // Go back after successful update and attempted deletions
+        }
 
-      } else {
-          // Creating a list - not in edit mode
-          const listingData = {
-              Title: trimmedItemName,
-              Description: trimmedItemDescription,
-              SellerId: currentUserId,
-              MainPicId: finalMainPicId,
-              ExtraPicId: finalExtraPicId
-          };
-          console.log("Attempting to create listing with data:", listingData);
-          const listingResponse = await fetch(`${API}/api/Listings/Create`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" /* Add Auth */ },
-              body: JSON.stringify(listingData)
-          });
-          if (!listingResponse.ok) {
-              let errorData = {}; try { errorData = await listingResponse.json(); } catch (e) {}
-              throw new Error(errorData?.message || `Failed to create listing (HTTP ${listingResponse.status})`);
+        Toast.show({
+          type: "success",
+          text1: t("MarketplaceEditItemScreen_UpdateSuccess"),
+        });
+        // Here we delete old pictures *after* a successful update
+        // Use Promise.allSettled to attempt all deletions even if one fails
+        const deleteResults = await Promise.allSettled(
+          picsToDeleteOnSuccess.map((picId) => deletePicture(picId))
+        );
+        deleteResults.forEach((result) => {
+          if (result.status === "rejected") {
+            console.error(
+              "Failed to delete an old picture during update:",
+              result.reason
+            );
           }
-          const finalResult = await listingResponse.json();
-          Toast.show({
-              type: "success",
-              text1: t("MarketplaceNewItemScreen_listingCreatedTitle"),
-              text2: t("MarketplaceNewItemScreen_listingCreatedSuccessMsg", { id: finalResult.listingId }),
-              position: "top"
-          });
-          await resetState(); // Reset state only after successful creation
-          router.back();
+        });
+        router.back(); // Go back after successful update and attempted deletions
+      } else {
+        // Creating a list - not in edit mode
+        const listingData = {
+          Title: trimmedItemName,
+          Description: trimmedItemDescription,
+          SellerId: currentUserId,
+          MainPicId: finalMainPicId,
+          ExtraPicId: finalExtraPicId,
+        };
+        console.log("Attempting to create listing with data:", listingData);
+        const listingResponse = await fetch(`${API}/api/Listings/Create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" /* Add Auth */ },
+          body: JSON.stringify(listingData),
+        });
+        if (!listingResponse.ok) {
+          let errorData = {};
+          try {
+            errorData = await listingResponse.json();
+          } catch (e) {}
+          throw new Error(
+            errorData?.message ||
+              `Failed to create listing (HTTP ${listingResponse.status})`
+          );
+        }
+        const finalResult = await listingResponse.json();
+        Toast.show({
+          type: "success",
+          text1: t("MarketplaceNewItemScreen_listingCreatedTitle"),
+          text2: t("MarketplaceNewItemScreen_listingCreatedSuccessMsg", {
+            id: finalResult.listingId,
+          }),
+          position: "top",
+        });
+        await resetState(); // Reset state only after successful creation
+        router.back();
       }
 
       // The duplicated logic block has been removed here.
-
     } catch (error) {
       console.error("Listing submission step failed:", error);
       // Display the actual error message
       Toast.show({
-          type: 'error',
-          text1: t("Common_Error"),
-          text2: error.message || t("MarketplaceNewItemScreen_submitListingFailed"),
-          position: 'top',
-          visibilityTime: 4000
+        type: "error",
+        text1: t("Common_Error"),
+        text2:
+          error.message || t("MarketplaceNewItemScreen_submitListingFailed"),
+        position: "top",
+        visibilityTime: 4000,
       });
     } finally {
       setIsSubmitting(false);
@@ -769,15 +837,12 @@ export default function AddNewItem() {
           </View>
         </View>
         {!isEditMode && showConfirm && (
-          <Modal visible={true} transparent={true} animationType="fade">
-            
-          </Modal>
+          <Modal visible={true} transparent={true} animationType="fade"></Modal>
         )}
         <ImageViewModal
           visible={showImageViewModal}
           imageUri={imageToViewUri}
-          onClose={() => {
-          }}
+          onClose={() => {}}
           onRemove={handleRemoveImage}
         />
       </ScrollView>

@@ -55,9 +55,10 @@ export default function GoodMorningProcedure() {
         }
 
         setUserId(storedUserId);
+        console.log("THIS IS USER ID: ", userId);
 
         const response = await fetch(
-          `${Globals.API_BASE_URL}/api/People/details/${userId}`,
+          `${Globals.API_BASE_URL}/api/People/details/${storedUserId}`,
           {
             method: "GET",
             headers: {

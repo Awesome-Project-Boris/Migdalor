@@ -1,7 +1,9 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Image } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
+import { Image as ExpoImage } from "expo-image";
+import { Globals } from "@/app/constants/Globals";
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
@@ -9,13 +11,15 @@ const EventCard = ({ event, onPress }) => {
   const { i18n, t } = useTranslation();
   const isRtl = i18n.dir() === "rtl";
 
-  // This assumes participants count is fetched and passed into the event object.
-  // For now, we'll simulate it as 0 if not present.
   const registeredCount = event.participantsCount || 0;
   const remainingSpots = event.capacity - registeredCount;
 
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
-  const imageUrl = placeholderImage;
+
+  // ✅ CHANGED: Logic to determine the image source
+  const imageUrl = event.picturePath
+    ? { uri: `${Globals.API_BASE_URL}${event.picturePath}` }
+    : placeholderImage;
 
   const cardDetailsStyle = [
     styles.cardDetails,
@@ -25,7 +29,11 @@ const EventCard = ({ event, onPress }) => {
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
-      <Image source={imageUrl} style={styles.cardImage} />
+      <ExpoImage
+        source={imageUrl}
+        style={styles.cardImage}
+        contentFit="cover"
+      />
       <View style={cardDetailsStyle}>
         <Text style={[styles.cardTitle, textStyle]}>{event.eventName}</Text>
 
@@ -49,16 +57,14 @@ const EventCard = ({ event, onPress }) => {
                 { flexDirection: isRtl ? "row-reverse" : "row" },
               ]}
             >
-              <Ionicons name="people-outline" size={24} color="#555" />
+              <Ionicons name="people-outline" size={16} color="#555" />
               <Text style={[styles.registrationText, textStyle]}>
-                {`${event.participantsCount} / ${event.capacity ?? "∞"} ${t(
-                  "EventCard_Registered",
-                  "Registered"
+                {`${registeredCount} / ${event.capacity ?? "∞"} ${t(
+                  "EventCard_Registered"
                 )}`}
               </Text>
             </View>
-            {/* --- NEW: Conditional text for available spots --- */}
-            {remainingSpots > 0 && (
+            {remainingSpots > 0 && event.capacity !== null && (
               <Text style={styles.spotsAvailableText}>
                 {t("EventCard_SpacesAvailable", { count: remainingSpots })}
               </Text>
@@ -67,9 +73,7 @@ const EventCard = ({ event, onPress }) => {
         )}
       </View>
       <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          {t("EventCard_MoreDetails", "Click for more details")}
-        </Text>
+        <Text style={styles.footerText}>{t("EventCard_MoreDetails")}</Text>
       </View>
     </TouchableOpacity>
   );
@@ -92,7 +96,6 @@ const styles = StyleSheet.create({
   cardImage: {
     width: "100%",
     height: 150,
-    resizeMode: "cover",
   },
   cardDetails: {
     padding: 16,
@@ -104,13 +107,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   metaRow: {
-    // This will be overridden by inline styles but sets a default
     flexDirection: "row",
     alignItems: "center",
     marginTop: 4,
-  },
-  icon: {
-    marginRight: 6,
   },
   baseText: {
     fontSize: 16,
@@ -118,14 +117,18 @@ const styles = StyleSheet.create({
   },
   initiatorText: {
     fontWeight: "500",
+    marginLeft: 6,
+    marginRight: 6,
   },
   registrationText: {
     color: "#005a9c",
     fontWeight: "bold",
+    marginLeft: 6,
+    marginRight: 6,
   },
   spotsAvailableText: {
     fontSize: 14,
-    color: "#28a745", // Green color to indicate availability
+    color: "#28a745",
     fontWeight: "600",
     marginTop: 8,
   },

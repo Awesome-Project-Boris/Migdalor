@@ -29,56 +29,45 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPost("SignIn")]
+        [Authorize]
         public async Task<IActionResult> SignIn([FromBody] BokerTovRequest request)
         {
-            // --- ADDED: Main try-catch block for robust error handling ---
             try
             {
-                _logger.LogInformation("SignIn endpoint called for ResidentId: {ResidentId}", request.ResidentId);
-
                 if (!Guid.TryParse(request.ResidentId, out Guid residentGuid))
                 {
-                    _logger.LogWarning("Invalid ResidentId format received: {ResidentId}", request.ResidentId);
                     return BadRequest("Invalid ResidentId format.");
                 }
 
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (!Guid.TryParse(userIdClaim, out Guid tokenGuid))
                 {
-                    _logger.LogWarning("Invalid user ID format in token for claim value: {userIdClaim}", userIdClaim);
                     return Unauthorized("Invalid user ID format in token.");
                 }
 
                 if (residentGuid != tokenGuid)
                 {
-                    _logger.LogWarning("Token-User mismatch. Token GUID: {tokenGuid}, Request GUID: {residentGuid}", tokenGuid, residentGuid);
                     return Unauthorized("Token does not match the requested user.");
                 }
 
-                var today = DateTime.Now.Date;
-
                 // 1. Mark attendance for the primary resident
-                var residentSuccess = await MarkAttendance(residentGuid, today);
+                var residentSuccess = await MarkAttendance(residentGuid);
                 if (!residentSuccess)
                 {
-                    _logger.LogWarning("Boker Tov record for Resident ID {ResidentId} on {Today} not found.", request.ResidentId, today);
-                    return NotFound($"Could not find a Boker Tov record for you for today. Please contact administration.");
+                    _logger.LogWarning("Boker Tov record for Resident ID {ResidentId} could not be found.", request.ResidentId);
+                    return NotFound($"Could not find a Boker Tov record for you. Please contact administration.");
                 }
-                _logger.LogInformation("Successfully marked attendance for primary resident: {residentGuid}", residentGuid);
-
 
                 // 2. If requested, mark attendance for the spouse
                 if (request.IncludeSpouse)
                 {
-                    _logger.LogInformation("Attempting to sign in spouse for resident: {residentGuid}", residentGuid);
                     var resident = await _context.OhResidents
                                                  .AsNoTracking()
                                                  .FirstOrDefaultAsync(r => r.ResidentId == residentGuid);
 
                     if (resident?.SpouseId != null)
                     {
-                        _logger.LogInformation("Found spouse with ID: {SpouseId}. Marking attendance.", resident.SpouseId.Value);
-                        await MarkAttendance(resident.SpouseId.Value, today);
+                        await MarkAttendance(resident.SpouseId.Value);
                     }
                     else
                     {
@@ -87,15 +76,42 @@ namespace MigdalorServer.Controllers
                 }
 
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Successfully saved all changes to the database.");
                 return Ok(new { message = "Boker Tov recorded successfully." });
             }
             catch (Exception ex)
             {
-                // --- ADDED: Detailed exception logging and response ---
                 _logger.LogError(ex, "An unexpected error occurred in the SignIn endpoint for ResidentId: {ResidentId}", request.ResidentId);
                 return StatusCode(500, $"An internal server error occurred: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Finds a resident's BokerTov record, updates its date to today, and marks it as signed in.
+        /// </summary>
+        /// <param name="residentId">The Guid ID of the resident to mark.</param>
+        /// <returns>True if the record was found and updated, otherwise false.</returns>
+        private async Task<bool> MarkAttendance(Guid residentId)
+        {
+            // Find the resident's record without checking the date.
+            var attendanceRecord = await _context.OhBokerTovs
+                .FirstOrDefaultAsync(a => a.ResidentId == residentId);
+
+            if (attendanceRecord == null)
+            {
+                _logger.LogWarning("MarkAttendance failed: No record found for ResidentId {residentId}", residentId);
+                return false; // Record not found
+            }
+
+            // Update the date to today before marking attendance.
+            attendanceRecord.AttendanceDate = DateTime.Now.Date;
+
+            // Only update if they haven't already signed in for this new "day"
+            if (!attendanceRecord.HasSignedIn)
+            {
+                attendanceRecord.HasSignedIn = true;
+                attendanceRecord.SignInTime = DateTime.Now;
+            }
+            return true;
         }
 
         /// <summary>

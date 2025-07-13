@@ -33,25 +33,29 @@ namespace MigdalorServer.Controllers
             {
                 var now = DateTime.UtcNow;
 
-                var events = await _context.OhEvents
-                    .AsNoTracking()
-                    .Where(e =>
-                        (e.IsRecurring == false && e.StartDate > now) ||
-                        (e.IsRecurring == true && e.EndDate > now)
-                    )
-                    .Select(e => new EventDto
+                var eventsQuery =
+                    from e in _context.OhEvents
+                        // Perform a LEFT JOIN to get picture details
+                    join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
+                    from pg in picGroup.DefaultIfEmpty()
+                    where (e.IsRecurring == false && e.StartDate > now) ||
+                          (e.IsRecurring == true && e.EndDate > now)
+                    select new EventDto
                     {
                         EventId = e.EventId,
                         EventName = e.EventName,
                         Description = e.Description,
                         Location = e.Location,
+                        PictureId = e.PictureId,
+                        PicturePath = pg.PicPath, 
                         IsRecurring = e.IsRecurring,
                         StartDate = e.StartDate,
                         EndDate = e.EndDate,
                         Capacity = e.Capacity,
-                        // This line counts the registrations for each event
                         ParticipantsCount = e.OhEventRegistrations.Count()
-                    }).ToListAsync();
+                    };
+
+                var events = await eventsQuery.AsNoTracking().ToListAsync();
 
                 var result = new
                 {
@@ -75,8 +79,12 @@ namespace MigdalorServer.Controllers
             try
             {
                 var eventDetail = await (from e in _context.OhEvents
+                                             // Join to get host
                                          join p in _context.OhPeople on e.HostId equals p.PersonId into hostGroup
-                                         from h in hostGroup.DefaultIfEmpty() // This makes it a LEFT JOIN
+                                         from h in hostGroup.DefaultIfEmpty()
+                                             // Join to get picture path
+                                         join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
+                                         from pg in picGroup.DefaultIfEmpty()
                                          where e.EventId == id
                                          select new EventDetailDto
                                          {
@@ -84,6 +92,8 @@ namespace MigdalorServer.Controllers
                                              EventName = e.EventName,
                                              Description = e.Description,
                                              Location = e.Location,
+                                             PictureId = e.PictureId,
+                                             PicturePath = pg.PicPath, 
                                              IsRecurring = e.IsRecurring,
                                              StartDate = e.StartDate,
                                              EndDate = e.EndDate,
@@ -100,6 +110,8 @@ namespace MigdalorServer.Controllers
                 {
                     return NotFound("Event not found.");
                 }
+
+                eventDetail.ParticipantsCount = await _context.OhEventRegistrations.CountAsync(r => r.EventId == id);
 
                 return Ok(eventDetail);
             }
@@ -273,22 +285,31 @@ namespace MigdalorServer.Controllers
             }
             // --- End Permission Check ---
 
-            var newEvent = new OhEvent
-            {
-                EventName = eventDto.EventName,
-                Description = eventDto.Description,
-                HostId = eventDto.HostId,
-                Location = eventDto.Location,
-                PictureId = eventDto.PictureId,
-                Capacity = eventDto.Capacity,
-                IsRecurring = false, // Always false for this form
-                RecurrenceRule = null,
-                StartDate = eventDto.StartDate,
-                EndDate = eventDto.EndDate,
-            };
-
             try
             {
+                // --- NEW: Check for duplicate event name before trying to insert ---
+                var eventNameExists = await _context.OhEvents.AnyAsync(e => e.EventName == eventDto.EventName);
+                if (eventNameExists)
+                {
+                    // Return a 409 Conflict error with a clear message
+                    return Conflict("An event with this name already exists. Please choose a different name.");
+                }
+                // --- End of new check ---
+
+                var newEvent = new OhEvent
+                {
+                    EventName = eventDto.EventName,
+                    Description = eventDto.Description,
+                    HostId = eventDto.HostId,
+                    Location = eventDto.Location,
+                    PictureId = eventDto.PictureId,
+                    Capacity = eventDto.Capacity,
+                    IsRecurring = false, // Always false for this form
+                    RecurrenceRule = null,
+                    StartDate = eventDto.StartDate,
+                    EndDate = eventDto.EndDate,
+                };
+
                 _context.OhEvents.Add(newEvent);
                 await _context.SaveChangesAsync();
 
