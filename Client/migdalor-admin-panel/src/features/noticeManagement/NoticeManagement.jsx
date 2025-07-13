@@ -115,6 +115,7 @@ const NoticeManagement = () => {
       setMessage("ההודעה נוצרה בהצלחה! שולח התראה לכלל המשתמשים...");
 
       const pushMessage = {
+        to: "/topics/all",
         title: newNotice.title,
         body: newNotice.content,
         data: {
@@ -123,7 +124,7 @@ const NoticeManagement = () => {
         },
       };
 
-      await api.post("/api/Notifications/broadcast", pushMessage, token);
+      await api.post("/Notifications/broadcast", pushMessage, token);
       setMessage("ההודעה וההתראה נשלחו בהצלחה!");
       resetForm();
     } catch (error) {
