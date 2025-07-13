@@ -14,12 +14,12 @@ namespace MigdalorServer.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class EventsController : ControllerBase
+    public class InstructorEventsController : ControllerBase
     {
         private readonly MigdalorDBContext _context;
         private static readonly TimeZoneInfo IsraelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
 
-        public EventsController(MigdalorDBContext context)
+        public InstructorEventsController(MigdalorDBContext context)
         {
             _context = context;
         }

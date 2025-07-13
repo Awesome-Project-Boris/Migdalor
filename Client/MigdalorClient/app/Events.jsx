@@ -43,7 +43,8 @@ export default function Events() {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem("jwt");
-      const response = await fetch(`${Globals.API_BASE_URL}/api/Events/MyEvents`, {
+      // UPDATED: Changed API route
+      const response = await fetch(`${Globals.API_BASE_URL}/api/InstructorEvents/MyEvents`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) throw new Error("Failed to fetch events.");
@@ -70,8 +71,9 @@ export default function Events() {
       setLoading(true);
       try {
         const token = await AsyncStorage.getItem("jwt");
+        // UPDATED: Changed API route
         const response = await fetch(
-          `${Globals.API_BASE_URL}/api/Events/${selectedEvent}/Instances`,
+          `${Globals.API_BASE_URL}/api/InstructorEvents/${selectedEvent}/Instances`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (!response.ok) throw new Error("Failed to fetch event instances.");
@@ -112,7 +114,6 @@ export default function Events() {
     };
 
     if (isRescheduling) {
-        // FIXED: Add frontend check to prevent rescheduling to a past date/time.
         if (newDate < new Date()) {
             Alert.alert("Invalid Date", "Cannot reschedule a meeting to a time that has already passed.");
             return;
@@ -128,7 +129,8 @@ export default function Events() {
     setIsSubmitting(true);
     try {
       const token = await AsyncStorage.getItem("jwt");
-      const response = await fetch(`${Globals.API_BASE_URL}/api/Events/${endpoint}`, {
+      // UPDATED: Changed API route
+      const response = await fetch(`${Globals.API_BASE_URL}/api/InstructorEvents/${endpoint}`, {
         method: method,
         headers: {
           'Content-Type': 'application/json',
@@ -243,7 +245,7 @@ export default function Events() {
                                 is24Hour={true}
                                 display="default"
                                 onChange={onDateChange}
-                                minimumDate={new Date()} // Prevents selecting past dates
+                                minimumDate={new Date()}
                             />
                         )}
                     </View>
