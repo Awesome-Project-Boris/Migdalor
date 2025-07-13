@@ -143,9 +143,37 @@ export default function Layout() {
                       }}
                     />
                     <Stack.Screen
+                      name="InstructorProfile"
+                      options={{
+                        title: "Instructor Profile",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="InstructorEditProfile"
+                      options={{
+                        title: "Edit Instructor Profile",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
                       name="MainMenu"
                       options={{
                         title: "Main Menu",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="InstructorMainMenu"
+                      options={{
+                        title: "Instructor Main Menu",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
+                      name="Events"
+                      options={{
+                        title: "Events",
                         headerShown: false,
                       }}
                     />

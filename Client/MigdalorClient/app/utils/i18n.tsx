@@ -103,6 +103,11 @@ const resources = {
       MainMenuScreen_ResidentListButton: "Resident List",
       MainMenuScreen_Timetable: "Time Table",
 
+      InstructorMainMenu_EventsButton: "Events",
+
+      Events_Title: "Events",
+      Events_NoEvents: "You have no events to manage at this time.",
+
       SettingsPopup_SettingsButton: "Settings",
       SettingsPopup_HomeButton: "Home",
       SettingsPopup_ProfileButton: "Profile",
@@ -528,6 +533,11 @@ const resources = {
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
       MainMenuScreen_Timetable: "לוח הזמנים",
+
+      InstructorMainMenu_EventsButton: "אירועים",
+
+      Events_Title: "אירועים",
+      Events_NoEvents: "אין לך אירועים לנהל כרגע.",
 
       SettingsPopup_SettingsButton: "הגדרות",
       SettingsPopup_HomeButton: "בית",

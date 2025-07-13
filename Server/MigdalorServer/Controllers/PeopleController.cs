@@ -31,6 +31,90 @@ namespace MigdalorServer.Controllers
             _configuration = configuration;
         }
 
+        [HttpGet("InstructorDetails")]
+        [Authorize]
+        public async Task<IActionResult> GetInstructorDetails()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+            {
+                return Unauthorized("Invalid token.");
+            }
+
+            var instructor = await _context.OhPeople
+                .Where(p => p.PersonId == userId && p.PersonRole == "Instructor")
+                .Select(p => new
+                {
+                    p.PersonId,
+                    p.PhoneNumber,
+                    p.HebFirstName,
+                    p.HebLastName,
+                    p.EngFirstName,
+                    p.EngLastName,
+                    p.Gender,
+                    p.Email,
+                    p.DateOfBirth,
+                    ProfilePicture = _context.OhPictures
+                                       .Where(pic => pic.PicId == p.ProfilePicId)
+                                       .Select(pic => new { pic.PicId, pic.PicPath, pic.PicAlt })
+                                       .FirstOrDefault()
+                })
+                .FirstOrDefaultAsync();
+
+            if (instructor == null)
+            {
+                return Forbid("User is not an instructor or not found.");
+            }
+
+            // Construct a full name for convenience
+            var response = new
+            {
+                id = instructor.PersonId,
+                phoneNumber = instructor.PhoneNumber,
+                hebName = $"{instructor.HebFirstName} {instructor.HebLastName}".Trim(),
+                engName = $"{instructor.EngFirstName} {instructor.EngLastName}".Trim(),
+                gender = instructor.Gender,
+                email = instructor.Email,
+                dateOfBirth = instructor.DateOfBirth,
+                profilePicture = instructor.ProfilePicture
+            };
+
+            return Ok(response);
+        }
+
+        [HttpPut("UpdateInstructorProfile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateInstructorProfile([FromBody] UpdateInstructorProfileDto dto)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId) || userId != dto.PersonId)
+            {
+                return Unauthorized("Invalid token or mismatched user ID.");
+            }
+
+            var person = await _context.OhPeople.FirstOrDefaultAsync(p => p.PersonId == userId && p.PersonRole == "Instructor");
+
+            if (person == null)
+            {
+                return Forbid("User is not an instructor or not found.");
+            }
+
+            // Update fields
+            person.PhoneNumber = dto.PhoneNumber;
+            person.Email = dto.Email;
+            person.ProfilePicId = dto.ProfilePicId;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return NoContent(); // Success
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred while updating the profile.");
+            }
+        }
+
         // POST: api/People/login
         // This method now authenticates the user and returns a JWT.
         [HttpPost("login")]
@@ -145,8 +229,32 @@ namespace MigdalorServer.Controllers
                     return BadRequest("Invalid user ID in token.");
                 }
 
+                //var data = OhPerson.GetPersonByIDForProfile(userId);
+                //return Ok(data);
+
+                // Get the base profile data
                 var data = OhPerson.GetPersonByIDForProfile(userId);
-                return Ok(data);
+                if (data == null)
+                {
+                    return NotFound("User profile data not found.");
+                }
+
+                // Separately, find the person record to get the role
+                var person = _context.OhPeople.Find(userId);
+                if (person == null)
+                {
+                    return NotFound("User record not found.");
+                }
+
+                // Convert the profile data to a flexible dictionary to add the new property
+                var json = JsonSerializer.Serialize(data);
+                var dictionary = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+
+                // Add the personRole to the dictionary
+                dictionary["personRole"] = person.PersonRole;
+
+                // Return the combined data
+                return Ok(dictionary);
             }
             catch (Exception e)
             {
@@ -270,8 +378,22 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                var digests = await OhPerson.GetActiveResidentDigestsAsync(_context);
-                return Ok(digests);
+                // 1. Get the original list of all active user digests
+                var allDigests = await OhPerson.GetActiveResidentDigestsAsync(_context);
+
+                // 2. Get the IDs of all users from that list
+                var userIds = allDigests.Select(d => d.UserId).ToList();
+
+                // 3. Find which of those IDs belong to a "Resident" or have a null role
+                var residentIds = await _context.OhPeople
+                    .Where(p => userIds.Contains(p.PersonId) && (p.PersonRole == "Resident" || p.PersonRole == null))
+                    .Select(p => p.PersonId)
+                    .ToListAsync();
+
+                // 4. Filter the original digest list to only include residents
+                var filteredDigests = allDigests.Where(d => residentIds.Contains(d.UserId)).ToList();
+
+                return Ok(filteredDigests);
             }
             catch (Exception ex)
             {

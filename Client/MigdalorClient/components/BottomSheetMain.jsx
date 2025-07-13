@@ -10,6 +10,7 @@ import FlipButton from "./FlipButton";
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
 import { Link, usePathname, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/context/AuthProvider";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -29,6 +30,7 @@ export const BottomSheetProvider = ({ children }) => {
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
   const router = useRouter();
+  const { user } = useAuth();
 
   const snapPoints = useMemo(() => ["50%"], []);
 
@@ -37,6 +39,15 @@ export const BottomSheetProvider = ({ children }) => {
   };
 
   const closeSheet = () => {
+    bottomSheetRef.current?.close();
+  };
+
+  const handleProfileNavigation = () => {
+    if (user?.personRole === "Instructor") {
+      router.navigate("InstructorProfile");
+    } else {
+      router.navigate("Profile");
+    }
     bottomSheetRef.current?.close();
   };
 
@@ -109,12 +120,7 @@ export const BottomSheetProvider = ({ children }) => {
           <View style={styles.row}>
             <FlipButton
               style={styles.button}
-              onPress={() => {
-                console.log("Menu 3 pressed");
-                setEditing(false);
-                router.navigate("Profile");
-                bottomSheetRef.current?.close();
-              }}
+              onPress={handleProfileNavigation}
               bgColor={styles.button.backgroundColor}
               textColor={styles.button.color}
               flipborderwidth={3}
@@ -130,7 +136,8 @@ export const BottomSheetProvider = ({ children }) => {
               </Text>
             </FlipButton>
 
-            {pathname === "/MainMenu" && (
+            {/* The "Change Layout" button will now only appear for non-instructors on the MainMenu screen. */}
+            {pathname === "/MainMenu" && user?.personRole !== "Instructor" && (
               <FlipButton
                 style={styles.button}
                 onPress={() => {
@@ -172,7 +179,6 @@ const styles = StyleSheet.create({
   button: {
     width: SCREEN_WIDTH * 0.42,
     height: 145,
-    // backgroundColor: "#4CAF50",
     backgroundColor: "#00007a",
     color: "#fff",
     borderRadius: 8,

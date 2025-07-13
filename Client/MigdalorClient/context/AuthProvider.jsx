@@ -41,6 +41,7 @@ export const AuthProvider = ({ children }) => {
         "userHebLastName",
         "userEngFirstName",
         "userEngLastName",
+        "personRole",
       ]);
       setUser(null);
       setToken(null);
@@ -108,12 +109,14 @@ export const AuthProvider = ({ children }) => {
 
       if (userDetailsResponse.ok) {
         const userData = await userDetailsResponse.json();
+        const personRole = userData.personRole || "";
         const formattedUser = {
           personId: userData.id,
           hebFirstName: userData.hebName?.split(" ")[0] || "",
           hebLastName: userData.hebName?.split(" ").slice(1).join(" ") || "",
           engFirstName: userData.engName?.split(" ")[0] || "",
           engLastName: userData.engName?.split(" ").slice(1).join(" ") || "",
+          personRole: personRole,
           ...userData,
         };
         setUser(formattedUser);
@@ -125,6 +128,7 @@ export const AuthProvider = ({ children }) => {
           ["userHebLastName", formattedUser.hebLastName],
           ["userEngFirstName", formattedUser.engFirstName],
           ["userEngLastName", formattedUser.engLastName],
+          ["personRole", personRole],
         ]);
       } else {
         await logout();
