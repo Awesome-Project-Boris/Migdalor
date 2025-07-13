@@ -101,6 +101,7 @@ const resources = {
       MainMenuScreen_MapButton: "Map",
       MainMenuScreen_NoticeBoardButton: "Notice Board",
       MainMenuScreen_ResidentListButton: "Resident List",
+      MainMenuScreen_Timetable: "Time Table",
 
       InstructorMainMenu_EventsButton: "Events",
 
@@ -348,6 +349,92 @@ const resources = {
       Days_Thursday: "Thursday",
       Days_Friday: "Friday",
       Days_Saturday: "Saturday",
+
+      // Events
+
+      Activities_AddNew: "Suggest a new acitivity",
+      Events_ClassesTitle: "Classes",
+      Events_ActivitiesTitle: "Activities",
+      Common_SearchPlaceholder: "Search by name...",
+      Common_Cancel: "Cancel",
+      Common_Register: "Register",
+      Common_Attended: "Attended",
+      Common_Absent: "Absent",
+      Common_Success: "Success",
+      Common_NotFound: "Not found.",
+      Errors_Event_Fetch: "Could not fetch events.",
+      Errors_Participant_Fetch: "Could not fetch participants.",
+      Errors_Auth_NoUser:
+        "Could not identify the current user. Please log in again.",
+      EventCard_Registered: " Registered",
+      EventCard_MoreDetails: "Click for more details",
+      Classes_NoClasses: "No classes available at the moment.",
+      Activities_NoActivities: "No activities available at the moment.",
+      EventFocus_Date: "Date",
+      EventFocus_Time: "Time",
+      EventFocus_Location: "Location",
+      EventFocus_Host: "Host",
+      EventFocus_Capacity: "Capacity",
+      EventFocus_MarkAttendance: "Click to Mark Attendance",
+      EventFocus_MarkingNotAvailable:
+        "Attendance marking can only occur on the day of the event or later.",
+      EventFocus_NoParticipants: "No one has registered yet.",
+      EventFocus_YouAreRegistered: "You are registered!",
+      EventFocus_ActivityFull: "This activity is full.",
+      EventFocus_ConfirmRegistrationTitle: "Confirm Registration",
+      EventFocus_ConfirmRegistrationMsg:
+        "Do you want to register for this activity?",
+      EventFocus_RegistrationSuccess: "You have been registered!",
+      EventCard_SpacesAvailable:
+        "There are {{count}} empty spaces - registration inside!",
+      EventFocus_SpacesAvailable:
+        "There are {{count}} empty spaces - registration below!",
+
+      // New Activity
+
+      NewActivity_Title: "Create a New Activity",
+      NewActivity_Name: "Activity Name",
+      NewActivity_Name_Error_Required: "Activity name is required.",
+      NewActivity_Name_Error_TooLong: "Name cannot exceed 100 characters.",
+      NewActivity_Description: "Description",
+      NewActivity_Description_Error_TooLong:
+        "Description cannot exceed 500 characters.",
+      NewActivity_Location: "Location",
+      NewActivity_Capacity: "Capacity (Number of participants)",
+      NewActivity_Capacity_Error_Required: "Capacity is required.",
+      NewActivity_Capacity_Error_Invalid: "Please enter a valid number.",
+      NewActivity_Image: "Activity Image",
+      NewActivity_Image_Optional: "Optional",
+      NewActivity_Image_TapToChoose: "Tap to choose",
+      NewActivity_SelectDate: "Select Date",
+      NewActivity_SelectStartTime: "Start Time",
+      NewActivity_SelectEndTime: "End Time",
+      NewActivity_CreateButton: "Create Activity",
+      NewActivity_CancelButton: "Cancel",
+      NewActivity_SuccessTitle: "Activity Created!",
+      NewActivity_SuccessMessage:
+        "Your new activity has been successfully created.",
+      NewActivity_CancelPromptTitle: "Discard Changes?",
+      NewActivity_CancelPromptMessage:
+        "Are you sure you want to discard this new activity?",
+      NewActivity_ConfirmDiscard: "Yes, Discard",
+      NewActivity_KeepEditing: "Keep Editing",
+      NewActivity_Capacity_Optional:
+        "Capacity (optional, leave blank for unlimited)",
+      EventFocus_Unlimited: "Unlimited",
+
+      // Timetable
+
+      Timetable_Title: "My Timetable",
+      Timetable_NoActivities: "No activities planned for today.",
+      Today: "Today",
+      Timetable_daily: "Daily",
+      Timetable_weekly: "Weekly",
+      Timetable_monthly: "Monthly",
+      minutes: "minutes",
+      Time: "Time",
+      Location: "Location",
+      Type: "Type",
     },
   },
   he: {
@@ -444,6 +531,7 @@ const resources = {
       MainMenuScreen_MapButton: "מפה",
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
+      MainMenuScreen_Timetable: "לוח הזמנים",
 
       InstructorMainMenu_EventsButton: "אירועים",
 
@@ -681,6 +769,88 @@ const resources = {
       Days_Thursday: "יום חמישי",
       Days_Friday: "יום שישי",
       Days_Saturday: "יום שבת",
+
+      // Events
+
+      Activities_AddNew: "להצעת פעילות חדשה",
+      Events_ClassesTitle: "חוגים",
+      Events_ActivitiesTitle: "פעילויות",
+      Common_SearchPlaceholder: "חיפוש לפי שם...",
+      Common_Cancel: "ביטול",
+      Common_Register: "הירשם",
+      Common_Attended: "נכח/ה",
+      Common_Absent: "נעדר/ה",
+      Common_Success: "הצלחה",
+      Common_NotFound: "לא נמצא.",
+      Errors_Event_Fetch: "לא ניתן היה לטעון את האירועים.",
+      Errors_Participant_Fetch: "לא ניתן היה לטעון את המשתתפים.",
+      Errors_Auth_NoUser: "לא ניתן היה לזהות את המשתמש. יש להתחבר מחדש.",
+      EventCard_Registered: " רשומים",
+      EventCard_MoreDetails: "לחץ לפרטים נוספים",
+      Classes_NoClasses: "אין חוגים זמינים כרגע.",
+      Activities_NoActivities: "אין פעילויות זמינות כרגע.",
+      EventFocus_Date: "תאריך",
+      EventFocus_Time: "שעה",
+      EventFocus_Location: "מיקום",
+      EventFocus_Host: "יזם/ית",
+      EventFocus_Capacity: "קיבולת",
+      EventFocus_MarkAttendance: "לחץ לסימון נוכחות",
+      EventFocus_MarkingNotAvailable:
+        "סימון נוכחות אפשרי רק ביום האירוע או לאחריו.",
+      EventFocus_NoParticipants: "אף אחד עדיין לא נרשם.",
+      EventFocus_YouAreRegistered: "נרשמת לפעילות!",
+      EventFocus_ActivityFull: "הפעילות מלאה.",
+      EventFocus_ConfirmRegistrationTitle: "אישור הרשמה",
+      EventFocus_ConfirmRegistrationMsg: "האם ברצונך להירשם לפעילות זו?",
+      EventFocus_RegistrationSuccess: "נרשמת בהצלחה!",
+      EventCard_SpacesAvailable:
+        "נותרו {{count}} מקומות פנויים - ההרשמה בפנים!",
+      EventFocus_SpacesAvailable:
+        "נותרו {{count}} מקומות פנויים - להרשמה למטה!",
+
+      // New Activity
+
+      NewActivity_Title: "יצירת פעילות חדשה",
+      NewActivity_Name: "שם הפעילות",
+      NewActivity_Name_Error_Required: "שם הפעילות הוא שדה חובה.",
+      NewActivity_Name_Error_TooLong: "השם לא יכול לעלות על 100 תווים.",
+      NewActivity_Description: "תיאור",
+      NewActivity_Description_Error_TooLong:
+        "התיאור לא יכול לעלות על 500 תווים.",
+      NewActivity_Location: "מיקום",
+      NewActivity_Capacity: "כמות משתתפים",
+      NewActivity_Capacity_Error_Required: "כמות המשתתפים היא שדה חובה.",
+      NewActivity_Capacity_Error_Invalid: "יש להזין מספר תקין.",
+      NewActivity_Image: "תמונת הפעילות",
+      NewActivity_Image_Optional: "אופציונלי",
+      NewActivity_Image_TapToChoose: "לחץ לבחירה",
+      NewActivity_SelectDate: "בחר תאריך",
+      NewActivity_SelectStartTime: "שעת התחלה",
+      NewActivity_SelectEndTime: "שעת סיום",
+      NewActivity_CreateButton: "צור פעילות",
+      NewActivity_CancelButton: "ביטול",
+      NewActivity_SuccessTitle: "הפעילות נוצרה!",
+      NewActivity_SuccessMessage: "הפעילות החדשה שלך נוצרה בהצלחה.",
+      NewActivity_CancelPromptTitle: "לבטל שינויים?",
+      NewActivity_CancelPromptMessage: "האם ברצונך לבטל את יצירת הפעילות?",
+      NewActivity_ConfirmDiscard: "כן, בטל",
+      NewActivity_KeepEditing: "המשך לערוך",
+      NewActivity_Capacity_Optional:
+        "כמות משתתפים (אופציונלי, השאר ריק ללא הגבלה)",
+      EventFocus_Unlimited: "ללא הגבלה",
+
+      // Timetable
+
+      Timetable_Title: "לוח הזמנים שלי",
+      Timetable_NoActivities: "אין פעילות מתוכננת להיום",
+      Today: "היום",
+      Timetable_daily: "יומי",
+      Timetable_weekly: "שבועי",
+      Timetable_monthly: "חודשי",
+      minutes: "דקות",
+      Time: "שעה",
+      Location: "מיקום",
+      Type: "סוג",
     },
   },
 };

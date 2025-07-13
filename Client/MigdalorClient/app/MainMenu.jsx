@@ -76,32 +76,37 @@ export default function Index() {
     },
     {
       key: "menu3",
+      name: t("MainMenuScreen_Timetable"),
+      destination: "Timetable",
+    },
+    {
+      key: "menu4",
       name: t("MainMenuScreen_ActivitiesAndClassesButton"),
       destination: "Classes",
     },
     {
-      key: "menu4",
+      key: "menu5",
       name: t("MainMenuScreen_MarketplaceButton"),
       destination: "Marketplace",
     },
     {
-      key: "menu5",
+      key: "menu6",
       name: t("MainMenuScreen_ResidentsCommitteeButton"),
       destination: "CommittieePage",
     },
     {
-      key: "menu6",
+      key: "menu7",
       name: t("MainMenuScreen_ActivityHoursButton"),
       destination: "PublicServices",
     },
-    { key: "menu7", name: t("MainMenuScreen_MapButton"), destination: "Map" },
+    { key: "menu8", name: t("MainMenuScreen_MapButton"), destination: "Map" },
     {
-      key: "menu8",
+      key: "menu9",
       name: t("MainMenuScreen_NoticeBoardButton"),
       destination: "Notices",
     },
     {
-      key: "menu9",
+      key: "menu10",
       name: t("MainMenuScreen_ResidentListButton"),
       destination: "ResidentList",
     },

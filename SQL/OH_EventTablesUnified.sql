@@ -38,7 +38,7 @@ CREATE TABLE [dbo].[OH_Events] (
     [HostID]           UNIQUEIDENTIFIER NULL, -- Assuming this links to a 'People' or 'Users' table
     [Location]         NVARCHAR(MAX) NULL,
     [PictureID]        INT NULL, -- Assuming this links to a 'Pictures' table
-    [Capacity]         INT NOT NULL,
+    [Capacity]         INT NULL,
 
     -- Recurrence Information
     [IsRecurring]      BIT NOT NULL DEFAULT 0,

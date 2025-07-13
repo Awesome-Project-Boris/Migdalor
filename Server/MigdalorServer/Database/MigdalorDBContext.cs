@@ -8,7 +8,6 @@ namespace MigdalorServer.Database
 {
     public partial class MigdalorDBContext : DbContext
     {
-
         public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
             : base(options)
         {
@@ -33,6 +32,7 @@ namespace MigdalorServer.Database
         public virtual DbSet<OhRoom> OhRooms { get; set; } = null!;
         public virtual DbSet<OhScheduleOverride> OhScheduleOverrides { get; set; } = null!;
         public virtual DbSet<OhService> OhServices { get; set; } = null!;
+        public virtual DbSet<OhTimeTableAddition> OhTimeTableAdditions { get; set; } = null!;
         public virtual DbSet<OhUserSetting> OhUserSettings { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -345,6 +345,13 @@ namespace MigdalorServer.Database
                     .WithMany(p => p.OhServices)
                     .HasForeignKey(d => d.PictureId)
                     .HasConstraintName("FK_Service_Picture");
+            });
+
+            modelBuilder.Entity<OhTimeTableAddition>(entity =>
+            {
+                entity.Property(e => e.DateAdded).HasDefaultValueSql("(getdate())");
+
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
             });
 
             modelBuilder.Entity<OhUserSetting>(entity =>

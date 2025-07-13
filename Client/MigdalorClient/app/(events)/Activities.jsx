@@ -1,40 +1,260 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Link } from "expo-router";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
+import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useTranslation } from "react-i18next";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { Globals } from "@/app/constants/Globals";
+import EventCard from "@/components/EventCard";
+import PaginatedListDisplay from "@/components/PaginatedListDisplay";
+import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Header from "@/components/Header";
+import FlipButton from "@/components/FlipButton";
+
+const ITEMS_PER_PAGE = 5;
 
 export default function ActivitiesScreen() {
-  const sampleActivity = { eventId: 2, eventName: "Summer BBQ" };
+  const { t, i18n } = useTranslation();
+  const router = useRouter();
+  const flatListRef = useRef(null);
+  const isRtl = i18n.dir() === "rtl";
+
+  const [allActivities, setAllActivities] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const [canInitiate, setCanInitiate] = useState(false);
+  const [isPermissionLoading, setIsPermissionLoading] = useState(true);
+
+  const checkInitiatePermission = useCallback(async () => {
+    setIsPermissionLoading(true);
+    try {
+      const storedToken = await AsyncStorage.getItem("jwt");
+      const storedUserId = await AsyncStorage.getItem("userID");
+
+      if (!storedToken || !storedUserId) {
+        setCanInitiate(false);
+        return;
+      }
+
+      const response = await fetch(
+        `${
+          Globals.API_BASE_URL
+        }/api/Resident/CanInitiateActivity/${storedUserId.replace(/"/g, "")}`,
+        {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setCanInitiate(data.canInitiate);
+      } else {
+        setCanInitiate(false);
+      }
+    } catch (err) {
+      console.error("Failed to check activity initiation permission:", err);
+      setCanInitiate(false);
+    } finally {
+      setIsPermissionLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchEvents = async () => {
+        setIsLoading(true);
+        try {
+          const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
+          if (!response.ok)
+            throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
+          const data = await response.json();
+          setAllActivities(data.activities || []);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchEvents();
+      checkInitiatePermission();
+    }, [t, checkInitiatePermission])
+  );
+
+  const filteredActivities = useMemo(() => {
+    if (!searchTerm) {
+      return allActivities;
+    }
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return allActivities.filter((c) =>
+      c.eventName.toLowerCase().includes(lowercasedTerm)
+    );
+  }, [allActivities, searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE);
+  const itemsForCurrentPage = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredActivities.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredActivities, currentPage]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage > 0 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+    }
+  };
+
+  const ListHeader = () => (
+    <>
+      <Text style={styles.mainTitle}>
+        {t("Events_ActivitiesTitle", "Activities")}
+      </Text>
+
+      {!isPermissionLoading && canInitiate && (
+        <FlipButton
+          onPress={() => router.push("/NewActivity")} // Will navigate to the new page later
+          style={styles.newActivityButton}
+          bgColor="#28a745"
+          textColor="#fff"
+        >
+          <Ionicons
+            name="add-circle-outline"
+            size={22}
+            color="white"
+            style={{ marginRight: 8 }}
+          />
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+            {t("Activities_AddNew", "Add a new activity")}
+          </Text>
+        </FlipButton>
+      )}
+
+      <FloatingLabelInput
+        label={t("Common_SearchPlaceholder", "Search by name...")}
+        value={searchTerm}
+        onChangeText={setSearchTerm}
+        style={styles.searchContainer}
+        alignRight={i18n.dir() === "rtl"}
+      />
+    </>
+  );
+
+  if (isLoading && !allActivities.length) {
+    return (
+      <View style={styles.container}>
+        <Header />
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" />
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Header />
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
-    <>
+    <View style={styles.container}>
       <Header />
-      <View style={styles.container}>
-        <Text style={styles.title}>Activities</Text>
-        <Text style={styles.subtitle}>List of all one-time activities.</Text>
-
-        {/* CORRECTED LINK: Points to the top-level screen with params */}
-        <Link
-          href={{
-            pathname: "/EventFocus",
-            params: { eventId: sampleActivity.eventId },
-          }}
-          style={styles.link}
-        >
-          <Text style={styles.linkText}>
-            {sampleActivity.eventName} (Tap to test)
-          </Text>
-        </Link>
-      </View>
-    </>
+      <PaginatedListDisplay
+        flatListRef={flatListRef}
+        items={itemsForCurrentPage}
+        ListHeaderComponent={ListHeader}
+        listContainerStyle={styles.listContainer}
+        renderItem={({ item }) => (
+          <EventCard
+            event={item}
+            onPress={() =>
+              router.push({
+                pathname: "/EventFocus",
+                params: { eventId: item.eventId },
+              })
+            }
+          />
+        )}
+        itemKeyExtractor={(item) => item.eventId.toString()}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        ListEmptyComponent={() => (
+          <View style={styles.centered}>
+            <Text>
+              {t("Activities_NoActivities", "No activities available.")}
+            </Text>
+          </View>
+        )}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff", marginTop: 60 },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 10 },
-  subtitle: { fontSize: 16, color: "gray", marginBottom: 20 },
-  link: { padding: 15, backgroundColor: "#f0f0f0", borderRadius: 8 },
-  linkText: { fontSize: 16, color: "#00007a" },
+  container: {
+    flex: 1,
+    backgroundColor: "#fef1e6", // Added background color
+  },
+  content: {
+    flex: 1,
+    marginTop: 5,
+    paddingHorizontal: 16,
+  },
+  searchContainer: {
+    marginBottom: 20,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    color: "red",
+    fontSize: 16,
+  },
+  mainTitle: {
+    fontSize: 32,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#333",
+    marginBottom: 20,
+  },
+  listContentContainer: {
+    alignItems: "center",
+  },
+  listContainer: {
+    paddingTop: 75, // Top padding to account for the Header
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+    alignSelf: "center",
+    width: "95%",
+  },
+  newActivityButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
 });
