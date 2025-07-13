@@ -197,7 +197,7 @@ export default function Index() {
     );
   }
 
-  if (user?.personRole === "instructor") {
+  if (user?.personRole === "Instructor") {
     return <InstructorMainMenu />;
   }
 

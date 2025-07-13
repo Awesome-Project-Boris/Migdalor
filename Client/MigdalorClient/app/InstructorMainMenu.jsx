@@ -14,7 +14,7 @@ export default function InstructorMainMenu() {
     {
       key: "menu1",
       name: t("MainMenuScreen_ProfileButton"),
-      destination: "Profile",
+      destination: "InstructorProfile",
     },
     {
       key: "menu2",
