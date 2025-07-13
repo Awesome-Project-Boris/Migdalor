@@ -107,6 +107,23 @@ export default function InstructorProfile() {
     );
   };
 
+  // Add this function inside your InstructorProfile component
+  const handleImagePress = (imageUriToView, altText = "") => {
+    if (!imageUriToView || imageUriToView === defaultUserImage) return; 
+
+    const paramsToPass = {
+      imageUri: imageUriToView.uri,
+      altText: altText,
+    };
+
+    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
+
+    router.push({
+      pathname: "/ImageViewScreen",
+      params: paramsToPass,
+    });
+  };
+
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -130,8 +147,16 @@ export default function InstructorProfile() {
         </FlipButton>
 
         <View style={styles.profileImageContainer}>
-          <BouncyButton shrinkScale={0.95} disabled={true}>
-            <Image source={profileImageSource} style={styles.profileImage} />
+          <BouncyButton
+            shrinkScale={0.95}
+            onPress={() => handleImagePress(profileImageSource, profilePic?.picAlt)}
+            disabled={profileImageSource === defaultUserImage}
+          >
+            <Image
+              alt={profilePic?.picAlt || "Profile picture"}
+              source={profileImageSource}
+              style={styles.profileImage}
+            />
           </BouncyButton>
         </View>
 
