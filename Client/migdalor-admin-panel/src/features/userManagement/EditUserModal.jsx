@@ -78,7 +78,7 @@ const EditUserModal = ({
     formPayload.append("file", file);
 
     try {
-      const pictureId = await api.postForm("/Picture", formPayload, token);
+      const pictureId = await api.postForm("/UploadAdmin", formPayload, token);
       setFormData((prev) => ({
         ...prev,
         profilePicId: parseInt(pictureId, 10),

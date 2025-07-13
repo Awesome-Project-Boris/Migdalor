@@ -42,6 +42,7 @@ namespace MigdalorServer.Models
                                               EngLastName = person.EngLastName,
                                               FullName = person.HebFirstName + " " + person.HebLastName,
                                               Email = person.Email,
+                                              Gender = person.Gender,
                                               PhoneNumber = person.PhoneNumber,
                                               RoomNumber = resident.ResidentApartmentNumber,
                                               IsActive = resident.IsActive,
