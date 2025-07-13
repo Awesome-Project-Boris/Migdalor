@@ -5,6 +5,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { API_BASE_URL } from "../../config";
 import InputField from "../../components/common/InputField";
 import CheckboxField from "../../components/common/CheckboxField";
+import SpouseCommand from "../../components/common/SpouseCommand";
 
 /**
  * A modal form for editing user details.
@@ -29,10 +30,6 @@ const EditUserModal = ({
   // Helper function to format dates correctly for input fields
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
-    // The date from the server might be treated as local time by the browser,
-    // causing it to shift by the timezone offset (e.g., showing the previous day).
-    // By ensuring the date string is treated as UTC (by appending 'Z' if not present),
-    // we can reliably get the correct YYYY-MM-DD format.
     const date = new Date(
       dateString.endsWith("Z") ? dateString : dateString + "Z"
     );
@@ -62,7 +59,6 @@ const EditUserModal = ({
 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [spouseSearch, setSpouseSearch] = useState("");
   const [isShowing, setIsShowing] = useState(false);
 
   useEffect(() => {
@@ -76,6 +72,13 @@ const EditUserModal = ({
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
+    }));
+  };
+
+  const handleSpouseSelect = (spouseId) => {
+    setFormData((prev) => ({
+      ...prev,
+      spouseId: spouseId,
     }));
   };
 
@@ -112,16 +115,6 @@ const EditUserModal = ({
     payload.spouseId = formData.spouseId ? Number(formData.spouseId) : null;
     onSave(payload);
   };
-
-  const filteredSpouses = useMemo(
-    () =>
-      allUsers.filter(
-        (u) =>
-          u.id !== user.id &&
-          u.fullName.toLowerCase().includes(spouseSearch.toLowerCase())
-      ),
-    [allUsers, user.id, spouseSearch]
-  );
 
   const profilePicUrl = formData.profilePicId
     ? `${API_BASE_URL}/Picture/${formData.profilePicId}`
@@ -283,35 +276,16 @@ const EditUserModal = ({
                   onChange={handleChange}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  בן/בת זוג
-                </label>
-                <input
-                  type="search"
-                  placeholder="חיפוש בן/בת זוג..."
-                  value={spouseSearch}
-                  onChange={(e) => setSpouseSearch(e.target.value)}
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm mb-2"
-                />
-                <select
-                  name="spouseId"
-                  value={formData.spouseId || ""}
-                  onChange={handleChange}
-                  className="block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-                >
-                  <option value="">ללא</option>
-                  {filteredSpouses.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.fullName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <SpouseCommand
+                users={allUsers}
+                currentUser={user}
+                selectedSpouseId={formData.spouseId}
+                onSelectSpouse={handleSpouseSelect}
+              />
             </div>
 
             {/* Column 3: Picture Upload */}
-            {/* <div className="space-y-4">
+            <div className="space-y-4">
               <h4 className="font-semibold text-lg border-b pb-2">
                 תמונת פרופיל
               </h4>
@@ -350,7 +324,7 @@ const EditUserModal = ({
                   </p>
                 )}
               </div>
-            </div> */}
+            </div>
           </div>
           <div className="flex justify-end items-center p-4 border-t mt-6 sticky bottom-0 bg-white rounded-b-2xl">
             <button
