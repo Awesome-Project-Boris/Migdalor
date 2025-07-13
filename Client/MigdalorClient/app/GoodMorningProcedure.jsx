@@ -57,11 +57,10 @@ export default function GoodMorningProcedure() {
         setUserId(storedUserId);
 
         const response = await fetch(
-          `${Globals.API_BASE_URL}/api/People/details`,
+          `${Globals.API_BASE_URL}/api/People/details/${userId}`,
           {
             method: "GET",
             headers: {
-              Authorization: `Bearer ${storedToken}`,
               "Content-Type": "application/json",
             },
           }

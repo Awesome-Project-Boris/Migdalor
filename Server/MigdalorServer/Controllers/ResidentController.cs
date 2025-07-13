@@ -6,6 +6,7 @@ using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
 using System;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace MigdalorServer.Controllers
@@ -22,7 +23,6 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                // This static method should ideally be moved into a service that uses _context
                 var residents = await OhResident.GetAllResidentsDetailsAsync();
                 return Ok(residents);
             }
@@ -161,5 +161,48 @@ namespace MigdalorServer.Controllers
                 return StatusCode(500, "An internal server error occurred while deactivating the resident.");
             }
         }
+
+        [HttpGet("CanInitiateActivity/{id}")]
+        [Authorize] // Ensures only an authenticated user can check their own permission
+        public async Task<IActionResult> CanResidentInitiateActivity(Guid id)
+        {
+            // --- Security Check: Ensure the user is checking their own status ---
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdClaim == null || id.ToString() != userIdClaim)
+            {
+                return Forbid("You can only check your own activity initiation status.");
+            }
+            // --- End Security Check ---
+
+            try
+            {
+                // Use a new DbContext instance, matching the pattern in this controller.
+                using MigdalorDBContext db = new MigdalorDBContext();
+
+                var resident = await db.OhResidents
+                                         .AsNoTracking()
+                                         .Where(r => r.ResidentId == id)
+                                         .Select(r => new { r.CanInitActivity }) // Select only the needed field
+                                         .FirstOrDefaultAsync();
+
+                if (resident == null)
+                {
+                    return NotFound("Resident not found.");
+                }
+
+                // Return a simple JSON object like { "canInitiate": true }
+                return Ok(new { canInitiate = resident.CanInitActivity });
+            }
+            catch (Exception ex)
+            {
+                // It's good practice to log the error for debugging.
+                // If you have a logger injected, you can use it here.
+                // For now, writing to console is fine for development.
+                Console.WriteLine($"Error in CanResidentInitiateActivity: {ex.Message}");
+                return StatusCode(500, "An internal server error occurred.");
+            }
+        }
+
+
     }
 }
