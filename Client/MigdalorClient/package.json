@@ -89,8 +89,7 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
     "tamagui": "^1.125.26",
-    "toastify-react-native": "^7.1.1",
-    "@react-native-community/datetimepicker": "8.2.0"
+    "toastify-react-native": "^7.1.1"
   },
   "devDependencies": {
     "@babel/core": "^7.26.0",

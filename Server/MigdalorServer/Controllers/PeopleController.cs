@@ -379,8 +379,22 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                var digests = await OhPerson.GetActiveResidentDigestsAsync(_context);
-                return Ok(digests);
+                // 1. Get the original list of all active user digests
+                var allDigests = await OhPerson.GetActiveResidentDigestsAsync(_context);
+
+                // 2. Get the IDs of all users from that list
+                var userIds = allDigests.Select(d => d.UserId).ToList();
+
+                // 3. Find which of those IDs belong to a "Resident" or have a null role
+                var residentIds = await _context.OhPeople
+                    .Where(p => userIds.Contains(p.PersonId) && (p.PersonRole == "Resident" || p.PersonRole == null))
+                    .Select(p => p.PersonId)
+                    .ToListAsync();
+
+                // 4. Filter the original digest list to only include residents
+                var filteredDigests = allDigests.Where(d => residentIds.Contains(d.UserId)).ToList();
+
+                return Ok(filteredDigests);
             }
             catch (Exception ex)
             {

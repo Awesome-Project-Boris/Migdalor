@@ -999,6 +999,7 @@ export default function EditProfile() {
 
       const uploadAndWrap = async (imageObj, role, altText, uploaderId) => {
         console.log("entering uploadAndWrap with imageObj:", imageObj);
+        console.log("role:", role);
         const imageUri = imageObj.PicPath;
         // Only upload if it's a new local file (starts with file://)
         if (imageUri?.startsWith("file://")) {
