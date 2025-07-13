@@ -35,7 +35,7 @@ const EditUserModal = ({
     dateOfBirth: user.dateOfBirth
       ? new Date(user.dateOfBirth).toISOString().split("T")[0]
       : "",
-    gender: user.gender == "M" ? "זכר" : "נקבה" || "",
+    gender: user.gender == "M" ? "זכר" : "נקבה",
     personRole: user.personRole || "Resident",
     branchName: user.branchName || "נורדיה",
     isBokerTov: user.isBokerTov ?? true,
@@ -75,7 +75,7 @@ const EditUserModal = ({
     setIsUploading(true);
     setUploadError("");
     const formPayload = new FormData();
-    formPayload.append("file", file);
+    formPayload.append("files", file);
 
     try {
       const pictureId = await api.postForm("/UploadAdmin", formPayload, token);
