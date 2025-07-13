@@ -301,5 +301,73 @@ namespace MigdalorServer.Controllers
                 return StatusCode(500, "An internal server error occurred while creating the event.");
             }
         }
+
+        [HttpGet("timetable")]
+        public async Task<ActionResult<IEnumerable<TimetableEntryDto>>> GetTimetableEntries([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        {
+            if (startDate == default || endDate == default)
+            {
+                return BadRequest("Please provide both a startDate and an endDate.");
+            }
+
+            var allEntries = new List<TimetableEntryDto>();
+
+            // 1. Get one-time events from OH_Events
+            var oneTimeEvents = await _context.OhEvents
+                .Where(e => !e.IsRecurring && e.StartDate >= startDate && e.StartDate <= endDate)
+                .Select(e => new TimetableEntryDto
+                {
+                    Id = e.EventId,
+                    Title = e.EventName,
+                    Description = e.Description,
+                    Location = e.Location,
+                    StartTime = e.StartDate,
+                    EndTime = e.EndDate ?? e.StartDate, // Use StartDate if EndDate is null
+                    SourceTable = "OH_Events",
+                    NavigationEventId = e.EventId // The event's own ID is used for navigation
+                })
+                .ToListAsync();
+            allEntries.AddRange(oneTimeEvents);
+
+            // 2. Get recurring event instances from OH_EventInstances
+            var eventInstances = await _context.OhEventInstances
+                .Where(i => i.StartTime >= startDate && i.StartTime <= endDate)
+                .Join(_context.OhEvents, // Join with OhEvents to get details like name and location
+                      instance => instance.EventId,
+                      parentEvent => parentEvent.EventId,
+                      (instance, parentEvent) => new TimetableEntryDto
+                      {
+                          Id = instance.InstanceId,
+                          Title = parentEvent.EventName,
+                          Description = parentEvent.Description,
+                          Location = parentEvent.Location,
+                          StartTime = instance.StartTime,
+                          EndTime = instance.EndTime,
+                          SourceTable = "OH_EventInstances",
+                          NavigationEventId = parentEvent.EventId // The PARENT event's ID is used for navigation
+                      })
+                .ToListAsync();
+            allEntries.AddRange(eventInstances);
+
+            // 3. Get manual additions from OH_TimeTableAdditions
+            var manualAdditions = await _context.OhTimeTableAdditions
+                .Where(a => a.StartTime >= startDate && a.StartTime <= endDate)
+                .Select(a => new TimetableEntryDto
+                {
+                    Id = a.Id,
+                    Title = a.Name,
+                    Description = a.Description,
+                    Location = a.Location,
+                    StartTime = a.StartTime,
+                    EndTime = a.EndTime,
+                    SourceTable = "OH_TimeTableAdditions",
+                    NavigationEventId = null // No navigation for manual additions
+                })
+                .ToListAsync();
+            allEntries.AddRange(manualAdditions);
+
+            // Return the combined list, ordered by start time
+            return Ok(allEntries.OrderBy(e => e.StartTime));
+        }
     }
 }

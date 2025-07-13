@@ -4,11 +4,12 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  ScrollView,
   Image,
   Alert,
+  TouchableOpacity,
+  ScrollView,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -32,14 +33,13 @@ const formatTime = (dateString) => {
 export default function EventFocusScreen() {
   const { eventId } = useLocalSearchParams();
   const { i18n, t } = useTranslation();
+  const router = useRouter();
 
   const [currentUserId, setCurrentUserId] = useState(null);
   const [event, setEvent] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  console.log("This is the event - ", event);
 
   const isRtl = i18n.dir() === "rtl";
 
@@ -140,6 +140,16 @@ export default function EventFocusScreen() {
     );
   };
 
+  const handleHostPress = () => {
+    if (!event?.host?.hostId || event.host.role === "Admin") return;
+
+    const pathname = event.isRecurring ? "/InstructorProfile" : "/Profile";
+    router.push({
+      pathname,
+      params: { userId: event.host.hostId },
+    });
+  };
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -172,32 +182,47 @@ export default function EventFocusScreen() {
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
   const startTime = formatTime(event.startDate);
   const endTime = formatTime(event.endDate);
-  const remainingSpots = event.capacity - participants.length;
+  const remainingSpots = event.capacity
+    ? event.capacity - participants.length
+    : null;
 
-  const DetailRow = ({ icon, label, value }) => (
-    <View
+  const DetailRow = ({
+    icon,
+    label,
+    value,
+    onPress,
+    isLink,
+    isLast = false,
+  }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={!onPress}
       style={[
-        styles.detailRow,
+        styles.detailRow(isLast),
         { flexDirection: isRtl ? "row-reverse" : "row" },
       ]}
     >
       <Ionicons
         name={icon}
         size={24}
-        color="#555"
+        color="#8c7a6b"
         style={isRtl ? styles.iconRtl : styles.iconLtr}
       />
       <Text style={styles.detailLabel}>{label}:</Text>
       <Text
-        style={[styles.detailValue, { textAlign: isRtl ? "left" : "right" }]}
+        style={[
+          styles.detailValue,
+          isLink && styles.linkText,
+          { textAlign: isRtl ? "left" : "right" },
+        ]}
       >
         {value}
       </Text>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#fef1e6" }}>
       <Header />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Image source={placeholderImage} style={styles.image} />
@@ -231,30 +256,27 @@ export default function EventFocusScreen() {
               icon="person-outline"
               label={t("EventFocus_Host", "Host")}
               value={hostName}
+              onPress={handleHostPress}
+              isLink={!!event.host?.hostId && event.host.role !== "Admin"}
+              isLast={event.isRecurring} // No border if it's the last item for a class
             />
           )}
-          <DetailRow
-            icon="people-outline"
-            label={t("EventFocus_Capacity", "Capacity")}
-            value={
-              event.capacity !== null
-                ? `${participants.length} / ${event.capacity}`
-                : t("EventFocus_Unlimited", "Unlimited")
-            }
-            isLast={true}
-          />
+          {!event.isRecurring && (
+            <DetailRow
+              icon="people-outline"
+              label={t("EventFocus_Capacity", "Capacity")}
+              value={
+                event.capacity !== null
+                  ? `${participants.length} / ${event.capacity}`
+                  : t("EventFocus_Unlimited", "Unlimited")
+              }
+              isLast={true}
+            />
+          )}
         </View>
 
-        {!isCreator &&
-          !isRegistered &&
-          event.capacity !== null &&
-          remainingSpots > 0 && (
-            <Text style={styles.spotsAvailableText}>
-              {t("EventFocus_SpacesAvailable", { count: remainingSpots })}
-            </Text>
-          )}
         {!event.isRecurring && (
-          <>
+          <View style={styles.actionContainer}>
             {isCreator && (
               <AttendanceDrawer
                 event={event}
@@ -263,28 +285,45 @@ export default function EventFocusScreen() {
                 onMarkAttendance={handleMarkAttendance}
               />
             )}
-            {!isCreator &&
-              (isRegistered ? (
-                <Text style={styles.statusText}>
-                  {t("EventFocus_YouAreRegistered", "You are registered!")}
-                </Text>
-              ) : isFull ? (
-                <Text style={styles.statusText}>
-                  {t("EventFocus_ActivityFull", "This activity is full.")}
-                </Text>
-              ) : (
-                <FlipButton
-                  onPress={handleRegister}
-                  style={styles.registerButton}
-                  bgColor="#007bff"
-                  textColor="#ffffff"
-                >
-                  <Text style={styles.buttonText}>
-                    {t("Common_Register", "Register")}
+            {!isCreator && (
+              <>
+                {remainingSpots > 0 && (
+                  <Text style={styles.spotsAvailableText}>
+                    {t("EventFocus_SpacesAvailable", { count: remainingSpots })}
                   </Text>
-                </FlipButton>
-              ))}
-          </>
+                )}
+                {isRegistered ? (
+                  <View style={styles.statusContainer}>
+                    <Text style={styles.statusText}>
+                      {t("EventFocus_YouAreRegistered", "You are registered!")}
+                    </Text>
+                  </View>
+                ) : isFull ? (
+                  <View
+                    style={[
+                      styles.statusContainer,
+                      { backgroundColor: "#f8d7da" },
+                    ]}
+                  >
+                    <Text style={[styles.statusText, styles.fullText]}>
+                      {t("EventFocus_ActivityFull", "This activity is full.")}
+                    </Text>
+                  </View>
+                ) : (
+                  <FlipButton
+                    onPress={handleRegister}
+                    style={styles.registerButton}
+                    bgColor="#007bff"
+                    textColor="#ffffff"
+                  >
+                    <Text style={styles.buttonText}>
+                      {t("Common_Register", "Register")}
+                    </Text>
+                  </FlipButton>
+                )}
+              </>
+            )}
+          </View>
         )}
       </ScrollView>
     </View>
@@ -292,13 +331,11 @@ export default function EventFocusScreen() {
 }
 
 const styles = StyleSheet.create({
-  // Main container styles, inspired by PublicServicesFocus
   scrollContainer: {
-    paddingTop: 80, // Matches PublicServicesFocus for space below Header
+    paddingTop: 80,
     paddingBottom: 40,
     alignItems: "center",
     paddingHorizontal: 16,
-    backgroundColor: "#fef1e6", // Warmer background color
   },
   centered: {
     flex: 1,
@@ -311,7 +348,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: "center",
   },
-  // Visual content styles
   image: {
     width: "100%",
     height: 220,
@@ -332,36 +368,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 24,
   },
-  // Details container, now more integrated
   detailsContainer: {
     width: "100%",
-    backgroundColor: "#fff8f0", // Softer white
+    backgroundColor: "#fff8f0",
     borderRadius: 10,
-    padding: 20,
+    paddingHorizontal: 20,
     marginBottom: 24,
     borderWidth: 1,
     borderColor: "#e0c4a2",
-  },
-  detailRow: {
-    flexDirection: "row", // Base direction
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  // Last row should not have a border below it
-  detailRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f5eadd",
   },
   detailRow: (isLast = false) => ({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
-    borderBottomWidth: isLast ? 0 : 1, // No border for the last item
+    borderBottomWidth: isLast ? 0 : 1,
     borderBottomColor: "#f5eadd",
   }),
   iconLtr: {
@@ -381,34 +401,45 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#333",
     flex: 1,
-    // Note: The dynamic textAlign is now applied inline in the component
   },
-  // Action styles
+  linkText: {
+    color: "#007bff",
+    textDecorationLine: "underline",
+  },
+  actionContainer: {
+    width: "100%",
+    paddingBottom: 30, // Padding for phone navigation buttons
+  },
   registerButton: {
-    paddingVertical: 0, // Let FlipButton handle padding
+    paddingVertical: 0,
     borderRadius: 8,
     marginTop: 10,
     width: "100%",
   },
   buttonText: {
-    fontSize: 22, // Slightly smaller for better fit
+    fontSize: 20,
     fontWeight: "bold",
   },
-  statusText: {
+  statusContainer: {
     width: "100%",
+    marginTop: 20,
+    padding: 15,
+    borderRadius: 8,
+    backgroundColor: "#e9f5ec",
+  },
+  statusText: {
     textAlign: "center",
     fontSize: 18,
     color: "#28a745",
     fontWeight: "bold",
-    marginTop: 20,
-    padding: 15,
-    backgroundColor: "#e9f5ec",
-    borderRadius: 8,
+  },
+  fullText: {
+    color: "#dc3545", // A red color for "full"
   },
   spotsAvailableText: {
     fontSize: 17,
     color: "#28a745",
-    fontWeight: "600", // Not as bold as the button text
+    fontWeight: "600",
     textAlign: "center",
     marginBottom: 15,
   },

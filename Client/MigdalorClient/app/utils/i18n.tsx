@@ -101,6 +101,7 @@ const resources = {
       MainMenuScreen_MapButton: "Map",
       MainMenuScreen_NoticeBoardButton: "Notice Board",
       MainMenuScreen_ResidentListButton: "Resident List",
+      MainMenuScreen_Timetable: "Time Table",
 
       SettingsPopup_SettingsButton: "Settings",
       SettingsPopup_HomeButton: "Home",
@@ -346,6 +347,7 @@ const resources = {
 
       // Events
 
+      Activities_AddNew: "Suggest a new acitivity",
       Events_ClassesTitle: "Classes",
       Events_ActivitiesTitle: "Activities",
       Common_SearchPlaceholder: "Search by name...",
@@ -415,6 +417,19 @@ const resources = {
       NewActivity_Capacity_Optional:
         "Capacity (optional, leave blank for unlimited)",
       EventFocus_Unlimited: "Unlimited",
+
+      // Timetable
+
+      Timetable_Title: "My Timetable",
+      Timetable_NoActivities: "No activities planned for today.",
+      Today: "Today",
+      Timetable_daily: "Daily",
+      Timetable_weekly: "Weekly",
+      Timetable_monthly: "Monthly",
+      minutes: "minutes",
+      Time: "Time",
+      Location: "Location",
+      Type: "Type",
     },
   },
   he: {
@@ -511,6 +526,7 @@ const resources = {
       MainMenuScreen_MapButton: "מפה",
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
+      MainMenuScreen_Timetable: "לוח הזמנים",
 
       SettingsPopup_SettingsButton: "הגדרות",
       SettingsPopup_HomeButton: "בית",
@@ -745,6 +761,8 @@ const resources = {
       Days_Saturday: "יום שבת",
 
       // Events
+
+      Activities_AddNew: "להצעת פעילות חדשה",
       Events_ClassesTitle: "חוגים",
       Events_ActivitiesTitle: "פעילויות",
       Common_SearchPlaceholder: "חיפוש לפי שם...",
@@ -810,6 +828,19 @@ const resources = {
       NewActivity_Capacity_Optional:
         "כמות משתתפים (אופציונלי, השאר ריק ללא הגבלה)",
       EventFocus_Unlimited: "ללא הגבלה",
+
+      // Timetable
+
+      Timetable_Title: "לוח הזמנים שלי",
+      Timetable_NoActivities: "אין פעילות מתוכננת להיום",
+      Today: "היום",
+      Timetable_daily: "יומי",
+      Timetable_weekly: "שבועי",
+      Timetable_monthly: "חודשי",
+      minutes: "דקות",
+      Time: "שעה",
+      Location: "מיקום",
+      Type: "סוג",
     },
   },
 };

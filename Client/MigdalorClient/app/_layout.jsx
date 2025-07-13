@@ -178,6 +178,13 @@ export default function Layout() {
                       }}
                     />
                     <Stack.Screen
+                      name="TimeTable"
+                      options={{
+                        title: "Time table Page",
+                        headerShown: false,
+                      }}
+                    />
+                    <Stack.Screen
                       name="EventFocus"
                       options={{
                         title: "Event Page",

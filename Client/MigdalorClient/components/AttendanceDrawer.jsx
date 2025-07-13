@@ -4,15 +4,12 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  FlatList,
-  Alert,
+  // FlatList has been removed to fix the nesting error
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
-import { Globals } from "@/app/constants/Globals";
 
 const AttendanceDrawer = ({
-  event,
   participants,
   canMarkAttendance,
   onMarkAttendance,
@@ -55,44 +52,48 @@ const AttendanceDrawer = ({
               )}
             </Text>
           ) : (
-            <FlatList
-              data={participants}
-              keyExtractor={(item) => item.participantId.toString()}
-              renderItem={({ item }) => (
-                <View style={styles.participantRow}>
-                  <Text style={[styles.participantName, textStyle]}>
-                    {isRtl ? item.hebrewFullName : item.englishFullName}
-                  </Text>
-                  <View style={styles.buttonGroup}>
-                    <TouchableOpacity
-                      style={[styles.statusButton, styles.attendedButton]}
-                      onPress={() =>
-                        handleMarkAttendance(item.participantId, "Attended")
-                      }
-                    >
-                      <Text style={styles.buttonText}>
-                        {t("Common_Attended", "Attended")}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.statusButton, styles.absentButton]}
-                      onPress={() =>
-                        handleMarkAttendance(item.participantId, "Absent")
-                      }
-                    >
-                      <Text style={styles.buttonText}>
-                        {t("Common_Absent", "Absent")}
-                      </Text>
-                    </TouchableOpacity>
+            // The FlatList has been replaced with a View and a .map() function
+            <View>
+              {participants.length > 0 ? (
+                participants.map((item) => (
+                  <View
+                    key={item.participantId.toString()}
+                    style={styles.participantRow}
+                  >
+                    <Text style={[styles.participantName, textStyle]}>
+                      {isRtl ? item.hebrewFullName : item.englishFullName}
+                    </Text>
+                    <View style={styles.buttonGroup}>
+                      <TouchableOpacity
+                        style={[styles.statusButton, styles.attendedButton]}
+                        onPress={() =>
+                          handleMarkAttendance(item.participantId, "Attended")
+                        }
+                      >
+                        <Text style={styles.buttonText}>
+                          {t("Common_Attended", "Attended")}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.statusButton, styles.absentButton]}
+                        onPress={() =>
+                          handleMarkAttendance(item.participantId, "Absent")
+                        }
+                      >
+                        <Text style={styles.buttonText}>
+                          {t("Common_Absent", "Absent")}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              )}
-              ListEmptyComponent={
+                ))
+              ) : (
+                // This replaces the ListEmptyComponent from the FlatList
                 <Text style={styles.infoText}>
                   {t("EventFocus_NoParticipants", "No one has registered yet.")}
                 </Text>
-              }
-            />
+              )}
+            </View>
           )}
         </View>
       )}
@@ -100,7 +101,7 @@ const AttendanceDrawer = ({
   );
 };
 
-// Styles for the drawer
+// Styles for the drawer (unchanged)
 const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
