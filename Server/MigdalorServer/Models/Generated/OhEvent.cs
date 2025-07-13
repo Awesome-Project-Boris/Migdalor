@@ -27,7 +27,7 @@ namespace MigdalorServer.Models
         public string? Location { get; set; }
         [Column("PictureID")]
         public int? PictureId { get; set; }
-        public int Capacity { get; set; }
+        public int? Capacity { get; set; }
         public bool IsRecurring { get; set; }
         [StringLength(255)]
         public string? RecurrenceRule { get; set; }
