@@ -5,6 +5,8 @@ using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -94,33 +96,62 @@ namespace MigdalorServer.Controllers
         }
 
         // POST api/<NoticeController>
+        // In NoticesController.cs
+
+        // In NoticesController.cs
+        // Make sure to add these using statements at the top of your file:
+        // using Microsoft.AspNetCore.Authorization;
+        // using System.Security.Claims;
+
         [HttpPost]
+        [Authorize(Roles = "admin")] // 1. Authorize attribute now checks for the lowercase "admin" role.
+                                     // 2. This requires a valid JWT with the corresponding role claim.
         public IActionResult Post([FromBody] NewNotice notice)
         {
-            _logger.LogInformation("POST /api/Notices called with title: {NoticeTitle}", notice?.Title); // Log entry point
+            // --- Model Validation (Best Practice) ---
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // --- Security Enhancement: Verify Sender ID from Token ---
+            // Get the user's ID from the token's claims.
+            var senderIdFromToken = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            // Check if the ID from the token matches the one in the request body.
+            // This prevents an admin from creating a notice on behalf of someone else.
+            if (string.IsNullOrEmpty(senderIdFromToken) || notice.SenderId.ToString() != senderIdFromToken)
+            {
+                _logger.LogWarning("Forbidden Action: User {TokenUserId} attempted to post a notice with a mismatched SenderId {BodySenderId}.", senderIdFromToken, notice.SenderId);
+                return Forbid(); // Return 403 Forbidden
+            }
+
+            _logger.LogInformation("POST /api/Notices called by admin {AdminId} with title: {NoticeTitle}", senderIdFromToken, notice?.Title);
+
             try
             {
-                var createdNotice = OhNotice.AddOhNotice(notice); // Pass logger down if needed
+                var createdNotice = OhNotice.AddOhNotice(notice);
+
                 _logger.LogInformation("Notice created successfully with ID: {NoticeId}", createdNotice.NoticeId);
+
                 return Ok(createdNotice);
             }
             catch (Exception e)
             {
-                // --- !! Log the full exception !! ---
                 _logger.LogError(e, "Error occurred in POST /api/Notices. Message: {ErrorMessage}", e.Message);
-                // Log inner exception if it exists
                 if (e.InnerException != null)
                 {
                     _logger.LogError(e.InnerException, "Inner Exception details.");
                 }
-                // --- End Logging ---
+
                 return StatusCode(
                     StatusCodes.Status500InternalServerError,
-                    // Return a generic error message to client, but log details above
                     "An internal error occurred while creating the notice."
                 );
             }
         }
+
+
 
         // PUT api/<NoticeController>/5
         [HttpPut("{id}")]
