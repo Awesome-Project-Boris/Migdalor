@@ -1,16 +1,89 @@
-// /src/features/userManagement/UserManagement.jsx
-
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Search, Edit, Trash2 } from "lucide-react";
+import { Search, Edit, Trash2, RotateCw } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import EditUserModal from "./EditUserModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
 
-/**
- * A component for managing system users. It allows viewing a list of users,
- * searching, editing user details, and deactivating users.
- */
+// --- Mock shadcn/ui Components for Data Table ---
+const Button = React.forwardRef(
+  ({ className, variant, size, ...props }, ref) => (
+    <button
+      className={`inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
+      ${
+        variant === "outline"
+          ? "border border-gray-300 bg-transparent hover:bg-gray-100"
+          : ""
+      }
+      ${size === "sm" ? "h-9 px-3" : "h-10 px-4 py-2"}
+      ${className}`}
+      ref={ref}
+      {...props}
+    />
+  )
+);
+Button.displayName = "Button";
+
+const Table = React.forwardRef(({ className, ...props }, ref) => (
+  <table
+    ref={ref}
+    className={`min-w-full divide-y divide-gray-200 ${className}`}
+    {...props}
+  />
+));
+Table.displayName = "Table";
+
+const TableHeader = React.forwardRef(({ className, ...props }, ref) => (
+  <thead ref={ref} className={`bg-gray-50 ${className}`} {...props} />
+));
+TableHeader.displayName = "TableHeader";
+
+const TableBody = React.forwardRef(({ className, ...props }, ref) => (
+  <tbody
+    ref={ref}
+    className={`bg-white divide-y divide-gray-200 ${className}`}
+    {...props}
+  />
+));
+TableBody.displayName = "TableBody";
+
+const TableRow = React.forwardRef(({ className, ...props }, ref) => (
+  <tr
+    ref={ref}
+    className={`transition-colors hover:bg-gray-50/50 ${className}`}
+    {...props}
+  />
+));
+TableRow.displayName = "TableRow";
+
+const TableHead = React.forwardRef(({ className, ...props }, ref) => (
+  <th
+    ref={ref}
+    className={`px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}
+    {...props}
+  />
+));
+TableHead.displayName = "TableHead";
+
+const TableCell = React.forwardRef(({ className, ...props }, ref) => (
+  <td
+    ref={ref}
+    className={`px-6 py-4 whitespace-nowrap ${className}`}
+    {...props}
+  />
+));
+TableCell.displayName = "TableCell";
+
+// --- Main UserManagement Component ---
+
 const UserManagement = () => {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
@@ -18,11 +91,10 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [sorting, setSorting] = useState([]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
-  /**
-   * Fetches the list of all resident users from the API.
-   */
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -31,7 +103,6 @@ const UserManagement = () => {
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("נכשל בטעינת המשתמשים.");
-      console.error("Failed to fetch users:", err);
     } finally {
       setIsLoading(false);
     }
@@ -41,164 +112,268 @@ const UserManagement = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  /**
-   * Handles saving updated user data via the API.
-   * @param {object} updatedUserData - The user data to save.
-   */
-  const handleSave = async (updatedUserData) => {
-    if (!editingUser) return;
+  const handleOpenEditModal = useCallback((user) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  }, []);
+
+  const handleCloseModal = () => {
+    setEditingUser(null);
+    setIsModalOpen(false);
+  };
+
+  const handleSave = async (userId, updatedUserData) => {
     try {
-      updatedUserData.gender = updatedUserData.gender == "זכר" ? "M" : "F";
+      if (updatedUserData.gender) {
+        updatedUserData.gender = updatedUserData.gender === "זכר" ? "M" : "F";
+      }
       await api.put(
-        `/Resident/UpdateProfile/${editingUser.id}`,
+        `/Resident/UpdateProfile/${userId}`,
         updatedUserData,
         token
       );
-      setEditingUser(null);
-      fetchUsers(); // Refresh the user list after saving.
+      handleCloseModal();
+      fetchUsers();
     } catch (err) {
       alert(`שגיאה בעדכון משתמש: ${err.message}`);
-      console.error("Failed to save user:", err);
     }
   };
 
-  /**
-   * Handles deleting a user (marking as inactive) via the API.
-   */
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (!deletingUser) return;
     try {
-      // The API endpoint marks the user as inactive rather than deleting.
       await api.delete(`/Resident/${deletingUser.id}`, token);
       setDeletingUser(null);
-      fetchUsers(); // Refresh the user list.
+      fetchUsers();
     } catch (err) {
       alert(`שגיאה במחיקת משתמש: ${err.message}`);
-      console.error("Failed to delete user:", err);
     }
   };
 
-  // Memoized filtering of users based on the search term.
-  const filteredUsers = useMemo(
-    () =>
-      users.filter(
-        (user) =>
-          (user.fullName || "")
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          (user.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (user.phoneNumber || "").includes(searchTerm)
-      ),
-    [users, searchTerm]
+  const handleRestoreUser = useCallback(
+    async (userId) => {
+      try {
+        await api.put(`/Resident/Restore/${userId}`, null, token);
+        fetchUsers();
+      } catch (err) {
+        alert(`שגיאה בשחזור משתמש: ${err.message}`);
+      }
+    },
+    [token, fetchUsers]
   );
 
-  if (isLoading) {
-    return <div className="text-center p-4">טוען משתמשים...</div>;
-  }
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "fullName",
+        header: "שם",
+        cell: ({ row }) => (
+          <div className="text-sm font-medium text-gray-900">
+            {row.getValue("fullName")}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "email",
+        header: "אימייל",
+        cell: ({ row }) => (
+          <div className="text-sm text-gray-500">
+            {row.getValue("email") || "N/A"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "phoneNumber",
+        header: "טלפון",
+        cell: ({ row }) => (
+          <div className="text-sm text-gray-500">
+            {row.getValue("phoneNumber") || "N/A"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "roomNumber",
+        header: "חדר",
+        cell: ({ row }) => (
+          <div className="text-sm text-gray-500">
+            {row.getValue("roomNumber") || "N/A"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "isActive",
+        header: "סטטוס",
+        cell: ({ row }) => {
+          const isActive = row.getValue("isActive");
+          return (
+            <span
+              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                isActive
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {isActive ? "פעיל" : "לא פעיל"}
+            </span>
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "פעולות",
+        cell: ({ row }) => {
+          const user = row.original;
+          return (
+            <div className="flex items-center space-x-4 space-x-reverse">
+              <button
+                onClick={() => handleOpenEditModal(user)}
+                className="text-blue-600 hover:text-blue-900"
+                title="ערוך"
+              >
+                <Edit size={18} />
+              </button>
+              {user.isActive ? (
+                <button
+                  onClick={() => setDeletingUser(user)}
+                  className="text-red-600 hover:text-red-900"
+                  title="מחק"
+                >
+                  <Trash2 size={18} />
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleRestoreUser(user.id)}
+                  className="text-green-600 hover:text-green-900"
+                  title="שחזר"
+                >
+                  <RotateCw size={18} />
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    [handleOpenEditModal, handleRestoreUser]
+  );
 
-  if (error) {
-    return <div className="text-center p-4 text-red-500">{error}</div>;
-  }
+  const table = useReactTable({
+    data: users,
+    columns,
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      sorting,
+      globalFilter,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+  });
+
+  if (isLoading) return <div className="text-center p-4">טוען משתמשים...</div>;
+  if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">ניהול משתמשים</h2>
-      <div className="relative mb-4">
-        <input
-          type="text"
-          placeholder="חפש לפי שם, אימייל או טלפון..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full p-2 pr-10 border border-gray-300 rounded-md text-right"
-        />
-        <Search
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          size={20}
-        />
+      <div className="flex items-center py-4">
+        <div className="relative w-full max-w-sm">
+          <input
+            placeholder="חפש לפי שם, אימייל או טלפון..."
+            value={globalFilter ?? ""}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="w-full p-2 pr-10 border border-gray-300 rounded-md text-right"
+          />
+          <Search
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+            size={20}
+          />
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              {["שם", "אימייל", "טלפון", "חדר", "סטטוס", "פעולות"].map(
-                (header) => (
-                  <th
-                    key={header}
-                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    {header}
-                  </th>
-                )
-              )}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
-              <tr key={user.id} className={!user.isActive ? "bg-red-50" : ""}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {user.fullName}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.email || "N/A"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.phoneNumber || "N/A"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.roomNumber || "N/A"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {user.isActive ? "פעיל" : "לא פעיל"}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-right">
-                  <button
-                    onClick={() => setEditingUser(user)}
-                    className="text-blue-600 hover:text-blue-900"
-                    title="ערוך"
-                  >
-                    <Edit size={18} />
-                  </button>
-                  {user.isActive && (
-                    <button
-                      onClick={() => setDeletingUser(user)}
-                      className="mx-4 text-red-600 hover:text-red-900"
-                      title="מחק"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  )}
-                </td>
-              </tr>
+      <div className="overflow-x-auto rounded-md border">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </TableHead>
+                ))}
+              </TableRow>
             ))}
-          </tbody>
-        </table>
-        {filteredUsers.length === 0 && !isLoading && (
-          <p className="text-center py-4 text-gray-500">לא נמצאו משתמשים.</p>
-        )}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className={!row.original.isActive ? "bg-red-50" : ""}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
+                  לא נמצאו תוצאות.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="space-x-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            הקודם
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            הבא
+          </Button>
+        </div>
       </div>
 
-      {editingUser && (
-        <EditUserModal
-          user={editingUser}
-          allUsers={users}
-          onClose={() => setEditingUser(null)}
-          onSave={handleSave}
-        />
-      )}
+      <EditUserModal
+        isOpen={isModalOpen}
+        user={editingUser}
+        allUsers={users}
+        onClose={handleCloseModal}
+        onSave={handleSave}
+      />
 
       {deletingUser && (
         <ConfirmationModal
           title="אישור מחיקת משתמש"
           message={`האם אתה בטוח שברצונך למחוק את ${deletingUser.fullName}? פעולה זו תסמן אותו כ"לא פעיל".`}
-          onConfirm={handleDelete}
+          onConfirm={handleDeleteConfirm}
           onCancel={() => setDeletingUser(null)}
         />
       )}
