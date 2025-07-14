@@ -14,6 +14,8 @@ using Microsoft.IdentityModel.Tokens;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
+using MigdalorServer.BL;
 
 namespace MigdalorServer.Controllers
 {
@@ -288,37 +290,28 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPut("UpdateProfile/{id}")]
-        // public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto) // changed to the method below to save privacy settings
         public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileRequestDto dto)
         {
-
-            // --- ADD THIS LOGGING BLOCK ---
             var options = new JsonSerializerOptions { WriteIndented = true };
             Console.WriteLine("--- RECEIVED UpdateProfile DTO ---");
             Console.WriteLine(JsonSerializer.Serialize(dto, options));
             Console.WriteLine("----------------------------------");
-            // --- END LOGGING BLOCK ---
 
-            // Changed from db to _context to fix saving privacy settings 
-            //using var db = new MigdalorDBContext();
-            //var person = db.OhPeople.Find(id);
             var person = _context.OhPeople.Find(id);
             if (person == null)
-                return NotFound("Person not found."); // Changed: NotFound()
+                return NotFound("Person not found.");
 
-            //var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
             var resident = _context.OhResidents
                              .Include(r => r.InterestNames)
                              .SingleOrDefault(r => r.ResidentId == id);
             if (resident == null)
-                return NotFound("Resident not found."); // Changed: NotFound()
+                return NotFound("Resident not found.");
 
             if (id != dto.PersonId)
             {
                 return BadRequest("Mismatched ID in URL and request body.");
             }
 
-            // --- Update Standard Fields ---
             person.PhoneNumber = dto.MobilePhone;
             person.Email = dto.Email;
             resident.HomePlace = dto.Origin;
@@ -330,34 +323,25 @@ namespace MigdalorServer.Controllers
             resident.AdditionalPic1Id = dto.AdditionalPicture1?.PicID;
             resident.AdditionalPic2Id = dto.AdditionalPicture2?.PicID;
 
-            // --- ✅ CORRECTED: Handle Interests Conditionally ---
-
-            // Only modify interests if the client actually sent data for them.
             bool interestsWereEdited = (dto.InterestNames != null && dto.InterestNames.Any()) ||
                                        (dto.NewInterestNames != null && dto.NewInterestNames.Any());
 
             if (interestsWereEdited)
             {
-                // 1. Add any new interests to the main OH_Interests table
                 if (dto.NewInterestNames != null && dto.NewInterestNames.Any())
                 {
                     foreach (var newName in dto.NewInterestNames)
                     {
-                        //if (!db.OhInterests.Any(i => i.InterestName == newName))
                         if (!_context.OhInterests.Any(i => i.InterestName == newName))
                         {
                             _context.OhInterests.Add(new OhInterest { InterestName = newName });
-                            //db.OhInterests.Add(new OhInterest { InterestName = newName });
                         }
                     }
                     _context.SaveChanges();
-                    //db.SaveChanges();
                 }
 
-                // 2. Clear the user's existing interests
                 resident.InterestNames.Clear();
 
-                // 3. Link all selected interests (both old and new) to the user
                 var allSelectedNames = (dto.InterestNames ?? new List<string>())
                                         .Concat(dto.NewInterestNames ?? new List<string>())
                                         .Distinct()
@@ -365,7 +349,6 @@ namespace MigdalorServer.Controllers
 
                 if (allSelectedNames.Any())
                 {
-                    //var interestsToLink = db.OhInterests
                     var interestsToLink = _context.OhInterests
                                             .Where(i => allSelectedNames.Contains(i.InterestName))
                                             .ToList();
@@ -382,7 +365,6 @@ namespace MigdalorServer.Controllers
                 var existingSettings = _context.OhPrivacySettings.Find(id);
                 if (existingSettings != null)
                 {
-                    // If settings exist, update them
                     existingSettings.ShowPartner = dto.PrivacySettings.ShowPartner;
                     existingSettings.ShowApartmentNumber = dto.PrivacySettings.ShowApartmentNumber;
                     existingSettings.ShowMobilePhone = dto.PrivacySettings.ShowMobilePhone;
@@ -397,7 +379,6 @@ namespace MigdalorServer.Controllers
                 }
                 else
                 {
-                    // If settings don't exist, create a new record
                     var newSettings = new OhPrivacySetting
                     {
                         PersonId = id,
@@ -417,12 +398,33 @@ namespace MigdalorServer.Controllers
                 }
             }
 
-            //db.SaveChanges();
             _context.SaveChanges();
-            return NoContent(); // Changed: return 204 on success
+            return NoContent();
         }
 
-        // GET: api/People/PrivacySettings/{id}
+        [HttpPost("reset-password/{id}")]
+        [Authorize]
+        public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordDto dto)
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest("A valid user ID must be provided.");
+            }
+
+            var person = await _context.OhPeople.FindAsync(id);
+            if (person == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            person.PasswordHash = PasswordServices.CreatePasswordHash(dto.NewPassword);
+
+            _context.OhPeople.Update(person);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
         [HttpGet("PrivacySettings/{id}")]
         public ActionResult<PrivacySettingsDto> GetPrivacySettings(Guid id)
         {
@@ -455,21 +457,16 @@ namespace MigdalorServer.Controllers
         {
             using var db = new MigdalorDBContext();
 
-            // If the list is null or empty, return all active residents.
             if (interestNames == null || !interestNames.Any())
             {
                 var allDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
                 return Ok(allDigests);
             }
 
-            // ✅ STEP 1: Fetch all residents and their interests into memory first.
-            // This is the key change. .ToList() executes the query and avoids the translation error.
             var allResidentsWithInterests = db.OhResidents
                 .Include(r => r.InterestNames)
                 .ToList();
 
-            // ✅ STEP 2: Now, filter the in-memory list using standard C#.
-            // This logic is the same as before, but now it runs on the C# list, not against the database.
             var residentIds = allResidentsWithInterests
                 .Where(resident => interestNames.All(requiredName =>
                     resident.InterestNames.Any(residentInterest => residentInterest.InterestName == requiredName)
@@ -477,14 +474,11 @@ namespace MigdalorServer.Controllers
                 .Select(resident => resident.ResidentId)
                 .ToList();
 
-            // If no residents match, return an empty list.
             if (!residentIds.Any())
             {
                 return Ok(new List<ResidentDigest>());
             }
 
-            // ✅ STEP 3: Proceed as before.
-            // Fetch the digests and filter them by the IDs you found.
             var allActiveDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
             var filteredDigests = allActiveDigests
                                     .Where(digest => residentIds.Contains(digest.UserId))

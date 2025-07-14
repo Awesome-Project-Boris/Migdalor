@@ -6,11 +6,14 @@ import {
   RotateCw,
   UserPlus,
   ShieldPlus,
+  KeyRound,
+  ArrowUpDown,
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import EditUserModal from "./EditUserModal";
 import CreateUserModal from "./CreateUserModal";
+import ResetPasswordModal from "./ResetPasswordModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import {
   flexRender,
@@ -23,20 +26,32 @@ import {
 
 // --- Mock shadcn/ui Components for Data Table ---
 const Button = React.forwardRef(
-  ({ className, variant, size, ...props }, ref) => (
-    <button
-      className={`inline-flex mx-1 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
-      ${
-        variant === "outline"
-          ? "border border-gray-300 bg-transparent hover:bg-gray-100"
-          : "bg-blue-600 text-white hover:bg-blue-700"
-      }
-      ${size === "sm" ? "h-9 px-3" : "h-10 px-4 py-2"}
-      ${className}`}
-      ref={ref}
-      {...props}
-    />
-  )
+  ({ className, variant, size, ...props }, ref) => {
+    const baseClasses =
+      "inline-flex mx-1 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    const sizeClasses = size === "sm" ? "h-9 px-3" : "h-10 px-4 py-2";
+
+    let variantClasses;
+    switch (variant) {
+      case "outline":
+        variantClasses =
+          "border border-gray-300 bg-transparent hover:bg-gray-100";
+        break;
+      case "ghost":
+        variantClasses = "hover:bg-gray-100";
+        break;
+      default:
+        variantClasses = "bg-blue-600 text-white hover:bg-blue-700";
+    }
+
+    return (
+      <button
+        className={`${baseClasses} ${sizeClasses} ${variantClasses} ${className}`}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
 );
 Button.displayName = "Button";
 
@@ -99,10 +114,13 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
+  const [passwordResetUser, setPasswordResetUser] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
+    useState(false);
   const [createUserType, setCreateUserType] = useState("resident");
-  const [sorting, setSorting] = useState([]);
+  const [sorting, setSorting] = useState([{ id: "dateOfArrival", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
 
   const fetchUsers = useCallback(async () => {
@@ -132,10 +150,17 @@ const UserManagement = () => {
     setIsCreateModalOpen(true);
   };
 
+  const handleOpenResetPasswordModal = useCallback((user) => {
+    setPasswordResetUser(user);
+    setIsResetPasswordModalOpen(true);
+  }, []);
+
   const handleCloseModals = () => {
     setEditingUser(null);
+    setPasswordResetUser(null);
     setIsEditModalOpen(false);
     setIsCreateModalOpen(false);
+    setIsResetPasswordModalOpen(false);
   };
 
   const handleSave = async (userId, updatedUserData) => {
@@ -178,11 +203,24 @@ const UserManagement = () => {
     [token, fetchUsers]
   );
 
+  const handlePasswordReset = async (userId, newPassword) => {
+    await api.post(`/People/reset-password/${userId}`, { newPassword }, token);
+  };
+
   const columns = useMemo(
     () => [
       {
         accessorKey: "fullName",
-        header: "שם",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            className="p-0 hover:bg-gray-200"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            שם
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+          </Button>
+        ),
         cell: ({ row }) => (
           <div className="text-sm font-medium text-gray-900">
             {row.getValue("fullName")}
@@ -191,7 +229,16 @@ const UserManagement = () => {
       },
       {
         accessorKey: "email",
-        header: "אימייל",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            className="p-0 hover:bg-gray-200"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            אימייל
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+          </Button>
+        ),
         cell: ({ row }) => (
           <div className="text-sm text-gray-500">
             {row.getValue("email") || "N/A"}
@@ -209,12 +256,42 @@ const UserManagement = () => {
       },
       {
         accessorKey: "roomNumber",
-        header: "חדר",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            className="p-0 hover:bg-gray-200"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            חדר
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+          </Button>
+        ),
         cell: ({ row }) => (
           <div className="text-sm text-gray-500">
             {row.getValue("roomNumber") || "N/A"}
           </div>
         ),
+      },
+      {
+        accessorKey: "dateOfArrival",
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            className="p-0 hover:bg-gray-200"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            תאריך הגעה
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const date = row.getValue("dateOfArrival");
+          return (
+            <div className="text-sm text-gray-500">
+              {date ? new Date(date).toLocaleDateString("he-IL") : "N/A"}
+            </div>
+          );
+        },
       },
       {
         accessorKey: "isActive",
@@ -240,29 +317,36 @@ const UserManagement = () => {
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="flex items-center space-x-4 space-x-reverse">
+            <div className="flex items-center space-x-2 space-x-reverse">
               <button
                 onClick={() => handleOpenEditModal(user)}
-                className="text-blue-600 hover:text-blue-900"
+                className="p-2 rounded-full text-blue-600 hover:bg-blue-100 transition-colors"
                 title="ערוך"
               >
-                <Edit size={18} />
+                <Edit size={20} />
+              </button>
+              <button
+                onClick={() => handleOpenResetPasswordModal(user)}
+                className="p-2 rounded-full text-yellow-600 hover:bg-yellow-100 transition-colors"
+                title="אפס סיסמה"
+              >
+                <KeyRound size={20} />
               </button>
               {user.isActive ? (
                 <button
                   onClick={() => setDeletingUser(user)}
-                  className="text-red-600 hover:text-red-900"
+                  className="p-2 rounded-full text-red-600 hover:bg-red-100 transition-colors"
                   title="מחק"
                 >
-                  <Trash2 size={18} />
+                  <Trash2 size={20} />
                 </button>
               ) : (
                 <button
                   onClick={() => handleRestoreUser(user.id)}
-                  className="text-green-600 hover:text-green-900"
+                  className="p-2 rounded-full text-green-600 hover:bg-green-100 transition-colors"
                   title="שחזר"
                 >
-                  <RotateCw size={18} />
+                  <RotateCw size={20} />
                 </button>
               )}
             </div>
@@ -270,7 +354,7 @@ const UserManagement = () => {
         },
       },
     ],
-    [handleOpenEditModal, handleRestoreUser]
+    [handleOpenEditModal, handleRestoreUser, handleOpenResetPasswordModal]
   );
 
   const table = useReactTable({
@@ -408,6 +492,13 @@ const UserManagement = () => {
         onClose={handleCloseModals}
         userType={createUserType}
         onUserCreated={fetchUsers}
+      />
+
+      <ResetPasswordModal
+        isOpen={isResetPasswordModalOpen}
+        onClose={handleCloseModals}
+        user={passwordResetUser}
+        onPasswordReset={handlePasswordReset}
       />
 
       {deletingUser && (
