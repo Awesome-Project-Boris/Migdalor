@@ -138,7 +138,6 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
       await api.post(endpoint, payload);
       setCreatedUserDetails(payload);
       setShowPasswordView(true);
-      // The onUserCreated call is now moved to handleFinalClose
     } catch (error) {
       console.error("Error creating user:", error);
       alert(
@@ -157,25 +156,26 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
   };
 
   const handlePrint = () => {
-    const printContent = document.getElementById("password-print-area");
-    const windowUrl = "about:blank";
-    const uniqueName = new Date().getTime();
-    const windowName = "Print" + uniqueName;
-    const printWindow = window.open(
-      windowUrl,
-      windowName,
-      "left=50000,top=50000,width=0,height=0"
-    );
+    const printContent = document.getElementById(
+      "password-print-area"
+    ).innerHTML;
+    const printWindow = window.open("", "_blank", "height=500,width=500");
 
+    printWindow.document.write("<html><head><title>פרטי משתמש</title>");
     printWindow.document.write(
-      "<html><head><title>Print</title><style>body { text-align: right; direction: rtl; font-family: Arial, sans-serif; }</style></head><body>"
+      "<style>body { direction: rtl; text-align: right; font-family: Arial, sans-serif; padding: 20px; }</style>"
     );
-    printWindow.document.write(printContent.innerHTML);
+    printWindow.document.write("</head><body>");
+    printWindow.document.write(printContent);
     printWindow.document.write("</body></html>");
     printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+
+    // Use a timeout to ensure content is rendered before printing
+    setTimeout(() => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    }, 250);
   };
 
   const handleCopyToClipboard = () => {
@@ -357,7 +357,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
               <button
                 type="button"
                 onClick={handleFinalClose}
-                className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700"
+                className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700"
               >
                 סגור
               </button>
