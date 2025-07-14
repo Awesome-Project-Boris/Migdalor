@@ -202,7 +202,7 @@ namespace MigdalorServer.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(168), // Set token expiration to 7 days
+                expires: DateTime.Now.AddHours(1440), // Set token expiration to 7 days
                 signingCredentials: credentials
             );
 
