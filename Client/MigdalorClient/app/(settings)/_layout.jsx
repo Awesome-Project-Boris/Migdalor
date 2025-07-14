@@ -22,7 +22,7 @@ export default function SettingsLayout() {
           tabBarStyle: { height: 70 },
           tabBarIconStyle: { height: 40, width: 40 },
           tabBarLabelStyle: { fontSize: 12 },
-          tabBarActiveTintColor: "#00007a",
+          tabBarActiveTintColor: "#00b5d9",
           tabBarInactiveTintColor: "black",
         }}
       >

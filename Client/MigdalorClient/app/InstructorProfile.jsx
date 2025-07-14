@@ -24,6 +24,7 @@ export default function InstructorProfile() {
   const router = useRouter();
   const { user: authUser } = useAuth();
   const { userId: paramUserId } = useLocalSearchParams();
+  
 
   const [form, setForm] = useState({
     name: "",
@@ -40,6 +41,7 @@ export default function InstructorProfile() {
 
       const loadProfileData = async () => {
         setLoading(true);
+
         try {
           // Determine which user ID to fetch: the one from params or the logged-in user
           const loggedInUserId = authUser?.id;
@@ -93,6 +95,11 @@ export default function InstructorProfile() {
       ? { uri: `${Globals.API_BASE_URL}${profilePic.picPath}` }
       : defaultUserImage;
 
+    const loggedInUserId = authUser?.id;
+    const viewingUserId = paramUserId || loggedInUserId;
+    const isOwnProfile = loggedInUserId && viewingUserId && loggedInUserId === viewingUserId;
+  
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -135,22 +142,24 @@ export default function InstructorProfile() {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Header />
         
-        <FlipButton
-          onPress={() => router.push({
-              pathname: '/InstructorEditProfile',
-              params: {
-                  initialData: JSON.stringify(form),
-                  initialPic: JSON.stringify(profilePic)
-              }
-          })}
-          bgColor="white"
-          textColor="black"
-          style={styles.editProfileButton}
-        >
-          <Text style={styles.editProfileButtonText}>
-            {t("ProfileScreen_editButton")}
-          </Text>
-        </FlipButton>
+        {isOwnProfile && (
+          <FlipButton
+            onPress={() => router.push({
+                pathname: '/InstructorEditProfile',
+                params: {
+                    initialData: JSON.stringify(form),
+                    initialPic: JSON.stringify(profilePic)
+                }
+            })}
+            bgColor="white"
+            textColor="black"
+            style={styles.editProfileButton}
+          >
+            <Text style={styles.editProfileButtonText}>
+              {t("ProfileScreen_editButton")}
+            </Text>
+          </FlipButton>
+        )}
 
         <View style={styles.profileImageContainer}>
           <BouncyButton

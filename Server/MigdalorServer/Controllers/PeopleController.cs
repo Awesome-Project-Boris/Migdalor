@@ -165,56 +165,38 @@ namespace MigdalorServer.Controllers
 
         [HttpGet("LoginDetails")]
         [Authorize]
-        public IActionResult GetPersonDetailsForLogin()
+        public async Task<IActionResult> GetPersonDetailsForLogin()
         {
             try
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
+                if (!Guid.TryParse(userIdClaim?.Value, out Guid userId))
                 {
                     return Unauthorized("Invalid token.");
                 }
 
-                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
-                {
-                    return BadRequest("Invalid user ID in token.");
-                }
+                var person = await _context.OhPeople.FindAsync(userId);
 
-                //var data = OhPerson.GetPersonByIDForProfile(userId);
-                //return Ok(data);
-
-                // Get the base profile data
-                var data = OhPerson.GetPersonByIDForProfile(userId);
-                if (data == null)
-                {
-                    return NotFound("User profile data not found.");
-                }
-
-                // Separately, find the person record to get the role
-                var person = _context.OhPeople.Find(userId);
                 if (person == null)
                 {
-                    return NotFound("User record not found.");
+                    return NotFound("User record associated with this token was not found.");
                 }
 
-                // Convert the profile data to a flexible dictionary to add the new property
-                var json = JsonSerializer.Serialize(data);
-                var dictionary = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                // Manually construct the response object directly from the OH_People table.
+                // This works for ALL roles.
+                var responseData = new
+                {
+                    id = person.PersonId,
+                    hebName = $"{person.HebFirstName} {person.HebLastName}".Trim(),
+                    engName = $"{person.EngFirstName} {person.EngLastName}".Trim(),
+                    personRole = person.PersonRole
+                };
 
-                // Add the personRole to the dictionary
-                dictionary["personRole"] = person.PersonRole;
-
-                // Return the combined data
-                return Ok(dictionary);
+                return Ok(responseData);
             }
             catch (Exception e)
             {
-                if (e.Message == "User not found")
-                    return NotFound("User Not Found");
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
-                );
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error getting user login details: {e.Message}");
             }
         }
 

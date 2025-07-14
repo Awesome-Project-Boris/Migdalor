@@ -14,7 +14,7 @@ export default function EventsTabLayout() {
         tabBarStyle: { height: 70 },
         tabBarIconStyle: { marginTop: 5 }, // Adjust as needed
         tabBarLabelStyle: { fontSize: 12, marginBottom: 5 }, // Adjust as needed
-        tabBarActiveTintColor: "#00007a", // Example color
+        tabBarActiveTintColor: "#00b5d9", // Example color
         tabBarInactiveTintColor: "black",
         headerShown: false, // Hides the header for the tab screens
       }}
