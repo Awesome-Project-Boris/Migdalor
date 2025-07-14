@@ -31,56 +31,7 @@ namespace MigdalorServer.Controllers
             _configuration = configuration;
         }
 
-        [HttpGet("InstructorDetails")]
-        [Authorize]
-        public async Task<IActionResult> GetInstructorDetails()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
-            {
-                return Unauthorized("Invalid token.");
-            }
-
-            var instructor = await _context.OhPeople
-                .Where(p => p.PersonId == userId && p.PersonRole == "Instructor")
-                .Select(p => new
-                {
-                    p.PersonId,
-                    p.PhoneNumber,
-                    p.HebFirstName,
-                    p.HebLastName,
-                    p.EngFirstName,
-                    p.EngLastName,
-                    p.Gender,
-                    p.Email,
-                    p.DateOfBirth,
-                    ProfilePicture = _context.OhPictures
-                                       .Where(pic => pic.PicId == p.ProfilePicId)
-                                       .Select(pic => new { pic.PicId, pic.PicPath, pic.PicAlt })
-                                       .FirstOrDefault()
-                })
-                .FirstOrDefaultAsync();
-
-            if (instructor == null)
-            {
-                return Forbid("User is not an instructor or not found.");
-            }
-
-            // Construct a full name for convenience
-            var response = new
-            {
-                id = instructor.PersonId,
-                phoneNumber = instructor.PhoneNumber,
-                hebName = $"{instructor.HebFirstName} {instructor.HebLastName}".Trim(),
-                engName = $"{instructor.EngFirstName} {instructor.EngLastName}".Trim(),
-                gender = instructor.Gender,
-                email = instructor.Email,
-                dateOfBirth = instructor.DateOfBirth,
-                profilePicture = instructor.ProfilePicture
-            };
-
-            return Ok(response);
-        }
+        
 
         [HttpPut("UpdateInstructorProfile")]
         [Authorize]
@@ -285,6 +236,53 @@ namespace MigdalorServer.Controllers
                     StatusCodes.Status500InternalServerError,
                     $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
                 );
+            }
+        }
+
+        [HttpGet("InstructorDetails/{userId}")]
+        public async Task<IActionResult> GetInstructorDetailsById(Guid userId)
+        {
+            try
+            {
+                var instructor = await _context.OhPeople
+                    .Where(p => p.PersonId == userId && p.PersonRole == "Instructor")
+                    .Select(p => new
+                    {
+                        p.PersonId,
+                        p.PhoneNumber,
+                        p.HebFirstName,
+                        p.HebLastName,
+                        p.EngFirstName,
+                        p.EngLastName,
+                        p.Email,
+                        ProfilePicture = _context.OhPictures
+                                           .Where(pic => pic.PicId == p.ProfilePicId)
+                                           .Select(pic => new { pic.PicId, pic.PicPath, pic.PicAlt })
+                                           .FirstOrDefault()
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (instructor == null)
+                {
+                    return NotFound("An instructor with the specified ID was not found.");
+                }
+
+                // Construct a clean response object
+                var response = new
+                {
+                    id = instructor.PersonId,
+                    phoneNumber = instructor.PhoneNumber,
+                    hebName = $"{instructor.HebFirstName} {instructor.HebLastName}".Trim(),
+                    engName = $"{instructor.EngFirstName} {instructor.EngLastName}".Trim(),
+                    email = instructor.Email,
+                    profilePicture = instructor.ProfilePicture
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred.", error = ex.Message });
             }
         }
 

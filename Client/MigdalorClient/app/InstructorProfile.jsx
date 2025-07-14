@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -23,6 +23,7 @@ export default function InstructorProfile() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user: authUser } = useAuth();
+  const { userId: paramUserId } = useLocalSearchParams();
 
   const [form, setForm] = useState({
     name: "",
@@ -36,19 +37,23 @@ export default function InstructorProfile() {
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
+
       const loadProfileData = async () => {
-        if (!authUser) {
-          setLoading(false);
-          return;
-        }
         setLoading(true);
         try {
-          const token = await AsyncStorage.getItem("jwt");
+          // Determine which user ID to fetch: the one from params or the logged-in user
+          const loggedInUserId = authUser?.id;
+          const userIdToFetch = paramUserId || loggedInUserId;
+
+          if (!userIdToFetch) {
+            console.warn("No user ID to fetch profile for.");
+            if (isActive) setLoading(false);
+            return;
+          }
+          
+          // Use the correct API endpoint that accepts a user ID
           const response = await fetch(
-            `${Globals.API_BASE_URL}/api/People/InstructorDetails`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
+            `${Globals.API_BASE_URL}/api/People/InstructorDetails/${userIdToFetch}`
           );
 
           if (!response.ok) {
@@ -58,6 +63,7 @@ export default function InstructorProfile() {
           const data = await response.json();
 
           if (isActive) {
+            // The API returns slightly different field names here
             setForm({
               name: data.engName || data.hebName,
               mobilePhone: data.phoneNumber || "",
@@ -79,7 +85,7 @@ export default function InstructorProfile() {
       return () => {
         isActive = false;
       };
-    }, [authUser])
+    }, [paramUserId, authUser]) // Re-run if the user ID in the param changes
   );
 
   const profileImageSource =

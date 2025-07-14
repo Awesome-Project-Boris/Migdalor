@@ -426,7 +426,8 @@ const resources = {
 
       // Timetable
 
-      Timetable_Title: "My Timetable",
+      Timetable_Title: "Timetable",
+      Timetable_SubTitle: "Timetable shows planned activities and classes",
       Timetable_NoActivities: "No activities planned for today.",
       Today: "Today",
       Timetable_daily: "Daily",
@@ -472,7 +473,7 @@ const resources = {
       ProfileScreen_arrivalYear: "תאריך הגעה לנורדיה",
       ProfileScreen_origin: "מקום מוצא",
       ProfileScreen_profession: "מקצוע",
-      ProfileScreen_interests: "תחומי עניין",
+      ProfileScreen_interests: "תחביבים",
       ProfileScreen_aboutMe: "קצת על עצמי",
       ProfileScreen_extraImages: "תמונות נוספות",
       ProfileScreen_editButton: "עריכת פרופיל",
@@ -482,7 +483,7 @@ const resources = {
 
       Common_Loading: "טוען...",
 
-      interestModal_newlyAdded: "תחומי עניין חדשים",
+      interestModal_newlyAdded: "תחביבים חדשים",
 
       PrivacySettings_savedLocally: "הגדרות פרטיות נשמרו במכשיר",
       PrivacySettings_title: "הגדרות פרטיות",
@@ -503,7 +504,7 @@ const resources = {
       EditProfileScreen_errorMessageProfession:
         "שדה 'מקצוע' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
       EditProfileScreen_errorMessageInterests:
-        "שדה 'תחומי עניין' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
+        "שדה 'תחביבים' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
       EditProfileScreen_errorMessageAboutMe:
         "שדה 'קצת על עצמי' חייב להכיל רק אותיות בעברית ובאנגלית או מספרים",
       EditProfileScreen_ProfileUpdated: "פרופיל עודכן בהצלחה!",
@@ -511,18 +512,18 @@ const resources = {
       //EditProfileScreen_errorMessageExtraImages: "אנא מלא את שדה 'תמונות נוספות'",
       //EditProfileScreen_errorMessageImage: "אנא מלא את שדה 'תמונה'",
 
-      EditProfileScreen_noInterests: "אין תחומי עניין להציג",
-      EditProfileScreen_editInterestsButton: "לבחירת תחומי עניין",
+      EditProfileScreen_noInterests: "אין תחביבים להציג",
+      EditProfileScreen_editInterestsButton: "לבחירת תחביבים",
 
-      interestModal_title: "עריכת תחומי עניין",
-      interestModal_searchPlaceholder: "חיפוש תחום עניין...",
-      interestModal_selectExisting: "בחירה מתחומי עניין קיימים",
-      interestModal_noResults: "לא נמצא תחום עניין",
+      interestModal_title: "עריכת תחביבים",
+      interestModal_searchPlaceholder: "חיפוש תחביב...",
+      interestModal_selectExisting: "בחירה מתחביבים קיימים",
+      interestModal_noResults: "לא נמצא תחביב",
       interestModal_addNew: "או שניתן להוסיף חדשים!",
-      interestModal_addPlaceholder: " הכניסו תחום עניין חדש ( עברית )",
+      interestModal_addPlaceholder: " הכניסו תחביב חדש ( עברית )",
       interestModal_addButton: "הוספה",
       interestModal_acceptButton: "אישור",
-      interestModa_newlyAdded: "תחומי עניין חדשים",
+      interestModa_newlyAdded: "תחביבים חדשים",
 
       MainMenuScreen_ProfileButton: "פרופיל",
       MainMenuScreen_ActivitiesAndClassesButton: "חוגים ופעילויות",
@@ -532,7 +533,7 @@ const resources = {
       MainMenuScreen_MapButton: "מפה",
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
-      MainMenuScreen_Timetable: "לוח הזמנים",
+      MainMenuScreen_Timetable: "מידעון",
 
       InstructorMainMenu_EventsButton: "אירועים",
 
@@ -719,9 +720,9 @@ const resources = {
       ResidentSearchScreen_accordionClose: "לחיצה לחיפוש",
       ResidentSearchScreen_accordionOpen: "לחיצה לסגירת החיפוש",
 
-      ResidentSearchScreen_selectInterestsButton: "הזינו תחומי עניין לחיפוש",
+      ResidentSearchScreen_selectInterestsButton: "הזינו תחביבים לחיפוש",
       ResidentSearchScreen_filteringByLabel: "מסנן לפי...",
-      ResidentSearchScreen_noInterestsSelected: "לא נבחרו תחומי עניין",
+      ResidentSearchScreen_noInterestsSelected: "לא נבחרו תחביבים",
 
       ResidentsCommitte_nameUnavailable: "שם לא זמין",
       ResidentsCommitte_titleUnavailable: "תואר לא זמין",
@@ -843,7 +844,8 @@ const resources = {
 
       // Timetable
 
-      Timetable_Title: "לוח הזמנים שלי",
+      Timetable_Title: "תוכניה",
+      Timetable_SubTitle: "תוכניה זו מציגה את הפעילויות והחוגים המתוכננים",
       Timetable_NoActivities: "אין פעילות מתוכננת להיום",
       Today: "היום",
       Timetable_daily: "יומי",

@@ -147,6 +147,8 @@ export default function EventFocusScreen() {
 
     // This logic correctly determines where to navigate.
     const pathname = event.isRecurring ? "/InstructorProfile" : "/Profile";
+    //const pathname = "/Profile";
+    //alert(`Navigating to ${pathname} with userId: ${event.host.hostId}`);
     router.push({
       pathname,
       params: { userId: event.host.hostId },
