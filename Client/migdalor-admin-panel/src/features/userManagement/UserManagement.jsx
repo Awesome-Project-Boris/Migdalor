@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Search, Edit, Trash2, RotateCw } from "lucide-react";
+import {
+  Search,
+  Edit,
+  Trash2,
+  RotateCw,
+  UserPlus,
+  ShieldPlus,
+} from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import EditUserModal from "./EditUserModal";
+import CreateUserModal from "./CreateUserModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import {
   flexRender,
@@ -17,11 +25,11 @@ import {
 const Button = React.forwardRef(
   ({ className, variant, size, ...props }, ref) => (
     <button
-      className={`inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
+      className={`inline-flex mx-1 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50
       ${
         variant === "outline"
           ? "border border-gray-300 bg-transparent hover:bg-gray-100"
-          : ""
+          : "bg-blue-600 text-white hover:bg-blue-700"
       }
       ${size === "sm" ? "h-9 px-3" : "h-10 px-4 py-2"}
       ${className}`}
@@ -91,7 +99,9 @@ const UserManagement = () => {
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createUserType, setCreateUserType] = useState("resident");
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
 
@@ -114,12 +124,18 @@ const UserManagement = () => {
 
   const handleOpenEditModal = useCallback((user) => {
     setEditingUser(user);
-    setIsModalOpen(true);
+    setIsEditModalOpen(true);
   }, []);
 
-  const handleCloseModal = () => {
+  const handleOpenCreateModal = (type) => {
+    setCreateUserType(type);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseModals = () => {
     setEditingUser(null);
-    setIsModalOpen(false);
+    setIsEditModalOpen(false);
+    setIsCreateModalOpen(false);
   };
 
   const handleSave = async (userId, updatedUserData) => {
@@ -132,7 +148,7 @@ const UserManagement = () => {
         updatedUserData,
         token
       );
-      handleCloseModal();
+      handleCloseModals();
       fetchUsers();
     } catch (err) {
       alert(`שגיאה בעדכון משתמש: ${err.message}`);
@@ -278,7 +294,7 @@ const UserManagement = () => {
   return (
     <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">ניהול משתמשים</h2>
-      <div className="flex items-center py-4">
+      <div className="flex items-center justify-between py-4">
         <div className="relative w-full max-w-sm">
           <input
             placeholder="חפש לפי שם, אימייל או טלפון..."
@@ -340,8 +356,26 @@ const UserManagement = () => {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="space-x-2">
+      <div className="flex items-center justify-between py-4">
+        <div className="flex space-x-4 space-x-reverse">
+          <Button
+            onClick={() => handleOpenCreateModal("resident")}
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <UserPlus size={16} className="ml-2" />
+            הוסף דייר
+          </Button>
+          <Button
+            onClick={() => handleOpenCreateModal("admin")}
+            size="sm"
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <ShieldPlus size={16} className="ml-2" />
+            הוסף איש צוות
+          </Button>
+        </div>
+        <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
@@ -362,11 +396,18 @@ const UserManagement = () => {
       </div>
 
       <EditUserModal
-        isOpen={isModalOpen}
+        isOpen={isEditModalOpen}
         user={editingUser}
         allUsers={users}
-        onClose={handleCloseModal}
+        onClose={handleCloseModals}
         onSave={handleSave}
+      />
+
+      <CreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={handleCloseModals}
+        userType={createUserType}
+        onUserCreated={fetchUsers}
       />
 
       {deletingUser && (

@@ -63,9 +63,9 @@ const DialogDescription = React.forwardRef((props, ref) => (
 
 const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
   const [formData, setFormData] = useState({});
-  const [generatedPassword, setGeneratedPassword] = useState("");
   const [showPasswordView, setShowPasswordView] = useState(false);
   const [createdUserDetails, setCreatedUserDetails] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const generatePassword = useCallback(() => {
     const lower = "abcdefghijklmnopqrstuvwxyz";
@@ -84,13 +84,11 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
       .sort(() => 0.5 - Math.random())
       .join("");
     setFormData((prev) => ({ ...prev, password: shuffledPass }));
-    setGeneratedPassword(shuffledPass);
     return shuffledPass;
   }, []);
 
   useEffect(() => {
     if (isOpen) {
-      const password = userType === "resident" ? generatePassword() : "";
       setFormData({
         phoneNumber: "",
         hebFirstName: "",
@@ -98,7 +96,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
         engFirstName: "",
         engLastName: "",
         gender: "זכר",
-        password: password,
+        password: generatePassword(), // Always generate a password on open
         role: userType === "admin" ? "Instructor" : "Resident",
       });
       setShowPasswordView(false);
@@ -108,32 +106,54 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "phoneNumber") {
+      const numericValue = value.replace(/\D/g, "");
+      if (numericValue.length <= 10) {
+        setFormData((prev) => ({ ...prev, [name]: numericValue }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     const endpoint =
-      userType === "resident" ? "/api/People/Register" : "/api/RegisterAdmin";
+      userType === "resident" ? "/People/Register" : "/RegisterAdmin";
     const payload = {
       ...formData,
       gender: formData.gender === "זכר" ? "M" : "F",
     };
 
-    try {
-      if (userType === "resident") {
-        await api.post(endpoint, payload);
-        setCreatedUserDetails(payload);
-        setShowPasswordView(true);
-      } else {
-        alert("Admin creation endpoint is not yet implemented.");
-        onClose();
-        return;
-      }
-      onUserCreated();
-    } catch (error) {
-      alert(`שגיאה ביצירת משתמש: ${error.message}`);
+    if (userType === "admin") {
+      alert("Admin creation endpoint is not yet implemented.");
+      setIsSubmitting(false);
+      onClose();
+      return;
     }
+
+    try {
+      await api.post(endpoint, payload);
+      setCreatedUserDetails(payload);
+      setShowPasswordView(true);
+      // The onUserCreated call is now moved to handleFinalClose
+    } catch (error) {
+      console.error("Error creating user:", error);
+      alert(
+        `שגיאה ביצירת משתמש: ${error.message || "An unknown error occurred."}`
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFinalClose = () => {
+    if (onUserCreated) {
+      onUserCreated();
+    }
+    onClose();
   };
 
   const handlePrint = () => {
@@ -159,10 +179,12 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
   };
 
   const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(
-      `שם משתמש: ${createdUserDetails.phoneNumber}\nסיסמה: ${generatedPassword}`
-    );
-    alert("פרטי המשתמש הועתקו.");
+    if (createdUserDetails) {
+      navigator.clipboard.writeText(
+        `שם משתמש: ${createdUserDetails.phoneNumber}\nסיסמה: ${createdUserDetails.password}`
+      );
+      alert("פרטי המשתמש הועתקו.");
+    }
   };
 
   const title =
@@ -181,7 +203,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>{description}</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} noValidate>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
                 <InputField
                   label="שם פרטי (עברית)"
@@ -215,6 +237,9 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
                   value={formData.phoneNumber}
                   onChange={handleChange}
                   required
+                  maxLength={10}
+                  pattern="\d*"
+                  type="tel"
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -230,40 +255,41 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
                     <option value="נקבה">נקבה</option>
                   </select>
                 </div>
+
+                <div className="relative md:col-span-2">
+                  <InputField
+                    label="סיסמה"
+                    name="password"
+                    type="text"
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={generatePassword}
+                    className="absolute left-2 top-8 p-1 text-gray-500 hover:text-blue-600"
+                  >
+                    <RefreshCw size={18} />
+                  </button>
+                </div>
+
                 {userType === "admin" && (
-                  <>
-                    <div className="relative">
-                      <InputField
-                        label="סיסמה"
-                        name="password"
-                        type="text"
-                        value={formData.password}
-                        onChange={handleChange}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={generatePassword}
-                        className="absolute left-2 top-8 p-1 text-gray-500 hover:text-blue-600"
-                      >
-                        <RefreshCw size={18} />
-                      </button>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        תפקיד
-                      </label>
-                      <select
-                        name="role"
-                        value={formData.role}
-                        onChange={handleChange}
-                        className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-                      >
-                        <option value="Instructor">מדריך</option>
-                        <option value="admin">מנהל</option>
-                      </select>
-                    </div>
-                  </>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      תפקיד
+                    </label>
+                    <select
+                      name="role"
+                      value={formData.role}
+                      onChange={handleChange}
+                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
+                    >
+                      <option value="Instructor">מדריך</option>
+                      <option value="admin">מנהל</option>
+                      <option value="supplier">ספק</option>
+                    </select>
+                  </div>
                 )}
               </div>
               <DialogFooter>
@@ -271,14 +297,16 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
                   type="button"
                   onClick={onClose}
                   className="px-5 py-2 mx-1 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400"
+                  disabled={isSubmitting}
                 >
                   ביטול
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700"
+                  className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-blue-300"
+                  disabled={isSubmitting}
                 >
-                  צור משתמש
+                  {isSubmitting ? "יוצר משתמש..." : "צור משתמש"}
                 </button>
               </DialogFooter>
             </form>
@@ -305,7 +333,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
               <p>
                 <strong>סיסמה:</strong>{" "}
                 <span className="font-mono bg-gray-200 p-1 rounded">
-                  {generatedPassword}
+                  {createdUserDetails.password}
                 </span>
               </p>
             </div>
@@ -328,7 +356,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
               </button>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleFinalClose}
                 className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700"
               >
                 סגור
