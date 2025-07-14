@@ -55,6 +55,7 @@ const resources = {
 
       PrivacySettings_savedLocally: "Privacy settings saved locally",
       PrivacySettings_title: "Privacy Settings",
+      PrivacySettings_SubTitle: "Choose what information to share with others",
 
       EditProfileScreen_saveButton: "Save Changes",
       EditProfileScreen_cancelButton: "Cancel",
@@ -487,6 +488,7 @@ const resources = {
 
       PrivacySettings_savedLocally: "הגדרות פרטיות נשמרו במכשיר",
       PrivacySettings_title: "הגדרות פרטיות",
+      PrivacySettings_SubTitle: "בחר אילו פרטים לשתף עם אחרים",
 
       EditProfileScreen_saveButton: "שמור שינויים",
       EditProfileScreen_cancelButton: "ביטול",

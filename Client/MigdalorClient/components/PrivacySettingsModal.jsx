@@ -51,13 +51,14 @@ const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => 
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>{t('PrivacySettings_title')}</Text>
+          <Text style={styles.modalSubTitle}>{t('PrivacySettings_SubTitle')}</Text>
           <ScrollView style={styles.scrollView}>
             {privacyOptions.map(option => (
               <View key={option.key} style={styles.optionRow}>
                 <Text style={styles.optionLabel}>{option.label}</Text>
                 <Switch
                   trackColor={{ false: "#767577", true: "#81b0ff" }}
-                  thumbColor={settings[option.key] ? "#f5dd4b" : "#f4f3f4"}
+                  thumbColor={settings[option.key] ? "#005eff" : "#f4f3f4"}
                   ios_backgroundColor="#3e3e3e"
                   onValueChange={() => handleToggle(option.key)}
                   value={settings[option.key]}
@@ -106,6 +107,11 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalSubTitle: {
+    fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 20,
   },
