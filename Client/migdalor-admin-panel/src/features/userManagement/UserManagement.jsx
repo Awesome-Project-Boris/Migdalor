@@ -24,7 +24,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-// --- Mock shadcn/ui Components for Data Table ---
+// --- Mock shadcn/ui Components ---
 const Button = React.forwardRef(
   ({ className, variant, size, ...props }, ref) => {
     const baseClasses =
@@ -104,6 +104,21 @@ const TableCell = React.forwardRef(({ className, ...props }, ref) => (
   />
 ));
 TableCell.displayName = "TableCell";
+
+// --- Mock Tooltip Components ---
+const TooltipProvider = ({ children }) => <>{children}</>;
+const Tooltip = ({ children }) => (
+  <div className="relative inline-flex group">{children}</div>
+);
+const TooltipTrigger = ({ children }) => <>{children}</>;
+const TooltipContent = ({ children, ...props }) => (
+  <div
+    className="absolute bottom-full mb-2 w-max px-2 py-1 text-xs font-semibold text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 transform -translate-x-1/2 left-1/2"
+    {...props}
+  >
+    {children}
+  </div>
+);
 
 // --- Main UserManagement Component ---
 
@@ -317,37 +332,61 @@ const UserManagement = () => {
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <button
-                onClick={() => handleOpenEditModal(user)}
-                className="p-2 rounded-full text-blue-600 hover:bg-blue-100 transition-colors"
-                title="ערוך"
-              >
-                <Edit size={20} />
-              </button>
-              <button
-                onClick={() => handleOpenResetPasswordModal(user)}
-                className="p-2 rounded-full text-yellow-600 hover:bg-yellow-100 transition-colors"
-                title="אפס סיסמה"
-              >
-                <KeyRound size={20} />
-              </button>
+            <div className="flex items-center justify-center space-x-2 space-x-reverse">
+              <Tooltip>
+                <TooltipTrigger>
+                  <button
+                    onClick={() => handleOpenEditModal(user)}
+                    className="p-2 rounded-full text-blue-600 hover:bg-blue-100 transition-colors"
+                  >
+                    <Edit size={20} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>ערוך פרטי משתמש</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger>
+                  <button
+                    onClick={() => handleOpenResetPasswordModal(user)}
+                    className="p-2 rounded-full text-yellow-600 hover:bg-yellow-100 transition-colors"
+                  >
+                    <KeyRound size={20} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>אפס סיסמה</p>
+                </TooltipContent>
+              </Tooltip>
               {user.isActive ? (
-                <button
-                  onClick={() => setDeletingUser(user)}
-                  className="p-2 rounded-full text-red-600 hover:bg-red-100 transition-colors"
-                  title="מחק"
-                >
-                  <Trash2 size={20} />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <button
+                      onClick={() => setDeletingUser(user)}
+                      className="p-2 rounded-full text-red-600 hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>השבת משתמש</p>
+                  </TooltipContent>
+                </Tooltip>
               ) : (
-                <button
-                  onClick={() => handleRestoreUser(user.id)}
-                  className="p-2 rounded-full text-green-600 hover:bg-green-100 transition-colors"
-                  title="שחזר"
-                >
-                  <RotateCw size={20} />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <button
+                      onClick={() => handleRestoreUser(user.id)}
+                      className="p-2 rounded-full text-green-600 hover:bg-green-100 transition-colors"
+                    >
+                      <RotateCw size={20} />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>הפעל משתמש</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </div>
           );
@@ -376,140 +415,142 @@ const UserManagement = () => {
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (
-    <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">ניהול משתמשים</h2>
-      <div className="flex items-center justify-between py-4">
-        <div className="relative w-full max-w-sm">
-          <input
-            placeholder="חפש לפי שם, אימייל או טלפון..."
-            value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(event.target.value)}
-            className="w-full p-2 pr-10 border border-gray-300 rounded-md text-right"
-          />
-          <Search
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={20}
-          />
+    <TooltipProvider>
+      <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">ניהול משתמשים</h2>
+        <div className="flex items-center justify-between py-4">
+          <div className="relative w-full max-w-sm">
+            <input
+              placeholder="חפש לפי שם, אימייל או טלפון..."
+              value={globalFilter ?? ""}
+              onChange={(event) => setGlobalFilter(event.target.value)}
+              className="w-full p-2 pr-10 border border-gray-300 rounded-md text-right"
+            />
+            <Search
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+          </div>
         </div>
-      </div>
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className={!row.original.isActive ? "bg-red-50" : ""}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  לא נמצאו תוצאות.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-between py-4">
-        <div className="flex space-x-4 space-x-reverse">
-          <Button
-            onClick={() => handleOpenCreateModal("resident")}
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <UserPlus size={16} className="ml-2" />
-            הוסף דייר
-          </Button>
-          <Button
-            onClick={() => handleOpenCreateModal("admin")}
-            size="sm"
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <ShieldPlus size={16} className="ml-2" />
-            הוסף איש צוות
-          </Button>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className={!row.original.isActive ? "bg-red-50" : ""}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    לא נמצאו תוצאות.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            הקודם
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            הבא
-          </Button>
+        <div className="flex items-center justify-between py-4">
+          <div className="flex space-x-4 space-x-reverse">
+            <Button
+              onClick={() => handleOpenCreateModal("resident")}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <UserPlus size={16} className="ml-2" />
+              הוסף דייר
+            </Button>
+            <Button
+              onClick={() => handleOpenCreateModal("admin")}
+              size="sm"
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <ShieldPlus size={16} className="ml-2" />
+              הוסף איש צוות
+            </Button>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              הקודם
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              הבא
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <EditUserModal
-        isOpen={isEditModalOpen}
-        user={editingUser}
-        allUsers={users}
-        onClose={handleCloseModals}
-        onSave={handleSave}
-      />
-
-      <CreateUserModal
-        isOpen={isCreateModalOpen}
-        onClose={handleCloseModals}
-        userType={createUserType}
-        onUserCreated={fetchUsers}
-      />
-
-      <ResetPasswordModal
-        isOpen={isResetPasswordModalOpen}
-        onClose={handleCloseModals}
-        user={passwordResetUser}
-        onPasswordReset={handlePasswordReset}
-      />
-
-      {deletingUser && (
-        <ConfirmationModal
-          title="אישור מחיקת משתמש"
-          message={`האם אתה בטוח שברצונך למחוק את ${deletingUser.fullName}? פעולה זו תסמן אותו כ"לא פעיל".`}
-          onConfirm={handleDeleteConfirm}
-          onCancel={() => setDeletingUser(null)}
+        <EditUserModal
+          isOpen={isEditModalOpen}
+          user={editingUser}
+          allUsers={users}
+          onClose={handleCloseModals}
+          onSave={handleSave}
         />
-      )}
-    </div>
+
+        <CreateUserModal
+          isOpen={isCreateModalOpen}
+          onClose={handleCloseModals}
+          userType={createUserType}
+          onUserCreated={fetchUsers}
+        />
+
+        <ResetPasswordModal
+          isOpen={isResetPasswordModalOpen}
+          onClose={handleCloseModals}
+          user={passwordResetUser}
+          onPasswordReset={handlePasswordReset}
+        />
+
+        {deletingUser && (
+          <ConfirmationModal
+            title="אישור מחיקת משתמש"
+            message={`האם אתה בטוח שברצונך למחוק את ${deletingUser.fullName}? פעולה זו תסמן אותו כ"לא פעיל".`}
+            onConfirm={handleDeleteConfirm}
+            onCancel={() => setDeletingUser(null)}
+          />
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 
