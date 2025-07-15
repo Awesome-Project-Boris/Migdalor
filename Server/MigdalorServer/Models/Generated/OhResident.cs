@@ -55,7 +55,7 @@ namespace MigdalorServer.Models
         [Column("additionalPic2ID")]
         public int? AdditionalPic2Id { get; set; }
         [Column("residentApartmentNumber")]
-        public int? ResidentApartmentNumber { get; set; }
+        public Guid? ResidentApartmentNumber { get; set; }
 
         [ForeignKey("AdditionalPic1Id")]
         [InverseProperty("OhResidentAdditionalPic1s")]
@@ -66,6 +66,9 @@ namespace MigdalorServer.Models
         [ForeignKey("ResidentId")]
         [InverseProperty("OhResident")]
         public virtual OhPerson Resident { get; set; } = null!;
+        [ForeignKey("ResidentApartmentNumber")]
+        [InverseProperty("OhResidents")]
+        public virtual OhApartment? ResidentApartmentNumberNavigation { get; set; }
         [ForeignKey("SpouseId")]
         [InverseProperty("InverseSpouse")]
         public virtual OhResident? Spouse { get; set; }

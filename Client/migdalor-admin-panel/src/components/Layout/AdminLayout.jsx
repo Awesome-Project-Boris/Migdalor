@@ -1,76 +1,72 @@
-// /src/components/layout/AdminLayout.jsx
-
 import React, { useState } from "react";
-import { Shield, LogOut, Users, FileText } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
+import SidebarButton from "./SidebarButton";
+import { LayoutDashboard, Users, FileText, LogOut } from "lucide-react";
 import UserManagement from "../../features/userManagement/UserManagement";
 import NoticeManagement from "../../features/noticeManagement/NoticeManagement";
-import SidebarButton from "./SidebarButton";
+import Dashboard from "../../pages/Dashboard"; // Import the new Dashboard page
 
 /**
- * The main layout for the authenticated admin area.
- * It includes a persistent sidebar for navigation and a main content area
- * where different management pages are rendered.
+ * The main layout for the admin panel.
+ * It includes a sidebar for navigation and a main content area
+ * where the selected page is displayed.
  */
 const AdminLayout = () => {
-  const [currentPage, setCurrentPage] = useState("users");
-  const { user, logout } = useAuth();
+  const [activePage, setActivePage] = useState("dashboard"); // Default to dashboard
+  const { logout } = useAuth();
 
-  // Renders the component for the currently selected page.
+  // Renders the component corresponding to the active page.
   const renderContent = () => {
-    switch (currentPage) {
+    switch (activePage) {
       case "users":
         return <UserManagement />;
       case "notices":
         return <NoticeManagement />;
+      case "dashboard":
       default:
-        // Fallback to the user management page.
-        return <UserManagement />;
+        // Pass setActivePage to allow the dashboard to navigate to other pages
+        return <Dashboard setActivePage={setActivePage} />;
     }
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar Navigation */}
-      <aside className="flex-shrink-0 flex flex-col w-64 bg-gray-800 text-gray-200">
-        <div className="flex items-center justify-center h-20 border-b border-gray-700">
-          <Shield className="w-8 h-8 text-blue-400" />
-          <span className="mx-3 text-2xl font-bold">מנהל מגדלור</span>
+    <div className="flex h-screen bg-gray-100" dir="rtl">
+      {/* Sidebar */}
+      <aside className="w-64 flex-shrink-0 bg-gray-800 text-white flex flex-col">
+        <div className="h-16 flex items-center justify-center text-2xl font-bold border-b border-gray-700">
+          <span>מגדלור</span>
         </div>
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-2 py-4 space-y-1">
           <SidebarButton
-            icon={<Users />}
+            icon={<LayoutDashboard size={20} />}
+            label="לוח בקרה"
+            isActive={activePage === "dashboard"}
+            onClick={() => setActivePage("dashboard")}
+          />
+          <SidebarButton
+            icon={<Users size={20} />}
             label="ניהול משתמשים"
-            onClick={() => setCurrentPage("users")}
-            isActive={currentPage === "users"}
+            isActive={activePage === "users"}
+            onClick={() => setActivePage("users")}
           />
           <SidebarButton
-            icon={<FileText />}
-            label="ניהול הודעות"
-            onClick={() => setCurrentPage("notices")}
-            isActive={currentPage === "notices"}
+            icon={<FileText size={20} />}
+            label="ניהול מודעות"
+            isActive={activePage === "notices"}
+            onClick={() => setActivePage("notices")}
           />
-          {/* Future navigation buttons can be added here */}
         </nav>
-        <div className="px-4 py-4 border-t border-gray-700">
-          <div className="text-sm">מחובר בתור:</div>
-          <div className="font-semibold truncate">
-            {user ? `${user.hebFirstName} ${user.hebLastName}` : "Admin"}
-          </div>
-          <button
+        <div className="p-2 border-t border-gray-700">
+          <SidebarButton
+            icon={<LogOut size={20} />}
+            label="התנתקות"
             onClick={logout}
-            className="flex items-center justify-center w-full px-4 py-2 mt-4 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="mx-2">התנתק</span>
-          </button>
+          />
         </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-10">
-        <div className="w-full max-w-7xl mx-auto">{renderContent()}</div>
-      </main>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto">{renderContent()}</main>
     </div>
   );
 };

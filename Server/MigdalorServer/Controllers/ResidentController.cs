@@ -204,5 +204,33 @@ namespace MigdalorServer.Controllers
         }
 
 
+        /// <summary>
+        /// Marks a resident as active.
+        /// </summary>
+        /// <param name="id">The GUID of the resident to restore.</param>
+        /// <returns>An IActionResult indicating the result of the operation.</returns>
+        [HttpPut("Restore/{id}")]
+        [Authorize]
+        public async Task<IActionResult> RestoreUser(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest("A valid resident ID must be provided.");
+            }
+            try
+            {
+                var success = await OhResident.RestoreUserAsync(id);
+                if (!success)
+                {
+                    return NotFound($"A resident with the ID '{id}' was not found.");
+                }
+                return Ok($"Resident with ID '{id}' was successfully marked as active.");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error in RestoreUser: {e}");
+                return StatusCode(500, "An internal server error occurred while activating the resident.");
+            }
+        }
     }
 }
