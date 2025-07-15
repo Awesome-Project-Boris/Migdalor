@@ -35,7 +35,7 @@ const mapNodes = [
   { id: 1, coords: "32.309722, 34.895251" },
   { id: 2, coords: "32.309750, 34.895035" },
   { id: 3, coords: "32.309747, 34.894634" },
-  { id: 4, coords: "32.309753, 34.894403" },
+  { id: 4, coords: "32.309750, 34.894447" }, // OLD:  32.309753, 34.894403      // NEW: 32.309750, 34.894447
   { id: 5, coords: "32.309818, 34.895326" },
   { id: 6, coords: "32.309999, 34.895159" },
   { id: 7, coords: "32.310278, 34.894875" },
@@ -45,10 +45,10 @@ const mapNodes = [
   { id: 11, coords: "32.309563, 34.895390" },
   { id: 12, coords: "32.309354, 34.895396" },
   { id: 13, coords: "32.308981, 34.895382" },
-  { id: 14, coords: "32.308775, 34.895376" },
+  { id: 14, coords: "32.308796, 34.895373" }, // OLD: 32.308775, 34.895376            // NEW:  32.308796, 34.895373
   { id: 15, coords: "32.309837, 34.895403" },
   { id: 16, coords: "32.310092, 34.895416" },
-  { id: 17, coords: "32.310405, 34.895419" },
+  { id: 17, coords: "32.310435, 34.895417" }, // OLD: 32.3z10405, 34.8z95419            // NEW:  32.310435, 34.895417
   { id: 18, coords: "32.310623, 34.895429" },
   { id: 19, coords: "32.310824, 34.895429" },
   { id: 20, coords: "32.310990, 34.895439" },
@@ -69,14 +69,14 @@ const mapNodes = [
   { id: 35, coords: "32.311409, 34.895968" },
   { id: 36, coords: "32.311252, 34.895979" },
   { id: 37, coords: "32.311154, 34.895966" },
-  { id: 38, coords: "32.310947, 34.895950" },
-  { id: 39, coords: "32.310968, 34.895813" },
+  { id: 38, coords: "32.310977, 34.895949" }, // OLD:  32.310947, 34.895950          // NEW: 32.310977, 34.895949
+  { id: 39, coords: "32.310982, 34.895819" }, // OLD:  32.3z10968, 34.8z95813           // NEW: 32.310982, 34.895819
   { id: 40, coords: "32.310990, 34.895593" },
   { id: 41, coords: "32.310848, 34.895284" },
   { id: 42, coords: "32.310909, 34.895069" },
   { id: 43, coords: "32.310983, 34.894895" },
   { id: 44, coords: "32.311229, 34.895287" },
-  { id: 45, coords: "32.311326, 34.895057" },
+  { id: 45, coords: "32.311301, 34.895115" }, // OLD: 32.3z11326, 34.8z95057          // NEW:  32.311301, 34.895115
   { id: 46, coords: "32.311376, 34.894984" },
   { id: 47, coords: "32.311486, 34.894847" },
   { id: 48, coords: "32.311167, 34.895594" },
@@ -112,7 +112,7 @@ const mapNodes = [
   { id: 78, coords: "32.309339, 34.895528" },
   { id: 79, coords: "32.309336, 34.895734" },
   { id: 80, coords: "32.309330, 34.895887" },
-  { id: 81, coords: "32.308813, 34.895871" },
+  { id: 81, coords: "32.308779, 34.895842" }, // OLD: 32.308813, 34.895871           // NEW: 32.308779, 34.895842
   { id: 82, coords: "32.308764, 34.895713" },
   { id: 83, coords: "32.308786, 34.895519" },
   { id: 84, coords: "32.308815, 34.895212" },
@@ -123,7 +123,7 @@ const mapNodes = [
   { id: 89, coords: "32.309661, 34.894435" },
   { id: 90, coords: "32.309856, 34.894433" },
   { id: 91, coords: "32.310364, 34.894458" },
-  { id: 92, coords: "32.310594, 34.894481" },
+  { id: 92, coords: "32.310667, 34.894481" }, // OLD: 32.310594, 34.894481        //  NEW:  32.310667, 34.894481
   { id: 93, coords: "32.310647, 34.894735" },
   { id: 94, coords: "32.310647, 34.894735" },
   { id: 95, coords: "32.310623, 34.895429" },
@@ -257,7 +257,7 @@ const polylines = [
   ],
   [
     { latitude: 32.309747, longitude: 34.894634 },
-    { latitude: 32.309753, longitude: 34.894403 },
+    { latitude: 32.30975, longitude: 34.894447 },
   ],
   [
     { latitude: 32.309722, longitude: 34.895251 },
@@ -297,7 +297,7 @@ const polylines = [
   ],
   [
     { latitude: 32.308981, longitude: 34.895382 },
-    { latitude: 32.308775, longitude: 34.895376 },
+    { latitude: 32.308796, longitude: 34.895373 },
   ],
   [
     { latitude: 32.309818, longitude: 34.895326 },
@@ -393,14 +393,14 @@ const polylines = [
   ],
   [
     { latitude: 32.311154, longitude: 34.895966 },
-    { latitude: 32.310947, longitude: 34.89595 },
+    { latitude: 32.310977, longitude: 34.89595 },
   ],
   [
-    { latitude: 32.310947, longitude: 34.89595 },
-    { latitude: 32.310968, longitude: 34.895813 },
+    { latitude: 32.310977, longitude: 34.89595 },
+    { latitude: 32.310982, longitude: 34.895819 },
   ],
   [
-    { latitude: 32.310968, longitude: 34.895813 },
+    { latitude: 32.310982, longitude: 34.895819 },
     { latitude: 32.31099, longitude: 34.895593 },
   ],
   [
@@ -429,10 +429,10 @@ const polylines = [
   ],
   [
     { latitude: 32.311229, longitude: 34.895287 },
-    { latitude: 32.311326, longitude: 34.895057 },
+    { latitude: 32.311301, longitude: 34.895115 },
   ],
   [
-    { latitude: 32.311326, longitude: 34.895057 },
+    { latitude: 32.311301, longitude: 34.895115 },
     { latitude: 32.311376, longitude: 34.894984 },
   ],
   [
@@ -609,10 +609,10 @@ const polylines = [
   ],
   [
     { latitude: 32.308979, longitude: 34.895869 },
-    { latitude: 32.308813, longitude: 34.895871 },
+    { latitude: 32.308779, longitude: 34.895842 },
   ],
   [
-    { latitude: 32.308813, longitude: 34.895871 },
+    { latitude: 32.308779, longitude: 34.895842 },
     { latitude: 32.308764, longitude: 34.895713 },
   ],
   [
@@ -621,10 +621,10 @@ const polylines = [
   ],
   [
     { latitude: 32.308786, longitude: 34.895519 },
-    { latitude: 32.308775, longitude: 34.895376 },
+    { latitude: 32.308796, longitude: 34.895373 },
   ],
   [
-    { latitude: 32.308775, longitude: 34.895376 },
+    { latitude: 32.308796, longitude: 34.895373 },
     { latitude: 32.308815, longitude: 34.895212 },
   ],
   [
@@ -649,10 +649,10 @@ const polylines = [
   ],
   [
     { latitude: 32.309661, longitude: 34.894435 },
-    { latitude: 32.309753, longitude: 34.894403 },
+    { latitude: 32.30975, longitude: 34.894447 },
   ],
   [
-    { latitude: 32.309753, longitude: 34.894403 },
+    { latitude: 32.30975, longitude: 34.894447 },
     { latitude: 32.309856, longitude: 34.894433 },
   ],
   [
@@ -661,10 +661,10 @@ const polylines = [
   ],
   [
     { latitude: 32.310364, longitude: 34.894458 },
-    { latitude: 32.310594, longitude: 34.894481 },
+    { latitude: 32.310667, longitude: 34.894481 },
   ],
   [
-    { latitude: 32.310594, longitude: 34.894481 },
+    { latitude: 32.310667, longitude: 34.894481 },
     { latitude: 32.310647, longitude: 34.894735 },
   ],
   [
@@ -673,395 +673,7 @@ const polylines = [
   ],
 ];
 
-const MapBoundsCoordinations = [
-  {
-    latitude: 32.312541,
-    longitude: 34.894063,
-  },
-  {
-    latitude: 32.31192,
-    longitude: 34.896611,
-  },
-  {
-    latitude: 32.308411,
-    longitude: 34.896262,
-  },
-  {
-    latitude: 32.308432,
-    longitude: 34.894108,
-  },
-
-  { latitude: 32.312541, longitude: 34.894063 },
-];
-
-const boundaryPolygonForCheck = MapBoundsCoordinations.map((p) => [
-  p.longitude,
-  p.latitude,
-]);
-
-const nodesById = mapNodes.reduce((acc, node) => {
-  const [lat, lon] = node.coords.split(", ").map(Number);
-  acc[node.id] = { latitude: lat, longitude: lon };
-  return acc;
-}, {});
-
-const Map = () => {
-  const { t } = useTranslation();
-
-  const buildingsCoordinations = [
-    {
-      id: "B1",
-      name: t("MapScreen_building1Name"),
-      info: t("MapScreen_building1Info"),
-      coordinates: [
-        { latitude: 32.310919, longitude: 34.895532 },
-        { latitude: 32.310909, longitude: 34.895903 },
-        { latitude: 32.310824, longitude: 34.895906 },
-        { latitude: 32.310824, longitude: 34.895655 },
-        { latitude: 32.310532, longitude: 34.895652 },
-        { latitude: 32.310533, longitude: 34.895527 },
-        { latitude: 32.310919, longitude: 34.895532 },
-      ],
-    },
-  ];
-
-  const [mapRegion, setMapRegion] = useState({
-    latitude: MAP_CENTER_LATITUDE,
-    longitude: MAP_CENTER_LONGITUDE,
-    latitudeDelta: INITIAL_LATITUDE_DELTA,
-    longitudeDelta: INITIAL_LONGITUDE_DELTA,
-  });
-  const [currentUserLocation, setCurrentUserLocation] = useState(null);
-  const [isInsideBoundary, setIsInsideBoundary] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedBuilding, setSelectedBuilding] = useState(null);
-  const [locationPermissionGranted, setLocationPermissionGranted] =
-    useState(false);
-  const mapRef = useRef(null);
-
-  const watchId = useRef(null);
-
-  const requestLocationPermission = async () => {
-    console.log(
-      "[Permissions] Requesting location permission (expo-location)..."
-    );
-    let { status, canAskAgain } =
-      await Location.requestForegroundPermissionsAsync();
-    console.log("[Permissions] Expo Location Status:", status);
-    if (status !== "granted") {
-      console.log("[Permissions] Expo Location permission denied");
-      setLocationPermissionGranted(false);
-
-      const alertMessage = t("Permissions_locationPermissionMessage");
-      const alertButtons = [{ text: t("Permissions_okButton") }];
-      if (!canAskAgain) {
-        alertButtons.push({
-          text: t("Permissions_openSettingsButton"),
-          onPress: () => Linking.openSettings(),
-        });
-      }
-      Alert.alert(
-        t("Permissions_permissionDeniedTitle"),
-        alertMessage,
-        alertButtons
-      );
-      return false;
-    }
-    console.log("[Permissions] Expo Location permission granted");
-    setLocationPermissionGranted(true);
-    return true;
-  };
-
-  useEffect(() => {
-    console.log("[Effect] Map component mounted. Requesting permission...");
-
-    let locationSubscription = null;
-
-    const activateLocation = async () => {
-      const granted = await requestLocationPermission();
-      console.log("[Effect] Permission request finished. Granted:", granted);
-
-      if (granted) {
-        console.log(
-          "[Effect] Permission granted. Getting initial position (expo-location)..."
-        );
-        try {
-          let location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High,
-          });
-          console.log(
-            "[Effect] getCurrentPositionAsync SUCCESS:",
-            JSON.stringify(location.coords, null, 2)
-          );
-          setCurrentUserLocation(location.coords);
-
-          const userCoordsForCheck = [
-            location.coords.longitude,
-            location.coords.latitude,
-          ];
-          const isInside = pointInPolygon(
-            userCoordsForCheck,
-            boundaryPolygonForCheck
-          );
-          setIsInsideBoundary(isInside);
-        } catch (error) {
-          console.error("[Effect] getCurrentPositionAsync ERROR:", error);
-          Alert.alert(
-            "Error Getting Location",
-            `Could not fetch initial location: ${error.message}`
-          );
-        }
-
-        console.log("[Effect] Starting location watcher (expo-location)...");
-        try {
-          if (watchId.current) {
-            console.log("[Effect] Removing previous location subscription.");
-            watchId.current.remove();
-            watchId.current = null;
-          }
-
-          locationSubscription = await Location.watchPositionAsync(
-            {
-              accuracy: Location.Accuracy.High,
-              timeInterval: 5000,
-              distanceInterval: 10,
-            },
-            (location) => {
-              setCurrentUserLocation(location.coords);
-
-              const userCoordsForCheck = [
-                location.coords.longitude,
-                location.coords.latitude,
-              ];
-              const isInside = pointInPolygon(
-                userCoordsForCheck,
-                boundaryPolygonForCheck
-              );
-              setIsInsideBoundary(isInside);
-            }
-          );
-          watchId.current = locationSubscription;
-          console.log("[Effect] watchPositionAsync started.");
-        } catch (error) {
-          console.error("[Effect] watchPositionAsync ERROR:", error);
-          Alert.alert(
-            "Error Watching Location",
-            `Could not start location updates: ${error.message}`
-          );
-        }
-      } else {
-        console.log(
-          "[Effect] Permission denied by user. Location tracking not started."
-        );
-      }
-    };
-
-    activateLocation();
-
-    return () => {
-      if (watchId.current) {
-        console.log(
-          "[Effect] Map component unmounting. Removing location subscription."
-        );
-        watchId.current.remove();
-        watchId.current = null;
-      }
-    };
-  }, []);
-
-  const handleBuildingPress = (building) => {
-    setSelectedBuilding(building);
-    setIsModalVisible(true);
-  };
-
-  const onRegionChangeComplete = (newRegion) => {
-    setMapRegion(newRegion);
-  };
-
-  return (
-    <View style={styles.container}>
-      <MapView
-        ref={mapRef}
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        mapType="standard"
-        region={mapRegion}
-        onRegionChangeComplete={onRegionChangeComplete}
-        onMapReady={() => console.log("Map is ready!")}
-        showsUserLocation={locationPermissionGranted}
-        showsMyLocationButton={locationPermissionGranted}
-        followsUserLocation={false}
-        onError={(error) => console.error("MapView Error:", error)}
-      >
-        {/* Polygons */}
-        <Polygon
-          coordinates={MapBoundsCoordinations}
-          strokeColor="rgba(255, 0, 0, 0.4)"
-          strokeWidth={2}
-          fillColor={"rgba(55, 180, 0, 0.15)"}
-        />
-        {buildingsCoordinations.map((building) => (
-          <Polygon
-            key={building.id}
-            coordinates={building.coordinates}
-            fillColor="rgba(0, 0, 255, 0.1)"
-            strokeColor="rgba(0, 0, 255, 1)"
-            strokeWidth={1.5}
-            tappable={true}
-            onPress={() => handleBuildingPress(building)}
-          />
-        ))}
-        {polylines.map((line, index) => (
-          <Polyline
-            key={`poly-${index}`}
-            coordinates={line}
-            strokeColor="#ffef77" //
-            strokeWidth={3}
-          />
-        ))}
-        {/* {mapNodes.map((node) => {
-          const [lat, lon] = node.coords.split(", ").map(Number);
-          return (
-            <Marker
-              key={`node-${node.id}`}
-              coordinate={{ latitude: lat, longitude: lon }}
-              title={`Node ${node.id}`}
-              pinColor="blue"
-            />
-          );
-        })} */}
-      </MapView>
-
-      {/*/ For dev purposes mainly/*/}
-      <View style={styles.statusOverlay}>
-        <Text style={styles.statusText}>
-          {t("LocationScreen_locationPermissionLabel")}
-          {locationPermissionGranted ? "Granted" : "Not Granted"}
-        </Text>
-        {locationPermissionGranted && (
-          <Text style={styles.statusText}>
-            {t("LocationScreen_userLocationLabel")}
-            {currentUserLocation
-              ? `${currentUserLocation.latitude.toFixed(
-                  4
-                )}, ${currentUserLocation.longitude.toFixed(4)}`
-              : "Tracking..."}
-          </Text>
-        )}
-        {locationPermissionGranted && currentUserLocation && (
-          <Text
-            style={[
-              styles.statusText,
-              { color: isInsideBoundary ? "lime" : "red", fontWeight: "bold" },
-            ]}
-          >
-            {t("LocationScreen_insideBoundaryLabel")}
-            {isInsideBoundary ? "Yes" : "No"}
-          </Text>
-        )}
-      </View>
-
-      {/* Building Info Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={() => {
-          setIsModalVisible(!isModalVisible);
-          setSelectedBuilding(null);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalBackground} />
-          <View style={styles.modalView}>
-            {selectedBuilding && (
-              <>
-                <Text style={styles.modalTitle}>{selectedBuilding.name}</Text>
-                <Text style={styles.modalText}>{selectedBuilding.info}</Text>
-              </>
-            )}
-            <FlipButton
-              style={styles.modalButton}
-              onPress={() => {
-                setIsModalVisible(false);
-                setSelectedBuilding(null);
-              }}
-            >
-              <Text>{t("MapScreen_backToMapButton")}</Text>
-            </FlipButton>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    ...StyleSheet.absoluteFillObject,
-    justifyContent: "flex-end",
-    alignItems: "center",
-  },
-  map: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  statusOverlay: {
-    position: "absolute",
-    top: 40,
-    left: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    padding: 8,
-    borderRadius: 5,
-    zIndex: 1,
-  },
-  statusText: {
-    color: "white",
-    fontSize: 12,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalBackground: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    width: "80%",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  modalText: {
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  modalButton: {
-    backgroundColor: "#2196F3",
-    padding: 10,
-    borderRadius: 5,
-    marginTop: 20,
-    width: "70%",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
-
-export default Map;
+///////////// TEMPTS BEFORE DB MOVE //////////////////////////////////////////////////////////////////////////////////////////
 
 const buildingsAndInfoForDb = [
   {
@@ -2955,7 +2567,13 @@ const buildingsAndInfoForDb = [
     name: "",
     info: "",
     entrances: [],
-    coordinates: [],
+    coordinates: [
+      "32.311407, 34.894518",
+      "32.311404, 34.894686",
+      "32.311135, 34.894691",
+      "32.311137, 34.894517",
+      "32.311407, 34.894518",
+    ],
     apartments: [
       {
         apartmentNumber: "00000000-0000-0000-0000-0000000A2151",
@@ -3054,7 +2672,13 @@ const buildingsAndInfoForDb = [
     name: "",
     info: "",
     entrances: [],
-    coordinates: [],
+    coordinates: [
+      "32.311741, 34.894537",
+      "32.311741, 34.894686",
+      "32.311421, 34.894693",
+      "32.311422, 34.894522",
+      "32.311741, 34.894537",
+    ],
     apartments: [
       {
         apartmentNumber: "00000000-0000-0000-0000-0000000A3151",
@@ -3143,3 +2767,429 @@ const buildingsAndInfoForDb = [
     ],
   },
 ];
+
+const buildingsToRender = buildingsAndInfoForDb
+  .map((building) => {
+    // The coordinates are strings, so we need to parse them into objects
+    const parsedCoords = building.coordinates
+      .map((coordString) => {
+        const [lat, lon] = coordString.split(", ").map(Number);
+        return { latitude: lat, longitude: lon };
+      })
+      .filter((coord) => !isNaN(coord.latitude) && !isNaN(coord.longitude)); // Filter out any invalid coordinates
+
+    return {
+      id: building.buildingId,
+      // Use the name from the data or provide a fallback
+      name: building.name || `Building ID: ${building.buildingId}`,
+      // Use the info from the data or provide a fallback
+      info: building.info || "No additional information available.",
+      coordinates: parsedCoords,
+    };
+  })
+  .filter((building) => building.coordinates.length > 0); // Ensure building has coordinates to render
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+const MapBoundsCoordinations = [
+  {
+    latitude: 32.312541,
+    longitude: 34.894063,
+  },
+  {
+    latitude: 32.31192,
+    longitude: 34.896611,
+  },
+  {
+    latitude: 32.308411,
+    longitude: 34.896262,
+  },
+  {
+    latitude: 32.308432,
+    longitude: 34.894108,
+  },
+
+  { latitude: 32.312541, longitude: 34.894063 },
+];
+
+const boundaryPolygonForCheck = MapBoundsCoordinations.map((p) => [
+  p.longitude,
+  p.latitude,
+]);
+
+const nodesById = mapNodes.reduce((acc, node) => {
+  const [lat, lon] = node.coords.split(", ").map(Number);
+  acc[node.id] = { latitude: lat, longitude: lon };
+  return acc;
+}, {});
+
+const Map = () => {
+  const { t } = useTranslation();
+
+  const buildingsCoordinations = [
+    {
+      id: "B1",
+      name: t("MapScreen_building1Name"),
+      info: t("MapScreen_building1Info"),
+      coordinates: [
+        { latitude: 32.310919, longitude: 34.895532 },
+        { latitude: 32.310909, longitude: 34.895903 },
+        { latitude: 32.310824, longitude: 34.895906 },
+        { latitude: 32.310824, longitude: 34.895655 },
+        { latitude: 32.310532, longitude: 34.895652 },
+        { latitude: 32.310533, longitude: 34.895527 },
+        { latitude: 32.310919, longitude: 34.895532 },
+      ],
+    },
+  ];
+
+  const [mapRegion, setMapRegion] = useState({
+    latitude: MAP_CENTER_LATITUDE,
+    longitude: MAP_CENTER_LONGITUDE,
+    latitudeDelta: INITIAL_LATITUDE_DELTA,
+    longitudeDelta: INITIAL_LONGITUDE_DELTA,
+  });
+  const [currentUserLocation, setCurrentUserLocation] = useState(null);
+  const [isInsideBoundary, setIsInsideBoundary] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedBuilding, setSelectedBuilding] = useState(null);
+  const [locationPermissionGranted, setLocationPermissionGranted] =
+    useState(false);
+  const mapRef = useRef(null);
+
+  const watchId = useRef(null);
+
+  const requestLocationPermission = async () => {
+    console.log(
+      "[Permissions] Requesting location permission (expo-location)..."
+    );
+    let { status, canAskAgain } =
+      await Location.requestForegroundPermissionsAsync();
+    console.log("[Permissions] Expo Location Status:", status);
+    if (status !== "granted") {
+      console.log("[Permissions] Expo Location permission denied");
+      setLocationPermissionGranted(false);
+
+      const alertMessage = t("Permissions_locationPermissionMessage");
+      const alertButtons = [{ text: t("Permissions_okButton") }];
+      if (!canAskAgain) {
+        alertButtons.push({
+          text: t("Permissions_openSettingsButton"),
+          onPress: () => Linking.openSettings(),
+        });
+      }
+      Alert.alert(
+        t("Permissions_permissionDeniedTitle"),
+        alertMessage,
+        alertButtons
+      );
+      return false;
+    }
+    console.log("[Permissions] Expo Location permission granted");
+    setLocationPermissionGranted(true);
+    return true;
+  };
+
+  useEffect(() => {
+    console.log("[Effect] Map component mounted. Requesting permission...");
+
+    let locationSubscription = null;
+
+    const activateLocation = async () => {
+      const granted = await requestLocationPermission();
+      console.log("[Effect] Permission request finished. Granted:", granted);
+
+      if (granted) {
+        console.log(
+          "[Effect] Permission granted. Getting initial position (expo-location)..."
+        );
+        try {
+          let location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+          console.log(
+            "[Effect] getCurrentPositionAsync SUCCESS:",
+            JSON.stringify(location.coords, null, 2)
+          );
+          setCurrentUserLocation(location.coords);
+
+          const userCoordsForCheck = [
+            location.coords.longitude,
+            location.coords.latitude,
+          ];
+          const isInside = pointInPolygon(
+            userCoordsForCheck,
+            boundaryPolygonForCheck
+          );
+          setIsInsideBoundary(isInside);
+        } catch (error) {
+          console.error("[Effect] getCurrentPositionAsync ERROR:", error);
+          Alert.alert(
+            "Error Getting Location",
+            `Could not fetch initial location: ${error.message}`
+          );
+        }
+
+        console.log("[Effect] Starting location watcher (expo-location)...");
+        try {
+          if (watchId.current) {
+            console.log("[Effect] Removing previous location subscription.");
+            watchId.current.remove();
+            watchId.current = null;
+          }
+
+          locationSubscription = await Location.watchPositionAsync(
+            {
+              accuracy: Location.Accuracy.High,
+              timeInterval: 5000,
+              distanceInterval: 10,
+            },
+            (location) => {
+              setCurrentUserLocation(location.coords);
+
+              const userCoordsForCheck = [
+                location.coords.longitude,
+                location.coords.latitude,
+              ];
+              const isInside = pointInPolygon(
+                userCoordsForCheck,
+                boundaryPolygonForCheck
+              );
+              setIsInsideBoundary(isInside);
+            }
+          );
+          watchId.current = locationSubscription;
+          console.log("[Effect] watchPositionAsync started.");
+        } catch (error) {
+          console.error("[Effect] watchPositionAsync ERROR:", error);
+          Alert.alert(
+            "Error Watching Location",
+            `Could not start location updates: ${error.message}`
+          );
+        }
+      } else {
+        console.log(
+          "[Effect] Permission denied by user. Location tracking not started."
+        );
+      }
+    };
+
+    activateLocation();
+
+    return () => {
+      if (watchId.current) {
+        console.log(
+          "[Effect] Map component unmounting. Removing location subscription."
+        );
+        watchId.current.remove();
+        watchId.current = null;
+      }
+    };
+  }, []);
+
+  const handleBuildingPress = (building) => {
+    setSelectedBuilding(building);
+    setIsModalVisible(true);
+  };
+
+  const onRegionChangeComplete = (newRegion) => {
+    setMapRegion(newRegion);
+  };
+
+  return (
+    <View style={styles.container}>
+      <MapView
+        ref={mapRef}
+        provider={PROVIDER_GOOGLE}
+        style={styles.map}
+        mapType="standard"
+        region={mapRegion}
+        onRegionChangeComplete={onRegionChangeComplete}
+        onMapReady={() => console.log("Map is ready!")}
+        showsUserLocation={locationPermissionGranted}
+        showsMyLocationButton={locationPermissionGranted}
+        followsUserLocation={false}
+        onError={(error) => console.error("MapView Error:", error)}
+      >
+        {/* Polygons */}
+        <Polygon
+          coordinates={MapBoundsCoordinations}
+          strokeColor="rgba(255, 0, 0, 0.4)"
+          strokeWidth={2}
+          fillColor={"rgba(55, 180, 0, 0.15)"}
+        />
+        {/* {buildingsCoordinations.map((building) => (
+          <Polygon
+            key={building.id}
+            coordinates={building.coordinates}
+            fillColor="rgba(0, 0, 255, 0.1)"
+            strokeColor="rgba(0, 0, 255, 1)"
+            strokeWidth={1.5}
+            tappable={true}
+            onPress={() => handleBuildingPress(building)}
+          />
+        ))} */}
+
+        {/*   TEST BEFORE DB MOVE      */}
+        {buildingsToRender.map((building) => (
+          <Polygon
+            key={building.id}
+            coordinates={building.coordinates}
+            fillColor="rgba(0, 0, 255, 0.1)"
+            strokeColor="rgba(0, 0, 255, 1)"
+            strokeWidth={1.5}
+            tappable={true}
+            onPress={() => handleBuildingPress(building)}
+          />
+        ))}
+
+        {polylines.map((line, index) => (
+          <Polyline
+            key={`poly-${index}`}
+            coordinates={line}
+            strokeColor="#ffef77" //
+            strokeWidth={5}
+          />
+        ))}
+        {/* {mapNodes.map((node) => {
+          const [lat, lon] = node.coords.split(", ").map(Number);
+          return (
+            <Marker
+              key={`node-${node.id}`}
+              coordinate={{ latitude: lat, longitude: lon }}
+              title={`Node ${node.id}`}
+              pinColor="blue"
+            />
+          );
+        })} */}
+      </MapView>
+
+      {/*/ For dev purposes mainly/*/}
+      <View style={styles.statusOverlay}>
+        <Text style={styles.statusText}>
+          {t("LocationScreen_locationPermissionLabel")}
+          {locationPermissionGranted ? "Granted" : "Not Granted"}
+        </Text>
+        {locationPermissionGranted && (
+          <Text style={styles.statusText}>
+            {t("LocationScreen_userLocationLabel")}
+            {currentUserLocation
+              ? `${currentUserLocation.latitude.toFixed(
+                  4
+                )}, ${currentUserLocation.longitude.toFixed(4)}`
+              : "Tracking..."}
+          </Text>
+        )}
+        {locationPermissionGranted && currentUserLocation && (
+          <Text
+            style={[
+              styles.statusText,
+              { color: isInsideBoundary ? "lime" : "red", fontWeight: "bold" },
+            ]}
+          >
+            {t("LocationScreen_insideBoundaryLabel")}
+            {isInsideBoundary ? "Yes" : "No"}
+          </Text>
+        )}
+      </View>
+
+      {/* Building Info Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={() => {
+          setIsModalVisible(!isModalVisible);
+          setSelectedBuilding(null);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalBackground} />
+          <View style={styles.modalView}>
+            {selectedBuilding && (
+              <>
+                <Text style={styles.modalTitle}>{selectedBuilding.name}</Text>
+                <Text style={styles.modalText}>{selectedBuilding.info}</Text>
+              </>
+            )}
+            <FlipButton
+              style={styles.modalButton}
+              onPress={() => {
+                setIsModalVisible(false);
+                setSelectedBuilding(null);
+              }}
+            >
+              <Text>{t("MapScreen_backToMapButton")}</Text>
+            </FlipButton>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  map: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  statusOverlay: {
+    position: "absolute",
+    top: 40,
+    left: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    padding: 8,
+    borderRadius: 5,
+    zIndex: 1,
+  },
+  statusText: {
+    color: "white",
+    fontSize: 12,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBackground: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: "80%",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  modalText: {
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalButton: {
+    backgroundColor: "#2196F3",
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 20,
+    width: "70%",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+
+export default Map;
