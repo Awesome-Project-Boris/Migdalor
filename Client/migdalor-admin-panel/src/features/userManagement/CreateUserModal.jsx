@@ -159,7 +159,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
     const printContent = document.getElementById(
       "password-print-area"
     ).innerHTML;
-    const printWindow = window.open("", "_blank", "height=500,width=500");
+    const printWindow = window.open("", "_blank", "height=700,width=700");
 
     printWindow.document.write("<html><head><title>פרטי משתמש</title>");
     printWindow.document.write(

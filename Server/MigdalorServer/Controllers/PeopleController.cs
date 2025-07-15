@@ -19,6 +19,32 @@ using MigdalorServer.BL;
 
 namespace MigdalorServer.Controllers
 {
+    // DTO for the reset password request
+    public class ResetPasswordDto
+    {
+        [Required]
+        public string NewPassword { get; set; }
+    }
+
+    // DTO for Admin Registration, includes Role
+    public class AdminRegisterDto
+    {
+        [Required]
+        public string PhoneNumber { get; set; }
+        [Required]
+        public string HebFirstName { get; set; }
+        [Required]
+        public string HebLastName { get; set; }
+        public string? EngFirstName { get; set; }
+        public string? EngLastName { get; set; }
+        public string Gender { get; set; }
+        [Required]
+        public string Password { get; set; }
+        [Required]
+        public string Role { get; set; }
+    }
+
+
     [Route("api/[controller]")]
     [ApiController]
     public class PeopleController : ControllerBase
@@ -267,6 +293,42 @@ namespace MigdalorServer.Controllers
                 );
             }
         }
+
+        [HttpPost("RegisterAdmin")]
+        [Authorize(Roles = "admin")]
+        public IActionResult RegisterAdmin([FromBody] AdminRegisterDto adminData)
+        {
+            try
+            {
+                if (_context.OhPeople.Any(p => p.PhoneNumber == adminData.PhoneNumber))
+                {
+                    return Conflict("A user with this phone number already exists.");
+                }
+
+                var newAdmin = new OhPerson
+                {
+                    PersonId = Guid.NewGuid(),
+                    PhoneNumber = adminData.PhoneNumber,
+                    HebFirstName = adminData.HebFirstName,
+                    HebLastName = adminData.HebLastName,
+                    EngFirstName = adminData.EngFirstName,
+                    EngLastName = adminData.EngLastName,
+                    Gender = adminData.Gender,
+                    PasswordHash = PasswordServices.CreatePasswordHash(adminData.Password),
+                    PersonRole = adminData.Role
+                };
+
+                _context.OhPeople.Add(newAdmin);
+                _context.SaveChanges();
+
+                return Ok(newAdmin);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error Registering Admin: {e.Message}");
+            }
+        }
+
 
         [HttpGet("ActiveDigests")]
         public async Task<ActionResult<IEnumerable<ResidentDigest>>> GetActiveResidentDigests()
