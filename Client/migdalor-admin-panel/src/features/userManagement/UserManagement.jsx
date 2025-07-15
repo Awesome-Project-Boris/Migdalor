@@ -242,18 +242,9 @@ const UserManagement = () => {
   );
 
   const handlePasswordReset = async (userId, newPassword) => {
-    try {
-      await api.post(
-        `/People/reset-password/${userId}`,
-        { newPassword },
-        token
-      );
-      showToast("success", "הסיסמה אופסה בהצלחה.");
-    } catch (err) {
-      showToast("error", `שגיאה באיפוס סיסמה: ${err.message}`);
-      // Re-throw the error so the modal can handle its state
-      throw err;
-    }
+    // The modal will now handle its own success/error feedback.
+    // This function just performs the API call.
+    return api.post(`/People/reset-password/${userId}`, { newPassword }, token);
   };
 
   const columns = useMemo(
@@ -573,10 +564,8 @@ const UserManagement = () => {
           isOpen={isCreateModalOpen}
           onClose={handleCloseModals}
           userType={createUserType}
-          onUserCreated={() => {
-            fetchUsers();
-            showToast("success", "המשתמש נוצר בהצלחה.");
-          }}
+          onUserCreated={fetchUsers}
+          showToast={showToast}
         />
 
         <ResetPasswordModal
@@ -584,6 +573,7 @@ const UserManagement = () => {
           onClose={handleCloseModals}
           user={passwordResetUser}
           onPasswordReset={handlePasswordReset}
+          showToast={showToast}
         />
 
         {deletingUser && (

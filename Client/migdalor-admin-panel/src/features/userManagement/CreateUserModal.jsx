@@ -61,7 +61,13 @@ const DialogDescription = React.forwardRef((props, ref) => (
 
 // --- Main CreateUserModal Component ---
 
-const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
+const CreateUserModal = ({
+  isOpen,
+  onClose,
+  userType,
+  onUserCreated,
+  showToast,
+}) => {
   const { token } = useAuth();
   const [formData, setFormData] = useState({});
   const [showPasswordView, setShowPasswordView] = useState(false);
@@ -131,16 +137,18 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
     try {
       await api.post(endpoint, payload, token);
       if (userType === "resident") {
+        showToast("success", "הדייר נוצר בהצלחה!");
         setCreatedUserDetails(payload);
         setShowPasswordView(true);
       } else {
-        alert("איש צוות נוצר בהצלחה!");
+        showToast("success", "איש צוות נוצר בהצלחה!");
         onUserCreated();
         onClose();
       }
     } catch (error) {
       console.error("Error creating user:", error);
-      alert(
+      showToast(
+        "error",
         `שגיאה ביצירת משתמש: ${error.message || "An unknown error occurred."}`
       );
     } finally {
@@ -182,7 +190,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
       navigator.clipboard.writeText(
         `שם משתמש: ${createdUserDetails.phoneNumber}\nסיסמה: ${createdUserDetails.password}`
       );
-      alert("פרטי המשתמש הועתקו.");
+      showToast("info", "פרטי המשתמש הועתקו.");
     }
   };
 
