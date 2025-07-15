@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, RefreshCw, Printer, Copy } from "lucide-react";
+import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import InputField from "../../components/common/InputField";
 
@@ -9,7 +10,6 @@ const Dialog = ({ open, onOpenChange, children }) => {
   return (
     <div
       className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-      onClick={() => onOpenChange(false)}
       dir="rtl"
     >
       {React.Children.map(children, (child) =>
@@ -62,6 +62,7 @@ const DialogDescription = React.forwardRef((props, ref) => (
 // --- Main CreateUserModal Component ---
 
 const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
+  const { token } = useAuth();
   const [formData, setFormData] = useState({});
   const [showPasswordView, setShowPasswordView] = useState(false);
   const [createdUserDetails, setCreatedUserDetails] = useState(null);
@@ -121,23 +122,22 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
     setIsSubmitting(true);
 
     const endpoint =
-      userType === "resident" ? "/People/Register" : "/RegisterAdmin";
+      userType === "resident" ? "/People/Register" : "/People/RegisterAdmin";
     const payload = {
       ...formData,
       gender: formData.gender === "זכר" ? "M" : "F",
     };
 
-    if (userType === "admin") {
-      alert("Admin creation endpoint is not yet implemented.");
-      setIsSubmitting(false);
-      onClose();
-      return;
-    }
-
     try {
-      await api.post(endpoint, payload);
-      setCreatedUserDetails(payload);
-      setShowPasswordView(true);
+      await api.post(endpoint, payload, token);
+      if (userType === "resident") {
+        setCreatedUserDetails(payload);
+        setShowPasswordView(true);
+      } else {
+        alert("איש צוות נוצר בהצלחה!");
+        onUserCreated();
+        onClose();
+      }
     } catch (error) {
       console.error("Error creating user:", error);
       alert(
@@ -159,7 +159,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
     const printContent = document.getElementById(
       "password-print-area"
     ).innerHTML;
-    const printWindow = window.open("", "_blank", "height=700,width=700");
+    const printWindow = window.open("", "_blank", "height=500,width=500");
 
     printWindow.document.write("<html><head><title>פרטי משתמש</title>");
     printWindow.document.write(
@@ -170,7 +170,6 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
     printWindow.document.write("</body></html>");
     printWindow.document.close();
 
-    // Use a timeout to ensure content is rendered before printing
     setTimeout(() => {
       printWindow.focus();
       printWindow.print();
@@ -287,7 +286,6 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
                     >
                       <option value="Instructor">מדריך</option>
                       <option value="admin">מנהל</option>
-                      <option value="supplier">ספק</option>
                     </select>
                   </div>
                 )}
@@ -357,7 +355,7 @@ const CreateUserModal = ({ isOpen, onClose, userType, onUserCreated }) => {
               <button
                 type="button"
                 onClick={handleFinalClose}
-                className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700"
+                className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700"
               >
                 סגור
               </button>
