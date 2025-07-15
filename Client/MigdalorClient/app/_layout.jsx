@@ -7,8 +7,9 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import ToastManager from "toastify-react-native";
 import * as SplashScreen from "expo-splash-screen";
+import { useRouter } from "expo-router";
+import * as Notifications from "expo-notifications";
 import { defaultConfig } from "@tamagui/config/v4";
-
 import { BottomSheetProvider } from "../components/BottomSheetMain";
 import { MainMenuEditProvider } from "@/context/MainMenuEditProvider";
 import { MarketplaceProvider } from "@/context/MarketplaceProvider";
@@ -24,6 +25,7 @@ const config = createTamagui(defaultConfig);
 SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {
+  const router = useRouter();
   useEffect(() => {
     async function prepare() {
       try {
@@ -44,6 +46,26 @@ export default function Layout() {
 
     prepare();
   }, []); // The empty dependency array ensures this runs only once
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+        if (data && data.noticeId) {
+          router.push({
+            pathname: "/NoticeFocus",
+            params: {
+              noticeId: data.noticeId,
+              hebSenderName: data.hebSenderName,
+              engSenderName: data.engSenderName,
+            },
+          });
+        }
+      }
+    );
+
+    return () => subscription.remove();
+  }, [router]);
 
   return (
     <AuthProvider>

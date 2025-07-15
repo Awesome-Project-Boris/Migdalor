@@ -130,6 +130,8 @@ const NoticeManagement = () => {
         data: {
           noticeId: noticeResponse.noticeId,
           category: newNotice.category,
+          hebSenderName: `${user?.hebFirstName} ${user?.hebLastName}`,
+          engSenderName: `${user?.engFirstName} ${user?.engLastName}`,
         },
       };
 

@@ -103,10 +103,10 @@ export const usePushNotifications = (): PushNotificationState => {
         setNotification(notification);
       });
 
-    responseListener.current =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        console.log(response);
-      });
+    // responseListener.current =
+    //   Notifications.addNotificationResponseReceivedListener((response) => {
+    //     console.log(response);
+    //   });
 
     return () => {
       Notifications.removeNotificationSubscription(

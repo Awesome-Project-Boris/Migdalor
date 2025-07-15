@@ -6,7 +6,7 @@ import {
   ActivityIndicator,
   Button,
 } from "react-native";
-import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Card, Paragraph, YStack, XStack, H2, Text } from "tamagui";
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
@@ -86,14 +86,14 @@ export default function NoticeFocus() {
     }
   }, [noticeId, t]);
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
+    if (noticeId) {
       setIsLoading(true);
       setNoticeData(null);
       setError(null);
       fetchNoticeDetails();
-    }, [fetchNoticeDetails])
-  );
+    }
+  }, [noticeId, fetchNoticeDetails]);
 
   if (isLoading) {
     return (
