@@ -15,6 +15,7 @@ import EditUserModal from "./EditUserModal";
 import CreateUserModal from "./CreateUserModal";
 import ResetPasswordModal from "./ResetPasswordModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
+import Toast from "../../components/common/Toast"; // Adjust this import path to where your Toast.jsx is located
 import {
   flexRender,
   getCoreRowModel,
@@ -138,6 +139,23 @@ const UserManagement = () => {
   const [sorting, setSorting] = useState([{ id: "dateOfArrival", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
 
+  // State for managing the toast component
+  const [toastState, setToastState] = useState({
+    show: false,
+    message: "",
+    variant: "info",
+  });
+
+  // Helper function to show a toast
+  const showToast = (variant, message) => {
+    setToastState({ show: true, variant, message });
+  };
+
+  // Handler to close the toast
+  const handleCloseToast = () => {
+    setToastState({ ...toastState, show: false });
+  };
+
   const fetchUsers = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -146,6 +164,7 @@ const UserManagement = () => {
       setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       setError("נכשל בטעינת המשתמשים.");
+      showToast("error", "נכשל בטעינת המשתמשים.");
     } finally {
       setIsLoading(false);
     }
@@ -188,10 +207,11 @@ const UserManagement = () => {
         updatedUserData,
         token
       );
+      showToast("success", "פרטי המשתמש עודכנו בהצלחה.");
       handleCloseModals();
       fetchUsers();
     } catch (err) {
-      alert(`שגיאה בעדכון משתמש: ${err.message}`);
+      showToast("error", `שגיאה בעדכון משתמש: ${err.message}`);
     }
   };
 
@@ -199,10 +219,12 @@ const UserManagement = () => {
     if (!deletingUser) return;
     try {
       await api.delete(`/Resident/${deletingUser.id}`, token);
+      showToast("success", `המשתמש ${deletingUser.fullName} הושבת בהצלחה.`);
       setDeletingUser(null);
       fetchUsers();
     } catch (err) {
-      alert(`שגיאה במחיקת משתמש: ${err.message}`);
+      showToast("error", `שגיאה במחיקת משתמש: ${err.message}`);
+      setDeletingUser(null);
     }
   };
 
@@ -210,16 +232,28 @@ const UserManagement = () => {
     async (userId) => {
       try {
         await api.put(`/Resident/Restore/${userId}`, null, token);
+        showToast("success", "המשתמש שוחזר בהצלחה.");
         fetchUsers();
       } catch (err) {
-        alert(`שגיאה בשחזור משתמש: ${err.message}`);
+        showToast("error", `שגיאה בשחזור משתמש: ${err.message}`);
       }
     },
     [token, fetchUsers]
   );
 
   const handlePasswordReset = async (userId, newPassword) => {
-    await api.post(`/People/reset-password/${userId}`, { newPassword }, token);
+    try {
+      await api.post(
+        `/People/reset-password/${userId}`,
+        { newPassword },
+        token
+      );
+      showToast("success", "הסיסמה אופסה בהצלחה.");
+    } catch (err) {
+      showToast("error", `שגיאה באיפוס סיסמה: ${err.message}`);
+      // Re-throw the error so the modal can handle its state
+      throw err;
+    }
   };
 
   const columns = useMemo(
@@ -417,6 +451,14 @@ const UserManagement = () => {
   return (
     <TooltipProvider>
       <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
+        {/* Render the Toast component */}
+        <Toast
+          show={toastState.show}
+          message={toastState.message}
+          variant={toastState.variant}
+          onClose={handleCloseToast}
+        />
+
         <h2 className="text-2xl font-bold text-gray-800 mb-4">ניהול משתמשים</h2>
         <div className="flex items-center justify-between py-4">
           <div className="relative w-full max-w-sm">
@@ -531,7 +573,10 @@ const UserManagement = () => {
           isOpen={isCreateModalOpen}
           onClose={handleCloseModals}
           userType={createUserType}
-          onUserCreated={fetchUsers}
+          onUserCreated={() => {
+            fetchUsers();
+            showToast("success", "המשתמש נוצר בהצלחה.");
+          }}
         />
 
         <ResetPasswordModal
@@ -543,8 +588,8 @@ const UserManagement = () => {
 
         {deletingUser && (
           <ConfirmationModal
-            title="אישור מחיקת משתמש"
-            message={`האם אתה בטוח שברצונך למחוק את ${deletingUser.fullName}? פעולה זו תסמן אותו כ"לא פעיל".`}
+            title="אישור השבתת משתמש"
+            message={`האם אתה בטוח שברצונך להשבית את ${deletingUser.fullName}?`}
             onConfirm={handleDeleteConfirm}
             onCancel={() => setDeletingUser(null)}
           />
