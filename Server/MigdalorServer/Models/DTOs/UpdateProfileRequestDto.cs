@@ -13,7 +13,7 @@ namespace MigdalorServer.Models.DTOs
         public string Origin { get; set; } = "";
         public string Profession { get; set; } = "";
         public string AboutMe { get; set; } = "";
-        public int? ResidentApartmentNumber { get; set; }
+        public Guid? ResidentApartmentNumber { get; set; }
 
         public Guid? SpouseId { get; set; }
 

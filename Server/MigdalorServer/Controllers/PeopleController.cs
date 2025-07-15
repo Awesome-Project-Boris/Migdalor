@@ -365,6 +365,7 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPost("register")]
+        [Authorize(Roles = "admin")]
         public IActionResult Register([FromBody] UserRegister user)
         {
             try
@@ -566,7 +567,7 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPost("reset-password/{id}")]
-        [Authorize]
+        [Authorize(Roles = "admin")]
         public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordDto dto)
         {
             if (id == Guid.Empty)
