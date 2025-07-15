@@ -1,13 +1,8 @@
-// /src/features/noticeManagement/NoticeManagement.jsx
-
 import React, { useState, useEffect, useCallback } from "react";
 import { api } from "../../api/apiService";
 import { useAuth } from "../../auth/AuthContext";
 import { API_BASE_URL } from "../../config";
-
-// In a real application, this should be in a central config file (e.g., /src/config.js)
-// You should replace this with the actual base URL of your API.
-
+import Toast from "../../components/common/Toast"; // Import the Toast component
 
 /**
  * A component for creating and sending new notices, inspired by the mobile interface.
@@ -28,10 +23,25 @@ const NoticeManagement = () => {
   const [isCategoryLoading, setIsCategoryLoading] = useState(true);
   const [categoryError, setCategoryError] = useState(null);
 
-  // State for form submission and UI feedback
+  // State for form submission
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [isError, setIsError] = useState(false);
+
+  // State for managing the toast component
+  const [toastState, setToastState] = useState({
+    show: false,
+    message: "",
+    variant: "info",
+  });
+
+  // Helper function to show a toast
+  const showToast = (variant, message) => {
+    setToastState({ show: true, variant, message });
+  };
+
+  // Handler to close the toast
+  const handleCloseToast = () => {
+    setToastState({ ...toastState, show: false });
+  };
 
   // --- Fetch Categories on Component Mount ---
   useEffect(() => {
@@ -39,7 +49,6 @@ const NoticeManagement = () => {
       setIsCategoryLoading(true);
       setCategoryError(null);
       try {
-        // Fetch categories using a standard fetch call, as this endpoint is public.
         const response = await fetch(`${API_BASE_URL}/Categories`);
         if (!response.ok) {
           throw new Error(`Failed to load categories: HTTP ${response.status}`);
@@ -55,25 +64,26 @@ const NoticeManagement = () => {
             const hebrewName = c.categoryHebName || c.categoryName;
             return {
               label: hebrewName || c.categoryEngName || "Unnamed Category",
-              value: hebrewName, // Use Hebrew name as the value to be sent
+              value: hebrewName,
             };
           })
           .filter((opt) => opt.value);
 
         setCategoryOptions(options);
         if (options.length > 0) {
-          setSelectedCategory(options[0].value); // Set default category
+          setSelectedCategory(options[0].value);
         }
       } catch (err) {
         console.error("Failed to load categories:", err);
         setCategoryError(err.message || "Failed to load categories.");
+        showToast("error", "שגיאה בטעינת הקטגוריות.");
       } finally {
         setIsCategoryLoading(false);
       }
     };
 
     fetchCategories();
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   // --- Form Reset Logic ---
   const resetForm = useCallback(() => {
@@ -89,12 +99,9 @@ const NoticeManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setMessage(null);
-    setIsError(false);
 
     if (!title || !content || !selectedCategory) {
-      setMessage("כותרת, תוכן וקטגוריה הם שדות חובה.");
-      setIsError(true);
+      showToast("warning", "כותרת, תוכן וקטגוריה הם שדות חובה.");
       setIsSubmitting(false);
       return;
     }
@@ -112,12 +119,14 @@ const NoticeManagement = () => {
       if (!noticeResponse) {
         throw new Error("יצירת ההודעה נכשלה. השרת לא החזיר תשובה.");
       }
-      setMessage("ההודעה נוצרה בהצלחה! שולח התראה לכלל המשתמשים...");
+      showToast("info", "ההודעה נוצרה בהצלחה! שולח התראה...");
 
       const pushMessage = {
         to: "/topics/all",
         title: newNotice.title,
         body: newNotice.content,
+        sound: "default",
+        badge: "0",
         data: {
           noticeId: noticeResponse.noticeId,
           category: newNotice.category,
@@ -125,23 +134,25 @@ const NoticeManagement = () => {
       };
 
       await api.post("/Notifications/broadcast", pushMessage, token);
-      setMessage("ההודעה וההתראה נשלחו בהצלחה!");
+      showToast("success", "ההודעה וההתראה נשלחו בהצלחה!");
       resetForm();
     } catch (error) {
       console.error("Failed to create or send notice:", error);
-      setMessage(`שגיאה: ${error.message}`);
-      setIsError(true);
+      showToast("error", `שגיאה: ${error.message}`);
     } finally {
       setIsSubmitting(false);
-      setTimeout(() => {
-        setMessage(null);
-        setIsError(false);
-      }, 7000);
     }
   };
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md max-w-2xl mx-auto">
+      <Toast
+        show={toastState.show}
+        message={toastState.message}
+        variant={toastState.variant}
+        onClose={handleCloseToast}
+      />
+
       <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
         יצירת הודעה חדשה
       </h2>
@@ -251,17 +262,6 @@ const NoticeManagement = () => {
           </button>
         </div>
       </form>
-
-      {/* Feedback Message */}
-      {message && (
-        <div
-          className={`mt-6 p-4 rounded-md text-center ${
-            isError ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-          }`}
-        >
-          {message}
-        </div>
-      )}
     </div>
   );
 };

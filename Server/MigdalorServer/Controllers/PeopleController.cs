@@ -413,7 +413,7 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPost("register")]
-        [Authorize(Roles = "admin")]
+        //[Authorize(Roles = "admin")]
         public IActionResult Register([FromBody] UserRegister user)
         {
             try

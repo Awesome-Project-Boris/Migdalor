@@ -60,6 +60,13 @@ builder
 
 builder.Services.AddHostedService<DailyTasksService>();
 
+// ---- Gemini Setup ----
+builder.Services.Configure<Migdalor.BL.GeminiSettings>(builder.Configuration.GetSection("Gemini"));
+
+builder.Services.AddHttpClient<Migdalor.BL.GeminiService>();
+
+builder.Services.AddScoped<Migdalor.BL.GeminiService>();
+
 // ---- JWT Setup ----
 
 // **FIX: Add a check to ensure the JWT Key is not null**
