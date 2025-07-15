@@ -8,14 +8,18 @@ import {
   ShieldPlus,
   KeyRound,
   ArrowUpDown,
+  Users,
+  UserCog,
+  UserCheck,
 } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import EditUserModal from "./EditUserModal";
 import CreateUserModal from "./CreateUserModal";
 import ResetPasswordModal from "./ResetPasswordModal";
+import ChangeRoleModal from "./ChangeRoleModal"; // Import the new modal
 import ConfirmationModal from "../../components/common/ConfirmationModal";
-import Toast from "../../components/common/Toast"; // Adjust this import path to where your Toast.jsx is located
+import Toast from "../../components/common/Toast"; // Adjust this import path
 import {
   flexRender,
   getCoreRowModel,
@@ -126,49 +130,64 @@ const TooltipContent = ({ children, ...props }) => (
 const UserManagement = () => {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [view, setView] = useState("residents"); // 'residents' or 'admins'
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
   const [passwordResetUser, setPasswordResetUser] = useState(null);
+  const [roleChangeUser, setRoleChangeUser] = useState(null); // State for the new modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
     useState(false);
+  const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false); // State for the new modal
   const [createUserType, setCreateUserType] = useState("resident");
   const [sorting, setSorting] = useState([{ id: "dateOfArrival", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  // State for managing the toast component
   const [toastState, setToastState] = useState({
     show: false,
     message: "",
     variant: "info",
   });
 
-  // Helper function to show a toast
   const showToast = (variant, message) => {
     setToastState({ show: true, variant, message });
   };
 
-  // Handler to close the toast
   const handleCloseToast = () => {
     setToastState({ ...toastState, show: false });
   };
 
   const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsLoading(true);
-      setError(null);
-      const data = await api.get("/Resident/residents", token);
-      setUsers(Array.isArray(data) ? data : []);
+      if (view === "residents") {
+        const data = await api.get("/Resident/residents", token);
+        setUsers(Array.isArray(data) ? data : []);
+      } else {
+        const data = await api.get("/People/admins", token);
+        // Normalize admin data to have a `fullName` property for consistency
+        const normalizedAdmins = data.map((admin) => ({
+          ...admin,
+          id: admin.personId, // Ensure id property exists
+          fullName: `${admin.hebFirstName} ${admin.hebLastName}`.trim(),
+          isActive: true, // Admins are always considered active in this context
+        }));
+        setAdmins(Array.isArray(normalizedAdmins) ? normalizedAdmins : []);
+      }
     } catch (err) {
-      setError("נכשל בטעינת המשתמשים.");
-      showToast("error", "נכשל בטעינת המשתמשים.");
+      const message =
+        view === "residents" ? "נכשל בטעינת הדיירים." : "נכשל בטעינת המנהלים.";
+      setError(message);
+      showToast("error", message);
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, view]);
 
   useEffect(() => {
     fetchUsers();
@@ -189,12 +208,19 @@ const UserManagement = () => {
     setIsResetPasswordModalOpen(true);
   }, []);
 
+  const handleOpenChangeRoleModal = useCallback((user) => {
+    setRoleChangeUser(user);
+    setIsChangeRoleModalOpen(true);
+  }, []);
+
   const handleCloseModals = () => {
     setEditingUser(null);
     setPasswordResetUser(null);
+    setRoleChangeUser(null);
     setIsEditModalOpen(false);
     setIsCreateModalOpen(false);
     setIsResetPasswordModalOpen(false);
+    setIsChangeRoleModalOpen(false);
   };
 
   const handleSave = async (userId, updatedUserData) => {
@@ -212,6 +238,18 @@ const UserManagement = () => {
       fetchUsers();
     } catch (err) {
       showToast("error", `שגיאה בעדכון משתמש: ${err.message}`);
+      throw err;
+    }
+  };
+
+  const handleRoleChange = async (userId, newRole) => {
+    try {
+      await api.put(`/People/UpdateRole/${userId}`, { role: newRole }, token);
+      showToast("success", "תפקיד המשתמש עודכן בהצלחה.");
+      fetchUsers(); // Refresh the list to show the new role
+    } catch (err) {
+      showToast("error", `שגיאה בעדכון תפקיד: ${err.message}`);
+      throw err; // Re-throw so the modal knows there was an error
     }
   };
 
@@ -242,114 +280,47 @@ const UserManagement = () => {
   );
 
   const handlePasswordReset = async (userId, newPassword) => {
-    // The modal will now handle its own success/error feedback.
-    // This function just performs the API call.
     return api.post(`/People/reset-password/${userId}`, { newPassword }, token);
   };
 
-  const columns = useMemo(
+  const residentColumns = useMemo(
     () => [
       {
         accessorKey: "fullName",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            className="p-0 hover:bg-gray-200"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            שם
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ row }) => (
-          <div className="text-sm font-medium text-gray-900">
-            {row.getValue("fullName")}
-          </div>
-        ),
+        header: "שם",
       },
       {
         accessorKey: "email",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            className="p-0 hover:bg-gray-200"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            אימייל
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ row }) => (
-          <div className="text-sm text-gray-500">
-            {row.getValue("email") || "N/A"}
-          </div>
-        ),
+        header: "אימייל",
       },
       {
         accessorKey: "phoneNumber",
         header: "טלפון",
-        cell: ({ row }) => (
-          <div className="text-sm text-gray-500">
-            {row.getValue("phoneNumber") || "N/A"}
-          </div>
-        ),
       },
       {
         accessorKey: "roomNumber",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            className="p-0 hover:bg-gray-200"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            חדר
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ row }) => (
-          <div className="text-sm text-gray-500">
-            {row.getValue("roomNumber") || "N/A"}
-          </div>
-        ),
+        header: "חדר",
       },
       {
         accessorKey: "dateOfArrival",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            className="p-0 hover:bg-gray-200"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            תאריך הגעה
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-          </Button>
-        ),
-        cell: ({ row }) => {
-          const date = row.getValue("dateOfArrival");
-          return (
-            <div className="text-sm text-gray-500">
-              {date ? new Date(date).toLocaleDateString("he-IL") : "N/A"}
-            </div>
-          );
-        },
+        header: "תאריך הגעה",
+        cell: ({ row }) =>
+          new Date(row.original.dateOfArrival).toLocaleDateString("he-IL"),
       },
       {
         accessorKey: "isActive",
         header: "סטטוס",
-        cell: ({ row }) => {
-          const isActive = row.getValue("isActive");
-          return (
-            <span
-              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                isActive
-                  ? "bg-green-100 text-green-800"
-                  : "bg-red-100 text-red-800"
-              }`}
-            >
-              {isActive ? "פעיל" : "לא פעיל"}
-            </span>
-          );
-        },
+        cell: ({ row }) => (
+          <span
+            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+              row.original.isActive
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {row.original.isActive ? "פעיל" : "לא פעיל"}
+          </span>
+        ),
       },
       {
         id: "actions",
@@ -362,7 +333,7 @@ const UserManagement = () => {
                 <TooltipTrigger>
                   <button
                     onClick={() => handleOpenEditModal(user)}
-                    className="p-2 rounded-full text-blue-600 hover:bg-blue-100 transition-colors"
+                    className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
                   >
                     <Edit size={20} />
                   </button>
@@ -375,7 +346,7 @@ const UserManagement = () => {
                 <TooltipTrigger>
                   <button
                     onClick={() => handleOpenResetPasswordModal(user)}
-                    className="p-2 rounded-full text-yellow-600 hover:bg-yellow-100 transition-colors"
+                    className="p-2 rounded-full text-yellow-600 hover:bg-yellow-100"
                   >
                     <KeyRound size={20} />
                   </button>
@@ -389,7 +360,7 @@ const UserManagement = () => {
                   <TooltipTrigger>
                     <button
                       onClick={() => setDeletingUser(user)}
-                      className="p-2 rounded-full text-red-600 hover:bg-red-100 transition-colors"
+                      className="p-2 rounded-full text-red-600 hover:bg-red-100"
                     >
                       <Trash2 size={20} />
                     </button>
@@ -403,7 +374,7 @@ const UserManagement = () => {
                   <TooltipTrigger>
                     <button
                       onClick={() => handleRestoreUser(user.id)}
-                      className="p-2 rounded-full text-green-600 hover:bg-green-100 transition-colors"
+                      className="p-2 rounded-full text-green-600 hover:bg-green-100"
                     >
                       <RotateCw size={20} />
                     </button>
@@ -421,8 +392,66 @@ const UserManagement = () => {
     [handleOpenEditModal, handleRestoreUser, handleOpenResetPasswordModal]
   );
 
+  const adminColumns = useMemo(
+    () => [
+      {
+        accessorKey: "fullName",
+        header: "שם",
+      },
+      {
+        accessorKey: "phoneNumber",
+        header: "טלפון",
+      },
+      {
+        accessorKey: "personRole",
+        header: "תפקיד",
+      },
+      {
+        id: "actions",
+        header: "פעולות",
+        cell: ({ row }) => {
+          const user = row.original;
+          return (
+            <div className="flex items-center justify-start space-x-2 space-x-reverse">
+              <Tooltip>
+                <TooltipTrigger>
+                  <button
+                    onClick={() => handleOpenChangeRoleModal(user)}
+                    className="p-2 rounded-full text-purple-600 hover:bg-purple-100"
+                  >
+                    <UserCheck size={20} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>שנה תפקיד</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger>
+                  <button
+                    onClick={() => handleOpenResetPasswordModal(user)}
+                    className="p-2 rounded-full text-yellow-600 hover:bg-yellow-100"
+                  >
+                    <KeyRound size={20} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>אפס סיסמה</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          );
+        },
+      },
+    ],
+    [handleOpenResetPasswordModal, handleOpenChangeRoleModal]
+  );
+
+  const data = view === "residents" ? users : admins;
+  const columns = view === "residents" ? residentColumns : adminColumns;
+
   const table = useReactTable({
-    data: users,
+    data,
     columns,
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
@@ -436,13 +465,12 @@ const UserManagement = () => {
     onGlobalFilterChange: setGlobalFilter,
   });
 
-  if (isLoading) return <div className="text-center p-4">טוען משתמשים...</div>;
+  if (isLoading) return <div className="text-center p-4">טוען נתונים...</div>;
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (
     <TooltipProvider>
       <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
-        {/* Render the Toast component */}
         <Toast
           show={toastState.show}
           message={toastState.message}
@@ -450,7 +478,34 @@ const UserManagement = () => {
           onClose={handleCloseToast}
         />
 
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">ניהול משתמשים</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-gray-800">ניהול משתמשים</h2>
+          <div className="flex items-center bg-gray-200 rounded-full p-1">
+            <button
+              onClick={() => setView("residents")}
+              className={`px-4 py-1.5 text-sm font-semibold rounded-full flex items-center transition-colors ${
+                view === "residents"
+                  ? "bg-white text-blue-600 shadow"
+                  : "bg-transparent text-gray-600"
+              }`}
+            >
+              <Users className="ml-2 h-4 w-4" />
+              דיירים
+            </button>
+            <button
+              onClick={() => setView("admins")}
+              className={`px-4 py-1.5 text-sm font-semibold rounded-full flex items-center transition-colors ${
+                view === "admins"
+                  ? "bg-white text-blue-600 shadow"
+                  : "bg-transparent text-gray-600"
+              }`}
+            >
+              <UserCog className="ml-2 h-4 w-4" />
+              צוות
+            </button>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between py-4">
           <div className="relative w-full max-w-sm">
             <input
@@ -573,6 +628,14 @@ const UserManagement = () => {
           onClose={handleCloseModals}
           user={passwordResetUser}
           onPasswordReset={handlePasswordReset}
+          showToast={showToast}
+        />
+
+        <ChangeRoleModal
+          isOpen={isChangeRoleModalOpen}
+          onClose={handleCloseModals}
+          user={roleChangeUser}
+          onRoleChange={handleRoleChange}
           showToast={showToast}
         />
 

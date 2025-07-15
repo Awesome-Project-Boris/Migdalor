@@ -44,6 +44,13 @@ namespace MigdalorServer.Controllers
         public string Role { get; set; }
     }
 
+    // DTO for updating a user's role
+    public class UpdateRoleDto
+    {
+        [Required]
+        public string Role { get; set; }
+    }
+
 
     [Route("api/[controller]")]
     [ApiController]
@@ -59,7 +66,48 @@ namespace MigdalorServer.Controllers
             _configuration = configuration;
         }
 
-        
+        // NEW: Endpoint to update a user's role
+        [HttpPut("UpdateRole/{id}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> UpdateRole(Guid id, [FromBody] UpdateRoleDto dto)
+        {
+            var person = await _context.OhPeople.FindAsync(id);
+            if (person == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            person.PersonRole = dto.Role;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        // NEW: Endpoint to get all staff/admin users
+        [HttpGet("admins")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetAdmins()
+        {
+            var admins = await _context.OhPeople
+                .Where(p => p.PersonRole != null && p.PersonRole != "Resident")
+                .Select(p => new
+                {
+                    p.PersonId,
+                    p.PhoneNumber,
+                    p.HebFirstName,
+                    p.HebLastName,
+                    p.EngFirstName,
+                    p.EngLastName,
+                    p.Gender,
+                    p.Email,
+                    p.DateOfBirth,
+                    p.PersonRole
+                })
+                .ToListAsync();
+
+            return Ok(admins);
+        }
+
 
         [HttpPut("UpdateInstructorProfile")]
         [Authorize]
