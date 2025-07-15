@@ -219,6 +219,7 @@ const resources = {
       LocationScreen_insideBoundaryLabel: "Inside Boundary:",
       LocationScreen_userLocationLabel: "User Location:",
       MapScreen_backToMapButton: "Back to Map",
+      MapScreen_Apartment: "Apartment no. ",
 
       ImagePicker_selectSourceTitle: "Select Image Source",
       ImagePicker_selectSourceMessage: "Choose how to select the image",
@@ -638,6 +639,7 @@ const resources = {
       LoginScreen_passwordLabel: "סיסמה",
       LoginScreen_loginButton: "כניסה",
 
+      MapScreen_Apartment: "דירה מספר ",
       MapScreen_building1Name: "בניין מספר אחת",
       MapScreen_building1Info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",
       Permissions_locationPermissionMessage: "נדרשת הרשאת מיקום להצגת המיקום.",
