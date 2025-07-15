@@ -1,13 +1,13 @@
 -- =================================================================
 -- Table for storing building information
 -- =================================================================
-CREATE TABLE Buildings (
+CREATE TABLE OH_Buildings (
     -- A unique identifier for the building, e.g., 'B1', 'B2', etc.
     -- This is the Primary Key for this table.
-    BuildingID VARCHAR(10) NOT NULL PRIMARY KEY,
+    BuildingID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
 
     -- The common name of the building, e.g., 'West Wing'.
-    Name NVARCHAR(100) NOT NULL,
+    BuildingName NVARCHAR(100) NOT NULL,
 
     -- Any additional information or description for the building.
     Info NVARCHAR(MAX) NULL,
@@ -21,19 +21,19 @@ GO
 -- =================================================================
 -- Table for storing individual apartment details
 -- =================================================================
-CREATE TABLE Apartments (
+CREATE TABLE OH_Apartments (
     -- The unique number for the apartment, e.g., '101', '432A'.
     -- This is the Primary Key for this table.
-    ApartmentNumber VARCHAR(10) NOT NULL PRIMARY KEY,
+    ApartmentNumber UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
 
     -- The ID of the building where the apartment is physically located.
     -- This is a Foreign Key that links to the Buildings table.
-    PhysicalBuildingID VARCHAR(10) NOT NULL,
+    PhysicalBuildingID UNIQUEIDENTIFIER NOT NULL,
 
     -- The ID of the building that must be entered to access the apartment.
     -- This handles cases where the entrance is in a different building.
     -- This is a Foreign Key that links to the Buildings table.
-    AccessBuildingID VARCHAR(10) NOT NULL,
+    AccessBuildingID UNIQUEIDENTIFIER NOT NULL,
 
     -- The ID of the resident living in the apartment.
     -- This is a Foreign Key that links to your existing OH_Residents table.
@@ -43,11 +43,11 @@ CREATE TABLE Apartments (
     -- --- CONSTRAINTS ---
     -- Defines the foreign key relationship to the Buildings table for PhysicalBuildingID
     CONSTRAINT FK_Apartments_PhysicalBuilding
-        FOREIGN KEY (PhysicalBuildingID) REFERENCES Buildings(BuildingID),
+        FOREIGN KEY (PhysicalBuildingID) REFERENCES OH_Buildings(BuildingID),
 
     -- Defines the foreign key relationship to the Buildings table for AccessBuildingID
     CONSTRAINT FK_Apartments_AccessBuilding
-        FOREIGN KEY (AccessBuildingID) REFERENCES Buildings(BuildingID),
+        FOREIGN KEY (AccessBuildingID) REFERENCES OH_Buildings(BuildingID),
 
     -- Defines the foreign key relationship to the OH_Residents table
     -- IMPORTANT: Make sure your residents table is named OH_Residents and its primary key is ResidentID.
@@ -61,9 +61,9 @@ GO
 -- Linking table for Buildings and their multiple entrance nodes
 -- This allows one building to have many entrance nodes.
 -- =================================================================
-CREATE TABLE BuildingEntrances (
+CREATE TABLE OH_BuildingEntrances (
     -- Foreign key linking to the Buildings table.
-    BuildingID VARCHAR(10) NOT NULL,
+    BuildingID UNIQUEIDENTIFIER NOT NULL,
 
     -- The ID of the navigation node that serves as an entrance.
     -- This does not have a foreign key constraint, as the nodes
@@ -77,6 +77,6 @@ CREATE TABLE BuildingEntrances (
 
     -- Defines the foreign key relationship to the Buildings table.
     CONSTRAINT FK_BuildingEntrances_Buildings
-        FOREIGN KEY (BuildingID) REFERENCES Buildings(BuildingID)
+        FOREIGN KEY (BuildingID) REFERENCES OH_Buildings(BuildingID)
 );
 GO
