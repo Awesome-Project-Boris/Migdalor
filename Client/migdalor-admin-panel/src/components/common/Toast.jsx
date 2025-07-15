@@ -45,7 +45,7 @@ const Toast = ({ show, variant = "info", message, onClose }) => {
             ...baseConfig,
             icon: "success",
             title: message,
-            timer: 1500,
+            timer: 2500,
           };
           break;
         case "error":
@@ -69,7 +69,7 @@ const Toast = ({ show, variant = "info", message, onClose }) => {
           config = {
             ...baseConfig,
             title: `<div class="text-center h5">${message}</div>`,
-            timer: 1500,
+            timer: 2500,
           };
           break;
       }
