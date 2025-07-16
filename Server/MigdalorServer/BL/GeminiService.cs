@@ -1,6 +1,4 @@
 // Server/MigdalorServer/BL/GeminiService.cs
-using Microsoft.Extensions.Options;
-using Migdalor.Models.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +6,8 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Migdalor.Models.DTOs;
 
 namespace Migdalor.BL
 {
@@ -40,16 +40,7 @@ namespace Migdalor.BL
         {
             var requestBody = new
             {
-                contents = new[]
-                {
-                    new
-                    {
-                        parts = new[]
-                        {
-                            new { text = prompt }
-                        }
-                    }
-                }
+                contents = new[] { new { parts = new[] { new { text = prompt } } } },
             };
 
             var json = JsonSerializer.Serialize(requestBody);
@@ -68,9 +59,17 @@ namespace Migdalor.BL
                     // Handle array response by iterating through each chunk
                     foreach (JsonElement element in doc.RootElement.EnumerateArray())
                     {
-                        if (element.TryGetProperty("candidates", out JsonElement candidates) && candidates.GetArrayLength() > 0)
+                        if (
+                            element.TryGetProperty("candidates", out JsonElement candidates)
+                            && candidates.GetArrayLength() > 0
+                        )
                         {
-                            if (candidates[0].TryGetProperty("content", out JsonElement contentElement) && contentElement.TryGetProperty("parts", out JsonElement parts) && parts.GetArrayLength() > 0)
+                            if (
+                                candidates[0]
+                                    .TryGetProperty("content", out JsonElement contentElement)
+                                && contentElement.TryGetProperty("parts", out JsonElement parts)
+                                && parts.GetArrayLength() > 0
+                            )
                             {
                                 if (parts[0].TryGetProperty("text", out JsonElement textElement))
                                 {
@@ -105,21 +104,8 @@ namespace Migdalor.BL
         {
             var requestBody = new
             {
-                contents = new[]
-                {
-                    new
-                    {
-                        role = "user",
-                        parts = new[]
-                        {
-                            new { text = prompt }
-                        }
-                    }
-                },
-                generationConfig = new
-                {
-                    responseModalities = new[] { "IMAGE", "TEXT" }
-                }
+                contents = new[] { new { role = "user", parts = new[] { new { text = prompt } } } },
+                generationConfig = new { responseModalities = new[] { "IMAGE", "TEXT" } },
             };
 
             var json = JsonSerializer.Serialize(requestBody);
@@ -134,20 +120,36 @@ namespace Migdalor.BL
                 using (JsonDocument doc = JsonDocument.Parse(responseString))
                 {
                     var images = new List<string>();
-                    // The root of the response is an array of candidates
-                    foreach (JsonElement candidate in doc.RootElement.EnumerateArray())
+                    // The root of the response is an array
+                    foreach (JsonElement element in doc.RootElement.EnumerateArray())
                     {
-                        if (candidate.TryGetProperty("candidates", out JsonElement candidates) && candidates.GetArrayLength() > 0)
+                        if (
+                            element.TryGetProperty("candidates", out JsonElement candidates)
+                            && candidates.GetArrayLength() > 0
+                        )
                         {
                             foreach (JsonElement innerCandidate in candidates.EnumerateArray())
                             {
-                                if (innerCandidate.TryGetProperty("content", out JsonElement contentElement) &&
-                                    contentElement.TryGetProperty("parts", out JsonElement parts))
+                                if (
+                                    innerCandidate.TryGetProperty(
+                                        "content",
+                                        out JsonElement contentElement
+                                    )
+                                    && contentElement.TryGetProperty("parts", out JsonElement parts)
+                                )
                                 {
                                     foreach (JsonElement part in parts.EnumerateArray())
                                     {
-                                        if (part.TryGetProperty("inlineData", out JsonElement inlineData) &&
-                                            inlineData.TryGetProperty("data", out JsonElement data))
+                                        if (
+                                            part.TryGetProperty(
+                                                "inlineData",
+                                                out JsonElement inlineData
+                                            )
+                                            && inlineData.TryGetProperty(
+                                                "data",
+                                                out JsonElement data
+                                            )
+                                        )
                                         {
                                             images.Add(data.GetString());
                                         }
@@ -166,8 +168,23 @@ namespace Migdalor.BL
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
-                throw new HttpRequestException($"Error from Gemini API: {response.StatusCode}, {errorContent}");
+                throw new HttpRequestException(
+                    $"Error from Gemini API: {response.StatusCode}, {errorContent}"
+                );
             }
+        }
+
+        /// <summary>
+        /// Generates a simplified icon using the Gemini API by modifying the prompt.
+        /// </summary>
+        /// <param name="prompt">The base prompt for the icon.</param>
+        /// <param name="size">The desired size of the icon in pixels.</param>
+        /// <returns>A list of base64 encoded strings representing the generated icons.</returns>
+        public async Task<List<string>> GenerateIconAsync(string prompt, int size)
+        {
+            string iconPrompt =
+                $"a simplified icon of {prompt}, vector style, on a white background, {size}x{size} pixels";
+            return await GenerateImageAsync(iconPrompt);
         }
     }
 }
