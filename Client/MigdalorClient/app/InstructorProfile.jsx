@@ -66,8 +66,11 @@ export default function InstructorProfile() {
 
           if (isActive) {
             // The API returns slightly different field names here
+            const nameToDisplay = Globals.userSelectedLanguage === 'he' 
+              ? data.hebName 
+              : data.engName;
             setForm({
-              name: data.engName || data.hebName,
+              name: nameToDisplay || "",
               mobilePhone: data.phoneNumber || "",
               email: data.email || "",
             });
@@ -90,6 +93,8 @@ export default function InstructorProfile() {
     }, [paramUserId, authUser]) // Re-run if the user ID in the param changes
   );
 
+  
+
   const profileImageSource =
     profilePic && profilePic.picPath
       ? { uri: `${Globals.API_BASE_URL}${profilePic.picPath}` }
@@ -110,10 +115,17 @@ export default function InstructorProfile() {
   }
 
   const renderField = (label, value) => {
+    // Check the global direction variable
+    const isRtl = Globals.userSelectedDirection === 'rtl';
+    
     return (
       <>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.box}>
+        <Text style={[styles.label, { textAlign: isRtl ? 'right' : 'left' }]}>
+            {label}
+        </Text>
+        
+        {/* Apply conditional text alignment to the value box */}
+        <Text style={[styles.box, { textAlign: isRtl ? 'right' : 'left' }]}>
           {value || t("ProfileScreen_emptyDataField")}
         </Text>
       </>
@@ -136,6 +148,7 @@ export default function InstructorProfile() {
       params: paramsToPass,
     });
   };
+  
 
   return (
     <View style={styles.wrapper}>

@@ -169,6 +169,7 @@ export const AuthProvider = ({ children }) => {
 
         const receivedToken = await response.text();
         await AsyncStorage.setItem("jwt", receivedToken);
+        
 
         // After successful login, load the user session, which will also store user details
         const loggedInUser = await loadUserSession();
@@ -189,6 +190,7 @@ export const AuthProvider = ({ children }) => {
               pushToken: expoPushToken.data,
             }),
           });
+          // console.log("token is this:", expoPushToken.data);
         }
       } catch (error) {
         console.error("Authentication error:", error);
