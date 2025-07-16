@@ -3,14 +3,15 @@ import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import SharedTable from "../../components/common/SharedTable";
 import Toast from "../../components/common/Toast";
-import Calendar from "../../components/common/Calendar"; // Import the new component
-import { Download } from "lucide-react";
+import Calendar from "../../components/common/Calendar";
+import { Download, Calendar as CalendarIcon } from "lucide-react";
 
 const Reports = () => {
   const { token } = useAuth();
   const [reportData, setReportData] = useState([]);
   const [dailyReportFiles, setDailyReportFiles] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [sorting, setSorting] = useState([
@@ -57,7 +58,6 @@ const Reports = () => {
     fetchInitialData();
   }, [token]);
 
-  // Create a set of available dates for quick lookup in the Calendar component
   const availableDates = useMemo(() => {
     const dates = new Set();
     dailyReportFiles.forEach((file) => {
@@ -72,6 +72,7 @@ const Reports = () => {
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
+    setIsCalendarOpen(false);
   };
 
   const handleDownload = async () => {
@@ -159,51 +160,63 @@ const Reports = () => {
         onClose={handleCloseToast}
       />
 
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          הורדת דוחות יומיים
+      {/* Daily Report Download Section */}
+      <div className="mb-8 p-4 bg-gray-50 w-fit rounded-lg border">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">
+          הורדת דוחות יומיים שמורים
         </h2>
-        <div className="flex flex-col md:flex-row items-start md:space-x-8 md:space-x-reverse bg-gray-50 p-4 rounded-lg border">
-          <div className="flex-shrink-0 w-full md:w-auto">
+        <div className="flex flex-col justify-between gap-2 items-center">
+          <button
+            onClick={() => setIsCalendarOpen(true)}
+            className="px-4 py-2 mx-1 bg-white border border-gray-300 rounded-md flex items-center text-gray-700 hover:bg-gray-50 w-full"
+          >
+            <CalendarIcon size={20} className="ml-2" />
+            <span>
+              {selectedDate
+                ? selectedDate.toLocaleDateString("he-IL")
+                : "בחר תאריך"}
+            </span>
+          </button>
+          <button
+            onClick={handleDownload}
+            disabled={
+              isDownloading ||
+              !selectedDate ||
+              !availableDates.has(
+                `${selectedDate.getFullYear()}-${String(
+                  selectedDate.getMonth() + 1
+                ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(
+                  2,
+                  "0"
+                )}`
+              )
+            }
+            className="px-6 py-2 mx-1 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center transition-all w-full"
+          >
+            <Download size={20} className="ml-2" />
+            {isDownloading ? "מוריד..." : "הורד דוח"}
+          </button>
+        </div>
+      </div>
+
+      {/* Calendar Modal */}
+      {isCalendarOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center"
+          onClick={() => setIsCalendarOpen(false)}
+        >
+          <div
+            className="bg-white rounded-lg shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Calendar
               availableDates={availableDates}
               onDateSelect={handleDateSelect}
               selectedDate={selectedDate}
             />
           </div>
-          <div className="mt-4 md:mt-0 flex flex-col items-start">
-            <p className="text-base text-gray-700 mb-4">
-              {selectedDate ? (
-                <>
-                  <strong>תאריך נבחר:</strong>{" "}
-                  {selectedDate.toLocaleDateString("he-IL")}
-                </>
-              ) : (
-                "בחר תאריך מהלוח להורדת הדוח."
-              )}
-            </p>
-            <button
-              onClick={handleDownload}
-              disabled={
-                isDownloading ||
-                !selectedDate ||
-                !availableDates.has(
-                  `${selectedDate.getFullYear()}-${String(
-                    selectedDate.getMonth() + 1
-                  ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(
-                    2,
-                    "0"
-                  )}`
-                )
-              }
-              className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center transition-all"
-            >
-              <Download size={20} className="ml-2" />
-              {isDownloading ? "מוריד..." : "הורד דוח"}
-            </button>
-          </div>
         </div>
-      </div>
+      )}
 
       <h2 className="text-2xl font-bold text-gray-800 mb-4">
         דוח נוכחות כללי - בוקר טוב
