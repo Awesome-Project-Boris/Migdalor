@@ -19,12 +19,8 @@ const resources = {
         'The Wizard of Oz: Dorothy and her little dog Toto lived in a small village in America.\nDorothy loved Toto very much, and they played with each other all the time. One day there was a terrible tornado. "We have to get to the basement, Toto!" Dorothy shouted. But it was too late. The strong and fierce wind lifted the farmhouse into the air and took Dorothy and Toto to the distant Land of Oz.',
 
       NotificationSettingsPage_header: "Notification Settings:",
-      NotificationSettingsPage_both: "Sound and Vibration",
-      NotificationSettingsPage_sound: "Sound",
-      NotificationSettingsPage_vibrate: "Vibration",
+      NotificationSettingsPage_normal: "Normal",
       NotificationSettingsPage_silent: "Silent",
-      NotificationSettingsPage_on: "On",
-      NotificationSettingsPage_off: "Off",
 
       LanguageSettingsPage_header: "Language Settings:",
       LanguageSettingsPage_LogoutHeader: "Account Settings:",
@@ -454,9 +450,7 @@ const resources = {
         'הקוסם מארץ עוץ: דורותי והכלב הקטן שלה טוטו גרו בכפר קטן באמריקה,\nדורותי אהבה מאוד את טוטו, והם היו משחקים אחד עם השניה כל הזמן. יום אחד היה סופת טורנדו נוראית. "אנחנו חייבים להגיע למרתף, טוטו!" קראה דורותי. אבל זה היה מאוחר מדי. הרוח החזקה והסוערת הרימה את בית החווה לאוויר ולקחה את דורותי וטוטו לארץ עוץ הנידחת.',
 
       NotificationSettingsPage_header: "הגדרות התראות:",
-      NotificationSettingsPage_both: "קול ורטט",
-      NotificationSettingsPage_sound: "קול",
-      NotificationSettingsPage_vibrate: "רטט",
+      NotificationSettingsPage_normal: "רגיל",
       NotificationSettingsPage_silent: "מושתק",
 
       LanguageSettingsPage_header: "הגדרות שפה:",

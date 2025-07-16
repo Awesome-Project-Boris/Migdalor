@@ -6,15 +6,15 @@ import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "@/app/constants/Globals";
 
-
-
 export interface PushNotificationState {
   expoPushToken?: Notifications.ExpoPushToken;
   notification?: Notifications.Notification;
 }
 
+const NOTIFICATION_SETTING_KEY = "user_notification_setting";
+
 async function postPushToken(expoPushToken: string) {
-  const userID  = await AsyncStorage.getItem("userID");
+  const userID = await AsyncStorage.getItem("userID");
   if (!userID) {
     return;
   }
@@ -23,27 +23,54 @@ async function postPushToken(expoPushToken: string) {
     pushToken: expoPushToken,
   };
 
-  // console.log("payload", payload);
-  const resp = await fetch(`${Globals.API_BASE_URL}/api/Notifications/registerToken`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (!resp.ok) {
-    console.error('Failed to register push token', await resp.text());
-  }
-  else {
-    console.log("token registered");
+  try {
+    const resp = await fetch(
+      `${Globals.API_BASE_URL}/api/Notifications/registerToken`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }
+    );
+    if (!resp.ok) {
+      console.error("Failed to register push token", await resp.text());
+    } else {
+      console.log("Push token registered successfully");
+    }
+  } catch (error) {
+    console.error("Error posting push token:", error);
   }
 }
 
 export const usePushNotifications = (): PushNotificationState => {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: true,
-      shouldShowAlert: true,
-      shouldSetBadge: true,
-    }),
+    handleNotification: async () => {
+      try {
+        const setting =
+          (await AsyncStorage.getItem(NOTIFICATION_SETTING_KEY)) || "both";
+
+        const shouldPlaySound = setting === "both" || setting === "sound";
+        // Note: There isn't a direct `shouldVibrate` property for the handler.
+        // On iOS, vibration is linked to sound.
+        // On Android, vibration for foreground notifications is handled by the channel's importance.
+        // This logic correctly sets sound, which implicitly handles vibration on iOS.
+        const shouldVibrate = setting === "both" || setting === "vibration";
+
+        return {
+          shouldShowAlert: true,
+          shouldPlaySound: shouldPlaySound,
+          shouldSetBadge: true,
+        };
+      } catch (error) {
+        console.error("Failed to get notification setting", error);
+        // Fallback to default behavior
+        return {
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+        };
+      }
+    },
   });
 
   const [expoPushToken, setExpoPushToken] = useState<
@@ -74,17 +101,27 @@ export const usePushNotifications = (): PushNotificationState => {
       }
 
       token = await Notifications.getExpoPushTokenAsync({
-        projectId: Constants?.expoConfig?.extra?.eas?.projectId ?? Constants?.easConfig?.projectId
+        projectId:
+          Constants?.expoConfig?.extra?.eas?.projectId ??
+          Constants?.easConfig?.projectId,
       });
     } else {
-      alert("Must be using a physical device for Push notifications");
+      // It's helpful to inform the user, but `alert` can be intrusive.
+      // console.log("Must be using a physical device for Push notifications");
     }
 
     if (Platform.OS === "android") {
-      Notifications.setNotificationChannelAsync("default", {
+      // Get the user's preference for vibration from storage
+      const setting =
+        (await AsyncStorage.getItem(NOTIFICATION_SETTING_KEY)) || "both";
+      const shouldVibrate = setting === "both" || setting === "vibration";
+
+      // Set up the notification channel with or without a vibration pattern.
+      // This controls notifications when the app is in the background or killed on Android.
+      await Notifications.setNotificationChannelAsync("default", {
         name: "default",
         importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 250, 250, 250],
+        vibrationPattern: shouldVibrate ? [0, 250, 250, 250] : null,
         lightColor: "#FF231F7C",
       });
     }
@@ -94,8 +131,10 @@ export const usePushNotifications = (): PushNotificationState => {
 
   useEffect(() => {
     registerForPushNotificationsAsync().then((token) => {
-      setExpoPushToken(token);
-      postPushToken(token?.data!);
+      if (token) {
+        setExpoPushToken(token);
+        postPushToken(token.data);
+      }
     });
 
     notificationListener.current =
@@ -103,17 +142,15 @@ export const usePushNotifications = (): PushNotificationState => {
         setNotification(notification);
       });
 
-    // responseListener.current =
-    //   Notifications.addNotificationResponseReceivedListener((response) => {
-    //     console.log(response);
-    //   });
-
     return () => {
-      Notifications.removeNotificationSubscription(
-        notificationListener.current!
-      );
-
-      Notifications.removeNotificationSubscription(responseListener.current!);
+      if (notificationListener.current) {
+        Notifications.removeNotificationSubscription(
+          notificationListener.current
+        );
+      }
+      if (responseListener.current) {
+        Notifications.removeNotificationSubscription(responseListener.current);
+      }
     };
   }, []);
 

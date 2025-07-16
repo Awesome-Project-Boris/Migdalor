@@ -53,7 +53,7 @@ export default function LanguageSettingsPage() {
             <FlipButton
               key={value}
               style={styles.button}
-              bgColor={languageSetting === value ? "#00007a" : "#ffffff"}
+              bgColor={languageSetting === value ? "#00b5d9" : "#ffffff"}
               textColor={languageSetting === value ? "#ffffff" : "#0b0908"}
               onPress={() => setLanguageSetting(value)}
             >

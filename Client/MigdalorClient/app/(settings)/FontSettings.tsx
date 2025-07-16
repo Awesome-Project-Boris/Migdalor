@@ -13,7 +13,7 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 const CustomSliderTrack = styled(Slider.Track, {
-  backgroundColor: "#00007a",
+  backgroundColor: "#00b5d9",
 });
 
 export default function GeneralSettingsPage() {
