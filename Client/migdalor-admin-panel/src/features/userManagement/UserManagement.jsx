@@ -7,7 +7,6 @@ import {
   UserPlus,
   ShieldPlus,
   KeyRound,
-  ArrowUpDown,
   Users,
   UserCog,
   UserCheck,
@@ -17,17 +16,10 @@ import { api } from "../../api/apiService";
 import EditUserModal from "./EditUserModal";
 import CreateUserModal from "./CreateUserModal";
 import ResetPasswordModal from "./ResetPasswordModal";
-import ChangeRoleModal from "./ChangeRoleModal"; // Import the new modal
+import ChangeRoleModal from "./ChangeRoleModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
-import Toast from "../../components/common/Toast"; // Adjust this import path
-import {
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import Toast from "../../components/common/Toast";
+import SharedTable from "../../components/common/SharedTable";
 
 // --- Mock shadcn/ui Components ---
 const Button = React.forwardRef(
@@ -60,56 +52,6 @@ const Button = React.forwardRef(
 );
 Button.displayName = "Button";
 
-const Table = React.forwardRef(({ className, ...props }, ref) => (
-  <table
-    ref={ref}
-    className={`min-w-full divide-y divide-gray-200 ${className}`}
-    {...props}
-  />
-));
-Table.displayName = "Table";
-
-const TableHeader = React.forwardRef(({ className, ...props }, ref) => (
-  <thead ref={ref} className={`bg-gray-50 ${className}`} {...props} />
-));
-TableHeader.displayName = "TableHeader";
-
-const TableBody = React.forwardRef(({ className, ...props }, ref) => (
-  <tbody
-    ref={ref}
-    className={`bg-white divide-y divide-gray-200 ${className}`}
-    {...props}
-  />
-));
-TableBody.displayName = "TableBody";
-
-const TableRow = React.forwardRef(({ className, ...props }, ref) => (
-  <tr
-    ref={ref}
-    className={`transition-colors hover:bg-gray-50/50 ${className}`}
-    {...props}
-  />
-));
-TableRow.displayName = "TableRow";
-
-const TableHead = React.forwardRef(({ className, ...props }, ref) => (
-  <th
-    ref={ref}
-    className={`px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider ${className}`}
-    {...props}
-  />
-));
-TableHead.displayName = "TableHead";
-
-const TableCell = React.forwardRef(({ className, ...props }, ref) => (
-  <td
-    ref={ref}
-    className={`px-6 py-4 whitespace-nowrap ${className}`}
-    {...props}
-  />
-));
-TableCell.displayName = "TableCell";
-
 // --- Mock Tooltip Components ---
 const TooltipProvider = ({ children }) => <>{children}</>;
 const Tooltip = ({ children }) => (
@@ -131,18 +73,18 @@ const UserManagement = () => {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
   const [admins, setAdmins] = useState([]);
-  const [view, setView] = useState("residents"); // 'residents' or 'admins'
+  const [view, setView] = useState("residents");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [deletingUser, setDeletingUser] = useState(null);
   const [passwordResetUser, setPasswordResetUser] = useState(null);
-  const [roleChangeUser, setRoleChangeUser] = useState(null); // State for the new modal
+  const [roleChangeUser, setRoleChangeUser] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isResetPasswordModalOpen, setIsResetPasswordModalOpen] =
     useState(false);
-  const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false); // State for the new modal
+  const [isChangeRoleModalOpen, setIsChangeRoleModalOpen] = useState(false);
   const [createUserType, setCreateUserType] = useState("resident");
   const [sorting, setSorting] = useState([{ id: "dateOfArrival", desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -170,12 +112,11 @@ const UserManagement = () => {
         setUsers(Array.isArray(data) ? data : []);
       } else {
         const data = await api.get("/People/admins", token);
-        // Normalize admin data to have a `fullName` property for consistency
         const normalizedAdmins = data.map((admin) => ({
           ...admin,
-          id: admin.personId, // Ensure id property exists
+          id: admin.personId,
           fullName: `${admin.hebFirstName} ${admin.hebLastName}`.trim(),
-          isActive: true, // Admins are always considered active in this context
+          isActive: true,
         }));
         setAdmins(Array.isArray(normalizedAdmins) ? normalizedAdmins : []);
       }
@@ -246,10 +187,10 @@ const UserManagement = () => {
     try {
       await api.put(`/People/UpdateRole/${userId}`, { role: newRole }, token);
       showToast("success", "תפקיד המשתמש עודכן בהצלחה.");
-      fetchUsers(); // Refresh the list to show the new role
+      fetchUsers();
     } catch (err) {
       showToast("error", `שגיאה בעדכון תפקיד: ${err.message}`);
-      throw err; // Re-throw so the modal knows there was an error
+      throw err;
     }
   };
 
@@ -412,7 +353,7 @@ const UserManagement = () => {
         cell: ({ row }) => {
           const user = row.original;
           return (
-            <div className="flex items-center justify-start space-x-2 space-x-reverse">
+            <div className="flex items-center justify-center space-x-2 space-x-reverse">
               <Tooltip>
                 <TooltipTrigger>
                   <button
@@ -449,21 +390,6 @@ const UserManagement = () => {
 
   const data = view === "residents" ? users : admins;
   const columns = view === "residents" ? residentColumns : adminColumns;
-
-  const table = useReactTable({
-    data,
-    columns,
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    state: {
-      sorting,
-      globalFilter,
-    },
-    onGlobalFilterChange: setGlobalFilter,
-  });
 
   if (isLoading) return <div className="text-center p-4">טוען נתונים...</div>;
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
@@ -505,70 +431,15 @@ const UserManagement = () => {
             </button>
           </div>
         </div>
-
-        <div className="flex items-center justify-between py-4">
-          <div className="relative w-full max-w-sm">
-            <input
-              placeholder="חפש לפי שם, אימייל או טלפון..."
-              value={globalFilter ?? ""}
-              onChange={(event) => setGlobalFilter(event.target.value)}
-              className="w-full p-2 pr-10 border border-gray-300 rounded-md text-right"
-            />
-            <Search
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-          </div>
-        </div>
-        <div className="overflow-x-auto rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    className={!row.original.isActive ? "bg-red-50" : ""}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    לא נמצאו תוצאות.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-        <div className="flex items-center justify-between py-4">
+        <SharedTable
+          data={data}
+          columns={columns}
+          globalFilter={globalFilter}
+          setGlobalFilter={setGlobalFilter}
+          sorting={sorting}
+          setSorting={setSorting}
+        />
+        <div className="flex items-center justify-end py-4">
           <div className="flex space-x-4 space-x-reverse">
             <Button
               onClick={() => handleOpenCreateModal("resident")}
@@ -585,24 +456,6 @@ const UserManagement = () => {
             >
               <ShieldPlus size={16} className="ml-2" />
               הוסף איש צוות
-            </Button>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              הקודם
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              הבא
             </Button>
           </div>
         </div>
