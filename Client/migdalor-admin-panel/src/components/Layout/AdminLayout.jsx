@@ -1,10 +1,17 @@
 import React, { useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import SidebarButton from "./SidebarButton";
-import { LayoutDashboard, Users, FileText, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  FileText,
+  LogOut,
+  MessageSquare, // Import the new icon
+} from "lucide-react";
 import UserManagement from "../../features/userManagement/UserManagement";
 import NoticeManagement from "../../features/noticeManagement/NoticeManagement";
-import Dashboard from "../../pages/Dashboard"; // Import the new Dashboard page
+import Dashboard from "../../pages/Dashboard";
+import Reports from "../../features/reports/Reports";
 
 /**
  * The main layout for the admin panel.
@@ -12,7 +19,7 @@ import Dashboard from "../../pages/Dashboard"; // Import the new Dashboard page
  * where the selected page is displayed.
  */
 const AdminLayout = () => {
-  const [activePage, setActivePage] = useState("dashboard"); // Default to dashboard
+  const [activePage, setActivePage] = useState("dashboard");
   const { logout } = useAuth();
 
   // Renders the component corresponding to the active page.
@@ -22,9 +29,10 @@ const AdminLayout = () => {
         return <UserManagement />;
       case "notices":
         return <NoticeManagement />;
+      case "reports":
+        return <Reports />;
       case "dashboard":
       default:
-        // Pass setActivePage to allow the dashboard to navigate to other pages
         return <Dashboard setActivePage={setActivePage} />;
     }
   };
@@ -50,10 +58,16 @@ const AdminLayout = () => {
             onClick={() => setActivePage("users")}
           />
           <SidebarButton
-            icon={<FileText size={20} />}
+            icon={<MessageSquare size={20} />} // Changed icon here
             label="ניהול מודעות"
             isActive={activePage === "notices"}
             onClick={() => setActivePage("notices")}
+          />
+          <SidebarButton
+            icon={<FileText size={20} />}
+            label="דוחות"
+            isActive={activePage === "reports"}
+            onClick={() => setActivePage("reports")}
           />
         </nav>
         <div className="p-2 border-t border-gray-700">

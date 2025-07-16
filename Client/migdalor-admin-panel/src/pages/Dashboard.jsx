@@ -1,5 +1,5 @@
 import React from "react";
-import { Users, FileText } from "lucide-react";
+import { Users, FileText, MessageSquare } from "lucide-react"; // Import the new icon
 
 /**
  * A card component for the dashboard, acting as a navigation button.
@@ -41,11 +41,17 @@ const Dashboard = ({ setActivePage }) => {
         <DashboardCard
           title="ניהול מודעות"
           description="ניהול לוח המודעות של האפליקציה."
-          icon={<FileText className="h-10 w-10 text-white" />}
+          icon={<MessageSquare className="h-10 w-10 text-white" />} // Changed icon here
           colorClass="bg-green-500"
           onClick={() => setActivePage("notices")}
         />
-        {/* New cards for additional pages can be added here in the future */}
+        <DashboardCard
+          title="דוחות"
+          description="הפקה והורדה של דוחות נוכחות ופעילויות."
+          icon={<FileText className="h-10 w-10 text-white" />}
+          colorClass="bg-purple-500"
+          onClick={() => setActivePage("reports")}
+        />
       </div>
     </div>
   );
