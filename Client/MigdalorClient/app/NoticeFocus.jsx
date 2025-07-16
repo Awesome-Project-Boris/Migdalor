@@ -6,13 +6,9 @@ import {
   ActivityIndicator,
   Button,
 } from "react-native";
-<<<<<<< Updated upstream
-import { useLocalSearchParams, useRouter } from "expo-router";
 import { Card, Paragraph, YStack, XStack, H2, Text } from "tamagui";
-=======
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Card, YStack } from "tamagui"; // We only need YStack from Tamagui now
->>>>>>> Stashed changes
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
 

@@ -9,14 +9,10 @@ import * as SplashScreen from "expo-splash-screen";
 import { useRouter } from "expo-router";
 import * as Notifications from "expo-notifications";
 import { defaultConfig } from "@tamagui/config/v4";
-<<<<<<< Updated upstream
-import { BottomSheetProvider } from "../components/BottomSheetMain";
-=======
 
 import { AuthProvider } from "@/context/AuthProvider";
 import { SettingsProvider, useSettings } from "@/context/SettingsContext"; // Import our new Provider and Hook
 import { BottomSheetProvider } from "@/components/BottomSheetMain";
->>>>>>> Stashed changes
 import { MainMenuEditProvider } from "@/context/MainMenuEditProvider";
 import { MarketplaceProvider } from "@/context/MarketplaceProvider";
 import { toastConfig } from "@/components/CustomToasts";
@@ -25,10 +21,6 @@ const config = createTamagui(defaultConfig);
 
 SplashScreen.preventAutoHideAsync();
 
-<<<<<<< Updated upstream
-export default function Layout() {
-  const router = useRouter();
-=======
 /**
  * This is the new inner layout component.
  */
@@ -36,7 +28,6 @@ function RootLayout() {
   // Get the loading state from our new SettingsContext.
   const { isLoading } = useSettings();
 
->>>>>>> Stashed changes
   useEffect(() => {
     // When isLoading becomes false, it means our settings have been loaded from storage.
     // Now it's safe to hide the splash screen.
@@ -51,31 +42,8 @@ function RootLayout() {
     return null;
   }
 
-<<<<<<< Updated upstream
-  useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
-        const data = response.notification.request.content.data;
-        if (data && data.noticeId) {
-          router.push({
-            pathname: "/NoticeFocus",
-            params: {
-              noticeId: data.noticeId,
-              hebSenderName: data.hebSenderName,
-              engSenderName: data.engSenderName,
-            },
-          });
-        }
-      }
-    );
-
-    return () => subscription.remove();
-  }, [router]);
-
-=======
   // Once loading is complete, render the entire application.
   // All the providers and screens below are exactly as you had them.
->>>>>>> Stashed changes
   return (
     <PaperProvider>
       <TamaguiProvider config={config}>

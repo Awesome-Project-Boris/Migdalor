@@ -51,15 +51,9 @@ export default function LanguageSettingsPage() {
             <FlipButton
               key={value}
               style={styles.button}
-<<<<<<< Updated upstream
-              bgColor={languageSetting === value ? "#00b5d9" : "#ffffff"}
-              textColor={languageSetting === value ? "#ffffff" : "#0b0908"}
-              onPress={() => setLanguageSetting(value)}
-=======
               bgColor={settings.language === value ? "#00007a" : "#ffffff"}
               textColor={settings.language === value ? "#ffffff" : "#0b0908"}
               onPress={() => updateSetting("language", value)}
->>>>>>> Stashed changes
             >
               <StyledText style={styles.buttonText}>{label}</StyledText>
             </FlipButton>

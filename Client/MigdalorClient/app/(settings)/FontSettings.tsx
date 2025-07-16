@@ -11,11 +11,7 @@ import StyledText from "@/components/StyledText.jsx";
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const CustomSliderTrack = styled(Slider.Track, {
-<<<<<<< Updated upstream
-  backgroundColor: "#00b5d9",
-=======
   backgroundColor: "#00b5d9", // A distinct color for the slider track
->>>>>>> Stashed changes
 });
 
 export default function FontSettingsPage() {
