@@ -2,6 +2,7 @@
 
 import i18next from "i18next";
 import { initReactI18next } from "react-i18next";
+import Events from "../Events";
 // import {Globals} from '../constants/Globals'; // No longer needed for initialization
 
 const resources = {
@@ -104,6 +105,24 @@ const resources = {
 
       Events_Title: "Events",
       Events_NoEvents: "You have no events to manage at this time.",
+      Events_Loading: "Loading Your Events...",
+      Events_Selct: "Select an Event",
+      Events_Choose: "-- Choose an Event --",
+      Events_ChooseDate: "-- Choose a Date --",
+      Events_SelectMeeting: "Select a Meeting",
+      Events_NoMeetings: "No upcoming meetings",
+      Events_MissingInformation: "Missing Information",
+      Events_MissingInformationMessage: "Please select a meeting and provide a reason.",
+      Events_InvalidDate: "Invalid Date",
+      Events_InvalidDateMessage: "Cannot reschedule a meeting to a time that has already passed.",
+      Events_MoveMeeting: "Move meeting to another time",
+      Events_NewMeeting: "New Meeting Date & Time",
+      Events_Reason_for_Move: "Reason for Move",
+      Events_Reason_for_Cancellation: "Reason for Cancellation",
+      Events_Confirm_Cancellation: "Confirm Cancellation",
+      Events_Confirm_Move: "Confirm Move",
+      Events_DescriptionPlaceholder: "e.g., Personal emergency, etc.",
+
 
       SettingsPopup_SettingsButton: "Settings",
       SettingsPopup_HomeButton: "Home",
@@ -216,6 +235,7 @@ const resources = {
       LocationScreen_insideBoundaryLabel: "Inside Boundary:",
       LocationScreen_userLocationLabel: "User Location:",
       MapScreen_backToMapButton: "Back to Map",
+      MapScreen_Apartment: "Apartment no. ",
 
       ImagePicker_selectSourceTitle: "Select Image Source",
       ImagePicker_selectSourceMessage: "Choose how to select the image",
@@ -535,6 +555,25 @@ const resources = {
 
       Events_Title: "אירועים",
       Events_NoEvents: "אין לך אירועים לנהל כרגע.",
+      Events_Loading: "טוען את האירועים שלך...",
+      Events_Selct: "בחר אירוע",
+      Events_Choose: "-- בחר אירוע --",
+      Events_ChooseDate: "-- בחר תאריך --",
+      Events_SelectMeeting: "בחר מפגש",
+      Events_NoMeetings: "אין מפגשים קרובים",
+      Events_MissingInformation: "חסר מידע",
+      Events_MissingInformationMessage: "אנא בחר מפגש וספק סיבה.",
+      Events_InvalidDate: "תאריך לא תקין",
+      Events_InvalidDateMessage: "לא ניתן לשנות מפגש לזמן שכבר עבר.",
+      Events_MoveMeeting: "העבר מפגש לזמן אחר",
+      Events_NewMeeting: "תאריך ושעה חדשים למפגש",
+      Events_Reason_for_Move: "סיבה להעברה",
+      Events_Reason_for_Cancellation: "סיבה לביטול",
+      Events_Confirm_Cancellation: "אשר ביטול",
+      Events_Confirm_Move: "אשר העברה",
+      Events_DescriptionPlaceholder: "לדוגמה, מקרה חירום אישי וכו'.",
+
+      
 
       SettingsPopup_SettingsButton: "הגדרות",
       SettingsPopup_HomeButton: "בית",
@@ -635,6 +674,7 @@ const resources = {
       LoginScreen_passwordLabel: "סיסמה",
       LoginScreen_loginButton: "כניסה",
 
+      MapScreen_Apartment: "דירה מספר ",
       MapScreen_building1Name: "בניין מספר אחת",
       MapScreen_building1Info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",
       Permissions_locationPermissionMessage: "נדרשת הרשאת מיקום להצגת המיקום.",

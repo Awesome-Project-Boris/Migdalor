@@ -101,7 +101,7 @@ export default function Events() {
 
   const handleSubmit = async () => {
     if (!selectedInstance || !notes.trim()) {
-      Alert.alert("Missing Information", "Please select a meeting and provide a reason.");
+      Alert.alert(t("Events_MissingInformation"), t("Events_MissingInformationMessage"));
       return;
     }
     
@@ -115,7 +115,7 @@ export default function Events() {
 
     if (isRescheduling) {
         if (newDate < new Date()) {
-            Alert.alert("Invalid Date", "Cannot reschedule a meeting to a time that has already passed.");
+            Alert.alert(t("Events_InvalidDate"), t("Events_InvalidDateMessage"));
             return;
         }
 
@@ -170,7 +170,7 @@ export default function Events() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />
-        <Text>Loading Your Events...</Text>
+        <Text>{t("Events_Loading")}</Text>
       </View>
     );
   }
@@ -193,10 +193,12 @@ export default function Events() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{t("Events_Title", "Manage My Events")}</Text>
 
-        <Text style={styles.label}>Select an Event</Text>
+        <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? 'right' : 'left' }]}>
+          {t("Events_Selct")}
+        </Text>
         <View style={styles.pickerContainer}>
           <Picker selectedValue={selectedEvent} onValueChange={(itemValue) => setSelectedEvent(itemValue)}>
-            <Picker.Item label="-- Choose an Event --" value={null} />
+            <Picker.Item label={t("Events_Choose")} value={null} />
             {events.map((event) => (
               <Picker.Item key={event.eventId} label={event.eventName} value={event.eventId} />
             ))}
@@ -205,10 +207,12 @@ export default function Events() {
 
         {selectedEvent && (
           <>
-            <Text style={styles.label}>Select a Meeting</Text>
+            <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? 'right' : 'left' }]}>
+              {t("Events_SelectMeeting")}
+            </Text>
             <View style={styles.pickerContainer}>
               <Picker selectedValue={selectedInstance} onValueChange={(itemValue) => setSelectedInstance(itemValue)} enabled={instances.length > 0}>
-                <Picker.Item label={instances.length > 0 ? "-- Choose a Date --" : "No upcoming meetings"} value={null} />
+                <Picker.Item label={instances.length > 0 ? t("Events_ChooseDate") : t("Events_NoMeetings")} value={null} />
                 {instances.map((instance) => (
                   <Picker.Item key={instance.instanceId} label={new Date(instance.startTime).toLocaleString()} value={instance.instanceId} />
                 ))}
@@ -223,12 +227,12 @@ export default function Events() {
                     <TouchableOpacity style={styles.checkbox} onPress={() => setIsRescheduling(!isRescheduling)}>
                         {isRescheduling && <View style={styles.checkboxInner} />}
                     </TouchableOpacity>
-                    <Text>Move meeting to another time</Text>
+                    <Text>{t("Events_MoveMeeting")}</Text>
                 </View>
 
                 {isRescheduling && (
                     <View>
-                        <Text style={styles.label}>New Meeting Date & Time</Text>
+                        <Text style={styles.label}>{t("Events_NewMeeting")}</Text>
                         <View style={styles.datePickerRow}>
                             <TouchableOpacity onPress={() => showMode('date')} style={styles.dateButton}>
                                 <Text style={styles.dateButtonText}>{newDate.toLocaleDateString()}</Text>
@@ -251,7 +255,7 @@ export default function Events() {
                     </View>
                 )}
 
-                <Text style={styles.label}>{isRescheduling ? 'Reason for Move' : 'Reason for Cancellation'}</Text>
+                <Text style={styles.label}>{isRescheduling ? t("Events_Reason_for_Move") : t("Events_Reason_for_Cancellation")}</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="e.g., Personal emergency, etc."
@@ -266,7 +270,7 @@ export default function Events() {
                     style={styles.actionButton}
                     disabled={isSubmitting}
                 >
-                    {isSubmitting ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>{isRescheduling ? 'Confirm Move' : 'Confirm Cancellation'}</Text>}
+                    {isSubmitting ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>{isRescheduling ? t("Events_Confirm_Move") : t("Events_Confirm_Cancellation")}</Text>}
                 </FlipButton>
             </View>
         )}
