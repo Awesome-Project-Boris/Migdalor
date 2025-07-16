@@ -162,7 +162,7 @@ const SharedTable = ({
           </strong>
         </span>
         <span className="flex items-center gap-1">
-          | עבור לעמוד:
+          עבור לעמוד:
           <input
             type="number"
             defaultValue={table.getState().pagination.pageIndex + 1}

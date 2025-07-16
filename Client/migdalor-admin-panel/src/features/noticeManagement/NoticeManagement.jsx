@@ -4,8 +4,39 @@ import { useAuth } from "../../auth/AuthContext";
 import Toast from "../../components/common/Toast";
 import SharedTable from "../../components/common/SharedTable";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
-import EditNoticeModal from "./EditNoticeModal";
-import { Edit, Trash2 } from "lucide-react";
+import NoticeModal from "./NoticeModal";
+import { Edit, Trash2, MessageSquarePlus } from "lucide-react";
+
+// --- Mock shadcn/ui Component ---
+const Button = React.forwardRef(
+  ({ className, variant, size, ...props }, ref) => {
+    const baseClasses =
+      "inline-flex mx-1 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    const sizeClasses = size === "sm" ? "h-9 px-3" : "h-10 px-4 py-2";
+
+    let variantClasses;
+    switch (variant) {
+      case "outline":
+        variantClasses =
+          "border border-gray-300 bg-transparent hover:bg-gray-100";
+        break;
+      case "ghost":
+        variantClasses = "hover:bg-gray-100";
+        break;
+      default:
+        variantClasses = "bg-blue-600 text-white hover:bg-blue-700";
+    }
+
+    return (
+      <button
+        className={`${baseClasses} ${sizeClasses} ${variantClasses} ${className}`}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = "Button";
 
 // --- Mock Tooltip Components ---
 const TooltipProvider = ({ children }) => <>{children}</>;
@@ -23,11 +54,12 @@ const TooltipContent = ({ children, ...props }) => (
 );
 
 const NoticeManagement = () => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const [notices, setNotices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editingNotice, setEditingNotice] = useState(null);
+  const [activeNotice, setActiveNotice] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingNotice, setDeletingNotice] = useState(null);
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState([{ id: "creationDate", desc: true }]);
@@ -64,19 +96,74 @@ const NoticeManagement = () => {
     fetchNotices();
   }, [fetchNotices]);
 
-  const handleOpenEditModal = useCallback((notice) => {
-    setEditingNotice(notice);
-  }, []);
+  const handleOpenModal = (notice = null) => {
+    setActiveNotice(notice);
+    setIsModalOpen(true);
+  };
 
-  const handleSave = async (noticeId, updatedNoticeData) => {
+  const handleCloseModal = () => {
+    setActiveNotice(null);
+    setIsModalOpen(false);
+  };
+
+  const handleSaveNotice = async (noticeData, noticeId) => {
+    const isEditMode = !!noticeId;
+
+    if (!user || !user.id) {
+      showToast("error", "שגיאה בזיהוי המשתמש. אנא התחבר מחדש.");
+      throw new Error("Could not identify user from context.");
+    }
+
+    const noticePayload = {
+      ...noticeData,
+      SenderId: user.id, // Always use the ID of the logged-in admin
+    };
+
+    if (isEditMode) {
+      noticePayload.Title = `עדכון: ${noticePayload.Title}`;
+    }
+
     try {
-      await api.put(`/Notices/${noticeId}`, updatedNoticeData, token);
-      showToast("success", "ההודעה עודכנה בהצלחה.");
-      setEditingNotice(null);
-      fetchNotices();
+      let savedNotice;
+      // Step 1: Save the notice (create or update)
+      if (isEditMode) {
+        savedNotice = await api.put(
+          `/Notices/${noticeId}`,
+          noticePayload,
+          token
+        );
+      } else {
+        savedNotice = await api.post("/Notices", noticePayload, token);
+      }
+
+      if (!savedNotice || !savedNotice.noticeId) {
+        throw new Error("יצירת ההודעה נכשלה, השרת לא החזיר מזהה הודעה.");
+      }
+
+      showToast("info", "ההודעה נשמרה! שולח התראה...");
+
+      // Step 2: Send the push notification
+      const pushMessage = {
+        to: "/topics/all",
+        title: noticePayload.Title,
+        body: noticePayload.Content,
+        sound: "default",
+        badge: "0",
+        data: {
+          noticeId: savedNotice.noticeId,
+          category: noticePayload.Category,
+          hebSenderName: `${user?.hebFirstName} ${user?.hebLastName}`,
+        },
+      };
+
+      await api.post("/Notifications/broadcast", pushMessage, token);
+
+      showToast("success", "ההודעה וההתראה נשלחו בהצלחה!");
+      fetchNotices(); // Refresh the table
     } catch (err) {
-      showToast("error", `שגיאה בעדכון ההודעה: ${err.message}`);
-      throw err;
+      const action = isEditMode ? "עדכון" : "יצירת";
+      showToast("error", `שגיאה ב${action} ההודעה: ${err.message}`);
+      throw err; // Re-throw to keep the modal open on error
     }
   };
 
@@ -126,7 +213,7 @@ const NoticeManagement = () => {
               <Tooltip>
                 <TooltipTrigger>
                   <button
-                    onClick={() => handleOpenEditModal(notice)}
+                    onClick={() => handleOpenModal(notice)}
                     className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
                   >
                     <Edit size={20} />
@@ -154,7 +241,7 @@ const NoticeManagement = () => {
         },
       },
     ],
-    [handleOpenEditModal]
+    []
   );
 
   if (isLoading) return <div className="text-center p-4">טוען הודעות...</div>;
@@ -169,7 +256,17 @@ const NoticeManagement = () => {
           variant={toastState.variant}
           onClose={handleCloseToast}
         />
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">ניהול הודעות</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-gray-800">ניהול הודעות</h2>
+          <Button
+            onClick={() => handleOpenModal()}
+            size="sm"
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <MessageSquarePlus size={16} className="ml-2" />
+            הוסף הודעה חדשה
+          </Button>
+        </div>
         <SharedTable
           data={notices}
           columns={columns}
@@ -178,14 +275,15 @@ const NoticeManagement = () => {
           sorting={sorting}
           setSorting={setSorting}
         />
-        {editingNotice && (
-          <EditNoticeModal
-            notice={editingNotice}
-            isOpen={!!editingNotice}
-            onClose={() => setEditingNotice(null)}
-            onSave={handleSave}
-          />
-        )}
+
+        <NoticeModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSaveNotice}
+          showToast={showToast}
+          notice={activeNotice}
+        />
+
         {deletingNotice && (
           <ConfirmationModal
             title="אישור מחיקה"
