@@ -28,8 +28,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "@/app/constants/Globals";
 import { Keyboard } from "react-native";
 import Header from "@/components/Header";
+import StyledText from "@/components/StyledText";
 
-import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
+import { Card, XStack, YStack, Spinner } from "tamagui";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
@@ -662,13 +663,13 @@ export default function AddNewItem() {
       >
         <View style={styles.contentContainer}>
           <View style={styles.headerRow}>
-            <Text style={styles.title}>
+            <StyledText style={styles.title}>
               {t(
                 isEditMode
                   ? "MarketplaceEditItemScreen_Header"
                   : "MarketplaceNewItemScreen_NewItem"
               )}
-            </Text>
+            </StyledText>
           </View>
 
           <FloatingLabelInput
@@ -681,11 +682,13 @@ export default function AddNewItem() {
           />
 
           {formErrors.itemName ? (
-            <Text style={styles.errorText}>{formErrors.itemName}</Text>
+            <StyledText style={styles.errorText}>
+              {formErrors.itemName}
+            </StyledText>
           ) : (
-            <Text style={styles.charCount}>
+            <StyledText style={styles.charCount}>
               {itemName.length}/{ITEM_NAME_LIMIT}
-            </Text>
+            </StyledText>
           )}
 
           <FloatingLabelInput
@@ -699,11 +702,13 @@ export default function AddNewItem() {
             maxLength={DESCRIPTION_LIMIT}
           />
           {formErrors.itemDescription ? (
-            <Text style={styles.errorText}>{formErrors.itemDescription}</Text>
+            <StyledText style={styles.errorText}>
+              {formErrors.itemDescription}
+            </StyledText>
           ) : (
-            <Text style={styles.charCount}>
+            <StyledText style={styles.charCount}>
               {itemDescription.length}/{DESCRIPTION_LIMIT}
-            </Text>
+            </StyledText>
           )}
 
           <XStack
@@ -719,7 +724,7 @@ export default function AddNewItem() {
               borderRadius="$4"
               overflow="hidden"
               margin={10}
-              onPress={() => viewOrPickImage("main")} // Step 1 of picking or viewing the card's image
+              onPress={() => viewOrPickImage("main")}
             >
               {mainImage ? (
                 <>
@@ -736,9 +741,9 @@ export default function AddNewItem() {
                     ai="center"
                     backgroundColor="rgba(0,0,0,0.4)"
                   >
-                    <Paragraph theme="alt2">
+                    <StyledText style={styles.imageOverlayText}>
                       {t("MarketplaceNewItemScreen_MainImage")}
-                    </Paragraph>
+                    </StyledText>
                   </YStack>
                 </>
               ) : (
@@ -749,13 +754,15 @@ export default function AddNewItem() {
                   p="$2"
                   style={{ direction: Globals.userSelectedDirection }}
                 >
-                  <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
-                  <Paragraph theme="alt2">
+                  <StyledText style={styles.imageCardHeader}>
+                    {t("MarketplaceNewItemScreen_MainImage")}
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("MarketplaceNewItemScreen_ImageOptional")}
-                  </Paragraph>
-                  <Paragraph theme="alt2">
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("MarketplaceNewItemScreen_ImageTapToChoose")}
-                  </Paragraph>
+                  </StyledText>
                 </YStack>
               )}
             </Card>
@@ -765,7 +772,7 @@ export default function AddNewItem() {
               height={150}
               borderRadius="$4"
               overflow="hidden"
-              onPress={() => viewOrPickImage("extra")} // Step 1 of picking or viewing the card's image
+              onPress={() => viewOrPickImage("extra")}
             >
               {extraImage ? (
                 <>
@@ -782,9 +789,9 @@ export default function AddNewItem() {
                     ai="center"
                     backgroundColor="rgba(0,0,0,0.4)"
                   >
-                    <Paragraph theme="alt2" color="$color">
+                    <StyledText style={styles.imageOverlayText}>
                       {t("MarketplaceNewItemScreen_ExtraImage")}
-                    </Paragraph>
+                    </StyledText>
                   </YStack>
                 </>
               ) : (
@@ -795,13 +802,15 @@ export default function AddNewItem() {
                   p="$2"
                   style={{ direction: Globals.userSelectedDirection }}
                 >
-                  <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2>
-                  <Paragraph theme="alt2">
+                  <StyledText style={styles.imageCardHeader}>
+                    {t("MarketplaceNewItemScreen_ExtraImage")}
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("MarketplaceNewItemScreen_ImageOptional")}
-                  </Paragraph>
-                  <Paragraph theme="alt2">
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("MarketplaceNewItemScreen_ImageTapToChoose")}
-                  </Paragraph>
+                  </StyledText>
                 </YStack>
               )}
             </Card>
@@ -818,9 +827,9 @@ export default function AddNewItem() {
               {isSubmitting ? (
                 <Spinner size="small" color="black" />
               ) : (
-                <Text style={styles.buttonLabel}>
+                <StyledText style={styles.buttonLabel}>
                   {t("MarketplaceSearchItem_SubmitButton")}
-                </Text>
+                </StyledText>
               )}
             </FlipButton>
             <FlipButton
@@ -830,9 +839,9 @@ export default function AddNewItem() {
               style={styles.cancelButton}
               disabled={isSubmitting}
             >
-              <Text style={styles.buttonLabel}>
+              <StyledText style={styles.buttonLabel}>
                 {t("MarketplaceSearchItem_CancelButton")}
-              </Text>
+              </StyledText>
             </FlipButton>
           </View>
         </View>
@@ -851,9 +860,9 @@ export default function AddNewItem() {
         <Modal visible={true} transparent={true} animationType="fade">
           <View style={styles.confirmOverlay}>
             <View style={styles.confirmContainer}>
-              <Text style={styles.confirmText}>
+              <StyledText style={styles.confirmText}>
                 {t("MarketplaceNewItemScreen_CancelDiscardHeader")}
-              </Text>
+              </StyledText>
               <View style={styles.confirmButtonRow}>
                 <FlipButton
                   onPress={confirmCancel}
@@ -861,9 +870,9 @@ export default function AddNewItem() {
                   textColor="black"
                   style={styles.confirmButton}
                 >
-                  <Text style={styles.buttonLabel}>
+                  <StyledText style={styles.buttonLabel}>
                     {t("MarketplaceNewItemScreen_CancelConfirmation")}
-                  </Text>
+                  </StyledText>
                 </FlipButton>
                 <FlipButton
                   onPress={() => setShowConfirm(false)}
@@ -871,9 +880,9 @@ export default function AddNewItem() {
                   textColor="white"
                   style={styles.confirmButton}
                 >
-                  <Text style={[styles.buttonLabel, { color: "white" }]}>
+                  <StyledText style={[styles.buttonLabel, { color: "white" }]}>
                     {t("MarketplaceNewItemScreen_CancelDiscard")}
-                  </Text>
+                  </StyledText>
                 </FlipButton>
               </View>
             </View>
@@ -988,5 +997,27 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: 5,
     fontSize: 12,
+  },
+  // --- NEW STYLES TO REPLACE TAMAGUI ELEMENTS ---
+  imageCardHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  imageCardParagraph: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+  },
+  imageOverlayText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
 });

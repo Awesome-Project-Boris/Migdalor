@@ -1,125 +1,111 @@
-import { View } from "tamagui";
-import { Slider, XStack, YStack, ZStack, Text, Image, styled } from "tamagui";
-import { Bold, Scroll } from "@tamagui/lucide-icons";
-import { useState, useEffect } from "react";
+import { View, Slider, XStack, YStack, Image, styled } from "tamagui";
+import { useState } from "react";
 import { StyleSheet, Dimensions, ScrollView } from "react-native";
-import { Globals } from "../constants/Globals";
-import { Pressable, TouchableWithoutFeedback } from "react-native-gesture-handler";
-import { useSharedValue } from "react-native-reanimated";
 import Header from "@/components/Header";
 import { useTranslation } from "react-i18next";
 
+// --- Custom Component and Context Imports ---
+import { useSettings } from "@/context/SettingsContext.jsx";
+import StyledText from "@/components/StyledText.jsx";
+
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const SCREEN_HEIGHT = Dimensions.get("window").height;
 
 const CustomSliderTrack = styled(Slider.Track, {
+<<<<<<< Updated upstream
   backgroundColor: "#00b5d9",
+=======
+  backgroundColor: "#00b5d9", // A distinct color for the slider track
+>>>>>>> Stashed changes
 });
 
-export default function GeneralSettingsPage() {
-  const {t} = useTranslation();
-
-  const [fontSize, setFontSize] = useState(Globals.userSelectedFontSize);
-
+export default function FontSettingsPage() {
+  const { t } = useTranslation();
+  const { settings, updateSetting } = useSettings();
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
-  useEffect(() => {
-    Globals.userSelectedFontSize = fontSize;
-  }, [fontSize]);
-
   return (
-    <View style={{ flex: 1 }}>
-     <Header/> 
-      <ScrollView scrollEnabled={scrollEnabled} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 60, paddingTop: 60  }}> 
-        <YStack height={70} alignItems="baseline" gap="$5" alignSelf="center">
-          <Text
-            fontSize={40}
-            fontWeight={800}
-            alignSelf="center"
-            // direction={Globals.userSelectedDirection as "rtl" | "ltr"}
-            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
-
-          >
+    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+      <Header />
+      <ScrollView
+        scrollEnabled={scrollEnabled}
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* --- HEADER SECTION --- */}
+        {/* The fixed height has been REMOVED from this YStack */}
+        <YStack alignItems="center" gap="$2" marginBottom="$6">
+          <StyledText style={styles.headerText}>
             {t("FontSettingsPage_header")}
-
-          </Text>
+          </StyledText>
         </YStack>
 
+        {/* --- SLIDER SECTION --- */}
         <XStack
-          height={80}
-          width={SCREEN_WIDTH * 1}
-          alignItems="baseline"
-          gap="$4"
-          alignSelf="center"
+          alignItems="center"
           justifyContent="center"
-          direction="rtl"
+          width="90%"
+          alignSelf="center"
+          gap="$3"
         >
           <Image
-            alignSelf="center"
-            //alignSelf="baseline"
-            
-            // style={{ paddingLeft: 20 }}
-            // style={{ alignItems: "flex-end" }}
-
             source={{
-              //uri: "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67e2e97a&is=67e197fa&hm=399800590e41b3c525eb29668dbc383634a34755fdaa97a20b329d40f0d48741&",
-              uri: Globals.userSelectedLanguage == "he" ? "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67f212ba&is=67f0c13a&hm=1b5416976411c76d5fa6911cb26ccd04e4c4bb69d5c813759e5264d4a7c27131&" : "https://pngimg.com/d/letter_a_PNG24.png",
+              uri:
+                settings.language === "he"
+                  ? "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67f212ba&is=67f0c13a&hm=1b5416976411c76d5fa6911cb26ccd04e4c4bb69d5c813759e5264d4a7c27131&"
+                  : "https://pngimg.com/d/letter_a_PNG24.png",
               width: 20,
               height: 20,
             }}
           />
-
+          <View style={{ flex: 1, marginHorizontal: 10 }}>
             <Slider
-              alignSelf="center"
               size="$6"
-              width={SCREEN_WIDTH * 0.6}
-              defaultValue={[3- Globals.userSelectedFontSize]}
+              width="100%"
+              min={1}
               max={3}
               step={1}
-              onValueChange={(value) => setFontSize(3- value[0])}
-              onSlideStart={() => {
-                setScrollEnabled(false)
-              }}
-              onSlideEnd={() => {
-                setScrollEnabled(true);
-              }}
+              defaultValue={[settings.fontSizeMultiplier]}
+              onValueChange={(value) =>
+                updateSetting("fontSizeMultiplier", value[0])
+              }
+              onSlideStart={() => setScrollEnabled(false)}
+              onSlideEnd={() => setScrollEnabled(true)}
             >
               <CustomSliderTrack>
                 <Slider.TrackActive />
               </CustomSliderTrack>
               <Slider.Thumb circular index={0} />
             </Slider>
-
+          </View>
           <Image
             source={{
-              //uri: "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67e2e97a&is=67e197fa&hm=399800590e41b3c525eb29668dbc383634a34755fdaa97a20b329d40f0d48741&",
-              uri: Globals.userSelectedLanguage == "he" ? "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67f212ba&is=67f0c13a&hm=1b5416976411c76d5fa6911cb26ccd04e4c4bb69d5c813759e5264d4a7c27131&" : "https://pngimg.com/d/letter_a_PNG24.png",
+              uri:
+                settings.language === "he"
+                  ? "https://cdn.discordapp.com/attachments/1309914853548359740/1353784406338175066/Aleph.png?ex=67f212ba&is=67f0c13a&hm=1b5416976411c76d5fa6911cb26ccd04e4c4bb69d5c813759e5264d4a7c27131&"
+                  : "https://pngimg.com/d/letter_a_PNG24.png",
               width: 50,
               height: 50,
             }}
           />
         </XStack>
 
-        <YStack alignItems="baseline" gap="$5" alignSelf="center">
-          <Text
-            fontSize={40}
-            fontWeight={800}
-            alignSelf="center"
-            // direction={Globals.userSelectedDirection as "rtl" | "ltr"}
-            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
-
-          >
+        {/* --- EXAMPLE TEXT SECTION --- */}
+        <YStack
+          alignItems="center"
+          gap="$3"
+          alignSelf="center"
+          marginTop="$8"
+          width="90%"
+        >
+          <StyledText style={styles.headerText}>
             {t("FontSettingsPage_exampleHeader")}
-          </Text>
-          <Text
-            style={[styles.textBoxStyle, { fontSize: fontSize * 10 + 20 }]}
-            alignSelf="center"
-            //direction={Globals.userSelectedDirection as "rtl" | "ltr"}
-            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
-
+          </StyledText>
+          <StyledText
+            style={styles.textBoxStyle}
+            writingDirection={settings.language === "he" ? "rtl" : "ltr"}
           >
             {t("FontSettingsPage_example")}
-          </Text>
+          </StyledText>
         </YStack>
       </ScrollView>
     </View>
@@ -127,17 +113,26 @@ export default function GeneralSettingsPage() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingVertical: 40, // Increased padding for better spacing
+    paddingHorizontal: 10,
+    marginTop: 60,
+  },
+  headerText: {
+    fontSize: 32, // Slightly adjusted base size
+    fontWeight: "800",
+    textAlign: "center",
+    color: "#333",
+  },
   textBoxStyle: {
-    //fontSize: 30,
-    backgroundColor: "#ddd",
+    fontSize: 16, // This is the base font size that will be multiplied
+    backgroundColor: "#EFEFEF",
     padding: 20,
     borderRadius: 10,
+    width: "100%",
+    textAlign: "center",
+    color: "#333",
+    // Adding overflow: 'hidden' can prevent text from rendering outside the box boundaries
+    overflow: "hidden",
   },
 });
-
-// export const SliderExample = () => {
-//   const progress = useSharedValue(30);
-//   const min = useSharedValue(0);
-//   const max = useSharedValue(100);
-//   return <AwesomeSlider progress={progress} minimumValue={min} maximumValue={max} />;
-// };

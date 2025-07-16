@@ -1,27 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { StyleSheet, Dimensions, ScrollView, View } from "react-native";
-import { Globals } from "@/app/constants/Globals";
-import FlipButton from "../../components/FlipButton";
 import Header from "@/components/Header";
 import { Divider } from "react-native-paper";
 import { useAuth } from "@/context/AuthProvider";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Text, YStack } from "tamagui";
+import { YStack } from "tamagui";
+
+// --- Our new imports ---
+import { useSettings } from "@/context/SettingsContext.jsx"; // Note the .jsx extension
+import FlipButton from "@/components/FlipButton";
+import StyledText from "@/components/StyledText.jsx"; // Use StyledText
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 export default function LanguageSettingsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { logout } = useAuth();
   const router = useRouter();
-  const [languageSetting, setLanguageSetting] = useState(Globals.userSelectedLanguage);
 
-  useEffect(() => {
-    Globals.userSelectedLanguage = languageSetting;
-    Globals.userSelectedDirection = languageSetting === "he" ? "rtl" : "ltr";
-    i18n.changeLanguage(languageSetting);
-  }, [languageSetting]);
+  // Get settings and update function from our context
+  const { settings, updateSetting } = useSettings();
 
   const options: { label: string; value: string }[] = [
     { label: t("LanguageSettingsPage_he"), value: "he" },
@@ -41,35 +40,39 @@ export default function LanguageSettingsPage() {
         }}
       >
         <YStack width="100%" alignItems="center" gap="$5">
-          <Text
-            fontSize={40}
-            fontWeight={800}
-            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+          <StyledText
+            style={{ fontSize: 40, fontWeight: "800" }}
+            writingDirection={settings.language === "he" ? "rtl" : "ltr"}
           >
             {t("LanguageSettingsPage_header")}
-          </Text>
+          </StyledText>
 
           {options.map(({ label, value }) => (
             <FlipButton
               key={value}
               style={styles.button}
+<<<<<<< Updated upstream
               bgColor={languageSetting === value ? "#00b5d9" : "#ffffff"}
               textColor={languageSetting === value ? "#ffffff" : "#0b0908"}
               onPress={() => setLanguageSetting(value)}
+=======
+              bgColor={settings.language === value ? "#00007a" : "#ffffff"}
+              textColor={settings.language === value ? "#ffffff" : "#0b0908"}
+              onPress={() => updateSetting("language", value)}
+>>>>>>> Stashed changes
             >
-              <Text style={styles.buttonText}>{label}</Text>
+              <StyledText style={styles.buttonText}>{label}</StyledText>
             </FlipButton>
           ))}
 
           <Divider style={{ width: SCREEN_WIDTH * 0.8, marginVertical: 20 }} />
 
-          <Text
-            fontSize={40}
-            fontWeight={800}
-            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+          <StyledText
+            style={{ fontSize: 40, fontWeight: "800" }}
+            writingDirection={settings.language === "he" ? "rtl" : "ltr"}
           >
             {t("LanguageSettingsPage_LogoutHeader")}
-          </Text>
+          </StyledText>
 
           <FlipButton
             style={styles.button}
@@ -80,7 +83,9 @@ export default function LanguageSettingsPage() {
               router.replace("/LoginScreen");
             }}
           >
-            <Text style={styles.buttonText}>{t("LanguageSettingsPage_Logout")}</Text>
+            <StyledText style={styles.buttonText}>
+              {t("LanguageSettingsPage_Logout")}
+            </StyledText>
           </FlipButton>
         </YStack>
       </ScrollView>
@@ -95,7 +100,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignSelf: "center",
-    backgroundColor: "#4CAF50",
   },
   buttonText: {
     fontSize: 18,
