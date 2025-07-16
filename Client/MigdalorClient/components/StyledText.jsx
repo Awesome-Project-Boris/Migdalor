@@ -6,7 +6,9 @@ import { useSettings } from "@/context/SettingsContext"; // Adjust path if neede
 
 const StyledText = (props) => {
   const { settings } = useSettings();
-  const { style, ...rest } = props;
+
+  // Destructure the new props for truncation alongside the existing ones.
+  const { style, numberOfLines, ellipsizeMode, ...rest } = props;
 
   const flattenedStyle = StyleSheet.flatten(style);
 
@@ -21,14 +23,21 @@ const StyledText = (props) => {
     const newFontSize = fontSize * settings.fontSizeMultiplier;
     finalStyle.fontSize = newFontSize;
 
-    // IMPORTANT: If a lineHeight was provided, scale it proportionally.
-    // If not, let React Native use the default.
+    // If a lineHeight was provided, scale it proportionally.
     if (lineHeight) {
       finalStyle.lineHeight = lineHeight * settings.fontSizeMultiplier;
     }
   }
 
-  return <Text style={finalStyle} {...rest} />;
+  // Render the built-in Text component, passing down the new props.
+  return (
+    <Text
+      style={finalStyle}
+      numberOfLines={numberOfLines}
+      ellipsizeMode={ellipsizeMode || "tail"} // Default to 'tail' if not provided
+      {...rest}
+    />
+  );
 };
 
 export default StyledText;

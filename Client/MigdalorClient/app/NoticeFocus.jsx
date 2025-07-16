@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   Button,
 } from "react-native";
-import { Card, Paragraph, YStack, XStack, H2, Text } from "tamagui";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Card, YStack } from "tamagui"; // We only need YStack from Tamagui now
 import FlipButton from "@/components/FlipButton";

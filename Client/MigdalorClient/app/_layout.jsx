@@ -1,17 +1,17 @@
 import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Stack } from "expo-router/stack";
+import { Stack, useRouter } from "expo-router"; // useRouter is now needed here
 import { PaperProvider } from "react-native-paper";
 import { TamaguiProvider, createTamagui } from "tamagui";
 import { Ionicons } from "@expo/vector-icons";
 import ToastManager from "toastify-react-native";
 import * as SplashScreen from "expo-splash-screen";
-import { useRouter } from "expo-router";
-import * as Notifications from "expo-notifications";
+import * as Notifications from "expo-notifications"; // This import from your teammate is preserved
 import { defaultConfig } from "@tamagui/config/v4";
 
+// --- All Provider Imports ---
 import { AuthProvider } from "@/context/AuthProvider";
-import { SettingsProvider, useSettings } from "@/context/SettingsContext"; // Import our new Provider and Hook
+import { SettingsProvider, useSettings } from "@/context/SettingsContext";
 import { BottomSheetProvider } from "@/components/BottomSheetMain";
 import { MainMenuEditProvider } from "@/context/MainMenuEditProvider";
 import { MarketplaceProvider } from "@/context/MarketplaceProvider";
@@ -19,31 +19,57 @@ import { toastConfig } from "@/components/CustomToasts";
 
 const config = createTamagui(defaultConfig);
 
+// Keep the splash screen visible. Our RootLayout will hide it.
 SplashScreen.preventAutoHideAsync();
 
 /**
- * This is the new inner layout component.
+ * This is the inner layout component. It's wrapped by all the necessary providers,
+ * so it can safely use hooks like useRouter and useSettings.
  */
 function RootLayout() {
-  // Get the loading state from our new SettingsContext.
-  const { isLoading } = useSettings();
+  const router = useRouter(); // Initialize the router here to use for notifications
+  const { isLoading } = useSettings(); // Get loading state from our context
 
+  // This hook correctly manages the splash screen, hiding it only when
+  // our settings have been loaded from storage.
   useEffect(() => {
-    // When isLoading becomes false, it means our settings have been loaded from storage.
-    // Now it's safe to hide the splash screen.
     if (!isLoading) {
       SplashScreen.hideAsync();
     }
-  }, [isLoading]); // This effect runs whenever the `isLoading` value changes.
+  }, [isLoading]);
 
-  // While the settings are loading, we render nothing. This prevents any part of the UI
-  // from appearing before the correct theme (font size, language) is ready.
+  // --- THIS IS YOUR TEAMMATE'S MERGED NOTIFICATION LOGIC ---
+  // This hook sets up a listener for when a user taps on a notification.
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(
+      (response) => {
+        const data = response.notification.request.content.data;
+        // For debugging: console.log("Notification tapped, data:", data);
+
+        // If the notification data contains a noticeId, navigate the user
+        if (data && data.noticeId) {
+          router.push({
+            pathname: "/NoticeFocus",
+            params: {
+              noticeId: data.noticeId,
+              hebSenderName: data.hebSenderName,
+              engSenderName: data.engSenderName,
+            },
+          });
+        }
+      }
+    );
+
+    // This function cleans up the listener when the app closes or the component unmounts.
+    return () => subscription.remove();
+  }, [router]); // The hook depends on the router to perform navigation.
+
+  // While settings are loading from storage, we render nothing to prevent a flicker of unstyled content.
   if (isLoading) {
     return null;
   }
 
-  // Once loading is complete, render the entire application.
-  // All the providers and screens below are exactly as you had them.
+  // Once loading is complete, render the entire application with all your screens.
   return (
     <PaperProvider>
       <TamaguiProvider config={config}>
@@ -52,7 +78,7 @@ function RootLayout() {
             <BottomSheetProvider>
               <MarketplaceProvider>
                 <Stack screenOptions={{ headerShown: false }}>
-                  {/* --- Your Navigation Stack --- */}
+                  {/* --- YOUR ENTIRE NAVIGATION STACK IS PRESERVED --- */}
                   <Stack.Screen
                     name="index"
                     options={{ title: "Index Page", headerShown: false }}
@@ -214,11 +240,10 @@ function RootLayout() {
 }
 
 /**
- * This is the main export component. Its only job is to set up the top-level providers.
+ * This is the main export component. Its only job is to set up the top-level providers,
+ * ensuring that all components within RootLayout have access to them.
  */
 export default function Layout() {
-  // The old useEffect for loading the language has been removed from here.
-
   return (
     <AuthProvider>
       <SettingsProvider>

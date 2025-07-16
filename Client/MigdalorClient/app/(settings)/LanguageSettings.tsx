@@ -1,25 +1,26 @@
 import React from "react";
-import { StyleSheet, Dimensions, ScrollView, View } from "react-native";
+import {
+  StyleSheet as RNStyleSheet,
+  Dimensions as RNDimensions,
+  ScrollView as RNScrollView,
+  View as RNView,
+} from "react-native";
 import Header from "@/components/Header";
 import { Divider } from "react-native-paper";
 import { useAuth } from "@/context/AuthProvider";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { YStack } from "tamagui";
-
-// --- Our new imports ---
-import { useSettings } from "@/context/SettingsContext.jsx"; // Note the .jsx extension
+import { YStack as TamaguiYStack } from "tamagui";
+import { useSettings } from "@/context/SettingsContext.jsx";
 import FlipButton from "@/components/FlipButton";
-import StyledText from "@/components/StyledText.jsx"; // Use StyledText
+import StyledText from "@/components/StyledText.jsx";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
+const SCREEN_WIDTH = RNDimensions.get("window").width;
 
 export default function LanguageSettingsPage() {
   const { t } = useTranslation();
   const { logout } = useAuth();
   const router = useRouter();
-
-  // Get settings and update function from our context
   const { settings, updateSetting } = useSettings();
 
   const options: { label: string; value: string }[] = [
@@ -28,20 +29,15 @@ export default function LanguageSettingsPage() {
   ];
 
   return (
-    <View style={{ flex: 1 }}>
+    <RNView style={{ flex: 1 }}>
       <Header />
-      <ScrollView
+      <RNScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingTop: 60,
-          paddingBottom: 160,
-          alignItems: "center",
-        }}
+        contentContainerStyle={languageStyles.scrollContent}
       >
-        <YStack width="100%" alignItems="center" gap="$5">
+        <TamaguiYStack width="100%" alignItems="center" gap="$5">
           <StyledText
-            style={{ fontSize: 40, fontWeight: "800" }}
+            style={languageStyles.headerText}
             writingDirection={settings.language === "he" ? "rtl" : "ltr"}
           >
             {t("LanguageSettingsPage_header")}
@@ -50,26 +46,26 @@ export default function LanguageSettingsPage() {
           {options.map(({ label, value }) => (
             <FlipButton
               key={value}
-              style={styles.button}
+              style={languageStyles.button}
               bgColor={settings.language === value ? "#00007a" : "#ffffff"}
               textColor={settings.language === value ? "#ffffff" : "#0b0908"}
               onPress={() => updateSetting("language", value)}
             >
-              <StyledText style={styles.buttonText}>{label}</StyledText>
+              <StyledText style={languageStyles.buttonText}>{label}</StyledText>
             </FlipButton>
           ))}
 
           <Divider style={{ width: SCREEN_WIDTH * 0.8, marginVertical: 20 }} />
 
           <StyledText
-            style={{ fontSize: 40, fontWeight: "800" }}
+            style={languageStyles.headerText}
             writingDirection={settings.language === "he" ? "rtl" : "ltr"}
           >
             {t("LanguageSettingsPage_LogoutHeader")}
           </StyledText>
 
           <FlipButton
-            style={styles.button}
+            style={languageStyles.button}
             bgColor="#ffffff"
             textColor="#0b0908"
             onPress={async () => {
@@ -77,17 +73,29 @@ export default function LanguageSettingsPage() {
               router.replace("/LoginScreen");
             }}
           >
-            <StyledText style={styles.buttonText}>
+            <StyledText style={languageStyles.buttonText}>
               {t("LanguageSettingsPage_Logout")}
             </StyledText>
           </FlipButton>
-        </YStack>
-      </ScrollView>
-    </View>
+        </TamaguiYStack>
+      </RNScrollView>
+    </RNView>
   );
 }
 
-const styles = StyleSheet.create({
+const languageStyles = RNStyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    paddingTop: 60,
+    paddingBottom: 160,
+    alignItems: "center",
+  },
+  headerText: {
+    fontSize: 30,
+    fontWeight: "800",
+    textAlign: "center",
+    lineHeight: 50,
+  },
   button: {
     width: SCREEN_WIDTH * 0.7,
     minHeight: 100,
