@@ -183,7 +183,7 @@ namespace Migdalor.BL
         public async Task<List<string>> GenerateIconAsync(string prompt, int size)
         {
             string iconPrompt =
-                $"a simplified icon of {prompt}, vector style, on a white background, {size}x{size} pixels";
+                $"a simplified icon of {prompt}, vector style, on a transparent background, {size}x{size} pixels";
             return await GenerateImageAsync(iconPrompt);
         }
     }
