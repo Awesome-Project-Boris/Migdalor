@@ -79,6 +79,38 @@ namespace MigdalorServer.Models
             }
         }
 
+        public static OhNotice UpdateNotice(int id, NewNotice notice)
+        {
+            using MigdalorDBContext db = new();
+            var existingNotice = db.OhNotices.FirstOrDefault(n => n.NoticeId == id);
+            if (existingNotice == null)
+            {
+                throw new Exception("Notice not found");
+            }
+
+            existingNotice.NoticeTitle = notice.Title;
+            existingNotice.NoticeMessage = notice.Content;
+            existingNotice.NoticeCategory = notice.Category;
+            existingNotice.NoticeSubCategory = notice.SubCategory;
+
+            db.SaveChanges();
+            return existingNotice;
+        }
+
+        public static void DeleteNotice(int id)
+        {
+            using MigdalorDBContext db = new();
+            var noticeToDelete = db.OhNotices.FirstOrDefault(n => n.NoticeId == id);
+            if (noticeToDelete == null)
+            {
+                throw new Exception("Notice not found");
+            }
+
+            db.OhNotices.Remove(noticeToDelete);
+            db.SaveChanges();
+        }
+
+
         /// <summary>
         /// Gets all notices for a specific category, joining with the OH_People table to return the sender's full name
         /// in both Hebrew and English.

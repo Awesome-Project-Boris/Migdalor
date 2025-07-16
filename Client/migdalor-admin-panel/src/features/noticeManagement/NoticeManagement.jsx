@@ -1,269 +1,321 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "../../api/apiService";
 import { useAuth } from "../../auth/AuthContext";
-import { API_BASE_URL } from "../../config";
-import Toast from "../../components/common/Toast"; // Import the Toast component
+import Toast from "../../components/common/Toast";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Edit,
+  Trash2,
+  Search,
+  ChevronUp,
+  ChevronDown,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
+import EditNoticeModal from "./EditNoticeModal";
 
-/**
- * A component for creating and sending new notices, inspired by the mobile interface.
- * It fetches categories dynamically and handles form submission with push notifications.
- */
 const NoticeManagement = () => {
-  // Authentication context to get user details and token
-  const { user, token } = useAuth();
+  const { token } = useAuth();
+  const [notices, setNotices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [editingNotice, setEditingNotice] = useState(null);
+  const [deletingNotice, setDeletingNotice] = useState(null);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState([{ id: "creationDate", desc: true }]);
 
-  // State for form fields
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [subCategory, setSubCategory] = useState("");
-
-  // State for category fetching
-  const [categoryOptions, setCategoryOptions] = useState([]);
-  const [isCategoryLoading, setIsCategoryLoading] = useState(true);
-  const [categoryError, setCategoryError] = useState(null);
-
-  // State for form submission
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // State for managing the toast component
   const [toastState, setToastState] = useState({
     show: false,
     message: "",
     variant: "info",
   });
 
-  // Helper function to show a toast
   const showToast = (variant, message) => {
     setToastState({ show: true, variant, message });
   };
 
-  // Handler to close the toast
   const handleCloseToast = () => {
     setToastState({ ...toastState, show: false });
   };
 
-  // --- Fetch Categories on Component Mount ---
+  const fetchNotices = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await api.get("/Notices", token);
+      setNotices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError("Failed to load notices.");
+      showToast("error", "Failed to load notices.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
-    const fetchCategories = async () => {
-      setIsCategoryLoading(true);
-      setCategoryError(null);
-      try {
-        const response = await fetch(`${API_BASE_URL}/Categories`);
-        if (!response.ok) {
-          throw new Error(`Failed to load categories: HTTP ${response.status}`);
-        }
-        const rawCategories = await response.json();
+    fetchNotices();
+  }, [fetchNotices]);
 
-        if (!Array.isArray(rawCategories)) {
-          throw new Error("Invalid data format received for categories.");
-        }
-
-        const options = rawCategories
-          .map((c) => {
-            const hebrewName = c.categoryHebName || c.categoryName;
-            return {
-              label: hebrewName || c.categoryEngName || "Unnamed Category",
-              value: hebrewName,
-            };
-          })
-          .filter((opt) => opt.value);
-
-        setCategoryOptions(options);
-        if (options.length > 0) {
-          setSelectedCategory(options[0].value);
-        }
-      } catch (err) {
-        console.error("Failed to load categories:", err);
-        setCategoryError(err.message || "Failed to load categories.");
-        showToast("error", "שגיאה בטעינת הקטגוריות.");
-      } finally {
-        setIsCategoryLoading(false);
-      }
-    };
-
-    fetchCategories();
+  const handleOpenEditModal = useCallback((notice) => {
+    setEditingNotice(notice);
   }, []);
 
-  // --- Form Reset Logic ---
-  const resetForm = useCallback(() => {
-    setTitle("");
-    setContent("");
-    setSubCategory("");
-    if (categoryOptions.length > 0) {
-      setSelectedCategory(categoryOptions[0].value);
-    }
-  }, [categoryOptions]);
-
-  // --- Handle Form Submission ---
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    if (!title || !content || !selectedCategory) {
-      showToast("warning", "כותרת, תוכן וקטגוריה הם שדות חובה.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const newNotice = {
-      title,
-      content,
-      category: selectedCategory,
-      subCategory: subCategory || null,
-      senderId: user?.personId,
-    };
-
+  const handleSave = async (noticeId, updatedNoticeData) => {
     try {
-      const noticeResponse = await api.post("/Notices", newNotice, token);
-      if (!noticeResponse) {
-        throw new Error("יצירת ההודעה נכשלה. השרת לא החזיר תשובה.");
-      }
-      showToast("info", "ההודעה נוצרה בהצלחה! שולח התראה...");
-
-      const pushMessage = {
-        to: "/topics/all",
-        title: newNotice.title,
-        body: newNotice.content,
-        sound: "default",
-        badge: "0",
-        data: {
-          noticeId: noticeResponse.noticeId,
-          category: newNotice.category,
-          hebSenderName: `${user?.hebFirstName} ${user?.hebLastName}`,
-          engSenderName: `${user?.engFirstName} ${user?.engLastName}`,
-        },
-      };
-
-      await api.post("/Notifications/broadcast", pushMessage, token);
-      showToast("success", "ההודעה וההתראה נשלחו בהצלחה!");
-      resetForm();
-    } catch (error) {
-      console.error("Failed to create or send notice:", error);
-      showToast("error", `שגיאה: ${error.message}`);
-    } finally {
-      setIsSubmitting(false);
+      await api.put(`/Notices/${noticeId}`, updatedNoticeData, token);
+      showToast("success", "ההודעה עודכנה בהצלחה.");
+      setEditingNotice(null);
+      fetchNotices();
+    } catch (err) {
+      showToast("error", `שגיאה בעדכון ההודעה: ${err.message}`);
+      throw err;
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deletingNotice) return;
+    try {
+      await api.delete(`/Notices/${deletingNotice.noticeId}`, token);
+      showToast("success", `ההודעה "${deletingNotice.noticeTitle}" נמחקה בהצלחה.`);
+      setDeletingNotice(null);
+      fetchNotices();
+    } catch (err){
+      showToast("error", `שגיאה במחיקת ההודעה: ${err.message}`);
+      setDeletingNotice(null);
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "noticeTitle",
+        header: "כותרת",
+      },
+      {
+        accessorKey: "noticeCategory",
+        header: "קטגוריה",
+      },
+      {
+        accessorKey: "hebSenderName",
+        header: "שולח",
+      },
+      {
+        accessorKey: "creationDate",
+        header: "תאריך",
+        cell: ({ row }) =>
+          new Date(row.original.creationDate).toLocaleDateString("he-IL"),
+      },
+      {
+        id: "actions",
+        header: "פעולות",
+        cell: ({ row }) => {
+          const notice = row.original;
+          return (
+            <div className="flex items-center justify-center space-x-2 space-x-reverse">
+              <button
+                onClick={() => handleOpenEditModal(notice)}
+                className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
+                title="ערוך הודעה"
+              >
+                <Edit size={20} />
+              </button>
+              <button
+                onClick={() => setDeletingNotice(notice)}
+                className="p-2 rounded-full text-red-600 hover:bg-red-100"
+                title="מחק הודעה"
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
+          );
+        },
+      },
+    ],
+    [handleOpenEditModal]
+  );
+
+  const table = useReactTable({
+    data: notices,
+    columns,
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      sorting,
+      globalFilter,
+    },
+    onGlobalFilterChange: setGlobalFilter,
+    initialState: {
+        pagination: {
+            pageSize: 10,
+        }
+    }
+  });
+
+  if (isLoading) return <div className="text-center p-4">טוען הודעות...</div>;
+  if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md max-w-2xl mx-auto">
+    <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
       <Toast
         show={toastState.show}
         message={toastState.message}
         variant={toastState.variant}
         onClose={handleCloseToast}
       />
-
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-        יצירת הודעה חדשה
-      </h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title Field */}
-        <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            כותרת
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            required
-          />
-        </div>
-
-        {/* Content Field */}
-        <div>
-          <label
-            htmlFor="content"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            תוכן ההודעה
-          </label>
-          <textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows="5"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            required
-          ></textarea>
-        </div>
-
-        {/* Category and Sub-Category Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label
-              htmlFor="category"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              קטגוריה
-            </label>
-            {isCategoryLoading ? (
-              <div className="text-center p-2">טוען קטגוריות...</div>
-            ) : categoryError ? (
-              <div className="text-red-500 text-sm p-2">
-                שגיאה בטעינת הקטגוריות
-              </div>
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">ניהול הודעות</h2>
+      <div className="relative mb-4">
+        <input
+          placeholder="חפש הודעות..."
+          value={globalFilter ?? ""}
+          onChange={(event) => setGlobalFilter(event.target.value)}
+          className="w-full p-2 pr-10 border border-gray-300 rounded-md text-right"
+        />
+        <Search
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+          size={20}
+        />
+      </div>
+      <div className="overflow-x-auto rounded-md border">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    <div className="flex items-center">
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      {{
+                        asc: <ChevronUp size={16} />,
+                        desc: <ChevronDown size={16} />,
+                      }[header.column.getIsSorted()] ?? null}
+                    </div>
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="hover:bg-gray-50">
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))
             ) : (
-              <select
-                id="category"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
-                disabled={categoryOptions.length === 0}
-              >
-                {categoryOptions.length > 0 ? (
-                  categoryOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    אין קטגוריות זמינות
-                  </option>
-                )}
-              </select>
+              <tr>
+                <td colSpan={columns.length} className="h-24 text-center">
+                  אין תוצאות.
+                </td>
+              </tr>
             )}
-          </div>
-          <div>
-            <label
-              htmlFor="subCategory"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              תת-קטגוריה (אופציונלי)
-            </label>
-            <input
-              type="text"
-              id="subCategory"
-              value={subCategory}
-              onChange={(e) => setSubCategory(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
+          </tbody>
+        </table>
+      </div>
 
-        {/* Submit Button */}
-        <div>
+      {/* Pagination Controls */}
+      <div className="flex items-center justify-between mt-4 text-sm">
+        <div className="flex items-center space-x-2 space-x-reverse">
           <button
-            type="submit"
-            disabled={isSubmitting || isCategoryLoading}
-            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-              isSubmitting || isCategoryLoading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            } transition-colors duration-200`}
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}
+            className="p-1 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "שולח..." : "צור ושלח הודעה"}
+            <ChevronsRight size={20}/>
+          </button>
+          <button
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+            className="p-1 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronRight size={20}/>
+          </button>
+          <button
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+            className="p-1 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft size={20}/>
+          </button>
+          <button
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}
+            className="p-1 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronsLeft size={20}/>
           </button>
         </div>
-      </form>
+        <span>
+          עמוד{" "}
+          <strong>
+            {table.getState().pagination.pageIndex + 1} מתוך {table.getPageCount()}
+          </strong>
+        </span>
+        <span className="flex items-center gap-1">
+          עבור לעמוד:
+          <input
+            type="number"
+            defaultValue={table.getState().pagination.pageIndex + 1}
+            onChange={(e) => {
+              const page = e.target.value ? Number(e.target.value) - 1 : 0;
+              table.setPageIndex(page);
+            }}
+            className="border p-1 rounded w-16 text-center"
+            min="1"
+            max={table.getPageCount()}
+          />
+        </span>
+        <select
+            value={table.getState().pagination.pageSize}
+            onChange={e => {
+                table.setPageSize(Number(e.target.value))
+            }}
+            className="border p-1 rounded"
+        >
+            {[10, 20, 30, 40, 50].map(pageSize => (
+                <option key={pageSize} value={pageSize}>
+                    הצג {pageSize}
+                </option>
+            ))}
+        </select>
+      </div>
+
+      {editingNotice && (
+        <EditNoticeModal
+          notice={editingNotice}
+          isOpen={!!editingNotice}
+          onClose={() => setEditingNotice(null)}
+          onSave={handleSave}
+        />
+      )}
+      {deletingNotice && (
+        <ConfirmationModal
+          title="אישור מחיקה"
+          message={`האם אתה בטוח שברצונך למחוק את ההודעה "${deletingNotice.noticeTitle}"?`}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeletingNotice(null)}
+        />
+      )}
     </div>
   );
 };
