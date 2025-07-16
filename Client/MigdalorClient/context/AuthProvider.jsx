@@ -31,6 +31,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const { expoPushToken } = usePushNotifications();
 
+  useEffect(() => {
+    const initializeAuth = async () => {
+      await refreshToken();
+      await loadUserSession();
+    };
+    initializeAuth();
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       // Remove the JWT and any other user data
@@ -130,6 +138,7 @@ export const AuthProvider = ({ children }) => {
           ["userEngLastName", formattedUser.engLastName],
           ["personRole", personRole],
         ]);
+        return formattedUser;
       } else {
         await logout();
       }
@@ -139,6 +148,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
+    return null;
   }, [logout]);
 
   const login = useCallback(
@@ -159,12 +169,15 @@ export const AuthProvider = ({ children }) => {
 
         const receivedToken = await response.text();
         await AsyncStorage.setItem("jwt", receivedToken);
+        
 
         // After successful login, load the user session, which will also store user details
-        await loadUserSession();
+        const loggedInUser = await loadUserSession();
+
+
 
         // Post push token to server after user session is loaded
-        if (expoPushToken?.data && user?.personId) {
+        if (expoPushToken?.data && loggedInUser?.personId) {
           const registerTokenUrl = `${Globals.API_BASE_URL}/api/Notifications/registerToken`;
           await fetch(registerTokenUrl, {
             method: "POST",
@@ -173,10 +186,11 @@ export const AuthProvider = ({ children }) => {
               Authorization: `Bearer ${receivedToken}`,
             },
             body: JSON.stringify({
-              personId: user.personId,
+              personId: loggedInUser.personId,
               pushToken: expoPushToken.data,
             }),
           });
+          // console.log("token is this:", expoPushToken.data);
         }
       } catch (error) {
         console.error("Authentication error:", error);
@@ -184,7 +198,7 @@ export const AuthProvider = ({ children }) => {
         throw error;
       }
     },
-    [logout, expoPushToken, loadUserSession, user]
+    [logout, expoPushToken, loadUserSession]
   );
 
   return (

@@ -49,7 +49,7 @@ namespace MigdalorServer.Models
                                               Profession = resident.Profession,
                                               ResidentDescription = resident.ResidentDescription,
                                               PhoneNumber = person.PhoneNumber,
-                                              RoomNumber = resident.ResidentApartmentNumber,
+                                              ResidentApartmentNumber = resident.ResidentApartmentNumber,
                                               IsActive = resident.IsActive,
                                               DateOfArrival = resident.DateOfArrival
                                           }).ToListAsync();
@@ -114,6 +114,28 @@ namespace MigdalorServer.Models
 
             // Mark the resident as inactive.
             resident.IsActive = false;
+            await context.SaveChangesAsync();
+            return true;
+        }
+
+        /// <summary>
+        /// Reactivates a resident by setting their IsActive flag to true.
+        /// </summary>
+        /// <param name="id">The GUID of the resident to reactivate.</param>
+        /// <returns>True if the activation was successful, false if the resident was not found.</returns>
+        public static async Task<bool> RestoreUserAsync(Guid id)
+        {
+            using var context = new MigdalorDBContext();
+            var resident = await context.OhResidents.FindAsync(id);
+
+            if (resident == null)
+            {
+                // The resident does not exist.
+                return false;
+            }
+
+            // Mark the resident as active.
+            resident.IsActive = true;
             await context.SaveChangesAsync();
             return true;
         }

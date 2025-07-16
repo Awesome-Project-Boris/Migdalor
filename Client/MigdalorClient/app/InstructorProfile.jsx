@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Image,
 } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -23,6 +23,8 @@ export default function InstructorProfile() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user: authUser } = useAuth();
+  const { userId: paramUserId } = useLocalSearchParams();
+  
 
   const [form, setForm] = useState({
     name: "",
@@ -36,19 +38,24 @@ export default function InstructorProfile() {
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
+
       const loadProfileData = async () => {
-        if (!authUser) {
-          setLoading(false);
-          return;
-        }
         setLoading(true);
+
         try {
-          const token = await AsyncStorage.getItem("jwt");
+          // Determine which user ID to fetch: the one from params or the logged-in user
+          const loggedInUserId = authUser?.id;
+          const userIdToFetch = paramUserId || loggedInUserId;
+
+          if (!userIdToFetch) {
+            console.warn("No user ID to fetch profile for.");
+            if (isActive) setLoading(false);
+            return;
+          }
+          
+          // Use the correct API endpoint that accepts a user ID
           const response = await fetch(
-            `${Globals.API_BASE_URL}/api/People/InstructorDetails`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
+            `${Globals.API_BASE_URL}/api/People/InstructorDetails/${userIdToFetch}`
           );
 
           if (!response.ok) {
@@ -58,8 +65,12 @@ export default function InstructorProfile() {
           const data = await response.json();
 
           if (isActive) {
+            // The API returns slightly different field names here
+            const nameToDisplay = Globals.userSelectedLanguage === 'he' 
+              ? data.hebName 
+              : data.engName;
             setForm({
-              name: data.engName || data.hebName,
+              name: nameToDisplay || "",
               mobilePhone: data.phoneNumber || "",
               email: data.email || "",
             });
@@ -79,13 +90,20 @@ export default function InstructorProfile() {
       return () => {
         isActive = false;
       };
-    }, [authUser])
+    }, [paramUserId, authUser]) // Re-run if the user ID in the param changes
   );
+
+  
 
   const profileImageSource =
     profilePic && profilePic.picPath
       ? { uri: `${Globals.API_BASE_URL}${profilePic.picPath}` }
       : defaultUserImage;
+
+    const loggedInUserId = authUser?.id;
+    const viewingUserId = paramUserId || loggedInUserId;
+    const isOwnProfile = loggedInUserId && viewingUserId && loggedInUserId === viewingUserId;
+  
 
   if (loading) {
     return (
@@ -97,10 +115,17 @@ export default function InstructorProfile() {
   }
 
   const renderField = (label, value) => {
+    // Check the global direction variable
+    const isRtl = Globals.userSelectedDirection === 'rtl';
+    
     return (
       <>
-        <Text style={styles.label}>{label}</Text>
-        <Text style={styles.box}>
+        <Text style={[styles.label, { textAlign: isRtl ? 'right' : 'left' }]}>
+            {label}
+        </Text>
+        
+        {/* Apply conditional text alignment to the value box */}
+        <Text style={[styles.box, { textAlign: isRtl ? 'right' : 'left' }]}>
           {value || t("ProfileScreen_emptyDataField")}
         </Text>
       </>
@@ -123,28 +148,31 @@ export default function InstructorProfile() {
       params: paramsToPass,
     });
   };
+  
 
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Header />
         
-        <FlipButton
-          onPress={() => router.push({
-              pathname: '/InstructorEditProfile',
-              params: {
-                  initialData: JSON.stringify(form),
-                  initialPic: JSON.stringify(profilePic)
-              }
-          })}
-          bgColor="white"
-          textColor="black"
-          style={styles.editProfileButton}
-        >
-          <Text style={styles.editProfileButtonText}>
-            {t("ProfileScreen_editButton")}
-          </Text>
-        </FlipButton>
+        {isOwnProfile && (
+          <FlipButton
+            onPress={() => router.push({
+                pathname: '/InstructorEditProfile',
+                params: {
+                    initialData: JSON.stringify(form),
+                    initialPic: JSON.stringify(profilePic)
+                }
+            })}
+            bgColor="white"
+            textColor="black"
+            style={styles.editProfileButton}
+          >
+            <Text style={styles.editProfileButtonText}>
+              {t("ProfileScreen_editButton")}
+            </Text>
+          </FlipButton>
+        )}
 
         <View style={styles.profileImageContainer}>
           <BouncyButton

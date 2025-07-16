@@ -63,12 +63,23 @@ export default function Index() {
   const latestButtonDataRef = useRef(initialDataStructure);
   const prevEditingRef = useRef(editing);
 
+  const now = new Date();
+  const options = { timeZone: "Asia/Jerusalem", hour: '2-digit', minute: '2-digit', hour12: false };
+  const timeString = new Intl.DateTimeFormat('en-GB', options).format(now);
+  const [hour, minute] = timeString.split(':').map(Number);
+
+  // Check if the current time is between 5:00 AM and 10:30 AM
+  const isAfterGoodMorningProcedureStartTime = hour > 5 || (hour === 5 && minute >= 0);
+  const isBeforeGoodMorningProcedureEndTime= hour < 10 || (hour === 10 && minute <= 30);
+  
+  const isGoodMorningProcedureVisible = isAfterGoodMorningProcedureStartTime && isBeforeGoodMorningProcedureEndTime;
+
   const initialDataStructure = [
-    {
+    ...(isGoodMorningProcedureVisible ? [{
       key: "menu1",
       name: t("MainMenuScreen_GoodMorningButton"),
       destination: "GoodMorningProcedure",
-    },
+    }] : []),
     {
       key: "menu2",
       name: t("MainMenuScreen_ProfileButton"),

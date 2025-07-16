@@ -14,9 +14,37 @@ using Microsoft.IdentityModel.Tokens;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
+using System.ComponentModel.DataAnnotations;
+using MigdalorServer.BL;
 
 namespace MigdalorServer.Controllers
 {
+    // DTO for the reset password request
+    public class ResetPasswordDto
+    {
+        [Required]
+        public string NewPassword { get; set; }
+    }
+
+    // DTO for Admin Registration, includes Role
+    public class AdminRegisterDto
+    {
+        [Required]
+        public string PhoneNumber { get; set; }
+        [Required]
+        public string HebFirstName { get; set; }
+        [Required]
+        public string HebLastName { get; set; }
+        public string? EngFirstName { get; set; }
+        public string? EngLastName { get; set; }
+        public string Gender { get; set; }
+        [Required]
+        public string Password { get; set; }
+        [Required]
+        public string Role { get; set; }
+    }
+
+
     [Route("api/[controller]")]
     [ApiController]
     public class PeopleController : ControllerBase
@@ -31,56 +59,7 @@ namespace MigdalorServer.Controllers
             _configuration = configuration;
         }
 
-        [HttpGet("InstructorDetails")]
-        [Authorize]
-        public async Task<IActionResult> GetInstructorDetails()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
-            {
-                return Unauthorized("Invalid token.");
-            }
-
-            var instructor = await _context.OhPeople
-                .Where(p => p.PersonId == userId && p.PersonRole == "Instructor")
-                .Select(p => new
-                {
-                    p.PersonId,
-                    p.PhoneNumber,
-                    p.HebFirstName,
-                    p.HebLastName,
-                    p.EngFirstName,
-                    p.EngLastName,
-                    p.Gender,
-                    p.Email,
-                    p.DateOfBirth,
-                    ProfilePicture = _context.OhPictures
-                                       .Where(pic => pic.PicId == p.ProfilePicId)
-                                       .Select(pic => new { pic.PicId, pic.PicPath, pic.PicAlt })
-                                       .FirstOrDefault()
-                })
-                .FirstOrDefaultAsync();
-
-            if (instructor == null)
-            {
-                return Forbid("User is not an instructor or not found.");
-            }
-
-            // Construct a full name for convenience
-            var response = new
-            {
-                id = instructor.PersonId,
-                phoneNumber = instructor.PhoneNumber,
-                hebName = $"{instructor.HebFirstName} {instructor.HebLastName}".Trim(),
-                engName = $"{instructor.EngFirstName} {instructor.EngLastName}".Trim(),
-                gender = instructor.Gender,
-                email = instructor.Email,
-                dateOfBirth = instructor.DateOfBirth,
-                profilePicture = instructor.ProfilePicture
-            };
-
-            return Ok(response);
-        }
+        
 
         [HttpPut("UpdateInstructorProfile")]
         [Authorize]
@@ -214,56 +193,38 @@ namespace MigdalorServer.Controllers
 
         [HttpGet("LoginDetails")]
         [Authorize]
-        public IActionResult GetPersonDetailsForLogin()
+        public async Task<IActionResult> GetPersonDetailsForLogin()
         {
             try
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-                if (userIdClaim == null)
+                if (!Guid.TryParse(userIdClaim?.Value, out Guid userId))
                 {
                     return Unauthorized("Invalid token.");
                 }
 
-                if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
-                {
-                    return BadRequest("Invalid user ID in token.");
-                }
+                var person = await _context.OhPeople.FindAsync(userId);
 
-                //var data = OhPerson.GetPersonByIDForProfile(userId);
-                //return Ok(data);
-
-                // Get the base profile data
-                var data = OhPerson.GetPersonByIDForProfile(userId);
-                if (data == null)
-                {
-                    return NotFound("User profile data not found.");
-                }
-
-                // Separately, find the person record to get the role
-                var person = _context.OhPeople.Find(userId);
                 if (person == null)
                 {
-                    return NotFound("User record not found.");
+                    return NotFound("User record associated with this token was not found.");
                 }
 
-                // Convert the profile data to a flexible dictionary to add the new property
-                var json = JsonSerializer.Serialize(data);
-                var dictionary = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                // Manually construct the response object directly from the OH_People table.
+                // This works for ALL roles.
+                var responseData = new
+                {
+                    id = person.PersonId,
+                    hebName = $"{person.HebFirstName} {person.HebLastName}".Trim(),
+                    engName = $"{person.EngFirstName} {person.EngLastName}".Trim(),
+                    personRole = person.PersonRole
+                };
 
-                // Add the personRole to the dictionary
-                dictionary["personRole"] = person.PersonRole;
-
-                // Return the combined data
-                return Ok(dictionary);
+                return Ok(responseData);
             }
             catch (Exception e)
             {
-                if (e.Message == "User not found")
-                    return NotFound("User Not Found");
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    $"Error getting user data: {e.InnerException?.Message ?? e.Message}"
-                );
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error getting user login details: {e.Message}");
             }
         }
 
@@ -288,6 +249,53 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        [HttpGet("InstructorDetails/{userId}")]
+        public async Task<IActionResult> GetInstructorDetailsById(Guid userId)
+        {
+            try
+            {
+                var instructor = await _context.OhPeople
+                    .Where(p => p.PersonId == userId && p.PersonRole == "Instructor")
+                    .Select(p => new
+                    {
+                        p.PersonId,
+                        p.PhoneNumber,
+                        p.HebFirstName,
+                        p.HebLastName,
+                        p.EngFirstName,
+                        p.EngLastName,
+                        p.Email,
+                        ProfilePicture = _context.OhPictures
+                                           .Where(pic => pic.PicId == p.ProfilePicId)
+                                           .Select(pic => new { pic.PicId, pic.PicPath, pic.PicAlt })
+                                           .FirstOrDefault()
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (instructor == null)
+                {
+                    return NotFound("An instructor with the specified ID was not found.");
+                }
+
+                // Construct a clean response object
+                var response = new
+                {
+                    id = instructor.PersonId,
+                    phoneNumber = instructor.PhoneNumber,
+                    hebName = $"{instructor.HebFirstName} {instructor.HebLastName}".Trim(),
+                    engName = $"{instructor.EngFirstName} {instructor.EngLastName}".Trim(),
+                    email = instructor.Email,
+                    profilePicture = instructor.ProfilePicture
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An error occurred.", error = ex.Message });
+            }
+        }
+
         // Helper method to generate the JWT
         private string GenerateJwtToken(OhPerson user)
         {
@@ -309,7 +317,7 @@ namespace MigdalorServer.Controllers
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(168), // Set token expiration to 7 days
+                expires: DateTime.Now.AddHours(1440), // Set token expiration to 7 days
                 signingCredentials: credentials
             );
 
@@ -357,6 +365,7 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPost("register")]
+        [Authorize(Roles = "admin")]
         public IActionResult Register([FromBody] UserRegister user)
         {
             try
@@ -372,6 +381,42 @@ namespace MigdalorServer.Controllers
                 );
             }
         }
+
+        [HttpPost("RegisterAdmin")]
+        [Authorize(Roles = "admin")]
+        public IActionResult RegisterAdmin([FromBody] AdminRegisterDto adminData)
+        {
+            try
+            {
+                if (_context.OhPeople.Any(p => p.PhoneNumber == adminData.PhoneNumber))
+                {
+                    return Conflict("A user with this phone number already exists.");
+                }
+
+                var newAdmin = new OhPerson
+                {
+                    PersonId = Guid.NewGuid(),
+                    PhoneNumber = adminData.PhoneNumber,
+                    HebFirstName = adminData.HebFirstName,
+                    HebLastName = adminData.HebLastName,
+                    EngFirstName = adminData.EngFirstName,
+                    EngLastName = adminData.EngLastName,
+                    Gender = adminData.Gender,
+                    PasswordHash = PasswordServices.CreatePasswordHash(adminData.Password),
+                    PersonRole = adminData.Role
+                };
+
+                _context.OhPeople.Add(newAdmin);
+                _context.SaveChanges();
+
+                return Ok(newAdmin);
+            }
+            catch (Exception e)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error Registering Admin: {e.Message}");
+            }
+        }
+
 
         [HttpGet("ActiveDigests")]
         public async Task<ActionResult<IEnumerable<ResidentDigest>>> GetActiveResidentDigests()
@@ -409,37 +454,28 @@ namespace MigdalorServer.Controllers
         }
 
         [HttpPut("UpdateProfile/{id}")]
-        // public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileDto dto) // changed to the method below to save privacy settings
         public IActionResult UpdateProfile(Guid id, [FromBody] UpdateProfileRequestDto dto)
         {
-
-            // --- ADD THIS LOGGING BLOCK ---
             var options = new JsonSerializerOptions { WriteIndented = true };
             Console.WriteLine("--- RECEIVED UpdateProfile DTO ---");
             Console.WriteLine(JsonSerializer.Serialize(dto, options));
             Console.WriteLine("----------------------------------");
-            // --- END LOGGING BLOCK ---
 
-            // Changed from db to _context to fix saving privacy settings 
-            //using var db = new MigdalorDBContext();
-            //var person = db.OhPeople.Find(id);
             var person = _context.OhPeople.Find(id);
             if (person == null)
-                return NotFound("Person not found."); // Changed: NotFound()
+                return NotFound("Person not found.");
 
-            //var resident = db.OhResidents.SingleOrDefault(r => r.ResidentId == id);
             var resident = _context.OhResidents
                              .Include(r => r.InterestNames)
                              .SingleOrDefault(r => r.ResidentId == id);
             if (resident == null)
-                return NotFound("Resident not found."); // Changed: NotFound()
+                return NotFound("Resident not found.");
 
             if (id != dto.PersonId)
             {
                 return BadRequest("Mismatched ID in URL and request body.");
             }
 
-            // --- Update Standard Fields ---
             person.PhoneNumber = dto.MobilePhone;
             person.Email = dto.Email;
             resident.HomePlace = dto.Origin;
@@ -451,34 +487,25 @@ namespace MigdalorServer.Controllers
             resident.AdditionalPic1Id = dto.AdditionalPicture1?.PicID;
             resident.AdditionalPic2Id = dto.AdditionalPicture2?.PicID;
 
-            // --- ✅ CORRECTED: Handle Interests Conditionally ---
-
-            // Only modify interests if the client actually sent data for them.
             bool interestsWereEdited = (dto.InterestNames != null && dto.InterestNames.Any()) ||
                                        (dto.NewInterestNames != null && dto.NewInterestNames.Any());
 
             if (interestsWereEdited)
             {
-                // 1. Add any new interests to the main OH_Interests table
                 if (dto.NewInterestNames != null && dto.NewInterestNames.Any())
                 {
                     foreach (var newName in dto.NewInterestNames)
                     {
-                        //if (!db.OhInterests.Any(i => i.InterestName == newName))
                         if (!_context.OhInterests.Any(i => i.InterestName == newName))
                         {
                             _context.OhInterests.Add(new OhInterest { InterestName = newName });
-                            //db.OhInterests.Add(new OhInterest { InterestName = newName });
                         }
                     }
                     _context.SaveChanges();
-                    //db.SaveChanges();
                 }
 
-                // 2. Clear the user's existing interests
                 resident.InterestNames.Clear();
 
-                // 3. Link all selected interests (both old and new) to the user
                 var allSelectedNames = (dto.InterestNames ?? new List<string>())
                                         .Concat(dto.NewInterestNames ?? new List<string>())
                                         .Distinct()
@@ -486,7 +513,6 @@ namespace MigdalorServer.Controllers
 
                 if (allSelectedNames.Any())
                 {
-                    //var interestsToLink = db.OhInterests
                     var interestsToLink = _context.OhInterests
                                             .Where(i => allSelectedNames.Contains(i.InterestName))
                                             .ToList();
@@ -503,7 +529,6 @@ namespace MigdalorServer.Controllers
                 var existingSettings = _context.OhPrivacySettings.Find(id);
                 if (existingSettings != null)
                 {
-                    // If settings exist, update them
                     existingSettings.ShowPartner = dto.PrivacySettings.ShowPartner;
                     existingSettings.ShowApartmentNumber = dto.PrivacySettings.ShowApartmentNumber;
                     existingSettings.ShowMobilePhone = dto.PrivacySettings.ShowMobilePhone;
@@ -518,7 +543,6 @@ namespace MigdalorServer.Controllers
                 }
                 else
                 {
-                    // If settings don't exist, create a new record
                     var newSettings = new OhPrivacySetting
                     {
                         PersonId = id,
@@ -538,12 +562,33 @@ namespace MigdalorServer.Controllers
                 }
             }
 
-            //db.SaveChanges();
             _context.SaveChanges();
-            return NoContent(); // Changed: return 204 on success
+            return NoContent();
         }
 
-        // GET: api/People/PrivacySettings/{id}
+        [HttpPost("reset-password/{id}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> ResetPassword(Guid id, [FromBody] ResetPasswordDto dto)
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest("A valid user ID must be provided.");
+            }
+
+            var person = await _context.OhPeople.FindAsync(id);
+            if (person == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            person.PasswordHash = PasswordServices.CreatePasswordHash(dto.NewPassword);
+
+            _context.OhPeople.Update(person);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
         [HttpGet("PrivacySettings/{id}")]
         public ActionResult<PrivacySettingsDto> GetPrivacySettings(Guid id)
         {
@@ -576,21 +621,16 @@ namespace MigdalorServer.Controllers
         {
             using var db = new MigdalorDBContext();
 
-            // If the list is null or empty, return all active residents.
             if (interestNames == null || !interestNames.Any())
             {
                 var allDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
                 return Ok(allDigests);
             }
 
-            // ✅ STEP 1: Fetch all residents and their interests into memory first.
-            // This is the key change. .ToList() executes the query and avoids the translation error.
             var allResidentsWithInterests = db.OhResidents
                 .Include(r => r.InterestNames)
                 .ToList();
 
-            // ✅ STEP 2: Now, filter the in-memory list using standard C#.
-            // This logic is the same as before, but now it runs on the C# list, not against the database.
             var residentIds = allResidentsWithInterests
                 .Where(resident => interestNames.All(requiredName =>
                     resident.InterestNames.Any(residentInterest => residentInterest.InterestName == requiredName)
@@ -598,14 +638,11 @@ namespace MigdalorServer.Controllers
                 .Select(resident => resident.ResidentId)
                 .ToList();
 
-            // If no residents match, return an empty list.
             if (!residentIds.Any())
             {
                 return Ok(new List<ResidentDigest>());
             }
 
-            // ✅ STEP 3: Proceed as before.
-            // Fetch the digests and filter them by the IDs you found.
             var allActiveDigests = await OhPerson.GetActiveResidentDigestsAsync(db);
             var filteredDigests = allActiveDigests
                                     .Where(digest => residentIds.Contains(digest.UserId))

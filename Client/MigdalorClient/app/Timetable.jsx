@@ -468,6 +468,7 @@ const TimetableScreen = () => {
   const ListHeader = () => (
     <>
       <Text style={styles.pageTitle}>{t("Timetable_Title", "לוח זמנים")}</Text>
+      <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle", "לוח זמנים")}</Text>
       <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
       <ViewSwitcher
         viewMode={viewMode}
@@ -563,6 +564,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#3D2B1F",
     marginTop: 15,
+  },
+  pageSubTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#3D2B1F",
+    marginTop: 15,
+    marginBottom: 10,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
   },
   mainTitle: {
     fontSize: 22,

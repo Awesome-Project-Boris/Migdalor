@@ -244,6 +244,9 @@ export default function Profile() {
     isVisible("showAdditionalPictures")
   );
 
+  
+
+
   const handleImagePress = (imageUriToView, altText = "") => {
     // if (!imageUriToView || imageUriToView === Globals.API_BASE_URL) {
     //   console.log("handleImagePress: No valid imageUri provided.");
