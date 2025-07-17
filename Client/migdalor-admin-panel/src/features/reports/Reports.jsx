@@ -93,18 +93,13 @@ const Reports = () => {
 
     setIsDownloading(true);
     try {
-      const response = await fetch(
-        `${api.API_BASE_URL}/reports/download/${fileName}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      // Use the centralized api service which now handles blobs correctly
+      const blob = await api.get(`/reports/download/${fileName}`, token);
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok.");
+      if (!blob) {
+        throw new Error("הקובץ שהתקבל ריק.");
       }
 
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -160,15 +155,14 @@ const Reports = () => {
         onClose={handleCloseToast}
       />
 
-      {/* Daily Report Download Section */}
-      <div className="mb-8 p-4 bg-gray-50 w-fit rounded-lg border">
+      <div className="mb-8 p-4 bg-gray-50 rounded-lg border">
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           הורדת דוחות יומיים שמורים
         </h2>
-        <div className="flex flex-col justify-between gap-2 items-center">
+        <div className="flex items-center space-x-4 space-x-reverse">
           <button
             onClick={() => setIsCalendarOpen(true)}
-            className="px-4 py-2 mx-1 bg-white border border-gray-300 rounded-md flex items-center text-gray-700 hover:bg-gray-50 w-full"
+            className="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center text-gray-700 hover:bg-gray-50"
           >
             <CalendarIcon size={20} className="ml-2" />
             <span>
@@ -191,7 +185,7 @@ const Reports = () => {
                 )}`
               )
             }
-            className="px-6 py-2 mx-1 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center transition-all w-full"
+            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center transition-all"
           >
             <Download size={20} className="ml-2" />
             {isDownloading ? "מוריד..." : "הורד דוח"}
@@ -199,7 +193,6 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Calendar Modal */}
       {isCalendarOpen && (
         <div
           className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center"
