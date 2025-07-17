@@ -36,6 +36,7 @@ export default function InstructorEditProfile() {
   });
   const [profilePic, setProfilePic] = useState(null);
   const [profileImage, setProfileImage] = useState(defaultUserImage);
+  const [errors, setErrors] = useState({});
 
   // State for image modals
   const [showImageViewModal, setShowImageViewModal] = useState(false);
@@ -63,8 +64,50 @@ export default function InstructorEditProfile() {
     }
   }, [profilePic]);
 
+  const validateField = (name, value) => {
+    const isRequired = (val) => {
+      if (!val || val.trim() === "") {
+        return t("Validation_FieldIsRequired", "This field is required.");
+      }
+      return null;
+    };
+
+    if (name === "mobilePhone") {
+      // 1. Check if the field is empty
+      const requiredError = isRequired(value);
+      if (requiredError) return requiredError;
+
+      // 2. Then, check the phone number format
+      const phoneRegex = /^05\d{8}$/;
+      if (!phoneRegex.test(value)) {
+        return t(
+          "EditProfileScreen_errorMessageMobilePhone",
+          "Please enter a valid 10-digit mobile number."
+        );
+      }
+    }
+
+    if (name === "email") {
+      const trimmedValue = value.trim(); 
+      const requiredError = isRequired(trimmedValue);
+      if (requiredError) return requiredError;
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Test the trimmed value
+      if (!emailRegex.test(trimmedValue)) {
+          return t(
+              "EditProfileScreen_errorMessageEmail",
+              "Please enter a valid email address."
+          );
+      }
+    }
+
+    return null;
+  };
+
   const handleFormChange = (name, value) => {
     setForm((prevForm) => ({ ...prevForm, [name]: value }));
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
   const handleImagePress = () => {
@@ -169,6 +212,22 @@ export default function InstructorEditProfile() {
 
 
   const handleSave = async () => {
+    const phoneError = validateField("mobilePhone", form.mobilePhone);
+    const emailError = validateField("email", form.email);
+
+    const newErrors = { mobilePhone: phoneError, email: emailError };
+    setErrors(newErrors);
+
+    if (phoneError || emailError) {
+      Toast.show({
+        type: "error",
+        text1: t("Common_ValidationErrorTitle", "Validation Error"),
+        text2: phoneError || emailError,
+      });
+      return; // Stop the function if there are errors
+    }
+
+
     let finalProfilePicData = profilePic;
     const initialPicParsed = initialPic ? JSON.parse(initialPic) : null;
 
@@ -267,7 +326,11 @@ export default function InstructorEditProfile() {
             value={form.mobilePhone}
             onChangeText={(text) => handleFormChange("mobilePhone", text)}
             keyboardType="phone-pad"
+            maxLength={10}
           />
+          {errors.mobilePhone && (
+            <Text style={styles.errorText}>{errors.mobilePhone}</Text>
+          )}
           <FloatingLabelInput
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
@@ -275,7 +338,9 @@ export default function InstructorEditProfile() {
             value={form.email}
             onChangeText={(text) => handleFormChange("email", text)}
             keyboardType="email-address"
+            maxLength={100}
           />
+          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
         </View>
 
         <View style={styles.buttonRow}>
@@ -321,4 +386,12 @@ const styles = StyleSheet.create({
   saveButton: { paddingVertical: 12, borderRadius: 8, width: "40%", alignItems: "center" },
   cancelButton: { paddingVertical: 12, borderRadius: 8, width: "40%", alignItems: "center" },
   buttonText: { fontSize: 26, fontWeight: "bold", textAlign: "center" },
+  errorText: {
+    color: "red",
+    marginBottom: 8,
+    marginTop: -30,
+    fontSize: 28,
+    width: "90%",
+    textAlign: "center",
+  },
 });
