@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -77,6 +77,23 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [viewingUserId, setViewingUserId] = useState(null);
+
+  const formattedArrivalDate = useMemo(() => {
+    if (form.arrivalYear) {
+      try {
+        const date = new Date(form.arrivalYear);
+        // Check if the date is valid before formatting
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString('en-GB'); // Formats to DD/MM/YYYY
+        }
+      } catch (error) {
+        console.error("Could not format date:", form.arrivalYear, error);
+      }
+      // Fallback to original string if it's not a valid date
+      return form.arrivalYear;
+    }
+    return "";
+  }, [form.arrivalYear]);
 
   useFocusEffect(
     useCallback(() => {
@@ -408,7 +425,7 @@ export default function Profile() {
         {renderField(
           "showArrivalYear",
           t("ProfileScreen_arrivalYear"),
-          form.arrivalYear
+          formattedArrivalDate
         )}
         {renderField("showOrigin", t("ProfileScreen_origin"), form.origin)}
         {renderField(
@@ -439,7 +456,13 @@ export default function Profile() {
                   />
                 ))
               ) : (
-                <Text style={styles.noInterestsText}>
+                <Text
+                  style={{
+                    ...styles.noInterestsText,
+                    width: "100%", // Ensures the component fills the container
+                    textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left", // Correctly aligns the text
+                  }}
+                >
                   {t("ProfileScreen_emptyDataField")}
                 </Text>
               )}

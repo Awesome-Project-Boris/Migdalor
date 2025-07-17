@@ -247,7 +247,7 @@ export default function EventFocusScreen() {
           <DetailRow
             icon="calendar-outline"
             label={t("EventFocus_Date", "Date")}
-            value={new Date(event.startDate).toLocaleDateString()}
+            value={new Date(event.startDate).toLocaleDateString('en-GB')}
           />
           <DetailRow
             icon="time-outline"

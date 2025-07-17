@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#007bff",
     fontWeight: "500",
+    textAlign: "center",
   },
   list: {
     width: "100%",

@@ -539,7 +539,7 @@ export default function NewActivity() {
               onPress={() => setShowDatePicker(true)}
             >
               <StyledText style={styles.pickerButtonText}>
-                {date.toLocaleDateString()}
+                {date.toLocaleDateString('en-GB')}
               </StyledText>
             </TouchableOpacity>
 

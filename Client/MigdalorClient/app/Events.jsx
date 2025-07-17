@@ -247,7 +247,7 @@ export default function Events() {
                         </Text>
                         <View style={styles.datePickerRow}>
                             <TouchableOpacity onPress={() => showMode('date')} style={styles.dateButton}>
-                                <Text style={styles.dateButtonText}>{newDate.toLocaleDateString()}</Text>
+                                <Text style={styles.dateButtonText}>{newDate.toLocaleDateString('en-GB')}</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => showMode('time')} style={styles.dateButton}>
                                 <Text style={styles.dateButtonText}>{newDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</Text>

@@ -76,8 +76,8 @@ export default function SearchAccordion({
         style={[defaultStyles.header, headerStyle, isActive ? defaultStyles.active : defaultStyles.inactive]}
       >
         <View style={defaultStyles.headerTextContainer}>
-          <StyledText 
-            style={ headerTextStyle || defaultStyles.headerText}
+          <StyledText
+            style={{ ...headerTextStyle || defaultStyles.headerText, textAlign: Globals.userSelectedDirection == 'rtl' ? 'right' : 'left' }}
             numberOfLines={isSingleWord ? 1 : 0}
             adjustsFontSizeToFit={isSingleWord}
           >
