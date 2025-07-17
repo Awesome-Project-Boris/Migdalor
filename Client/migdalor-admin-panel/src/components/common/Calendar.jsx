@@ -200,7 +200,7 @@ const Calendar = ({ availableDates, onDateSelect, selectedDate }) => {
   };
 
   return (
-    <div className="bg-white border rounded-lg p-3 shadow-sm max-w-sm mx-auto">
+    <div className="bg-white border rounded-lg p-3 shadow-sm max-w-md mx-auto">
       {isPickerVisible ? (
         renderPicker()
       ) : (

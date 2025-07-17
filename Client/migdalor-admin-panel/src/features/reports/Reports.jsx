@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import SharedTable from "../../components/common/SharedTable";
@@ -18,6 +18,7 @@ const Reports = () => {
     { id: "attendanceDate", desc: true },
   ]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const calendarRef = useRef(null);
 
   const [toastState, setToastState] = useState({
     show: false,
@@ -32,6 +33,18 @@ const Reports = () => {
   const handleCloseToast = () => {
     setToastState({ ...toastState, show: false });
   };
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (calendarRef.current && !calendarRef.current.contains(event.target)) {
+        setIsCalendarOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [calendarRef]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -93,7 +106,6 @@ const Reports = () => {
 
     setIsDownloading(true);
     try {
-      // Use the centralized api service which now handles blobs correctly
       const blob = await api.get(`/reports/download/${fileName}`, token);
 
       if (!blob) {
@@ -159,18 +171,30 @@ const Reports = () => {
         <h2 className="text-xl font-bold text-gray-800 mb-4">
           הורדת דוחות יומיים שמורים
         </h2>
-        <div className="flex items-center space-x-4 space-x-reverse">
-          <button
-            onClick={() => setIsCalendarOpen(true)}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center text-gray-700 hover:bg-gray-50"
-          >
-            <CalendarIcon size={20} className="ml-2" />
-            <span>
-              {selectedDate
-                ? selectedDate.toLocaleDateString("he-IL")
-                : "בחר תאריך"}
-            </span>
-          </button>
+        <div className="flex flex-col items-center space-y-3">
+          {/* Popover container */}
+          <div className="relative w-full" ref={calendarRef}>
+            <button
+              onClick={() => setIsCalendarOpen((prev) => !prev)}
+              className="w-full justify-center px-4 py-2 bg-white border border-gray-300 rounded-md flex items-center text-gray-700 hover:bg-gray-50"
+            >
+              <CalendarIcon size={20} className="ml-2" />
+              <span>
+                {selectedDate
+                  ? selectedDate.toLocaleDateString("he-IL")
+                  : "בחר תאריך"}
+              </span>
+            </button>
+            {isCalendarOpen && (
+              <div className="absolute top-full mt-2 z-50 left-1/2 -translate-x-1/2">
+                <Calendar
+                  availableDates={availableDates}
+                  onDateSelect={handleDateSelect}
+                  selectedDate={selectedDate}
+                />
+              </div>
+            )}
+          </div>
           <button
             onClick={handleDownload}
             disabled={
@@ -185,31 +209,13 @@ const Reports = () => {
                 )}`
               )
             }
-            className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center transition-all"
+            className="w-full px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center transition-all"
           >
             <Download size={20} className="ml-2" />
             {isDownloading ? "מוריד..." : "הורד דוח"}
           </button>
         </div>
       </div>
-
-      {isCalendarOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center"
-          onClick={() => setIsCalendarOpen(false)}
-        >
-          <div
-            className="bg-white rounded-lg shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Calendar
-              availableDates={availableDates}
-              onDateSelect={handleDateSelect}
-              selectedDate={selectedDate}
-            />
-          </div>
-        </div>
-      )}
 
       <h2 className="text-2xl font-bold text-gray-800 mb-4">
         דוח נוכחות כללי - בוקר טוב
