@@ -1,8 +1,9 @@
 import React from "react";
-import { StyleSheet, View, Text, Image } from "react-native";
+import { StyleSheet, View, Image } from "react-native"; // Text import removed
 import { useTranslation } from "react-i18next";
 import { SCREEN_WIDTH, Globals } from "../app/constants/Globals";
 import BouncyButton from "@/components/BouncyButton";
+import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
 const placeholderImage = require("../assets/images/tempItem.jpg");
 
@@ -28,18 +29,21 @@ export default function MarketplaceItemCard({ data, onPress }) {
       />
 
       <View style={styles.infoContainer}>
-        <Text style={styles.itemName} numberOfLines={2}>
+        {/* Replaced Text with StyledText */}
+        <StyledText style={styles.itemName} numberOfLines={2}>
           {data?.title || t("MarketplaceItemCard_Untitled")}
-        </Text>
-        <Text style={styles.sellerName}>
+        </StyledText>
+        {/* Replaced Text with StyledText */}
+        <StyledText style={styles.sellerName}>
           {data?.sellerName || t("MarketplaceItemCard_UnknownSeller")}
-        </Text>
+        </StyledText>
       </View>
 
       <View style={styles.moreInfoContainer}>
-        <Text style={styles.moreInfoText}>
+        {/* Replaced Text with StyledText */}
+        <StyledText style={styles.moreInfoText}>
           {t("MarketplaceScreen_MoreDetailsButton")}
-        </Text>
+        </StyledText>
       </View>
     </BouncyButton>
   );

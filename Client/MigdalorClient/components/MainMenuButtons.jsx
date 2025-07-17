@@ -1,10 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native"; // 'Text' import removed
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Animatable from "react-native-animatable";
 import { useRouter } from "expo-router";
 import { useMainMenuEdit } from "../context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
+import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -49,7 +50,8 @@ export default function MainMenuButtons({ data, onDragEnd }) {
           style={styles.touchable}
           flipborderwidth={5}
         >
-          <Text style={styles.itemText}>{item.name}</Text>
+          {/* Replaced Text with StyledText */}
+          <StyledText style={styles.itemText}>{item.name}</StyledText>
         </FlipButton>
       </Animatable.View>
     );
@@ -95,7 +97,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   itemText: {
-    fontSize: 24,
+    fontSize: 24, // Base font size is defined, so StyledText can scale it
     color: "#000",
   },
   activeItem: {

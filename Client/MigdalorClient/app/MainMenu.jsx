@@ -1,11 +1,10 @@
 import React, { useRef, useEffect, useCallback, useState } from "react";
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-} from "react-native";
+} from "react-native"; // 'Text' import removed
 
 import { Stack } from "expo-router";
 
@@ -21,6 +20,7 @@ import { Toast } from "toastify-react-native";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthProvider";
 import InstructorMainMenu from "./InstructorMainMenu";
+import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
 const ASYNC_STORAGE_KEY = "mainMenuOrder";
 
@@ -208,7 +208,10 @@ export default function Index() {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <ActivityIndicator size="large" color="#006aab" />
-        <Text>{t("MainMenuScreen_loadingMenu")}</Text>
+        {/* Replaced Text with StyledText and added a style */}
+        <StyledText style={styles.loadingText}>
+          {t("MainMenuScreen_loadingMenu")}
+        </StyledText>
       </View>
     );
   }
@@ -256,6 +259,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 50,
     backgroundColor: "#fbe6d0",
+  },
+  loadingText: { // Added style for the loading text
+    marginTop: 10,
+    fontSize: 18,
+    color: "#333",
   },
   toggleButton: {
     width: 300,

@@ -1,13 +1,15 @@
 import React from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View } from "react-native"; // 'Text' import removed
 import { SCREEN_WIDTH } from "../app/constants/Globals";
 import { useTranslation } from "react-i18next";
+import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
 function NoSearchMatchCard() {
   const { t } = useTranslation();
   return (
     <View style={styles.container}>
-      <Text style={styles.itemName}>{t("Common_noResultsFound")}</Text>
+      {/* Replaced Text with StyledText */}
+      <StyledText style={styles.itemName}>{t("Common_noResultsFound")}</StyledText>
     </View>
   );
 }
