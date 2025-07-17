@@ -28,6 +28,7 @@ import FlipButton from "@/components/FlipButton";
 import ImageViewModal from "@/components/ImageViewModal";
 import StyledText from "@/components/StyledText";
 import { Globals } from "@/app/constants/Globals";
+import { useSettings } from "@/context/SettingsContext"; // Import useSettings
 import { Card, Spinner, YStack } from "tamagui";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -67,6 +68,8 @@ const formatTime = (date) => {
 export default function NewActivity() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { settings } = useSettings();
+  const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
   // State variables (all unchanged)
   const [eventName, setEventName] = useState("");
@@ -137,10 +140,6 @@ export default function NewActivity() {
     }
   };
 
-  // In NewActivity.jsx
-
-  // In NewActivity.jsx
-
   const generateAiImage = async () => {
     Keyboard.dismiss();
     if (!eventName.trim() && !description.trim()) {
@@ -170,9 +169,6 @@ export default function NewActivity() {
       const responseData = await response.json();
       let base64Code = null;
 
-      // --- NEW: Automatically find the image data ---
-      // This code looks for a key in the response whose value is an array
-      // containing a long string (the Base64 data).
       const dataKey = Object.keys(responseData).find(
         (key) =>
           Array.isArray(responseData[key]) &&
@@ -183,7 +179,6 @@ export default function NewActivity() {
       if (dataKey) {
         base64Code = responseData[dataKey][0];
       }
-      // --- End of new code ---
 
       if (!base64Code) {
         throw new Error(
@@ -210,9 +205,7 @@ export default function NewActivity() {
   };
 
   const onChangeDate = (event, selectedDate) => {
-    // Hide the picker first (important for Android)
     setShowDatePicker(false);
-    // Check if a date was actually selected
     if (event.type === "set" && selectedDate) {
       setDate(selectedDate);
     }
@@ -281,7 +274,6 @@ export default function NewActivity() {
     }
   };
 
-  // --- NEW: Function to delete an uploaded picture from the server ---
   const deletePictureOnServer = async (pictureId) => {
     if (!pictureId) return;
     console.log(`Attempting to delete orphaned picture ID: ${pictureId}`);
@@ -296,7 +288,6 @@ export default function NewActivity() {
     }
   };
 
-  // --- Validation ---
   const validateFields = () => {
     const errors = {};
     if (!eventName.trim())
@@ -314,7 +305,6 @@ export default function NewActivity() {
     return Object.keys(errors).length === 0;
   };
 
-  // --- Actions ---
   const handleCancel = () => {
     if (hasUnsavedChanges()) {
       setShowCancelConfirm(true);
@@ -341,7 +331,7 @@ export default function NewActivity() {
     }
 
     setIsSubmitting(true);
-    let uploadedPicId = null; // --- NEW: Variable to track uploaded picture ID ---
+    let uploadedPicId = null;
 
     try {
       const currentUserId = (await AsyncStorage.getItem("userID"))?.replace(
@@ -352,12 +342,10 @@ export default function NewActivity() {
       if (!currentUserId || !authToken)
         throw new Error("Authentication details are missing.");
 
-      // --- Step 1: Upload image first ---
       if (imageUri) {
         uploadedPicId = await uploadImage(imageUri, currentUserId);
       }
 
-      // --- Step 2: Combine Date and Time ---
       const finalStartDate = new Date(date);
       finalStartDate.setHours(
         startTime.getHours(),
@@ -369,19 +357,17 @@ export default function NewActivity() {
       const finalEndDate = new Date(date);
       finalEndDate.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
 
-      // --- Step 3: Create payload ---
       const payload = {
         EventName: eventName.trim(),
         Description: description.trim(),
         HostId: currentUserId,
         Location: location.trim(),
-        PictureId: uploadedPicId, // Use the ID from the upload
+        PictureId: uploadedPicId,
         Capacity: parseInt(capacity, 10),
         StartDate: finalStartDate.toISOString(),
         EndDate: finalEndDate.toISOString(),
       };
 
-      // --- Step 4: POST to the new endpoint ---
       const response = await fetch(`${API}/api/events/CreateActivity`, {
         method: "POST",
         headers: {
@@ -393,7 +379,6 @@ export default function NewActivity() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        // If this fails, the 'catch' block will handle deleting the image.
         throw new Error(errorText || "Failed to create activity.");
       }
 
@@ -404,8 +389,6 @@ export default function NewActivity() {
       });
       router.back();
     } catch (err) {
-      // --- NEW: Fallback logic ---
-      // If an image was uploaded but the event creation failed, delete the image.
       if (uploadedPicId) {
         await deletePictureOnServer(uploadedPicId);
       }
@@ -420,17 +403,19 @@ export default function NewActivity() {
       <Header />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1, backgroundColor: "#fef1e6" }}
+        style={styles.screenContainer}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.formContainer}>
+          <View style={styles.headerPlaque}>
             <StyledText style={styles.title}>
               {t("NewActivity_Title")}
             </StyledText>
+          </View>
 
+          <View style={styles.formPlaque}>
             <FloatingLabelInput
               label={t("NewActivity_Name")}
               value={eventName}
@@ -475,16 +460,18 @@ export default function NewActivity() {
               </StyledText>
             )}
 
-            <StyledText style={styles.sectionTitle}>
+            <StyledText style={styles.imageSectionTitle}>
               {t("NewActivity_Image")}
             </StyledText>
             <Card
               elevate
               width="100%"
-              height={180}
+              height={useColumnLayout ? 250 : 180}
               borderRadius="$4"
               overflow="hidden"
               onPress={viewOrPickImage}
+              borderWidth={1}
+              borderColor="#ddd"
             >
               {imageUri ? (
                 <Card.Background>
@@ -495,14 +482,14 @@ export default function NewActivity() {
                   />
                 </Card.Background>
               ) : (
-                <YStack f={1} jc="center" ai="center" p="$2" bg="$background">
-                  <StyledText style={styles.tamaguiH2}>
+                <YStack f={1} jc="center" ai="center" p="$2" bg="#f8f9fa">
+                  <StyledText style={styles.imageCardHeader}>
                     {t("NewActivity_Image")}
                   </StyledText>
-                  <StyledText style={styles.tamaguiParagraph}>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("NewActivity_Image_Optional")}
                   </StyledText>
-                  <StyledText style={styles.tamaguiParagraph}>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("NewActivity_Image_TapToChoose")}
                   </StyledText>
                 </YStack>
@@ -511,7 +498,10 @@ export default function NewActivity() {
 
             <FlipButton
               onPress={generateAiImage}
-              style={styles.genAiButton}
+              style={[
+                styles.genAiButton,
+                useColumnLayout && styles.fullWidthButton,
+              ]}
               disabled={
                 isGenerating || !eventName.trim() || !description.trim()
               }
@@ -525,12 +515,13 @@ export default function NewActivity() {
                     size={22}
                     style={{ marginRight: 8 }}
                   />
-                  <StyledText>{t("NewActivity_GenAI_Button")}</StyledText>
+                  <StyledText style={styles.buttonLabel}>
+                    {t("NewActivity_GenAI_Button")}
+                  </StyledText>
                 </View>
               )}
             </FlipButton>
 
-            {/* --- CORRECTED DATE/TIME SECTION --- */}
             <StyledText style={styles.sectionTitle}>
               {t("EventFocus_Date")}
             </StyledText>
@@ -539,7 +530,7 @@ export default function NewActivity() {
               onPress={() => setShowDatePicker(true)}
             >
               <StyledText style={styles.pickerButtonText}>
-                {date.toLocaleDateString('en-GB')}
+                {date.toLocaleDateString("en-GB")}
               </StyledText>
             </TouchableOpacity>
 
@@ -552,8 +543,10 @@ export default function NewActivity() {
               />
             )}
 
-            <View style={styles.timeRow}>
-              <View style={{ flex: 1 }}>
+            <View
+              style={[styles.timeRow, useColumnLayout && styles.timeColumn]}
+            >
+              <View style={styles.timePickerContainer}>
                 <StyledText style={styles.timeLabel}>
                   {t("NewActivity_SelectStartTime")}
                 </StyledText>
@@ -566,7 +559,7 @@ export default function NewActivity() {
                   </StyledText>
                 </TouchableOpacity>
               </View>
-              <View style={{ flex: 1, marginLeft: 10 }}>
+              <View style={styles.timePickerContainer}>
                 <StyledText style={styles.timeLabel}>
                   {t("NewActivity_SelectEndTime")}
                 </StyledText>
@@ -600,19 +593,28 @@ export default function NewActivity() {
                 onChange={onChangeEndTime}
               />
             )}
-            {/* --- END OF CORRECTED SECTION --- */}
 
-            <View style={styles.buttonRow}>
+            <View
+              style={[styles.buttonRow, useColumnLayout && styles.buttonColumn]}
+            >
               <FlipButton
                 onPress={handleCancel}
-                style={styles.cancelButton}
+                style={[
+                  styles.cancelButton,
+                  useColumnLayout && styles.fullWidthButton,
+                ]}
                 disabled={isSubmitting || isGenerating}
               >
-                <StyledText>{t("NewActivity_CancelButton")}</StyledText>
+                <StyledText style={styles.buttonLabel}>
+                  {t("NewActivity_CancelButton")}
+                </StyledText>
               </FlipButton>
               <FlipButton
                 onPress={handleSubmit}
-                style={styles.submitButton}
+                style={[
+                  styles.submitButton,
+                  useColumnLayout && styles.fullWidthButton,
+                ]}
                 disabled={isSubmitting || isGenerating}
                 bgColor="#007bff"
                 textColor="#fff"
@@ -620,7 +622,7 @@ export default function NewActivity() {
                 {isSubmitting ? (
                   <Spinner color="white" />
                 ) : (
-                  <StyledText style={styles.submitButtonText}>
+                  <StyledText style={[styles.buttonLabel, { color: "#fff" }]}>
                     {t("NewActivity_CreateButton")}
                   </StyledText>
                 )}
@@ -652,7 +654,9 @@ export default function NewActivity() {
                 onPress={() => setShowCancelConfirm(false)}
                 style={styles.confirmButton}
               >
-                <StyledText>{t("NewActivity_KeepEditing")}</StyledText>
+                <StyledText style={styles.buttonLabel}>
+                  {t("NewActivity_KeepEditing")}
+                </StyledText>
               </FlipButton>
               <FlipButton
                 onPress={confirmCancel}
@@ -660,7 +664,7 @@ export default function NewActivity() {
                 bgColor="red"
                 textColor="#fff"
               >
-                <StyledText style={{ color: "#fff" }}>
+                <StyledText style={[styles.buttonLabel, { color: "#fff" }]}>
                   {t("NewActivity_ConfirmDiscard")}
                 </StyledText>
               </FlipButton>
@@ -673,29 +677,48 @@ export default function NewActivity() {
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#f7e7ce", // Champagne background
+  },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 30,
+    padding: 20,
     paddingTop: 80,
   },
-  formContainer: {
-    width: SCREEN_WIDTH * 0.9,
+  headerPlaque: {
+    width: "100%",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
     padding: 20,
-    borderRadius: 12,
-    backgroundColor: "#fff",
+    marginBottom: 20,
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  formPlaque: {
+    width: "100%",
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 25,
     color: "#333",
   },
   sectionTitle: {
@@ -705,6 +728,29 @@ const styles = StyleSheet.create({
     color: "#444",
     marginTop: 20,
     marginBottom: 10,
+  },
+  imageSectionTitle: {
+    fontSize: 18,
+    textAlign: "center",
+    fontWeight: "600",
+    color: "#444",
+    marginTop: 20,
+    paddingBottom: 8,
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  imageCardHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  imageCardParagraph: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
   },
   pickerButton: {
     borderWidth: 1,
@@ -721,6 +767,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
+    gap: 10,
+  },
+  timeColumn: {
+    flexDirection: "column",
+    gap: 15,
+  },
+  timePickerContainer: {
+    flex: 1,
   },
   timeLabel: {
     textAlign: "center",
@@ -733,9 +787,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 30,
   },
+  buttonColumn: {
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 15,
+  },
   submitButton: { width: "48%" },
   cancelButton: { width: "48%", backgroundColor: "#f0f0f0" },
-  submitButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  fullWidthButton: {
+    width: "100%",
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   errorText: {
     color: "red",
     alignSelf: "flex-start",
@@ -773,6 +838,6 @@ const styles = StyleSheet.create({
   },
   genAiButton: {
     marginTop: 15,
-    backgroundColor: "#e6f7ff", // A light blue color
+    backgroundColor: "#e6f7ff",
   },
 });
