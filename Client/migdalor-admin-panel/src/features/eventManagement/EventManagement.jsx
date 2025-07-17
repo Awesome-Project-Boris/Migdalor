@@ -28,58 +28,18 @@ const EventManagement = () => {
     setToastState({ show: true, variant, message });
   const handleCloseToast = () => setToastState({ ...toastState, show: false });
 
-  // MOCK API CALL - Replace with real API calls later
   const fetchData = useCallback(async () => {
     setIsLoading(true);
-    // In a real app, you would call different endpoints based on the view
-    // For now, we'll use mock data.
-    const mockEvents = [
-      {
-        eventID: 1,
-        eventName: "הרצאה על תזונה",
-        hostName: 'ד"ר כהן',
-        location: "אודיטוריום",
-        startDate: "2025-08-01T10:00:00",
-        isRecurring: false,
-        capacity: 100,
-      },
-      {
-        eventID: 2,
-        eventName: "ערב סרט",
-        hostName: "ועדת תרבות",
-        location: "מועדון",
-        startDate: "2025-08-05T19:30:00",
-        isRecurring: false,
-        capacity: 50,
-      },
-    ];
-    const mockClasses = [
-      {
-        eventID: 3,
-        eventName: "חוג יוגה",
-        hostName: "אלה יוגה",
-        location: "סטודיו",
-        startDate: "2025-07-21T08:00:00",
-        isRecurring: true,
-        recurrenceRule: "FREQ=WEEKLY;BYDAY=MO",
-        capacity: 20,
-      },
-      {
-        eventID: 4,
-        eventName: "סדנת ציור",
-        hostName: "אמן הבית",
-        location: "חדר אומנות",
-        startDate: "2025-07-22T14:00:00",
-        isRecurring: true,
-        recurrenceRule: "FREQ=WEEKLY;BYDAY=TU",
-        capacity: 15,
-      },
-    ];
-
-    setTimeout(() => {
-      setData(view === "events" ? mockEvents : mockClasses);
+    const isRecurring = view === "classes";
+    try {
+      const result = await api.get(`/events?isRecurring=${isRecurring}`, token);
+      setData(Array.isArray(result) ? result : []);
+    } catch (error) {
+      showToast("error", `שגיאה בטעינת הנתונים: ${error.message}`);
+      setData([]); // Clear data on error
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   }, [view, token]);
 
   useEffect(() => {
@@ -101,17 +61,31 @@ const EventManagement = () => {
     const action = isEditMode ? "עדכון" : "יצירת";
     const typeText = eventData.IsRecurring ? "החוג" : "האירוע";
 
-    // MOCK SAVE - Replace with real API call
-    console.log(`Saving ${typeText}`, eventData);
-    showToast("success", `${typeText} נשמר בהצלחה!`);
-    fetchData(); // Refresh data
+    try {
+      if (isEditMode) {
+        await api.put(`/events/${eventId}`, eventData, token);
+      } else {
+        await api.post("/events", eventData, token);
+      }
+      showToast("success", `${typeText} נשמר בהצלחה!`);
+      fetchData(); // Refresh data from server
+    } catch (error) {
+      showToast("error", `${action} ${typeText} נכשל: ${error.message}`);
+      throw error; // Re-throw to keep modal open
+    }
   };
 
   const handleDeleteConfirm = async () => {
-    // MOCK DELETE - Replace with real API call
-    showToast("success", `האירוע "${deletingEvent.eventName}" נמחק בהצלחה.`);
-    setDeletingEvent(null);
-    fetchData(); // Refresh data
+    if (!deletingEvent) return;
+    try {
+      await api.delete(`/events/${deletingEvent.eventID}`, token);
+      showToast("success", `האירוע "${deletingEvent.eventName}" נמחק בהצלחה.`);
+      setDeletingEvent(null);
+      fetchData(); // Refresh data from server
+    } catch (error) {
+      showToast("error", `מחיקת האירוע נכשלה: ${error.message}`);
+      setDeletingEvent(null);
+    }
   };
 
   const columns = useMemo(
@@ -123,7 +97,10 @@ const EventManagement = () => {
         accessorKey: "startDate",
         header: "תאריך התחלה",
         cell: ({ row }) =>
-          new Date(row.original.startDate).toLocaleString("he-IL"),
+          new Date(row.original.startDate).toLocaleString("he-IL", {
+            dateStyle: "short",
+            timeStyle: "short",
+          }),
       },
       { accessorKey: "capacity", header: "קיבולת" },
       {
@@ -134,12 +111,14 @@ const EventManagement = () => {
             <button
               onClick={() => handleOpenModal(row.original)}
               className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
+              title="ערוך"
             >
               <Edit size={20} />
             </button>
             <button
               onClick={() => setDeletingEvent(row.original)}
               className="p-2 rounded-full text-red-600 hover:bg-red-100"
+              title="מחק"
             >
               <Trash2 size={20} />
             </button>
