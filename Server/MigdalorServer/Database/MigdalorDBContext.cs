@@ -8,6 +8,7 @@ namespace MigdalorServer.Database
 {
     public partial class MigdalorDBContext : DbContext
     {
+
         public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
             : base(options)
         {
@@ -196,15 +197,17 @@ namespace MigdalorServer.Database
 
             modelBuilder.Entity<OhParticipation>(entity =>
             {
-                entity.HasKey(e => e.AttendanceId)
-                    .HasName("PK__OH_Parti__8B69263CCC0236E7");
+                entity.HasKey(e => e.ParticipationId)
+                    .HasName("PK__OH_Parti__4EA27080DCD56B17");
 
-                entity.Property(e => e.Status).HasDefaultValueSql("('Attended')");
+                entity.Property(e => e.RegistrationTime).HasDefaultValueSql("(getdate())");
 
-                entity.HasOne(d => d.Instance)
+                entity.Property(e => e.Status).HasDefaultValueSql("('Registered')");
+
+                entity.HasOne(d => d.Event)
                     .WithMany(p => p.OhParticipations)
-                    .HasForeignKey(d => d.InstanceId)
-                    .HasConstraintName("FK_Attendance_EventInstances");
+                    .HasForeignKey(d => d.EventId)
+                    .HasConstraintName("FK_Participation_Events");
             });
 
             modelBuilder.Entity<OhPermission>(entity =>
