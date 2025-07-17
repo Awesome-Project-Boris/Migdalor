@@ -290,6 +290,7 @@ export default function EventFocusScreen() {
                 eventId={eventId}
                 participants={participants}
                 canMarkAttendance={canMarkAttendance}
+                isFinalized={event.participationChecked} // Pass the new prop
               />
             )}
             {!isCreator && (
