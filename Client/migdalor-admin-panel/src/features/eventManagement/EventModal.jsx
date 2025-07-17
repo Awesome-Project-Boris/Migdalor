@@ -2,52 +2,59 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import InputField from "../../components/common/InputField";
 import CheckboxField from "../../components/common/CheckboxField";
-import RRuleGenerator from "./RRuleGenerator"; // Import the new component
+import RRuleGenerator from "./RRuleGenerator";
 import { useAuth } from "../../auth/AuthContext";
 
-const EventModal = ({
-  isOpen,
-  onClose,
-  onSave,
-  showToast,
-  event,
-  eventType,
-}) => {
-  const { user, token } = useAuth();
+const EventModal = ({ isOpen, onClose, onSave, event, eventType }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditMode = !!event;
+  const currentEventType = isEditMode
+    ? event.isRecurring
+      ? "class"
+      : "event"
+    : eventType;
 
   useEffect(() => {
-    if (isEditMode) {
-      setFormData({
-        EventName: event.eventName || "",
-        Description: event.description || "",
-        Location: event.location || "",
-        Capacity: event.capacity || 0,
-        IsRecurring: event.isRecurring || false,
-        RecurrenceRule: event.recurrenceRule || "",
-        StartDate: event.startDate
-          ? new Date(event.startDate).toISOString().slice(0, 16)
-          : "",
-        EndDate: event.endDate
-          ? new Date(event.endDate).toISOString().slice(0, 16)
-          : "",
-      });
-    } else {
-      setFormData({
-        EventName: "",
-        Description: "",
-        Location: "",
-        Capacity: 0,
-        IsRecurring: eventType === "class",
-        RecurrenceRule: eventType === "class" ? "FREQ=WEEKLY;INTERVAL=1" : "",
-        StartDate: "",
-        EndDate: "",
-      });
+    const getInitialFormData = () => {
+      if (isEditMode) {
+        return {
+          EventName: event.eventName || "",
+          Description: event.description || "",
+          Location: event.location || "",
+          Capacity: event.capacity || 0,
+          IsRecurring: event.isRecurring || false,
+          RecurrenceRule: event.recurrenceRule || "",
+          StartDate: event.startDate
+            ? new Date(event.startDate).toISOString().slice(0, 16)
+            : "",
+          EndDate: event.endDate
+            ? new Date(event.endDate).toISOString().slice(0, 16)
+            : "",
+          HostId: event.hostId || user.id, // Keep existing host or use current admin
+        };
+      } else {
+        return {
+          EventName: "",
+          Description: "",
+          Location: "",
+          Capacity: 0,
+          IsRecurring: currentEventType === "class",
+          RecurrenceRule:
+            currentEventType === "class" ? "FREQ=WEEKLY;INTERVAL=1" : "",
+          StartDate: "",
+          EndDate: "",
+          HostId: user.id, // Assign current admin as host for new events
+        };
+      }
+    };
+
+    if (isOpen) {
+      setFormData(getInitialFormData());
     }
-  }, [event, eventType, isEditMode, isOpen]);
+  }, [event, eventType, isEditMode, isOpen, user]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -64,22 +71,25 @@ const EventModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const eventData = {
+
+    // Convert capacity to a number
+    const finalFormData = {
       ...formData,
-      HostID: user.id,
+      Capacity: Number(formData.Capacity) || 0,
     };
 
     try {
-      await onSave(eventData, isEditMode ? event.eventID : null);
+      await onSave(finalFormData, isEditMode ? event.eventID : null);
       handleClose();
     } catch (error) {
+      // Parent component handles the toast
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    setFormData({});
+    setFormData({}); // Clear form data on close
     onClose();
   };
 
@@ -94,8 +104,8 @@ const EventModal = ({
         <div className="flex justify-between items-center pb-4 border-b">
           <h3 className="text-xl font-semibold">
             {isEditMode
-              ? `עריכת ${event.isRecurring ? "חוג" : "אירוע"}`
-              : `יצירת ${eventType === "class" ? "חוג" : "אירוע"} חדש`}
+              ? `עריכת ${currentEventType === "class" ? "חוג" : "אירוע"}`
+              : `יצירת ${currentEventType === "class" ? "חוג" : "אירוע"} חדש`}
           </h3>
           <button
             onClick={handleClose}
@@ -109,31 +119,30 @@ const EventModal = ({
             <InputField
               label="שם האירוע/חוג"
               name="EventName"
-              value={formData.EventName}
+              value={formData.EventName || ""}
               onChange={handleChange}
               required
             />
             <InputField
               label="מיקום"
               name="Location"
-              value={formData.Location}
+              value={formData.Location || ""}
               onChange={handleChange}
             />
             <InputField
               label="קיבולת משתתפים"
               name="Capacity"
               type="number"
-              value={formData.Capacity}
+              value={formData.Capacity || ""}
               onChange={handleChange}
             />
             <InputField
               label="תאריך התחלה"
               name="StartDate"
               type="datetime-local"
-              value={formData.StartDate}
+              value={formData.StartDate || ""}
               onChange={handleChange}
               required
-              InputLabelProps={{ shrink: true }}
             />
           </div>
 
@@ -143,7 +152,7 @@ const EventModal = ({
             </label>
             <textarea
               name="Description"
-              value={formData.Description}
+              value={formData.Description || ""}
               onChange={handleChange}
               rows="4"
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
@@ -154,12 +163,12 @@ const EventModal = ({
             <CheckboxField
               label="אירוע קבוע (חוג)"
               name="IsRecurring"
-              checked={formData.IsRecurring}
+              checked={formData.IsRecurring || false}
               onChange={handleChange}
             />
             {formData.IsRecurring && (
               <RRuleGenerator
-                value={formData.RecurrenceRule}
+                value={formData.RecurrenceRule || ""}
                 onChange={handleRruleChange}
               />
             )}

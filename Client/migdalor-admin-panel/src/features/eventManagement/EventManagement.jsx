@@ -9,8 +9,9 @@ import { Edit, Trash2, PlusCircle, Calendar, Users } from "lucide-react";
 
 const EventManagement = () => {
   const { token } = useAuth();
-  const [view, setView] = useState("events"); // 'events' or 'classes'
-  const [data, setData] = useState([]);
+  const [view, setView] = useState("events");
+  const [events, setEvents] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeEvent, setActiveEvent] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,59 +29,19 @@ const EventManagement = () => {
     setToastState({ show: true, variant, message });
   const handleCloseToast = () => setToastState({ ...toastState, show: false });
 
-  // MOCK API CALL - Replace with real API calls later
   const fetchData = useCallback(async () => {
     setIsLoading(true);
-    // In a real app, you would call different endpoints based on the view
-    // For now, we'll use mock data.
-    const mockEvents = [
-      {
-        eventID: 1,
-        eventName: "הרצאה על תזונה",
-        hostName: 'ד"ר כהן',
-        location: "אודיטוריום",
-        startDate: "2025-08-01T10:00:00",
-        isRecurring: false,
-        capacity: 100,
-      },
-      {
-        eventID: 2,
-        eventName: "ערב סרט",
-        hostName: "ועדת תרבות",
-        location: "מועדון",
-        startDate: "2025-08-05T19:30:00",
-        isRecurring: false,
-        capacity: 50,
-      },
-    ];
-    const mockClasses = [
-      {
-        eventID: 3,
-        eventName: "חוג יוגה",
-        hostName: "אלה יוגה",
-        location: "סטודיו",
-        startDate: "2025-07-21T08:00:00",
-        isRecurring: true,
-        recurrenceRule: "FREQ=WEEKLY;BYDAY=MO",
-        capacity: 20,
-      },
-      {
-        eventID: 4,
-        eventName: "סדנת ציור",
-        hostName: "אמן הבית",
-        location: "חדר אומנות",
-        startDate: "2025-07-22T14:00:00",
-        isRecurring: true,
-        recurrenceRule: "FREQ=WEEKLY;BYDAY=TU",
-        capacity: 15,
-      },
-    ];
-
-    setTimeout(() => {
-      setData(view === "events" ? mockEvents : mockClasses);
+    try {
+      // API call to fetch both events and classes
+      const response = await api.get("/events/all", token);
+      setEvents(response.events || []);
+      setClasses(response.classes || []);
+    } catch (error) {
+      showToast("error", `שגיאה בטעינת נתונים: ${error.message}`);
+    } finally {
       setIsLoading(false);
-    }, 500);
-  }, [view, token]);
+    }
+  }, [token]);
 
   useEffect(() => {
     fetchData();
@@ -98,20 +59,44 @@ const EventManagement = () => {
 
   const handleSaveEvent = async (eventData, eventId) => {
     const isEditMode = !!eventId;
-    const action = isEditMode ? "עדכון" : "יצירת";
-    const typeText = eventData.IsRecurring ? "החוג" : "האירוע";
-
-    // MOCK SAVE - Replace with real API call
-    console.log(`Saving ${typeText}`, eventData);
-    showToast("success", `${typeText} נשמר בהצלחה!`);
-    fetchData(); // Refresh data
+    const typeText = eventData.IsRecurring ? "חוג" : "אירוע";
+    const serverEventData = {
+      eventName: eventData.EventName,
+      description: eventData.Description,
+      location: eventData.Location,
+      capacity: eventData.Capacity,
+      isRecurring: eventData.IsRecurring,
+      recurrenceRule: eventData.RecurrenceRule,
+      startDate: eventData.StartDate,
+      endDate: eventData.EndDate,
+      hostId: eventData.HostId,
+    };
+    try {
+      if (isEditMode) {
+        await api.put(`/events/admin/${eventId}`, serverEventData, token);
+        showToast("success", `${typeText} עודכן בהצלחה!`);
+      } else {
+        await api.post("/events/admin", serverEventData, token);
+        showToast("success", `${typeText} נוצר בהצלחה!`);
+      }
+      fetchData(); // Refresh data on success
+    } catch (error) {
+      showToast("error", `שגיאה בשמירת ה${typeText}: ${error.message}`);
+      throw error; // Re-throw to keep modal open
+    }
   };
 
   const handleDeleteConfirm = async () => {
-    // MOCK DELETE - Replace with real API call
-    showToast("success", `האירוע "${deletingEvent.eventName}" נמחק בהצלחה.`);
-    setDeletingEvent(null);
-    fetchData(); // Refresh data
+    if (!deletingEvent) return;
+    try {
+      await api.delete(`/events/admin/${deletingEvent.eventID}`, token);
+      showToast("success", `האירוע "${deletingEvent.eventName}" נמחק בהצלחה.`);
+      setDeletingEvent(null);
+      fetchData();
+    } catch (error) {
+      showToast("error", `שגיאה במחיקת האירוע: ${error.message}`);
+      setDeletingEvent(null);
+    }
   };
 
   const columns = useMemo(
@@ -150,6 +135,8 @@ const EventManagement = () => {
     []
   );
 
+  const dataToDisplay = view === "events" ? events : classes;
+
   return (
     <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
       <Toast
@@ -158,7 +145,6 @@ const EventManagement = () => {
         variant={toastState.variant}
         onClose={handleCloseToast}
       />
-
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-800">
           ניהול אירועים וחוגים
@@ -188,7 +174,6 @@ const EventManagement = () => {
           </button>
         </div>
       </div>
-
       <div className="flex justify-end mb-4">
         <button
           onClick={() => handleOpenModal()}
@@ -198,12 +183,11 @@ const EventManagement = () => {
           {view === "events" ? "צור אירוע חדש" : "צור חוג חדש"}
         </button>
       </div>
-
       {isLoading ? (
         <div className="text-center p-4">טוען נתונים...</div>
       ) : (
         <SharedTable
-          data={data}
+          data={dataToDisplay}
           columns={columns}
           globalFilter={globalFilter}
           setGlobalFilter={setGlobalFilter}
@@ -211,16 +195,13 @@ const EventManagement = () => {
           setSorting={setSorting}
         />
       )}
-
       <EventModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleSaveEvent}
-        showToast={showToast}
         event={activeEvent}
-        eventType={view === "events" ? "event" : "class"}
+        eventType={view}
       />
-
       {deletingEvent && (
         <ConfirmationModal
           title="אישור מחיקה"
