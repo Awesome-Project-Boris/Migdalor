@@ -18,7 +18,181 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                var events = await OhEvent.GetEventsAsync(isRecurring);
+                var now = DateTime.UtcNow;
+
+                var eventsQuery =
+                    from e in _context.OhEvents
+                        // Perform a LEFT JOIN to get picture details
+                    join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
+                    from pg in picGroup.DefaultIfEmpty()
+                    where (e.IsRecurring == false && e.StartDate > now) ||
+                          (e.IsRecurring == true && e.EndDate > now)
+                    select new EventDto
+                    {
+                        EventId = e.EventId,
+                        EventName = e.EventName,
+                        Description = e.Description,
+                        Location = e.Location,
+                        PictureId = e.PictureId,
+                        PicturePath = pg.PicPath, 
+                        IsRecurring = e.IsRecurring,
+                        StartDate = e.StartDate,
+                        EndDate = e.EndDate,
+                        Capacity = e.Capacity,
+                        ParticipantsCount = e.OhEventRegistrations.Count()
+                    };
+
+                var events = await eventsQuery.AsNoTracking().ToListAsync();
+
+                var result = new
+                {
+                    Classes = events.Where(e => e.IsRecurring),
+                    Activities = events.Where(e => !e.IsRecurring)
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error fetching events: {ex.Message}");
+            }
+        }
+
+        // 2. GET: api/events/{id}
+        // CORRECTED: This query now manually joins with OhPeople to get Host details.
+        [HttpGet("{id}")]
+        public async Task<ActionResult<EventDetailDto>> GetEventById(int id)
+        {
+            try
+            {
+                var eventDetail = await (from e in _context.OhEvents
+                                             // Join to get host
+                                         join p in _context.OhPeople on e.HostId equals p.PersonId into hostGroup
+                                         from h in hostGroup.DefaultIfEmpty()
+                                             // Join to get picture path
+                                         join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
+                                         from pg in picGroup.DefaultIfEmpty()
+                                         where e.EventId == id
+                                         select new EventDetailDto
+                                         {
+                                             EventId = e.EventId,
+                                             EventName = e.EventName,
+                                             Description = e.Description,
+                                             Location = e.Location,
+                                             PictureId = e.PictureId,
+                                             PicturePath = pg.PicPath, 
+                                             IsRecurring = e.IsRecurring,
+                                             StartDate = e.StartDate,
+                                             EndDate = e.EndDate,
+                                             Capacity = e.Capacity,
+                                             Host = h == null ? null : new HostDto
+                                             {
+                                                 HostId = h.PersonId,
+                                                 EnglishName = h.EngFirstName + " " + h.EngLastName,
+                                                 HebrewName = h.HebFirstName + " " + h.HebLastName
+                                             }
+                                         }).FirstOrDefaultAsync();
+
+                if (eventDetail == null)
+                {
+                    return NotFound("Event not found.");
+                }
+
+                eventDetail.ParticipantsCount = await _context.OhEventRegistrations.CountAsync(r => r.EventId == id);
+
+                return Ok(eventDetail);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error fetching event details: {ex.Message}");
+            }
+        }
+
+        // 3. GET: api/events/{eventId}/participants
+        // CORRECTED: This query now manually joins OhEventRegistrations with OhPeople.
+        [HttpGet("{eventId}/participants")]
+        public async Task<ActionResult<IEnumerable<ParticipantDto>>> GetEventParticipants(int eventId)
+        {
+            try
+            {
+                var participants = await (from r in _context.OhEventRegistrations
+                                          join p in _context.OhPeople on r.ParticipantId equals p.PersonId
+                                          where r.EventId == eventId
+                                          select new ParticipantDto
+                                          {
+                                              ParticipantId = r.ParticipantId,
+                                              EnglishFullName = p.EngFirstName + " " + p.EngLastName,
+                                              HebrewFullName = p.HebFirstName + " " + p.HebLastName,
+                                              RegistrationStatus = r.Status
+                                          }).ToListAsync();
+
+                return Ok(participants);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error fetching participants: {ex.Message}");
+            }
+        }
+
+        // 4. POST: api/events/attendance
+        // CORRECTED: Uses 'OhParticipation' which matches your DbContext.
+        [HttpPost("attendance")]
+        public async Task<IActionResult> UpdateAttendance([FromBody] UpdateAttendanceDto attendanceDto)
+        {
+            try
+            {
+                var attendanceRecord = await _context.OhParticipations
+                    .FirstOrDefaultAsync(a => a.EventId == attendanceDto.InstanceId && a.ParticipantId == attendanceDto.ParticipantId);
+
+                if (attendanceRecord != null)
+                {
+                    attendanceRecord.Status = attendanceDto.Status;
+                }
+                else
+                {
+                    // Use the correct class name 'OhParticipation' from the generated model.
+                    var newRecord = new OhParticipation
+                    {
+                        EventId = attendanceDto.InstanceId,
+                        ParticipantId = attendanceDto.ParticipantId,
+                        Status = attendanceDto.Status,
+                        RegistrationTime = DateTime.UtcNow
+                    };
+                    _context.OhParticipations.Add(newRecord);
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok("Attendance updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error updating attendance: {ex.Message}");
+            }
+        }
+
+        // 5. GET: api/events/host/{hostId}
+        // Pulls all events hosted by a specific person
+        [HttpGet("host/{hostId}")]
+        public async Task<ActionResult<IEnumerable<EventDto>>> GetEventsByHost(Guid hostId)
+        {
+            try
+            {
+                var events = await _context.OhEvents
+                    .AsNoTracking()
+                    .Where(e => e.HostId == hostId)
+                    .Select(e => new EventDto
+                    {
+                        EventId = e.EventId,
+                        EventName = e.EventName,
+                        Description = e.Description,
+                        Location = e.Location,
+                        IsRecurring = e.IsRecurring,
+                        StartDate = e.StartDate,
+                        EndDate = e.EndDate,
+                        Capacity = e.Capacity
+                    })
+                    .ToListAsync();
+
                 return Ok(events);
             }
             catch (Exception ex)
