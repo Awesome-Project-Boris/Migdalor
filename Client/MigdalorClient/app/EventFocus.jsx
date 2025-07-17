@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
-  Image,
   Alert,
   TouchableOpacity,
   ScrollView,
@@ -17,7 +16,7 @@ import { Globals } from "@/app/constants/Globals";
 import AttendanceDrawer from "@/components/AttendanceDrawer";
 import FlipButton from "@/components/FlipButton";
 import Header from "@/components/Header";
-import { Image as ExpoImage } from "expo-image"; // Use Expo Image for better performance and caching
+import { Image as ExpoImage } from "expo-image";
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
@@ -32,7 +31,8 @@ const formatTime = (dateString) => {
 };
 
 export default function EventFocusScreen() {
-  const { eventId } = useLocalSearchParams();
+  const { eventId: eventIdFromParams } = useLocalSearchParams();
+  const [eventId, setEventId] = useState(null);
   const { i18n, t } = useTranslation();
   const router = useRouter();
 
@@ -41,8 +41,16 @@ export default function EventFocusScreen() {
   const [participants, setParticipants] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const isRtl = i18n.dir() === "rtl";
+
+  useEffect(() => {
+    if (eventIdFromParams) {
+      const numericEventId = parseInt(eventIdFromParams, 10);
+      if (!isNaN(numericEventId)) {
+        setEventId(numericEventId);
+      }
+    }
+  }, [eventIdFromParams]);
 
   useEffect(() => {
     const getUserIdFromStorage = async () => {
@@ -64,16 +72,19 @@ export default function EventFocusScreen() {
 
   const fetchData = useCallback(async () => {
     if (!eventId || !currentUserId) return;
+
     setIsLoading(true);
     try {
       const [eventResponse, participantsResponse] = await Promise.all([
         fetch(`${Globals.API_BASE_URL}/api/events/${eventId}`),
         fetch(`${Globals.API_BASE_URL}/api/events/${eventId}/participants`),
       ]);
+
       if (!eventResponse.ok)
         throw new Error(
           t("Errors_Event_Fetch", "Could not fetch event details.")
         );
+
       const eventData = await eventResponse.json();
       setEvent(eventData);
 
@@ -89,10 +100,10 @@ export default function EventFocusScreen() {
   }, [eventId, currentUserId, t]);
 
   useEffect(() => {
-    if (currentUserId) {
+    if (currentUserId && eventId) {
       fetchData();
     }
-  }, [fetchData, currentUserId]);
+  }, [fetchData, currentUserId, eventId]);
 
   const handleRegister = () => {
     Alert.alert(
@@ -107,11 +118,15 @@ export default function EventFocusScreen() {
           text: t("Common_Register", "Register"),
           onPress: async () => {
             try {
+              const authToken = await AsyncStorage.getItem("jwt");
               const response = await fetch(
                 `${Globals.API_BASE_URL}/api/events/register`,
                 {
                   method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${authToken}`,
+                  },
                   body: JSON.stringify({
                     eventId: event.eventId,
                     participantId: currentUserId,
@@ -134,21 +149,9 @@ export default function EventFocusScreen() {
     );
   };
 
-  const handleMarkAttendance = async (participantId, status) => {
-    Alert.alert(
-      "Attendance",
-      `Marked user as ${status}. (Implementation pending)`
-    );
-  };
-
   const handleHostPress = () => {
-    // This function is now correctly placed before the return statement.
     if (!event?.host?.hostId || event.host.role === "Admin") return;
-
-    // This logic correctly determines where to navigate.
     const pathname = event.isRecurring ? "/InstructorProfile" : "/Profile";
-    //const pathname = "/Profile";
-    //alert(`Navigating to ${pathname} with userId: ${event.host.hostId}`);
     router.push({
       pathname,
       params: { userId: event.host.hostId },
@@ -169,7 +172,6 @@ export default function EventFocusScreen() {
       </View>
     );
   }
-
   if (!event) {
     return (
       <View style={styles.centered}>
@@ -285,10 +287,9 @@ export default function EventFocusScreen() {
           <View style={styles.actionContainer}>
             {isCreator && (
               <AttendanceDrawer
-                event={event}
+                eventId={eventId}
                 participants={participants}
                 canMarkAttendance={canMarkAttendance}
-                onMarkAttendance={handleMarkAttendance}
               />
             )}
             {!isCreator && (

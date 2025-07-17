@@ -149,37 +149,41 @@ namespace MigdalorServer.Controllers
 
         // 4. POST: api/events/attendance
         // CORRECTED: Uses 'OhParticipation' which matches your DbContext.
-        [HttpPost("attendance")]
-        public async Task<IActionResult> UpdateAttendance([FromBody] UpdateAttendanceDto attendanceDto)
+        [HttpPost("participation")] // Changed route to be more accurate
+        public async Task<IActionResult> UpdateParticipation([FromBody] UpdateParticipationDto participationDto)
         {
             try
             {
-                var attendanceRecord = await _context.OhParticipations
-                    .FirstOrDefaultAsync(a => a.InstanceId == attendanceDto.InstanceId && a.ParticipantId == attendanceDto.ParticipantId);
+                // 1. Find an existing participation record using EventId
+                var participationRecord = await _context.OhParticipations
+                    .FirstOrDefaultAsync(p => p.EventId == participationDto.EventId && p.ParticipantId == participationDto.ParticipantId);
 
-                if (attendanceRecord != null)
+                if (participationRecord != null)
                 {
-                    attendanceRecord.Status = attendanceDto.Status;
+                    // 2. If the record exists, update the status and the timestamp
+                    participationRecord.Status = participationDto.Status;
+                    participationRecord.RegistrationTime = DateTime.UtcNow; // Update the timestamp
                 }
                 else
                 {
-                    // Use the correct class name 'OhParticipation' from the generated model.
+                    // 3. If the record does not exist, create a new one
                     var newRecord = new OhParticipation
                     {
-                        InstanceId = attendanceDto.InstanceId,
-                        ParticipantId = attendanceDto.ParticipantId,
-                        Status = attendanceDto.Status,
-                        SignInTime = DateTime.UtcNow
+                        EventId = participationDto.EventId,
+                        ParticipantId = participationDto.ParticipantId,
+                        Status = participationDto.Status,
+                        RegistrationTime = DateTime.UtcNow // Set initial timestamp
                     };
                     _context.OhParticipations.Add(newRecord);
                 }
 
                 await _context.SaveChangesAsync();
-                return Ok("Attendance updated successfully.");
+                return Ok("Participation updated successfully.");
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error updating attendance: {ex.Message}");
+                // It's good practice to log the exception here
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error updating participation: {ex.Message}");
             }
         }
 
@@ -390,5 +394,31 @@ namespace MigdalorServer.Controllers
             // Return the combined list, ordered by start time
             return Ok(allEntries.OrderBy(e => e.StartTime));
         }
+
+        [HttpPost("{eventId}/mark-checked")]
+        [Authorize] // Ensure only authorized users can perform this action
+        public async Task<IActionResult> MarkParticipationAsChecked(int eventId)
+        {
+            try
+            {
+                var eventToUpdate = await _context.OhEvents.FindAsync(eventId);
+
+                if (eventToUpdate == null)
+                {
+                    return NotFound("Event not found.");
+                }
+
+                eventToUpdate.ParticipationChecked = true;
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Event participation has been successfully marked as checked." });
+            }
+            catch (Exception ex)
+            {
+                // In a real app, you would log the exception ex
+                return StatusCode(StatusCodes.Status500InternalServerError, "An internal server error occurred.");
+            }
+        }
+
     }
 }
