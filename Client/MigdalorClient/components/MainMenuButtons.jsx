@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   item: {
     width: SCREEN_WIDTH * 0.9,
-    height: 100,
+    minheight: 100,
     backgroundColor: "#fafafa",
     borderRadius: 8,
     marginVertical: 8,
@@ -97,6 +97,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   itemText: {
+    textAlign: "center",
     fontSize: 24, // Base font size is defined, so StyledText can scale it
     color: "#000",
   },

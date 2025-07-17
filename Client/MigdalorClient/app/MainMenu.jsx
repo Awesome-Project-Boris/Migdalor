@@ -21,7 +21,6 @@ import { Toast } from "toastify-react-native";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthProvider";
 import InstructorMainMenu from "./InstructorMainMenu";
-import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
 const ASYNC_STORAGE_KEY = "mainMenuOrder";
 

@@ -178,7 +178,9 @@ const styles = StyleSheet.create({
   },
   button: {
     width: SCREEN_WIDTH * 0.42,
-    height: 145,
+    minHeight: 145,               
+    paddingVertical: 15,          
+    paddingHorizontal: 5,
     backgroundColor: "#00b5d9",
     color: "#fff",
     borderRadius: 8,
