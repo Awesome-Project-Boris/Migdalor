@@ -34,6 +34,7 @@ namespace MigdalorServer.Models
         public string? RecurrenceRule { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public bool ParticipationChecked { get; set; }
 
         [InverseProperty("Event")]
         public virtual ICollection<OhEventInstance> OhEventInstances { get; set; }

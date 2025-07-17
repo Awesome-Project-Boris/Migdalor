@@ -154,9 +154,8 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                // 1. Find an existing participation record using EventId
-                var participationRecord = await _context.OhParticipations
-                    .FirstOrDefaultAsync(p => p.EventId == participationDto.EventId && p.ParticipantId == participationDto.ParticipantId);
+                var attendanceRecord = await _context.OhParticipations
+                    .FirstOrDefaultAsync(a => a.EventId == attendanceDto.InstanceId && a.ParticipantId == attendanceDto.ParticipantId);
 
                 if (participationRecord != null)
                 {
@@ -169,10 +168,10 @@ namespace MigdalorServer.Controllers
                     // 3. If the record does not exist, create a new one
                     var newRecord = new OhParticipation
                     {
-                        EventId = participationDto.EventId,
-                        ParticipantId = participationDto.ParticipantId,
-                        Status = participationDto.Status,
-                        RegistrationTime = DateTime.UtcNow // Set initial timestamp
+                        EventId = attendanceDto.InstanceId,
+                        ParticipantId = attendanceDto.ParticipantId,
+                        Status = attendanceDto.Status,
+                        RegistrationTime = DateTime.UtcNow
                     };
                     _context.OhParticipations.Add(newRecord);
                 }
