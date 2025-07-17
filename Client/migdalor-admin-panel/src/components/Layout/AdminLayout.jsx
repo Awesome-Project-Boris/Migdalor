@@ -6,12 +6,14 @@ import {
   Users,
   FileText,
   LogOut,
-  MessageSquare, // Import the new icon
+  MessageSquare,
+  CalendarDays, // Import the new icon
 } from "lucide-react";
 import UserManagement from "../../features/userManagement/UserManagement";
 import NoticeManagement from "../../features/noticeManagement/NoticeManagement";
 import Dashboard from "../../pages/Dashboard";
 import Reports from "../../features/reports/Reports";
+import EventManagement from "../../features/eventManagement/EventManagement";
 
 /**
  * The main layout for the admin panel.
@@ -31,6 +33,8 @@ const AdminLayout = () => {
         return <NoticeManagement />;
       case "reports":
         return <Reports />;
+      case "events":
+        return <EventManagement />;
       case "dashboard":
       default:
         return <Dashboard setActivePage={setActivePage} />;
@@ -58,10 +62,17 @@ const AdminLayout = () => {
             onClick={() => setActivePage("users")}
           />
           <SidebarButton
-            icon={<MessageSquare size={20} />} // Changed icon here
+            icon={<MessageSquare size={20} />}
             label="ניהול מודעות"
             isActive={activePage === "notices"}
             onClick={() => setActivePage("notices")}
+          />
+          {/* New Button for Event Management */}
+          <SidebarButton
+            icon={<CalendarDays size={20} />}
+            label="ניהול אירועים"
+            isActive={activePage === "events"}
+            onClick={() => setActivePage("events")}
           />
           <SidebarButton
             icon={<FileText size={20} />}
