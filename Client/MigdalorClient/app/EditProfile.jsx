@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   Dimensions,
-  Text,
   ScrollView,
   Image,
   TextInput,
@@ -11,6 +10,7 @@ import {
   Modal,
   Alert,
 } from "react-native";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 import * as ImagePicker from "expo-image-picker";
 import { useRoute, useNavigation } from "@react-navigation/native";
@@ -37,10 +37,12 @@ import { Globals } from "@/app/constants/Globals";
 import InterestModal from "@/components/InterestSelectionModal";
 import ImageHistory from "@/components/ImageHistory";
 import PrivacySettingsModal from "@/components/PrivacySettingsModal";
+import { useSettings } from "@/context/SettingsContext.jsx";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
 export default function EditProfile() {
+  const { settings } = useSettings();
   const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute();
@@ -83,9 +85,6 @@ export default function EditProfile() {
     PicName: "",
     PicPath: "",
     PicAlt: "",
-    //DateTime: "",
-    //UploaderId: "",
-    //PicRole: "Profile picture",
   });
 
   const [additionalPic1, setAdditionalPic1] = useState({
@@ -113,62 +112,32 @@ export default function EditProfile() {
     aboutMe: 300,
   };
 
-  // Interests modal      //////////////////////
-
   const [isInterestModalVisible, setInterestModalVisible] = useState(false);
-  const [allInterests, setAllInterests] = useState([]); // Fetched on mount
-  const [userInterests, setUserInterests] = useState([]); // The single source of truth for the user's choices
-
-  // Image History modal //
+  const [allInterests, setAllInterests] = useState([]);
+  const [userInterests, setUserInterests] = useState([]);
 
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
   const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
   const [historyRole, setHistoryRole] = useState("");
-  const [historyTargetSlot, setHistoryTargetSlot] = useState(null); // 'main', 'add1', or 'add2'
+  const [historyTargetSlot, setHistoryTargetSlot] = useState(null);
 
 
   const openHistoryModal = (role, target) => {
-    setIsNavigatingBack(true); // TO ELIMINATE RACE CONDITION OF MODAL
+    setIsNavigatingBack(true);
     setHistoryRole(role);
-    setHistoryTargetSlot(target); // Set the specific target slot
+    setHistoryTargetSlot(target);
     setHistoryModalVisible(true);
   };
   useEffect(() => {
-  // This will run AFTER the component re-renders with the new state
   console.log("The profilePic state has now been updated to:", profilePic);
 }, [profilePic]);
 
-  // const handleSelectFromHistory = (selectedImage) => {
-  //   // console.log("Selected image is:", selectedImage);
-  //   if (historyRole === "Profile picture") {
-  //     // console.log("setting profilePic:", profilePic);
-  //     setProfilePic(selectedImage);
-  //     // console.log("afterwards profilePic:", profilePic);
-  //   } else {
-  //     // console.log("Current additionalPic1:", additionalPic1);
-  //     // console.log("Current additionalPic2:", additionalPic2);
-  //     if (!additionalPic1.PicId || !additionalPic1.PicID ) { // !!
-  //       // console.log("Setting additionalPic1...");
-  //       setAdditionalPic1(selectedImage);
-  //       // console.log("afterwards additionalPic1:", additionalPic1);
-  //     } else {
-  //       // console.log("Setting additionalPic2...");
-  //       setAdditionalPic2(selectedImage);
-  //       // console.log("afterwards additionalPic2:", additionalPic2);
-  //     }
-  //   }
-  //   setShowImageViewModal(false);
-  //   setHistoryModalVisible(false);
-
-  //   setIsNavigatingBack(false);
-  // };
   useEffect(() => {
   console.log("3. The 'additionalPic1' state was updated to:", JSON.stringify(additionalPic1, null, 2));
 }, [additionalPic1]);
 
   const handleSelectFromHistory = (selectedImage) => {
     console.log("2. Received in EditProfile:", JSON.stringify(selectedImage, null, 2));
-    // Use the new state to know exactly which image to set
     switch (historyTargetSlot) {
       case 'main':
         setProfilePic(selectedImage);
@@ -180,27 +149,17 @@ export default function EditProfile() {
         setAdditionalPic2(selectedImage);
         break;
       default:
-        // Fallback in case something goes wrong
         console.error("Unknown history target slot:", historyTargetSlot);
         Toast.show({ type: "error", text1: "Could not select image." });
         break;
     }
-
-    // Close the modal and reset states
-    // setShowImageViewModal(false);
     setHistoryModalVisible(false);
     setIsNavigatingBack(false);
-    setHistoryTargetSlot(null); // Reset for next time
+    setHistoryTargetSlot(null);
   };
 
-  // 2. Add a useEffect to fetch all interests when the component loads
-
-  // --- Replace your current initial load useEffect with this one ---
-
   useEffect(() => {
-    // This hook now runs only on the first load and does EVERYTHING needed to set up the page.
     if (isInitialLoad.current) {
-      // --- Part 1: Your original logic for setting profile data ---
       if (initialData) {
         const parsedData = JSON.parse(initialData);
         if (parsedData.residentInterests) {
@@ -239,8 +198,6 @@ export default function EditProfile() {
           }
         );
       }
-
-      // --- Part 2 (THE FIX): Fetch the list of all possible interests ---
       const fetchAllInterestsFromDB = async () => {
         try {
           const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
@@ -248,28 +205,21 @@ export default function EditProfile() {
           setAllInterests(data ? data.map((name) => ({ name })) : []);
         } catch (err) {
           console.error("Failed to fetch all interests:", err);
-          // Optionally, show a toast message here
         }
       };
       fetchAllInterestsFromDB();
-
-      // Flip the flag to false so this block never runs again for this screen instance
       isInitialLoad.current = false;
     }
-  }, [initialData, initialPics]); // Dependencies are correct
+  }, [initialData, initialPics]);
 
-  // Remember what's been selected
   const { initialSelectedNames, initialNewInterests } = useMemo(() => {
     const allExistingNames = new Set(allInterests.map((i) => i.name));
-
     const selected = userInterests
       .filter((i) => allExistingNames.has(i.name))
       .map((i) => i.name);
-
     const newlyAdded = userInterests
       .filter((i) => !allExistingNames.has(i.name))
       .map((i) => i.name);
-
     return {
       initialSelectedNames: selected,
       initialNewInterests: newlyAdded,
@@ -279,16 +229,11 @@ export default function EditProfile() {
   const handleConfirmInterests = ({ selectedNames, newInterests }) => {
     const existingInterestObjects = selectedNames.map((name) => ({ name }));
     const newInterestObjects = newInterests.map((name) => ({ name }));
-
-    // Update the main userInterests state with the new combined list
     setUserInterests([...existingInterestObjects, ...newInterestObjects]);
     setInterestModalVisible(false);
   };
 
-  //////////////////////////////////////////
-
   const [formErrors, setFormErrors] = useState({});
-
   const inputRefs = {
     partner: useRef(null),
     residentApartmentNumber: useRef(null),
@@ -315,8 +260,6 @@ export default function EditProfile() {
     const error = validateField(name, value);
     setFormErrors((prev) => ({ ...prev, [name]: error }));
     setForm((prevForm) => ({ ...prevForm, [name]: value }));
-    console.log('Updated "' + name + '" to: "' + value + '"');
-    console.log("Updated Data:", form);
   };
 
   const validateField = (name, value) => {
@@ -324,32 +267,27 @@ export default function EditProfile() {
     if (max && value.length > max) {
       return `${name} must be at most ${max} characters.`;
     }
-
     const isRequired = (val) => {
       if (!val || val.trim() === "") {
         return t("Validation_FieldIsRequired", "This field is required.");
       }
       return null;
     };
-
     switch (name) {
       case "partner":
         return value.trim() === "" || regexHebrewEnglish.test(value)
           ? null
           : t("EditProfileScreen_errorMessagePartner");
-
       case "residentApartmentNumber":
         return value.trim() === "" || /^[0-9]+$/.test(value)
           ? null
           : t("EditProfileScreen_errorMessageApartmentNumber");
-
       case "mobilePhone":
         const requiredError = isRequired(value);
         if (requiredError) return requiredError;
         return /^0\d{9}$/.test(value)
           ? null
           : t("EditProfileScreen_errorMessageMobilePhone");
-
       case "email":
         const trimmedValue = value.trim(); 
         const emailRequiredError = isRequired(trimmedValue);
@@ -357,37 +295,30 @@ export default function EditProfile() {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
           ? null
           : t("EditProfileScreen_errorMessageEmail");
-
       case "origin":
         return value.trim() === "" || regexHebrewEnglishNumbers.test(value)
           ? null
           : t("EditProfileScreen_errorMessageOrigin");
-
       case "profession":
         return value.trim() === "" || regexHebrewEnglishNumbers.test(value)
           ? null
           : t("EditProfileScreen_errorMessageProfession");
-
       case "interests":
         return value.trim() === "" || regexHebrewEnglishNumbers.test(value)
           ? null
           : t("EditProfileScreen_errorMessageInterests");
-
       case "aboutMe":
         return value.trim() === "" || regexHebrewEnglishNumbers.test(value)
           ? null
           : t("EditProfileScreen_errorMessageAboutMe");
-
       default:
         return null;
     }
   };
 
   const handleRemoveImage = async () => {
-    const type = imageTypeToClear; // Get the type ('main', 'add1', or 'add2')
-
+    const type = imageTypeToClear;
     if (type === "main") {
-      // Check if there was actually a picture to remove
       if (profilePic.PicID || profilePic.PicId) {
         setClearedPics((prev) => ({ ...prev, profile: true }));
       }
@@ -405,82 +336,37 @@ export default function EditProfile() {
       }
       setAdditionalPic2({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
     }
-
     setShowImageViewModal(false);
   };
 
   const handleAddImage = async () => {
     switch (imageTypeToClear) {
-      case "main":
-        pickImage("main", setProfilePic);
-        break;
-      case "add1":
-        pickImage("add1", setAdditionalPic1);
-        break;
-      case "add2":
-        pickImage("add2", setAdditionalPic2);
-        break;
-      default:
-        console.error("Invalid image type:", type);
+      case "main": pickImage("main", setProfilePic); break;
+      case "add1": pickImage("add1", setAdditionalPic1); break;
+      case "add2": pickImage("add2", setAdditionalPic2); break;
+      default: console.error("Invalid image type:", imageTypeToClear);
     }
-    // setShowImageViewModal(false);
   };
 
   const uploadImage = async (imageUri, role, altText, uploaderId) => {
     if (!imageUri || !imageUri.startsWith("file://")) {
-      console.log(
-        `Skipping upload for non-local file or null URI: ${imageUri}`
-      );
-      return null; // Not a local file to upload
+      return null;
     }
-
-    console.log(`Uploading image: ${role}`);
     const formData = new FormData();
     const fileType = imageUri.substring(imageUri.lastIndexOf(".") + 1);
     const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
-
-    formData.append("files", {
-      uri: imageUri,
-      name: `${role}.${fileType}`,
-      type: mimeType,
-    });
+    formData.append("files", { uri: imageUri, name: `${role}.${fileType}`, type: mimeType });
     formData.append("picRoles", role);
     formData.append("picAlts", altText);
     formData.append("uploaderId", uploaderId);
-
-    // console.log("imageUri:", imageUri); // Debugging line
-    // console.log("role:", role); // Debugging line
-    // console.log("fileType:", fileType); // Debugging line
-    // console.log("picAlts:", altText); // Debugging line
-    // console.log("uploaderId:", uploaderId); // Debugging line
-
-    // console.log("FormData:", formData); // Debugging line
-    // console.log("ProfilePic", imageUri); // Debugging line
-
     try {
-      const uploadResponse = await fetch(
-        `${Globals.API_BASE_URL}/api/Picture`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      const uploadResults = await uploadResponse.json(); // Assume server always returns JSON
-
-      if (
-        !uploadResponse.ok ||
-        !Array.isArray(uploadResults) ||
-        uploadResults.length === 0 ||
-        !uploadResults[0].success
-      ) {
-        const errorMsg =
-          uploadResults?.[0]?.errorMessage ||
-          `Image upload failed (HTTP ${uploadResponse.status})`;
+      const uploadResponse = await fetch(`${Globals.API_BASE_URL}/api/Picture`, { method: "POST", body: formData });
+      const uploadResults = await uploadResponse.json();
+      if (!uploadResponse.ok || !Array.isArray(uploadResults) || uploadResults.length === 0 || !uploadResults[0].success) {
+        const errorMsg = uploadResults?.[0]?.errorMessage || `Image upload failed (HTTP ${uploadResponse.status})`;
         throw new Error(errorMsg);
       }
-      console.log(`Upload successful for ${role}:`, uploadResults[0]);
-      await safeDeleteFile(imageUri); // Clean up local copy after successful upload
-      // --- CORRECTED RETURN STATEMENT ---
+      await safeDeleteFile(imageUri);
       return {
         PicID: uploadResults[0].picId,
         PicPath: uploadResults[0].serverPath,
@@ -491,71 +377,26 @@ export default function EditProfile() {
         DateTime: new Date().toISOString(),
       };
     } catch (error) {
-      console.error(`Image upload failed for ${role}:`, error);
-      Toast.show({
-        type: "error",
-        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
-        text2: error.message,
-        position: "top",
-      });
-      // Decide if failure is critical. Maybe throw error to stop handleSubmit?
-      throw error; // Re-throw to stop the submission process
+      Toast.show({ type: "error", text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"), text2: error.message, position: "top" });
+      throw error;
     }
   };
 
-  useEffect(() => {
-    console.log("ClearedPics updated:", clearedPics);
-  }, [clearedPics]);
-
   const handleCancel = () => {
-    console.log("Cancelled Edit Profile");
-
     try {
       const parsedInitialData = JSON.parse(initialData);
       const parsedInitialPics = JSON.parse(initialPics);
-
       setForm(parsedInitialData);
       setProfilePic(parsedInitialPics.profilePic);
       setAdditionalPic1(parsedInitialPics.additionalPic1);
       setAdditionalPic2(parsedInitialPics.additionalPic2);
-
-      Toast.show({
-        type: "info", // Type for styling (if themes are set up)
-        text1: t("EditProfileScreen_ProfileUpdateCancelled"),
-        duration: 3500, // Custom duration
-        position: "top", // Example: 'top' or 'bottom'
-      });
-
+      Toast.show({ type: "info", text1: t("EditProfileScreen_ProfileUpdateCancelled"), duration: 3500, position: "top" });
       router.back();
     } catch (err) {
       console.warn("Failed to parse initialData during cancel:", err);
       router.back();
     }
   };
-
-  // useEffect(() => {
-  //   // Update the form with initialData
-  //   if (initialData) {
-  //     const parsedData = JSON.parse(initialData);
-  //     if (parsedData.residentInterests) {
-  //       // If the original object array exists, use it
-  //       setUserInterests(parsedData.residentInterests);
-  //     } else if (parsedData.interests) {
-  //       // Otherwise, if the string array exists, convert it back to an object array
-  //       setUserInterests(parsedData.interests.map((name) => ({ name })));
-  //     } else {
-  //       // Fallback to an empty array if neither exists
-  //       setUserInterests([]);
-  //     }
-  //     setForm(parsedData);
-  //   }
-  //   if (initialPics) {
-  //     const pics = JSON.parse(initialPics);
-  //     setProfilePic(pics.profilePic);
-  //     setAdditionalPic1(pics.additionalPic1);
-  //     setAdditionalPic2(pics.additionalPic2);
-  //   }
-  // }, [initialData, initialPics]);
 
   const [profileImage, setProfileImage] = useState(defaultUserImage);
   const [additionalImage1, setAdditionalImage1] = useState(defaultUserImage);
@@ -573,9 +414,7 @@ export default function EditProfile() {
 
   useEffect(() => {
     if (additionalPic1.PicPath?.trim().startsWith("/Images/")) {
-      setAdditionalImage1({
-        uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}`,
-      });
+      setAdditionalImage1({ uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` });
     } else if (additionalPic1.PicPath?.startsWith("file://")) {
       setAdditionalImage1({ uri: additionalPic1.PicPath });
     } else {
@@ -585,9 +424,7 @@ export default function EditProfile() {
 
   useEffect(() => {
     if (additionalPic2.PicPath?.trim().startsWith("/Images/")) {
-      setAdditionalImage2({
-        uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}`,
-      });
+      setAdditionalImage2({ uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` });
     } else if (additionalPic2.PicPath?.startsWith("file://")) {
       setAdditionalImage2({ uri: additionalPic2.PicPath });
     } else {
@@ -595,523 +432,195 @@ export default function EditProfile() {
     }
   }, [additionalPic2.PicPath]);
 
-  // Fetch privacy settings on component load
   useEffect(() => {
     const fetchPrivacySettings = async () => {
       try {
         const storedUserID = await AsyncStorage.getItem("userID");
         if (!storedUserID) return;
-
         const response = await fetch(`${Globals.API_BASE_URL}/api/People/PrivacySettings/${storedUserID}`);
         if (response.ok) {
           const data = await response.json();
           setPrivacySettings(data);
-        } else {
-          console.log("No custom privacy settings found for user, using defaults.");
         }
       } catch (error) {
         console.error("Failed to fetch privacy settings:", error);
       }
     };
-
     fetchPrivacySettings();
   }, []);
 
   const handleSavePrivacySettings = (newSettings) => {
     setPrivacySettings(newSettings);
-    // Toast.show({
-    //     type: "info",
-    //     text1: t("PrivacySettings_savedLocally"),
-    //     position: "top",
-    // });
   };
 
-  // Helper function to get the current URI based on type
-  // This function should return the *display-ready* URI (local or full server URL)
   const getDisplayUriForType = (type) => {
     switch (type) {
-      case "main":
-        // profileImage is already a { uri: ... } object or defaultUserImage
-        return profileImage.uri || ""; // Return the URI string or empty
-      case "add1":
-        return additionalImage1.uri || "";
-      case "add2":
-        return additionalImage2.uri || "";
-      default:
-        return "";
+      case "main": return profileImage.uri || "";
+      case "add1": return additionalImage1.uri || "";
+      case "add2": return additionalImage2.uri || "";
+      default: return "";
     }
   };
 
   const handleImagePress = (type) => {
     setImageTypeToClear(type);
-    const uriToDisplay = getDisplayUriForType(type); // Get the display-ready URI
+    const uriToDisplay = getDisplayUriForType(type);
     setImageToViewUri(uriToDisplay);
     setShowImageViewModal(true);
   };
 
-  // Old logic
-  // const handleImagePress = (imageUriToView, altText = "") => {
-  //   if (!imageUriToView) {
-  //     console.log("handleImagePress: No valid imageUri provided.");
-  //     return;
-  //   }
-  //   console.log("handleImagePress: imageUriToView:", imageUriToView);
-
-  //   // if (imageUriToView === Globals.API_BASE_URL) {
-  //   //   console.log("handleImagePress: No valid imageUri provided.");
-  //   //   return;
-  //   // }
-
-  //   const paramsToPass = {
-  //     imageUri: imageUriToView,
-  //     altText: altText,
-  //   };
-
-  //   console.log("Navigating to ImageViewScreen with params:", paramsToPass);
-
-  //   router.push({
-  //     pathname: "/ImageViewScreen",
-  //     params: paramsToPass,
-  //   });
-  // };
-
-  // Updating Pictures
-
-  // --- Image Viewing/Removal Logic ---
   const [showImageViewModal, setShowImageViewModal] = useState(false);
   const [imageToViewUri, setImageToViewUri] = useState(null);
-  const [imageTypeToClear, setImageTypeToClear] = useState(null); // 'main' | 'add1' | 'add2'
-
+  const [imageTypeToClear, setImageTypeToClear] = useState(null);
   const [wasDefaultImage, setWasDefaultImage] = useState(false);
 
   const copyImageToAppDir = async (sourceUri, prefix) => {
     try {
       const filename = `${prefix}-${Date.now()}-${sourceUri.split("/").pop()}`;
       const destinationUri = FileSystem.documentDirectory + filename;
-      console.log(`Copying from ${sourceUri} to ${destinationUri}`);
       await FileSystem.copyAsync({ from: sourceUri, to: destinationUri });
-      console.log(`Copy successful: ${destinationUri}`);
       return destinationUri;
     } catch (e) {
-      console.error("FileSystem.copyAsync Error:", e);
       throw e;
     }
   };
 
-  // --- Helper: Safely Delete Local File ---
   const safeDeleteFile = async (uri) => {
     if (!uri || !uri.startsWith("file://")) return;
     try {
-      console.log(`Attempting to delete local file: ${uri}`);
       await FileSystem.deleteAsync(uri, { idempotent: true });
-      console.log(`Successfully deleted or file did not exist: ${uri}`);
     } catch (error) {
       console.error(`Error deleting local file ${uri}:`, error);
     }
   };
 
-  // --- Image Picker ---
-
   const pickImage = async (type, setFn) => {
     const role = type === "main" ? "Profile picture" : "Extra picture";
-
-    const libraryPermission =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (libraryPermission.status !== "granted") {
-      Alert.alert(
-        t("ImagePicker_permissionDeniedTitle"),
-        t("ImagePicker_libraryPermissionDeniedMessage"),
-        [{ text: t("ImagePicker_cancelButton") }]
-      );
+      Alert.alert(t("ImagePicker_permissionDeniedTitle"), t("ImagePicker_libraryPermissionDeniedMessage"), [{ text: t("ImagePicker_cancelButton") }]);
       return;
     }
-
-    Alert.alert(
-      t("ImagePicker_selectSourceTitle"),
-      t("ImagePicker_selectSourceMessage"),
-      [
-        {
-          text: t("ImagePicker_takePhotoButton"),
-          onPress: async () => {
-            const cameraPermission =
-              await ImagePicker.requestCameraPermissionsAsync();
-            if (cameraPermission.status !== "granted") {
-              Alert.alert(
-                t("ImagePicker_permissionDeniedTitle"),
-                t("ImagePicker_cameraPermissionDeniedMessage"),
-                [{ text: t("ImagePicker_cancelButton") }]
-              );
-              return;
+    Alert.alert(t("ImagePicker_selectSourceTitle"), t("ImagePicker_selectSourceMessage"), [
+      { text: t("ImagePicker_takePhotoButton"), onPress: async () => {
+          const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+          if (cameraPermission.status !== "granted") {
+            Alert.alert(t("ImagePicker_permissionDeniedTitle"), t("ImagePicker_cameraPermissionDeniedMessage"), [{ text: t("ImagePicker_cancelButton") }]);
+            return;
+          }
+          const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.5 });
+          if (!result.canceled && result.assets?.[0]?.uri) {
+            try {
+              const newUri = await copyImageToAppDir(result.assets[0].uri, "camera");
+              let defaultAlt = type === "main" ? "Profile picture" : (type === "add1" ? "Extra picture 1" : "Extra picture 2");
+              setFn((prev) => ({ ...prev, PicPath: newUri, PicAlt: defaultAlt }));
+              setImageToViewUri(newUri);
+            } catch (copyError) {
+              Alert.alert(t("ImagePicker_errorTitle"), t("ImagePicker_saveCameraImageFailure"), [{ text: t("ImagePicker_cancelButton") }]);
             }
-            const result = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              quality: 0.5,
-            });
+          }
+        }},
+      { text: t("ImagePicker_chooseFromLibraryButton"), onPress: async () => {
+          try {
+            let result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.7 });
             if (!result.canceled && result.assets?.[0]?.uri) {
               try {
-                const newUri = await copyImageToAppDir(
-                  result.assets[0].uri,
-                  "camera"
-                );
-                //setFn((prev) => ({ ...prev, PicPath: newUri }));
-                // --- NEW, CORRECTED CODE ---
-                let defaultAlt = "Extra picture"; // A fallback
-                if (type === "main") {
-                    defaultAlt = "Profile picture";
-                } else if (type === "add1") {
-                    defaultAlt = "Extra picture 1";
-                } else if (type === "add2") {
-                    defaultAlt = "Extra picture 2";
-                }
-
-                // Set both the path and the alt text in the state
+                const newUri = await copyImageToAppDir(result.assets[0].uri, "library");
+                let defaultAlt = type === "main" ? "Profile picture" : (type === "add1" ? "Extra picture 1" : "Extra picture 2");
                 setFn((prev) => ({ ...prev, PicPath: newUri, PicAlt: defaultAlt }));
                 setImageToViewUri(newUri);
               } catch (copyError) {
-                Alert.alert(
-                  t("ImagePicker_errorTitle"),
-                  t("ImagePicker_saveCameraImageFailure"),
-                  [{ text: t("ImagePicker_cancelButton") }]
-                );
-                // Note: setImage is not defined in the scope, assuming you might remove this line
-                // setImage(null);
+                Alert.alert(t("ImagePicker_errorTitle"), t("ImagePicker_saveLibraryImageFailure"), [{ text: t("ImagePicker_cancelButton") }]);
               }
             }
-          },
-        },
-        {
-          text: t("ImagePicker_chooseFromLibraryButton"),
-          onPress: async () => {
-            try {
-              let result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                quality: 0.7,
-              });
-              if (!result.canceled && result.assets?.[0]?.uri) {
-                try {
-                  const newUri = await copyImageToAppDir(
-                    result.assets[0].uri,
-                    "library"
-                  );
-                  //setFn((prev) => ({ ...prev, PicPath: newUri }));
-                  // --- NEW, CORRECTED CODE ---
-                  let defaultAlt = "Extra picture"; // A fallback
-                  if (type === "main") {
-                      defaultAlt = "Profile picture";
-                  } else if (type === "add1") {
-                      defaultAlt = "Extra picture 1";
-                  } else if (type === "add2") {
-                      defaultAlt = "Extra picture 2";
-                  }
-
-                  // Set both the path and the alt text in the state
-                  setFn((prev) => ({ ...prev, PicPath: newUri, PicAlt: defaultAlt }));
-                  setImageToViewUri(newUri);
-                } catch (copyError) {
-                  Alert.alert(
-                    t("ImagePicker_errorTitle"),
-                    t("ImagePicker_saveLibraryImageFailure"),
-                    [{ text: t("ImagePicker_cancelButton") }]
-                  );
-                  // Note: setImage is not defined in the scope, assuming you might remove this line
-                  // setImage(null);
-                }
-              }
-            } catch (error) {
-              Alert.alert(
-                t("ImagePicker_errorTitle"),
-                t("ImagePicker_openLibraryFailure"),
-                [{ text: t("ImagePicker_cancelButton") }]
-              );
-            }
-          },
-        },
-        {
-          text: t("ImagePicker_chooseFromHistoryButton", "History"),
-          //onPress: () => openHistoryModal(role), // <-- Changed from navigation.navigate
-          onPress: () => {
-            setShowImageViewModal(false); // 1. Close the current modal first
-            openHistoryModal(role, type);   // 2. Then open the history modal
-          },
-        },
-        { text: t("ImagePicker_cancelButton"), style: "cancel" },
-      ]
-    );
-    console.log("pickImage: type:", type); // Debugging line
-    console.log("pickImage: profilePic:", profilePic); // Debugging line
+          } catch (error) {
+            Alert.alert(t("ImagePicker_errorTitle"), t("ImagePicker_openLibraryFailure"), [{ text: t("ImagePicker_cancelButton") }]);
+          }
+        }},
+      { text: t("ImagePicker_chooseFromHistoryButton", "History"), onPress: () => {
+          setShowImageViewModal(false);
+          openHistoryModal(role, type);
+        }},
+      { text: t("ImagePicker_cancelButton"), style: "cancel" },
+    ]);
   };
-
-  // Listening to changes in the ImageHistory page:
-
-  // useEffect(() => {
-  //   // This effect runs when the screen receives new parameters from navigation.
-  //   if (route.params?.selectedImage && route.params?.targetRole) {
-  //     const { selectedImage, targetRole } = route.params;
-
-  //     console.log("Received selected image from history:", selectedImage);
-  //     console.log("Target role:", targetRole);
-
-  //     // Update the correct image state based on the target role.
-  //     if (targetRole === "Profile picture") {
-  //       setProfilePic(selectedImage);
-  //     } else if (targetRole === "Extra picture") {
-  //       // Here, we need to decide which "Extra picture" slot to fill.
-  //       // A simple approach is to fill the first available one.
-  //       if (!additionalPic1.PicId || !additionalPic1.PicID) { // !!
-  //         setAdditionalPic1(selectedImage);
-  //       } else {
-  //         setAdditionalPic2(selectedImage);
-  //       }
-  //     }
-
-  //     // IMPORTANT: Clear the params after using them.
-  //     // This prevents the effect from re-running with the same old data if the user
-  //     // navigates away and back to the edit screen.
-  //     navigation.setParams({ selectedImage: null, targetRole: null });
-  //   }
-  // }, [route.params?.selectedImage, route.params?.targetRole]);
-
-
-
-  
-  // const viewOrPickImage = (type, currentUri) => {
-  //   console.log(currentUri === Globals.API_BASE_URL);
-  //   console.log("currentUri: ", currentUri);
-  //   console.log(currentUri == "");
-  //   if (currentUri == "") {
-  //     // When no image is set
-  //     // Show add-new option instead of remove
-  //     setWasDefaultImage(true);
-  //     setImageToViewUri(""); // no image to show
-  //     setImageTypeToClear(type);
-  //     setShowImageViewModal(true);
-  //   } else {
-  //     setWasDefaultImage(false);
-  //     setImageToViewUri(currentUri);
-  //     setImageTypeToClear(type);
-  //     setShowImageViewModal(true);
-  //   }
-  // };
 
   const deletePicture = async (pictureId) => {
-    if (!pictureId) return; // No ID to delete
-    console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
+    if (!pictureId) return;
     try {
-      const response = await fetch(
-        `${Globals.API_BASE_URL}/api/Picture/${pictureId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
+      const response = await fetch(`${Globals.API_BASE_URL}/api/Picture/${pictureId}`, { method: "DELETE" });
       if (!response.ok) {
         let errorMsg = `Failed to delete picture ${pictureId} (HTTP ${response.status})`;
-        try {
-          const errData = await response.json();
-          errorMsg = errData.message || errorMsg;
-        } catch {}
+        try { const errData = await response.json(); errorMsg = errData.message || errorMsg; } catch {}
         throw new Error(errorMsg);
       }
-      console.log(`Successfully deleted picture ID: ${pictureId} via API.`);
-      // No need to delete local file here, as it's an existing server file
-    } catch (err) {
-      // console.error(`Failed to delete picture ID ${pictureId}:`, err);
-      // Log error, maybe show a non-blocking warning to user?
-
-      // Toast.show({
-      //   type: "warning",
-      //   text1: t("MarketplaceItemScreen_PicDeleteErrorTitle"),
-      //   text2: err.message,
-      // });
-      // Don't necessarily stop the whole edit process if old pic deletion fails
-    }
+    } catch (err) {}
   };
-
-  console.log("profilePic: ", profilePic);
-  console.log("additionalPic1: ", additionalPic1);
-  console.log("additionalImage1: ", additionalImage1);
-  console.log("additionalPic2: ", additionalPic2);
 
   const handleSave = async () => {
     const newErrors = {};
     let firstErrorField = null;
-
     const cleanedForm = {};
 
     Object.entries(form).forEach(([key, value]) => {
-      if (key === "arrivalYear") {
-        return;
-      }
-
+      if (key === "arrivalYear") return;
       const str = value == null ? "" : String(value);
-      const cleanedValue = str.trim(); // safe now
+      const cleanedValue = str.trim();
       cleanedForm[key] = cleanedValue;
-
       const error = validateField(key, cleanedValue);
       newErrors[key] = error;
-      if (!firstErrorField && error) {
-        firstErrorField = key;
-      }
+      if (!firstErrorField && error) firstErrorField = key;
     });
 
     setFormErrors(newErrors);
-
     if (firstErrorField) {
       const ref = inputRefs[firstErrorField];
       if (ref?.current) {
         ref.current.blur();
-        setTimeout(() => {
-          ref.current?.focus();
-        }, 10);
+        setTimeout(() => { ref.current?.focus(); }, 10);
       }
       return;
     }
 
     setForm(cleanedForm);
-    console.log("Updated Data:", cleanedForm);
-
-    //console.log(cleanedForm.residentApartmentNumber)
-
     try {
       const storedUserID = await AsyncStorage.getItem("userID");
-      console.log("Stored user ID:", storedUserID); // Debugging line
-      if (!storedUserID) {
-        console.error("No user ID found in AsyncStorage.");
-        return;
-      }
-      cleanedForm.residentApartmentNumber = parseInt(
-        cleanedForm.residentApartmentNumber
-      );
+      if (!storedUserID) return;
+      cleanedForm.residentApartmentNumber = parseInt(cleanedForm.residentApartmentNumber);
       form.residentApartmentNumber = parseInt(form.residentApartmentNumber);
-      console.log(
-        "cleanedForm.residentApartmentNumber ",
-        cleanedForm.residentApartmentNumber
-      );
-      console.log("form.residentApartmentNumber", form.residentApartmentNumber);
-
-
-      /////////////////////////////////////////////// Interests ////////////////////////////////////////////////////
-
-      // filtering what interests the user chose from the modal, and the new ones to add to the DB.
 
       const allExistingNames = new Set(allInterests.map((i) => i.name));
-
-      const finalSelectedNames = userInterests
-        .filter((i) => allExistingNames.has(i.name))
-        .map((i) => i.name);
-
-      const finalNewInterestNames = userInterests
-        .filter((i) => !allExistingNames.has(i.name))
-        .map((i) => i.name);
-
-      //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      console.log("cleanedform ", cleanedForm);
-
-      const uploadAndWrap = async (imageObj, role, altText, uploaderId) => {
-        console.log("entering uploadAndWrap with imageObj:", imageObj);
-        console.log("role:", role);
-        const imageUri = imageObj.PicPath;
-        // Only upload if it's a new local file (starts with file://)
-        if (imageUri?.startsWith("file://")) {
-          const uploadedPicData = await uploadImage(
-            imageUri,
-            role,
-            altText,
-            uploaderId
-          );
-          console.log("uploadAndWrap returned:", uploadedPicData);
-          return uploadedPicData; // Returns { PicID, PicPath (serverPath), PicName, PicAlt }
-        }
-        // If it's an existing server path (not a local file), return the existing object
-        if (imageObj.PicID && imageObj.PicPath?.trim().startsWith("/Images/")) {
-          return imageObj;
-        }
-        // Otherwise, it's null or an invalid path, so return null
-        return null;
-      };
-
-      // --- Image Processing Logic for each picture ---
-      // This logic determines the FINAL state of each picture (null, or server data)
-      // and handles deletions of old server images if replaced or removed.
-
+      const finalSelectedNames = userInterests.filter((i) => allExistingNames.has(i.name)).map((i) => i.name);
+      const finalNewInterestNames = userInterests.filter((i) => !allExistingNames.has(i.name)).map((i) => i.name);
 
       const initialPicsParsed = JSON.parse(initialPics);
-
-      // Helper function to process each image cleanly
       const processImage = async (currentPic, initialPic, clearedFlag, role, altText) => {
-        // Case 1: A new local file was picked to upload.
         if (currentPic.PicPath?.startsWith("file://")) {
-          // If there was an old server image, delete it now.
-          if (initialPic?.picId) { 
-            await deletePicture(initialPic.picId, role);
-          }
+          if (initialPic?.picId) await deletePicture(initialPic.picId, role);
           return await uploadAndWrap(currentPic, role, currentPic.PicAlt || altText, storedUserID);
         }
-        
-        // Case 2: An existing server image is present.
-        // This correctly handles images from initial load AND images selected from history.
         if (currentPic.PicPath?.startsWith("/Images/")) {
-          // Check if the picture was replaced from history.
-          if (initialPic?.picId && initialPic.picId !== (currentPic.PicID || currentPic.PicId)) {
-            await deletePicture(initialPic.picId, role);
-          }
+          if (initialPic?.picId && initialPic.picId !== (currentPic.PicID || currentPic.PicId)) await deletePicture(initialPic.picId, role);
           return currentPic;
         }
-
-        // Case 3: The slot was explicitly cleared.
         if (clearedFlag) {
-          if (initialPic?.picId) {
-            await deletePicture(initialPic.picId, role);
-          }
+          if (initialPic?.picId) await deletePicture(initialPic.picId, role);
           return null;
         }
-
-        // Default: The slot is and remains empty.
         return null;
       };
 
-      // Process all three images using the robust helper function
       const finalProfilePicData = await processImage(profilePic, initialPicsParsed.profilePic, clearedPics.profile, "profile_picture", "Profile picture");
       const finalAdd1PicData = await processImage(additionalPic1, initialPicsParsed.additionalPic1, clearedPics.add1, "secondary_profile", "Extra picture 1");
       const finalAdd2PicData = await processImage(additionalPic2, initialPicsParsed.additionalPic2, clearedPics.add2, "secondary_profile", "Extra picture 2");
-
-
       
-      // --- CRITICAL: Update the component's state with the new server paths and IDs ---
-      console.log("Final Profile Pic Data is:", finalProfilePicData);
-      setProfilePic(
-        finalProfilePicData || {
-          PicID: null,
-          PicName: "",
-          PicPath: "",
-          PicAlt: "",
-        }
-      );
-      setAdditionalPic1(
-        finalAdd1PicData || {
-          PicID: null,
-          PicName: "",
-          PicPath: "",
-          PicAlt: "",
-        }
-      );
-      setAdditionalPic2(
-        finalAdd2PicData || {
-          PicID: null,
-          PicName: "",
-          PicPath: "",
-          PicAlt: "",
-        }
-      );
-      setClearedPics({ profile: false, add1: false, add2: false }); // Reset cleared flags
+      setProfilePic(finalProfilePicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      setAdditionalPic1(finalAdd1PicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      setAdditionalPic2(finalAdd2PicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      setClearedPics({ profile: false, add1: false, add2: false });
 
       const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`;
-      console.log("API URL:", apiurl); // Debugging line
-
       const requestBody = {
-        // your cleaned form fields
         ...cleanedForm,
         PersonId: storedUserID,
         profilePicture: finalProfilePicData,
@@ -1121,148 +630,68 @@ export default function EditProfile() {
         newInterestNames: finalNewInterestNames,
         privacySettings: privacySettings,
       };
-      console.log("requestBody: ", requestBody);
 
-      console.log("requestBody.profilePicture: ", requestBody.profilePicture);
-      console.log(
-        "requestBody.additionalPicture1: ",
-        requestBody.additionalPicture1
-      );
-      console.log(
-        "requestBody.additionalPicture2: ",
-        requestBody.additionalPicture2
-      );
-
-      const response = await fetch(apiurl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log("body:");
-      console.log({
-        ...cleanedForm,
-        profilePic, // Note: These profilePic, additionalPic1, additionalPic2 here will be the *updated* state
-        additionalPic1,
-        additionalPic2,
-      });
-
-      console.log("response:", response);
-
+      const response = await fetch(apiurl, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
       if (!response.ok) {
         let errorData = {};
-        try {
-          errorData = await response.json();
-        } catch (e) {}
-        throw new Error(
-          errorData?.message || `Profile update failed: HTTP ${response.status}`
-        );
+        try { errorData = await response.json(); } catch (e) {}
+        throw new Error(errorData?.message || `Profile update failed: HTTP ${response.status}`);
       }
-
-      Toast.show({
-        type: "success",
-        text1: t("EditProfileScreen_ProfileUpdated"),
-
-        duration: 3500,
-        position: "top",
-      });
+      Toast.show({ type: "success", text1: t("EditProfileScreen_ProfileUpdated"), duration: 3500, position: "top" });
       router.back();
     } catch (error) {
-      console.error("Error getting userID", error);
+      console.error("Error during save:", error);
     }
   };
-  // console.log("profilePic", profilePic);
-  // console.log("additionalPic1", additionalPic1);
-  // console.log("additionalPic2", additionalPic2);
 
-  // 1. Create the array of in-use picture IDs right before rendering the modal
   const picturesInUse = [
     profilePic.PicID || profilePic.PicId,
     additionalPic1.PicID || additionalPic1.PicId,
     additionalPic2.PicID || additionalPic2.PicId,
-  ].filter(Boolean); // .filter(Boolean) removes any null or empty values
+  ].filter(Boolean);
 
-  // Get the IDs of pictures that have been cleared in this session
   const initialPicsParsed = JSON.parse(initialPics);
   const clearedPictureIds = [];
-  if (clearedPics.profile && initialPicsParsed.profilePic) {
-    clearedPictureIds.push(initialPicsParsed.profilePic.picId);
-  }
-  if (clearedPics.add1 && initialPicsParsed.additionalPic1) {
-    clearedPictureIds.push(initialPicsParsed.additionalPic1.picId);
-  }
-  if (clearedPics.add2 && initialPicsParsed.additionalPic2) {
-    clearedPictureIds.push(initialPicsParsed.additionalPic2.picId);
-  }
+  if (clearedPics.profile && initialPicsParsed.profilePic) clearedPictureIds.push(initialPicsParsed.profilePic.picId);
+  if (clearedPics.add1 && initialPicsParsed.additionalPic1) clearedPictureIds.push(initialPicsParsed.additionalPic1.picId);
+  if (clearedPics.add2 && initialPicsParsed.additionalPic2) clearedPictureIds.push(initialPicsParsed.additionalPic2.picId);
+
+  const isMaxFontSize = settings.fontSizeMultiplier === 3;
+  
+  const buttonContainerStyle = [
+    styles.buttonRow,
+    isMaxFontSize && styles.buttonColumn
+  ];
+
+  const buttonStyle = [
+    styles.actionButton, // A new base style for both buttons
+    isMaxFontSize && { width: '85%' } // Wider buttons for column layout
+  ];
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <Header />
         <View style={styles.profileImageContainer}>
-          <BouncyButton
-            shrinkScale={0.95}
-            // onPress={() =>
-            //   viewOrPickImage(
-            //     "main",
-            //     profilePic.PicPath?.trim()
-            //       ? Globals.API_BASE_URL + profilePic.PicPath
-            //       : "" // Triggers default
-            //   )
-            // }
-
-            onPress={() => handleImagePress("main")}
-            disabled={!profilePic.PicPath?.trim()}
-          >
+          <BouncyButton shrinkScale={0.95} onPress={() => handleImagePress("main")} disabled={!profilePic.PicPath?.trim()}>
             {profilePic.PicPath === "" ? (
               <>
-                <Image
-                  alt={profilePic.PicAlt}
-                  //source={imageUrl}
-                  //source={profileImage}
-                  source={
-                    profilePic.PicPath
-                      ? { uri: profilePic.PicPath }
-                      : defaultUserImage
-                  }
-                  //source={imageUrl}
-                  style={styles.profileImage}
-                />
+                <Image alt={profilePic.PicAlt} source={profilePic.PicPath ? { uri: profilePic.PicPath } : defaultUserImage} style={styles.profileImage}/>
                 <Card.Background></Card.Background>
-                <YStack
-                  f={1}
-                  jc="center"
-                  ai="center"
-                  backgroundColor="rgba(0,0,0,0.4)"
-                ></YStack>
+                <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)"></YStack>
               </>
             ) : (
-              <YStack
-                f={1}
-                jc="center"
-                ai="center"
-                p="$2"
-                style={{ direction: Globals.userSelectedDirection }}
-              >
-                <Image
-                  alt={profilePic.PicAlt}
-                  source={profileImage}
-                  style={styles.profileImage}
-                />
+              <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
+                <Image alt={profilePic.PicAlt} source={profileImage} style={styles.profileImage}/>
               </YStack>
             )}
           </BouncyButton>
         </View>
 
         <View style={styles.profileNameContainer}>
-          <Text style={styles.profileName}>
+          <StyledText style={styles.profileName}>
             {form.name || t("ProfileScreen_emptyDataField")}
-          </Text>
+          </StyledText>
         </View>
 
         <View style={styles.editableContainer}>
@@ -1272,16 +701,14 @@ export default function EditProfile() {
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
             value={form.residentApartmentNumber}
-            onChangeText={(text) =>
-              handleFormChange("residentApartmentNumber", text)
-            }
+            onChangeText={(text) => handleFormChange("residentApartmentNumber", text)}
             keyboardType="numeric"
             ref={inputRefs.residentApartmentNumber}
           />
           {formErrors.residentApartmentNumber && (
-            <Text style={styles.errorText}>
+            <StyledText style={styles.errorText}>
               {formErrors.residentApartmentNumber}
-            </Text>
+            </StyledText>
           )}
 
           <FloatingLabelInput
@@ -1295,7 +722,7 @@ export default function EditProfile() {
             ref={inputRefs.mobilePhone}
           />
           {formErrors.mobilePhone && (
-            <Text style={styles.errorText}>{formErrors.mobilePhone}</Text>
+            <StyledText style={styles.errorText}>{formErrors.mobilePhone}</StyledText>
           )}
 
           <FloatingLabelInput
@@ -1309,7 +736,7 @@ export default function EditProfile() {
             ref={inputRefs.email}
           />
           {formErrors.email && (
-            <Text style={styles.errorText}>{formErrors.email}</Text>
+            <StyledText style={styles.errorText}>{formErrors.email}</StyledText>
           )}
 
           <FloatingLabelInput
@@ -1322,7 +749,7 @@ export default function EditProfile() {
             ref={inputRefs.origin}
           />
           {formErrors.origin && (
-            <Text style={styles.errorText}>{formErrors.origin}</Text>
+            <StyledText style={styles.errorText}>{formErrors.origin}</StyledText>
           )}
 
           <FloatingLabelInput
@@ -1337,34 +764,28 @@ export default function EditProfile() {
             ref={inputRefs.profession}
           />
           {formErrors.profession && (
-            <Text style={styles.errorText}>{formErrors.profession}</Text>
+            <StyledText style={styles.errorText}>{formErrors.profession}</StyledText>
           )}
 
           <View style={styles.interestSectionContainer}>
-            <Text style={styles.label}>{t("ProfileScreen_interests")}</Text>
+            <StyledText style={styles.label}>{t("ProfileScreen_interests")}</StyledText>
             <View style={styles.interestChipDisplay}>
               {userInterests.length > 0 ? (
                 userInterests.map((interest) => (
-                  <View
-                    key={interest.interestID || interest.name}
-                    style={styles.chipReadOnly}
-                  >
-                    <Text style={styles.chipTextReadOnly}>{interest.name}</Text>
+                  <View key={interest.interestID || interest.name} style={styles.chipReadOnly}>
+                    <StyledText style={styles.chipTextReadOnly}>{interest.name}</StyledText>
                   </View>
                 ))
               ) : (
-                <Text style={styles.noInterestsText}>
+                <StyledText style={styles.noInterestsText}>
                   {t("EditProfileScreen_noInterests")}
-                </Text>
+                </StyledText>
               )}
             </View>
-            <FlipButton
-              onPress={() => setInterestModalVisible(true)}
-              style={styles.editInterestsButton}
-            >
-              <Text style={styles.editInterestsButtonText}>
+            <FlipButton onPress={() => setInterestModalVisible(true)} style={styles.editInterestsButton}>
+              <StyledText style={styles.editInterestsButtonText}>
                 {t("EditProfileScreen_editInterestsButton")}
-              </Text>
+              </StyledText>
             </FlipButton>
           </View>
 
@@ -1382,105 +803,50 @@ export default function EditProfile() {
             textAlignVertical="top"
           />
           {formErrors.aboutMe && (
-            <Text style={styles.errorText}>{formErrors.aboutMe}</Text>
+            <StyledText style={styles.errorText}>{formErrors.aboutMe}</StyledText>
           )}
 
-          <Text
-            style={[
-              styles.label,
-              {
-                textAlign:
-                  Globals.userSelectedDirection === "rtl" ? "right" : "left",
-              },
-            ]}
-          >
+          <StyledText style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
             {t("ProfileScreen_extraImages")}
-          </Text>
+          </StyledText>
 
           <View style={styles.profileExtraImageContainer}>
-            <BouncyButton
-              shrinkScale={0.95}
-              // onPress={() =>
-              //   viewOrPickImage(
-              //     "add1",
-              //     additionalPic1.PicPath?.trim()
-              //       ? Globals.API_BASE_URL + additionalPic1.PicPath
-              //       : "" // Triggers default
-              //   )
-              // }
-
-              onPress={() => handleImagePress("add1")}
-              disabled={!additionalPic1.PicPath?.trim()}
-            >
-              <Image
-                alt={additionalPic1.PicAlt}
-                // source={
-                //   additionalPic1.PicPath
-                //     ? { uri: additionalPic1.PicPath }
-                //     : defaultUserImage // Or a placeholder for empty extra image
-                // }
-                source={additionalImage1}
-                style={styles.profileImage}
-              />
+            <BouncyButton shrinkScale={0.95} onPress={() => handleImagePress("add1")} disabled={!additionalPic1.PicPath?.trim()}>
+              <Image alt={additionalPic1.PicAlt} source={additionalImage1} style={styles.profileImage} />
             </BouncyButton>
-            <BouncyButton
-              shrinkScale={0.95}
-              // onPress={() =>
-              //   viewOrPickImage(
-              //     "add2",
-              //     additionalPic2.PicPath?.trim()
-              //       ? Globals.API_BASE_URL + additionalPic2.PicPath
-              //       : "" // Triggers default
-              //   )
-              // }
-
-              onPress={() => handleImagePress("add2")}
-              disabled={!additionalPic2.PicPath?.trim()}
-            >
-              <Image
-                alt={additionalPic2.PicAlt}
-                // source={
-                //   additionalPic2.PicPath
-                //     ? { uri: additionalPic2.PicPath }
-                //     : defaultUserImage // Or a placeholder for empty extra image
-                // }
-                source={additionalImage2}
-                style={styles.profileImage}
-              />
+            <BouncyButton shrinkScale={0.95} onPress={() => handleImagePress("add2")} disabled={!additionalPic2.PicPath?.trim()}>
+              <Image alt={additionalPic2.PicAlt} source={additionalImage2} style={styles.profileImage} />
             </BouncyButton>
           </View>
         </View>
 
         <View style={styles.privacyButtonContainer}>
-            <FlipButton
-                onPress={() => setPrivacyModalVisible(true)}
-                style={styles.privacyButton}
-            >
-                <Text style={styles.privacyButtonText}>{t('PrivacySettings_title')}</Text>
+            <FlipButton onPress={() => setPrivacyModalVisible(true)} style={styles.privacyButton}>
+                <StyledText style={styles.privacyButtonText}>{t('PrivacySettings_title')}</StyledText>
             </FlipButton>
         </View>
-
-        <View style={styles.buttonRow}>
+        
+        <View style={buttonContainerStyle}>
           <FlipButton
             onPress={handleSave}
             bgColor="white"
             textColor="black"
-            style={styles.saveButton}
+            style={buttonStyle}
           >
-            <Text style={styles.saveButtonText}>
+            <StyledText style={styles.actionButtonText}>
               {t("EditProfileScreen_saveButton")}
-            </Text>
+            </StyledText>
           </FlipButton>
 
           <FlipButton
             onPress={handleCancel}
             bgColor="white"
             textColor="black"
-            style={styles.cancelButton}
+            style={buttonStyle}
           >
-            <Text style={styles.saveButtonText}>
+            <StyledText style={styles.actionButtonText}>
               {t("EditProfileScreen_cancelButton")}
-            </Text>
+            </StyledText>
           </FlipButton>
         </View>
       </ScrollView>
@@ -1496,12 +862,9 @@ export default function EditProfile() {
         visible={showImageViewModal}
         imageUri={imageToViewUri}
         onClose={() => setShowImageViewModal(false)}
-        onAdd={() => {
-          handleAddImage(); // Clear the image after picking a new one
-        }}
+        onAdd={handleAddImage}
         onRemove={handleRemoveImage}
       />
-
       <InterestModal
         visible={isInterestModalVisible}
         mode="edit"
@@ -1511,7 +874,6 @@ export default function EditProfile() {
         onClose={() => setInterestModalVisible(false)}
         onConfirm={handleConfirmInterests}
       />
-
       <PrivacySettingsModal
         visible={isPrivacyModalVisible}
         onClose={() => setPrivacyModalVisible(false)}
@@ -1526,21 +888,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fef1e6",
   },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 10,
-    backgroundColor: "#fff0da",
-  },
   scroll: {
     alignItems: "center",
     paddingBottom: 60,
     paddingTop: 80,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginVertical: 10,
   },
   profileImageContainer: {
     alignItems: "center",
@@ -1587,19 +938,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
     marginBottom: 30,
   },
-
-  input: {
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 8,
-    minHeight: 40,
-  },
-  multiline: {
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
   extraImages: {
     flexDirection: "row",
     justifyContent: "space-around",
@@ -1607,22 +945,26 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   buttonRow: {
+    width: '90%',
     flexDirection: "row",
     justifyContent: "space-evenly",
     marginTop: 40,
-    gap: 20,
+    gap: 30,
   },
-  saveButton: {
+  buttonColumn: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  actionButton: {
     paddingVertical: 12,
     borderRadius: 8,
-    width: "40%",
+    width: "45%", // Default width for side-by-side
     alignItems: "center",
   },
-  cancelButton: {
-    paddingVertical: 12,
-    borderRadius: 8,
-    width: "40%",
-    alignItems: "center",
+  actionButtonText: {
+    fontSize: 26,
+    fontWeight: "bold",
+    textAlign: "center",
   },
   saveButtonText: {
     fontSize: 26,
@@ -1640,24 +982,6 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 20,
     width: "80%",
-  },
-  box: {
-    width: "85%",
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 6,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    color: "#333",
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    minHeight: 30,
   },
   extraImage: {
     width: 300,
@@ -1679,10 +1003,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     width: "100%",
     marginTop: 30,
-    gap: 30,
+    gap: 20,
   },
-
-  buttonLabel: { fontSize: 20, fontWeight: "bold" },
   errorText: {
     color: "red",
     marginBottom: 8,
@@ -1691,9 +1013,6 @@ const styles = StyleSheet.create({
     width: "90%",
     textAlign: "center",
   },
-
-  // INTERESTS
-
   interestSectionContainer: {
     width: "85%",
     alignSelf: "center",
@@ -1726,7 +1045,7 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   editInterestsButton: {
-    marginTop: 15,
+    marginTop: 35,
     alignSelf: "center",
     paddingVertical: 10,
     paddingHorizontal: 30,
@@ -1738,8 +1057,8 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
+    textAlign: "center",
   },
-
   privacyButtonContainer: {
     width: '85%',
     alignSelf: 'center',
@@ -1749,7 +1068,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
-    backgroundColor: '#6c757d', // A neutral, secondary button color
+    backgroundColor: '#6c757d',
   },
   privacyButtonText: {
     fontSize: 18,

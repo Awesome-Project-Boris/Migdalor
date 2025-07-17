@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TextInput,
@@ -20,6 +19,7 @@ import { useAuth } from "@/context/AuthProvider";
 import { Globals } from "@/app/constants/Globals";
 import FlipButton from "@/components/FlipButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 export default function Events() {
   const { t } = useTranslation();
@@ -43,7 +43,6 @@ export default function Events() {
     setLoading(true);
     try {
       const token = await AsyncStorage.getItem("jwt");
-      // UPDATED: Changed API route
       const response = await fetch(`${Globals.API_BASE_URL}/api/InstructorEvents/MyEvents`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -71,7 +70,6 @@ export default function Events() {
       setLoading(true);
       try {
         const token = await AsyncStorage.getItem("jwt");
-        // UPDATED: Changed API route
         const response = await fetch(
           `${Globals.API_BASE_URL}/api/InstructorEvents/${selectedEvent}/Instances`,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -129,7 +127,6 @@ export default function Events() {
     setIsSubmitting(true);
     try {
       const token = await AsyncStorage.getItem("jwt");
-      // UPDATED: Changed API route
       const response = await fetch(`${Globals.API_BASE_URL}/api/InstructorEvents/${endpoint}`, {
         method: method,
         headers: {
@@ -170,7 +167,7 @@ export default function Events() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />
-        <Text>{t("Events_Loading")}</Text>
+        <StyledText>{t("Events_Loading")}</StyledText>
       </View>
     );
   }
@@ -180,8 +177,8 @@ export default function Events() {
           <View style={styles.container}>
               <Header />
               <View style={styles.centered}>
-                  <Text style={styles.title}>{t("Events_Title", "Manage My Events")}</Text>
-                  <Text style={styles.noEventsText}>{t("Events_NoEvents", "You have no events to manage at this time.")}</Text>
+                  <StyledText style={styles.title}>{t("Events_Title", "Manage My Events")}</StyledText>
+                  <StyledText style={styles.noEventsText}>{t("Events_NoEvents", "You have no events to manage at this time.")}</StyledText>
               </View>
           </View>
       );
@@ -191,11 +188,11 @@ export default function Events() {
     <View style={styles.container}>
       <Header />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>{t("Events_Title", "Manage My Events")}</Text>
+        <StyledText style={styles.title}>{t("Events_Title", "Manage My Events")}</StyledText>
 
-        <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? 'right' : 'left' }]}>
+        <StyledText style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? 'right' : 'left' }]}>
           {t("Events_Selct")}
-        </Text>
+        </StyledText>
         <View style={styles.pickerContainer}>
           <Picker selectedValue={selectedEvent} onValueChange={(itemValue) => setSelectedEvent(itemValue)}>
             <Picker.Item label={t("Events_Choose")} value={null} />
@@ -207,9 +204,9 @@ export default function Events() {
 
         {selectedEvent && (
           <>
-            <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? 'right' : 'left' }]}>
+            <StyledText style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? 'right' : 'left' }]}>
               {t("Events_SelectMeeting")}
-            </Text>
+            </StyledText>
             <View style={styles.pickerContainer}>
               <Picker selectedValue={selectedInstance} onValueChange={(itemValue) => setSelectedInstance(itemValue)} enabled={instances.length > 0}>
                 <Picker.Item label={instances.length > 0 ? t("Events_ChooseDate") : t("Events_NoMeetings")} value={null} />
@@ -228,7 +225,6 @@ export default function Events() {
                     style={[
                         styles.checkbox,
                         {
-                            // If direction is RTL, add margin to the left. Otherwise, add it to the right.
                             marginLeft: Globals.userSelectedDirection === 'rtl' ? 10 : 0,
                             marginRight: Globals.userSelectedDirection === 'rtl' ? 0 : 10,
                         }
@@ -237,20 +233,20 @@ export default function Events() {
                 >
                     {isRescheduling && <View style={styles.checkboxInner} />}
                 </TouchableOpacity>
-                  <Text>{t("Events_MoveMeeting")}</Text>
+                  <StyledText>{t("Events_MoveMeeting")}</StyledText>
                 </View>
 
                 {isRescheduling && (
                     <View>
-                        <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === 'rtl' ? 'right' : 'left' }]}>
+                        <StyledText style={[styles.label, { textAlign: Globals.userSelectedDirection === 'rtl' ? 'right' : 'left' }]}>
                           {t("Events_NewMeeting")}
-                        </Text>
+                        </StyledText>
                         <View style={styles.datePickerRow}>
                             <TouchableOpacity onPress={() => showMode('date')} style={styles.dateButton}>
-                                <Text style={styles.dateButtonText}>{newDate.toLocaleDateString('en-GB')}</Text>
+                                <StyledText style={styles.dateButtonText}>{newDate.toLocaleDateString('en-GB')}</StyledText>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => showMode('time')} style={styles.dateButton}>
-                                <Text style={styles.dateButtonText}>{newDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</Text>
+                                <StyledText style={styles.dateButtonText}>{newDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</StyledText>
                             </TouchableOpacity>
                         </View>
                         {showPicker && (
@@ -267,9 +263,9 @@ export default function Events() {
                     </View>
                 )}
 
-                <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === 'rtl' ? 'right' : 'left' }]}>
+                <StyledText style={[styles.label, { textAlign: Globals.userSelectedDirection === 'rtl' ? 'right' : 'left' }]}>
                   {isRescheduling ? t("Events_Reason_for_Move") : t("Events_Reason_for_Cancellation")}
-                </Text>
+                </StyledText>
                 <TextInput
                     style={styles.input}
                     placeholder={t("Events_DescriptionPlaceholder")}
@@ -284,7 +280,7 @@ export default function Events() {
                     style={styles.actionButton}
                     disabled={isSubmitting}
                 >
-                    {isSubmitting ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>{isRescheduling ? t("Events_Confirm_Move") : t("Events_Confirm_Cancellation")}</Text>}
+                    {isSubmitting ? <ActivityIndicator color="white" /> : <StyledText style={styles.buttonText}>{isRescheduling ? t("Events_Confirm_Move") : t("Events_Confirm_Cancellation")}</StyledText>}
                 </FlipButton>
             </View>
         )}
@@ -296,7 +292,7 @@ export default function Events() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fef1e6" },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  scrollContent: { padding: 20, paddingBottom: 60 },
+  scrollContent: { padding: 20, paddingBottom: 60, paddingTop: 80, },
   title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, textAlign: 'center' },
   label: { fontSize: 18, fontWeight: "600", marginTop: 20, marginBottom: 10 },
   pickerContainer: { borderWidth: 1, borderColor: "#ccc", borderRadius: 8, backgroundColor: "white" },
