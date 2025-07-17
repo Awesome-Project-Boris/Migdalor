@@ -1,356 +1,26 @@
-// import React, { useState, useEffect, useMemo, useRef } from "react";
-// import {
-//   Modal,
-//   View,
-//   Text,
-//   StyleSheet,
-//   SafeAreaView,
-//   ScrollView,
-//   TouchableOpacity,
-//   Keyboard,
-// } from "react-native";
-// import { Ionicons } from "@expo/vector-icons";
-// import { useTranslation } from "react-i18next";
-// import { Globals } from "../app/constants/Globals"; // For RTL support
-
-// // Import your custom components
-// import InterestChip from "./InterestChip";
-// import FloatingLabelInput from "./FloatingLabelInput";
-// import FlipButton from "./FlipButton";
-
-// export default function InterestModal({
-//   visible,
-//   mode = "edit",
-//   allInterests = [],
-//   initialSelectedNames = [],
-//   initialNewInterests = [], // Receives the preserved list
-//   onClose,
-//   onConfirm,
-// }) {
-//   const { t } = useTranslation();
-//   const isRTL = Globals.userSelectedDirection === "rtl";
-
-//   const scrollViewRef = useRef(null);
-//   const newInterestInputRef = useRef(null);
-
-//   // State Management
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [selectedNames, setSelectedNames] = useState(new Set());
-//   const [newInterestInput, setNewInterestInput] = useState("");
-//   const [newlyAddedNames, setNewlyAddedNames] = useState([]);
-//   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
-//   // Effect to reset the state when the modal becomes visible
-//   useEffect(() => {
-//     if (visible) {
-//       setSelectedNames(new Set(initialSelectedNames));
-//       setNewlyAddedNames(initialNewInterests || []);
-//       setSearchTerm("");
-//       setNewInterestInput("");
-//     }
-//     // This is a common technique to create a stable dependency from arrays.
-//     // The effect will now only re-run if the *content* of the arrays changes.
-//   }, [visible, JSON.stringify([initialSelectedNames, initialNewInterests])]);
-
-//   // keyboard focused
-
-//   useEffect(() => {
-//     const keyboardDidShowListener = Keyboard.addListener(
-//       "keyboardDidShow",
-//       () => setKeyboardVisible(true)
-//     );
-//     const keyboardDidHideListener = Keyboard.addListener(
-//       "keyboardDidHide",
-//       () => setKeyboardVisible(false)
-//     );
-
-//     // Cleanup function
-//     return () => {
-//       keyboardDidShowListener.remove();
-//       keyboardDidHideListener.remove();
-//     };
-//   }, []);
-
-//   //
-
-//   const handleNewInterestFocus = () => {
-//     setTimeout(() => {
-//       if (newInterestInputRef.current) {
-//         newInterestInputRef.current.measureLayout(
-//           scrollViewRef.current.getInnerViewNode(),
-//           (x, y) => {
-//             scrollViewRef.current.scrollTo({ y: y - 20, animated: true });
-//           },
-//           () => {}
-//         );
-//       }
-//     }, 100);
-//   };
-
-//   // Memoized list of interests filtered by the search term
-//   const filteredInterests = useMemo(() => {
-//     if (!searchTerm) return allInterests;
-//     const lowercasedTerm = searchTerm.toLowerCase();
-//     return allInterests.filter(
-//       (interest) =>
-//         !selectedNames.has(interest.name) && // Exclude already selected
-//         interest.name.toLowerCase().includes(lowercasedTerm)
-//     );
-//   }, [allInterests, searchTerm, selectedNames]);
-
-//   // Handlers
-//   const handleSelect = (name) => {
-//     setSelectedNames((prev) => {
-//       const newSet = new Set(prev);
-//       newSet.has(name) ? newSet.delete(name) : newSet.add(name);
-//       return newSet;
-//     });
-//   };
-
-//   const handleAddNewInterest = () => {
-//     const newName = newInterestInput.trim();
-//     if (newName && !newlyAddedNames.includes(newName)) {
-//       setNewlyAddedNames((prev) => [...prev, newName]);
-//       setNewInterestInput("");
-//       Keyboard.dismiss();
-//     }
-//   };
-
-//   const handleRemoveNewInterest = (nameToRemove) => {
-//     setNewlyAddedNames((prev) => prev.filter((name) => name !== nameToRemove));
-//   };
-
-//   const handleConfirm = () => {
-//     onConfirm({
-//       selectedNames: Array.from(selectedNames),
-//       newInterests: newlyAddedNames,
-//     });
-//     onClose();
-//   };
-
-//   // Replace your existing return statement with this corrected structure
-
-//   return (
-//     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-//       <SafeAreaView style={styles.container}>
-//         <View style={styles.topPanel}>
-//           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-//             <Ionicons name="close" size={32} color="#555" />
-//           </TouchableOpacity>
-//         </View>
-
-//         <ScrollView
-//           ref={scrollViewRef}
-//           contentContainerStyle={styles.scrollContent}
-//           keyboardShouldPersistTaps="handled"
-//         >
-//           {/* This block contains all content that will be hidden when the keyboard opens */}
-//           <View style={isKeyboardVisible ? styles.hidden : {}}>
-//             <Text style={styles.title}>{t("interestModal_title")}</Text>
-
-//             <FloatingLabelInput
-//               label={t("interestModal_searchPlaceholder")}
-//               value={searchTerm}
-//               onChangeText={setSearchTerm}
-//               style={styles.inputContainer}
-//               alignRight={isRTL}
-//             />
-
-//             <Text style={styles.subHeader}>
-//               {t("interestModal_selectExisting")}
-//             </Text>
-//             <View style={styles.interestContainer}>
-//               {filteredInterests.length > 0 ? (
-//                 filteredInterests.map((interest) => (
-//                   <InterestChip
-//                     key={interest.name}
-//                     label={interest.name} // Changed to pass the name string
-//                     isSelected={selectedNames.has(interest.name)}
-//                     onPress={() => handleSelect(interest.name)}
-//                   />
-//                 ))
-//               ) : (
-//                 <Text style={styles.noResultsText}>
-//                   {t("interestModal_noResults")}
-//                 </Text>
-//               )}
-//             </View>
-//           </View>
-
-//           {mode === "edit" && (
-//             <>
-//               <Text style={styles.subHeader}>{t("interestModal_addNew")}</Text>
-//               <View style={styles.addContainer}>
-//                 <FloatingLabelInput
-//                   ref={newInterestInputRef}
-//                   onFocus={handleNewInterestFocus}
-//                   label={t("interestModal_addPlaceholder")}
-//                   value={newInterestInput}
-//                   onChangeText={setNewInterestInput}
-//                   style={[styles.inputContainer, { marginBottom: 15 }]}
-//                   alignRight={isRTL}
-//                 />
-//                 <FlipButton
-//                   style={styles.addButton}
-//                   onPress={handleAddNewInterest}
-//                 >
-//                   <Text style={styles.addButtonText}>
-//                     {t("interestModal_addButton")}
-//                   </Text>
-//                 </FlipButton>
-//               </View>
-//             </>
-//           )}
-
-//           {/* This container for newly added chips is always visible */}
-//           {newlyAddedNames.length > 0 && (
-//             <View style={styles.newlyAddedContainer}>
-//               {newlyAddedNames.map((name) => (
-//                 <InterestChip
-//                   key={name}
-//                   label={name}
-//                   isSelected={true}
-//                   onPress={() => handleRemoveNewInterest(name)}
-//                 />
-//               ))}
-//             </View>
-//           )}
-
-//           {/* The footer is now inside the ScrollView and will be hidden with the keyboard */}
-//           <View style={[styles.footer, isKeyboardVisible ? styles.hidden : {}]}>
-//             <FlipButton onPress={handleConfirm} style={styles.acceptButton}>
-//               <Text style={styles.acceptButtonText}>
-//                 {t("interestModal_acceptButton")}
-//               </Text>
-//             </FlipButton>
-//           </View>
-//         </ScrollView>
-//       </SafeAreaView>
-//     </Modal>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: { flex: 1, backgroundColor: "#fff" },
-//   topPanel: {
-//     height: 60,
-//     justifyContent: "center",
-//     alignItems: "flex-start",
-//     paddingHorizontal: 15,
-//   },
-//   closeButton: { padding: 5 },
-//   scrollContent: {
-//     paddingHorizontal: 20,
-//     paddingBottom: 100, // Space for the floating footer
-//   },
-//   title: {
-//     fontSize: 28,
-//     fontWeight: "bold",
-//     color: "#111",
-//     marginBottom: 20,
-//     textAlign: "center",
-//   },
-//   subHeader: {
-//     fontSize: 18,
-//     fontWeight: "600",
-//     color: "#444",
-//     marginTop: 25,
-//     marginBottom: 10,
-//   },
-//   inputContainer: {
-//     marginBottom: 5,
-//     marginTop: 25,
-//   },
-//   interestContainer: {
-//     flexDirection: "row",
-//     flexWrap: "wrap",
-//     backgroundColor: "#f0f2f5", // Dim gray color
-//     borderRadius: 8,
-//     borderWidth: 1,
-//     borderColor: "#e0e0e0", // Mild border
-//     padding: 10,
-//     minHeight: 100,
-//     justifyContent: "flex-start",
-//   },
-//   noResultsText: {
-//     flex: 1,
-//     textAlign: "center",
-//     color: "#888",
-//     marginTop: 30,
-//     fontSize: 16,
-//   },
-//   addContainer: {
-//     alignItems: "center",
-//   },
-//   addButton: {
-//     paddingVertical: 12,
-//     paddingHorizontal: 35,
-//     borderRadius: 8,
-//     marginBottom: 40,
-//   },
-//   addButtonText: {
-//     fontSize: 16,
-//     color: "#fff",
-//     fontWeight: "bold",
-//   },
-//   newlyAddedContainer: {
-//     flexDirection: "row",
-//     flexWrap: "wrap",
-//     marginTop: 15,
-//     paddingVertical: 10,
-//     borderTopWidth: 1,
-//     borderTopColor: "#eee",
-//     marginBottom: 40,
-//   },
-//   footer: {
-//     paddingTop: 20, // Extra space for home bar on iOS
-//     backgroundColor: "#fff",
-//     borderTopWidth: 1,
-//     borderTopColor: "#e0e0e0",
-//   },
-//   acceptButton: {
-//     minHeight: 65,
-//     marginBottom: 30,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   acceptButtonText: {
-//     fontSize: 24,
-//     color: "#fff",
-//     fontWeight: "bold",
-//   },
-//   // Add this new style to your existing StyleSheet.create({...}) call
-//   focusedAddContainer: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     paddingHorizontal: 30,
-//     paddingBottom: 50,
-//   },
-//   hidden: {
-//     display: "none",
-//   },
-// });
-
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Modal,
   View,
-  Text,
   StyleSheet,
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Keyboard,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import { Globals } from "../app/constants/Globals";
+import { Toast } from "toastify-react-native";
 
-// Import your custom components
+// Custom components and hooks
 import InterestChip from "./InterestChip";
 import FloatingLabelInput from "./FloatingLabelInput";
 import FlipButton from "./FlipButton";
+import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext";
+import { Globals } from "../app/constants/Globals";
+import { hebrewLevenshtein } from "../utils/stringSimilarityHeb";
 
 export default function InterestModal({
   visible,
@@ -362,6 +32,7 @@ export default function InterestModal({
   onConfirm,
 }) {
   const { t } = useTranslation();
+  const { settings } = useSettings();
   const isRTL = Globals.userSelectedDirection === "rtl";
 
   // State Management
@@ -369,18 +40,46 @@ export default function InterestModal({
   const [selectedNames, setSelectedNames] = useState(new Set());
   const [newInterestInput, setNewInterestInput] = useState("");
   const [newlyAddedNames, setNewlyAddedNames] = useState([]);
+  const [suggestedInterest, setSuggestedInterest] = useState(null);
 
-  // Effect to reset state when the modal becomes visible
+  const useColumnLayout = settings.fontSizeMultiplier >= 2.0;
+
   useEffect(() => {
     if (visible) {
       setSelectedNames(new Set(initialSelectedNames));
       setNewlyAddedNames(initialNewInterests || []);
       setSearchTerm("");
       setNewInterestInput("");
+      setSuggestedInterest(null);
     }
-  }, [visible, JSON.stringify([initialSelectedNames, initialNewInterests])]);
+  }, [
+    visible,
+    JSON.stringify(initialSelectedNames),
+    JSON.stringify(initialNewInterests),
+  ]);
 
-  // Memoized list of interests filtered by the search term
+  useEffect(() => {
+    if (!newInterestInput || newInterestInput.length < 2) {
+      setSuggestedInterest(null);
+      return;
+    }
+
+    let bestMatch = null;
+    let minDistance = 1.5;
+
+    for (const interest of allInterests) {
+      const wordsInInterest = interest.name.split(" ");
+      for (const word of wordsInInterest) {
+        const distance = hebrewLevenshtein(newInterestInput, word);
+        if (distance < minDistance && !selectedNames.has(interest.name)) {
+          minDistance = distance;
+          bestMatch = interest.name;
+        }
+      }
+    }
+    setSuggestedInterest(bestMatch);
+  }, [newInterestInput, allInterests, selectedNames]);
+
   const filteredInterests = useMemo(() => {
     if (!searchTerm) return allInterests;
     return allInterests.filter((interest) =>
@@ -388,22 +87,14 @@ export default function InterestModal({
     );
   }, [allInterests, searchTerm]);
 
-  // --- Input Handlers with Hebrew-only Validation ---
   const hebrewRegex = /^[\u0590-\u05FF\s]*$/;
-
   const handleSearchChange = (text) => {
-    if (hebrewRegex.test(text)) {
-      setSearchTerm(text);
-    }
+    if (hebrewRegex.test(text)) setSearchTerm(text);
   };
-
   const handleNewInterestChange = (text) => {
-    if (hebrewRegex.test(text)) {
-      setNewInterestInput(text);
-    }
+    if (hebrewRegex.test(text)) setNewInterestInput(text);
   };
 
-  // --- Action Handlers ---
   const handleSelect = (name) => {
     setSelectedNames((prev) => {
       const newSet = new Set(prev);
@@ -414,11 +105,59 @@ export default function InterestModal({
 
   const handleAddNewInterest = () => {
     const newName = newInterestInput.trim();
-    if (newName && !newlyAddedNames.includes(newName)) {
-      setNewlyAddedNames((prev) => [...prev, newName]);
+    if (!newName) return;
+    const allExistingNames = [
+      ...allInterests.map((i) => i.name),
+      ...newlyAddedNames,
+    ];
+
+    if (
+      allExistingNames.some(
+        (name) => name.toLowerCase() === newName.toLowerCase()
+      )
+    ) {
+      Toast.show({
+        type: "info",
+        text1: t("interestModal_existsTitle"),
+        text2: t("interestModal_existsMsg"),
+      });
+      const originalName = allExistingNames.find(
+        (name) => name.toLowerCase() === newName.toLowerCase()
+      );
+      if (originalName && !selectedNames.has(originalName)) {
+        handleSelect(originalName);
+      }
       setNewInterestInput("");
+      setSuggestedInterest(null);
       Keyboard.dismiss();
+      return;
     }
+
+    for (const existingName of allExistingNames) {
+      const distance = hebrewLevenshtein(newName, existingName);
+      if (distance < 1.5) {
+        Alert.alert(
+          t("interestModal_similarTitle"),
+          t("interestModal_similarMsg", { newName, existingName }),
+          [
+            { text: t("Common_Cancel"), style: "cancel" },
+            {
+              text: t("interestModal_addAnyway"),
+              onPress: () => addInterestConfirmed(newName),
+            },
+          ]
+        );
+        return;
+      }
+    }
+    addInterestConfirmed(newName);
+  };
+
+  const addInterestConfirmed = (name) => {
+    setNewlyAddedNames((prev) => [...prev, name]);
+    setNewInterestInput("");
+    setSuggestedInterest(null);
+    Keyboard.dismiss();
   };
 
   const handleRemoveNewInterest = (nameToRemove) => {
@@ -433,100 +172,173 @@ export default function InterestModal({
     onClose();
   };
 
+  const selectedAndAdded = useMemo(() => {
+    const combined = new Set([...selectedNames, ...newlyAddedNames]);
+    return Array.from(combined);
+  }, [selectedNames, newlyAddedNames]);
+
+  const headerContent = (
+    <View style={[styles.header, useColumnLayout && styles.headerColumn]}>
+      <TouchableOpacity onPress={onClose} style={styles.headerButton}>
+        <Ionicons name="close" size={32} color="#555" />
+      </TouchableOpacity>
+      <StyledText style={[styles.title, useColumnLayout && styles.titleColumn]}>
+        {t("interestModal_title")}
+      </StyledText>
+      <FlipButton
+        onPress={handleConfirm}
+        style={[styles.acceptButton, useColumnLayout && styles.buttonColumn]}
+      >
+        <StyledText style={styles.acceptButtonText}>
+          {t("interestModal_acceptButton")}
+        </StyledText>
+      </FlipButton>
+    </View>
+  );
+
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.container}>
-        {/* 1. HEADER with Close and Accept buttons */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.headerButton}>
-            <Ionicons name="close" size={32} color="#555" />
-          </TouchableOpacity>
-          <Text style={styles.title}>{t("interestModal_title")}</Text>
-          <FlipButton onPress={handleConfirm} style={styles.acceptButton}>
-            <Text style={styles.acceptButtonText}>
-              {t("interestModal_acceptButton")}
-            </Text>
-          </FlipButton>
-        </View>
-
+        {!useColumnLayout && headerContent}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled" // 3. Fix for keyboard dismissal bug
+          keyboardShouldPersistTaps="handled"
         >
-          {/* --- Section for selecting existing interests --- */}
-          <Text style={styles.subHeader}>
-            {t("interestModal_selectExisting")}
-          </Text>
-          <FloatingLabelInput
-            label={t("interestModal_searchPlaceholder")}
-            value={searchTerm}
-            onChangeText={handleSearchChange} // 5. Hebrew-only input
-            style={styles.inputContainer}
-            alignRight={isRTL}
-          />
-          <View style={styles.interestContainer}>
-            {filteredInterests.length > 0 ? (
-              filteredInterests.map((interest) => (
-                <InterestChip
-                  key={interest.name}
-                  label={interest.name}
-                  isSelected={selectedNames.has(interest.name)}
-                  onPress={() => handleSelect(interest.name)}
-                />
-              ))
-            ) : (
-              <Text style={styles.noResultsText}>
-                {t("interestModal_noResults")}
-              </Text>
-            )}
-          </View>
+          {useColumnLayout && headerContent}
 
-          {/* --- Section for adding new interests --- */}
-          {mode === "edit" && (
+          {selectedAndAdded.length > 0 && (
             <>
-              <Text style={styles.subHeader}>{t("interestModal_addNew")}</Text>
-              <View style={styles.addContainer}>
-                <FloatingLabelInput
-                  label={t("interestModal_addPlaceholder")}
-                  value={newInterestInput}
-                  onChangeText={handleNewInterestChange} // 5. Hebrew-only input
-                  style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}
-                  alignRight={isRTL}
-                />
-                <FlipButton
-                  style={styles.addButton}
-                  onPress={handleAddNewInterest}
-                >
-                  <Text style={styles.addButtonText}>
-                    {t("interestModal_addButton")}
-                  </Text>
-                </FlipButton>
-              </View>
-            </>
-          )}
-
-          {/* 7. CONTAINER for newly added interests */}
-          {newlyAddedNames.length > 0 && (
-            <>
-              <Text style={styles.subHeader}>
-                {t("interestModal_newlyAdded")}{" "}
-                {/* Assumes you add this key to i18n files */}
-              </Text>
+              <StyledText style={styles.subHeader}>
+                {t("interestModal_yourSelections")}
+              </StyledText>
+              <StyledText style={styles.disclaimerText}>
+                {t("interestModal_deselectDisclaimer")}
+              </StyledText>
               <View style={styles.interestContainer}>
-                {newlyAddedNames.map((name) => (
+                {selectedAndAdded.map((name) => (
                   <InterestChip
                     key={name}
                     label={name}
                     isSelected={true}
-                    onPress={() => handleRemoveNewInterest(name)}
-                    // 2. Prop to show the deletion mark
-                    showDeleteIcon={true}
+                    showDeleteIcon={newlyAddedNames.includes(name)}
+                    onPress={() => {
+                      if (newlyAddedNames.includes(name)) {
+                        handleRemoveNewInterest(name);
+                      } else {
+                        handleSelect(name);
+                      }
+                    }}
                   />
                 ))}
               </View>
             </>
           )}
+
+          <StyledText style={styles.subHeader}>
+            {t("interestModal_selectExisting")}
+          </StyledText>
+
+          <FloatingLabelInput
+            label={t("interestModal_searchPlaceholder")}
+            value={searchTerm}
+            onChangeText={handleSearchChange}
+            style={styles.inputContainer}
+            alignRight={isRTL}
+          />
+          <View
+            style={[styles.interestContainer, { backgroundColor: "#f0f2f5" }]}
+          >
+            {filteredInterests.length > 0 ? (
+              filteredInterests
+                .filter((i) => !selectedNames.has(i.name))
+                .map((interest) => (
+                  <InterestChip
+                    key={interest.name}
+                    label={interest.name}
+                    isSelected={false}
+                    onPress={() => handleSelect(interest.name)}
+                  />
+                ))
+            ) : (
+              <StyledText style={styles.noResultsText}>
+                {t("interestModal_noResults")}
+              </StyledText>
+            )}
+          </View>
+
+          {mode === "edit" && (
+            <>
+              <StyledText style={styles.subHeader}>
+                {t("interestModal_addNew")}
+              </StyledText>
+              <View>
+                <View
+                  style={[
+                    styles.addContainer,
+                    useColumnLayout && styles.addContainerColumn,
+                  ]}
+                >
+                  <FloatingLabelInput
+                    label={t("interestModal_addPlaceholder")}
+                    value={newInterestInput}
+                    onChangeText={handleNewInterestChange}
+                    style={[
+                      styles.inputContainer,
+                      useColumnLayout ? styles.inputColumn : styles.inputRow,
+                    ]}
+                    alignRight={isRTL}
+                  />
+                  <FlipButton
+                    style={[
+                      styles.addButton,
+                      useColumnLayout && styles.buttonColumn,
+                    ]}
+                    onPress={handleAddNewInterest}
+                  >
+                    <StyledText style={styles.addButtonText}>
+                      {t("interestModal_addButton")}
+                    </StyledText>
+                  </FlipButton>
+                </View>
+              </View>
+            </>
+          )}
         </ScrollView>
+
+        {suggestedInterest && (
+          <View style={styles.suggestionContainer}>
+            <View
+              style={[
+                styles.suggestionBox,
+                useColumnLayout && styles.suggestionBoxColumn,
+              ]}
+            >
+              <StyledText style={styles.suggestionText}>
+                {t("interestModal_didYouMean")}
+              </StyledText>
+              <InterestChip
+                label={suggestedInterest}
+                onPress={() => {
+                  handleSelect(suggestedInterest);
+                  setNewInterestInput("");
+                  setSuggestedInterest(null);
+                  Keyboard.dismiss();
+                  Toast.show({
+                    type: "success",
+                    text1: t("interestModal_suggestionAcceptedTitle"),
+                    text2: t("interestModal_suggestionAcceptedMsg"),
+                  });
+                }}
+              />
+              <TouchableOpacity
+                style={styles.suggestionClose}
+                onPress={() => setSuggestedInterest(null)}
+              >
+                <Ionicons name="close-circle" size={28} color="#999" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </SafeAreaView>
     </Modal>
   );
@@ -544,13 +356,28 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e0e0e0",
     backgroundColor: "#fff",
   },
+  headerColumn: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    paddingBottom: 15,
+    borderBottomWidth: 0,
+    marginTop: 15,
+  },
   headerButton: {
     padding: 5,
+    alignSelf: "flex-start",
   },
   title: {
     fontSize: 20,
     fontWeight: "bold",
     color: "#111",
+    flexShrink: 1,
+    paddingHorizontal: 10,
+  },
+  titleColumn: {
+    textAlign: "center",
+    marginVertical: 15,
+    fontSize: 22,
   },
   acceptButton: {
     paddingVertical: 8,
@@ -574,6 +401,15 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: "left",
   },
+  // --- NEW STYLE for disclaimer ---
+  disclaimerText: {
+    fontSize: 14,
+    color: "#6c757d",
+    textAlign: "left",
+    marginBottom: 15,
+    marginTop: -10, // Pull it closer to the sub-header above it
+    fontStyle: "italic",
+  },
   inputContainer: {
     marginBottom: 5,
   },
@@ -584,7 +420,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#e0e0e0",
-    padding: 10,
+    padding: 5,
     minHeight: 100,
     justifyContent: "flex-start",
   },
@@ -598,7 +434,17 @@ const styles = StyleSheet.create({
   addContainer: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between", // 6. Fix for Add button placement
+  },
+  addContainerColumn: {
+    flexDirection: "column",
+    alignItems: "stretch",
+  },
+  inputRow: {
+    flex: 1,
+    marginRight: 10,
+  },
+  inputColumn: {
+    marginBottom: 15,
   },
   addButton: {
     paddingVertical: 12,
@@ -607,9 +453,52 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  buttonColumn: {
+    width: "100%",
+  },
   addButtonText: {
     fontSize: 16,
     color: "#fff",
     fontWeight: "bold",
+  },
+  suggestionContainer: {
+    position: "absolute",
+    top: 80,
+    left: 20,
+    right: 20,
+    zIndex: 10,
+  },
+  suggestionBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 12,
+    paddingRight: 40,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  suggestionBoxColumn: {
+    flexDirection: "column",
+    alignItems: "center",
+    paddingBottom: 15,
+  },
+  suggestionText: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "600",
+    marginRight: 10,
+    marginBottom: 5,
+  },
+  suggestionClose: {
+    position: "absolute",
+    top: 5,
+    right: 5,
+    padding: 5,
   },
 });

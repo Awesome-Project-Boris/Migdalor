@@ -14,6 +14,7 @@ import FlipButton from "../components/FlipButton";
 import Greeting from "../components/MainMenuHelloNameplate";
 import Header from "../components/Header";
 import { EditToggleButton } from "../components/MainMenuFinishEditButton";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
@@ -64,22 +65,33 @@ export default function Index() {
   const prevEditingRef = useRef(editing);
 
   const now = new Date();
-  const options = { timeZone: "Asia/Jerusalem", hour: '2-digit', minute: '2-digit', hour12: false };
-  const timeString = new Intl.DateTimeFormat('en-GB', options).format(now);
-  const [hour, minute] = timeString.split(':').map(Number);
+  const options = {
+    timeZone: "Asia/Jerusalem",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  };
+  const timeString = new Intl.DateTimeFormat("en-GB", options).format(now);
+  const [hour, minute] = timeString.split(":").map(Number);
 
-  // Check if the current time is between 5:00 AM and 10:30 AM
-  const isAfterGoodMorningProcedureStartTime = hour > 5 || (hour === 5 && minute >= 0);
-  const isBeforeGoodMorningProcedureEndTime= hour < 10 || (hour === 10 && minute <= 30);
-  
-  const isGoodMorningProcedureVisible = isAfterGoodMorningProcedureStartTime && isBeforeGoodMorningProcedureEndTime;
+  const isAfterGoodMorningProcedureStartTime =
+    hour > 5 || (hour === 5 && minute >= 0);
+  const isBeforeGoodMorningProcedureEndTime =
+    hour < 10 || (hour === 10 && minute <= 30);
+
+  const isGoodMorningProcedureVisible =
+    isAfterGoodMorningProcedureStartTime && isBeforeGoodMorningProcedureEndTime;
 
   const initialDataStructure = [
-    ...(isGoodMorningProcedureVisible ? [{
-      key: "menu1",
-      name: t("MainMenuScreen_GoodMorningButton"),
-      destination: "GoodMorningProcedure",
-    }] : []),
+    ...(isGoodMorningProcedureVisible
+      ? [
+          {
+            key: "menu1",
+            name: t("MainMenuScreen_GoodMorningButton"),
+            destination: "GoodMorningProcedure",
+          },
+        ]
+      : []),
     {
       key: "menu2",
       name: t("MainMenuScreen_ProfileButton"),
@@ -260,14 +272,16 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     backgroundColor: "#fbe6d0",
   },
-  loadingText: { // Added style for the loading text
+  loadingText: {
+    // Added style for the loading text
     marginTop: 10,
     fontSize: 18,
     color: "#333",
   },
   toggleButton: {
     width: 300,
-    height: 70,
+    // --- FIX: Removed fixed height to allow the button to grow ---
+    // height: 70,
     marginBottom: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,

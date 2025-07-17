@@ -38,7 +38,7 @@ const resources = {
       ProfileScreen_arrivalYear: "Date of Arrival to Nordia",
       ProfileScreen_origin: "Originally From",
       ProfileScreen_profession: "Profession",
-      ProfileScreen_interests: "Interests",
+      ProfileScreen_interests: "Hobbies",
       ProfileScreen_aboutMe: "About Me",
       ProfileScreen_extraImages: "Extra Images",
       ProfileScreen_editButton: "Edit Profile",
@@ -48,7 +48,7 @@ const resources = {
 
       Common_Loading: "Loading...",
 
-      interestModal_newlyAdded: "Newly Added Interests",
+      interestModal_newlyAdded: "Newly Added Hobbies",
 
       PrivacySettings_savedLocally: "Privacy settings saved locally",
       PrivacySettings_title: "Privacy Settings",
@@ -71,7 +71,7 @@ const resources = {
       EditProfileScreen_errorMessageProfession:
         "Profession field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_errorMessageInterests:
-        "Interests field must contain only Hebrew and English letters or numbers",
+        "Hobbies field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_errorMessageAboutMe:
         "About Me field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_ProfileUpdated: "Profile Updated Successfully!",
@@ -79,18 +79,33 @@ const resources = {
       //EditProfileScreen_errorMessageExtraImages: "Please fill in the 'Extra Images' field",
       //EditProfileScreen_errorMessageImage: "Please fill in the 'Image' field",
 
-      EditProfileScreen_noInterests: "No interests to display",
-      EditProfileScreen_editInterestsButton: "Select Interests",
+      EditProfileScreen_noInterests: "No Hobbies to display",
+      EditProfileScreen_editInterestsButton: "Select Hobbies",
 
-      interestModal_title: "Edit Interests",
-      interestModal_searchPlaceholder: "Search for an interest...",
+      interestModal_title: "Edit Hobbies",
+      interestModal_searchPlaceholder: "Search for an Hobbies...",
       interestModal_selectExisting: "Select from existing",
-      interestModal_noResults: "No interests found.",
+      interestModal_noResults: "No Hobbies found.",
       interestModal_addNew: "Or add a new one",
-      interestModal_addPlaceholder: "Type a new interest ( Hebrew )",
+      interestModal_addPlaceholder: "Type a new Hobbie ( Hebrew )",
       interestModal_addButton: "Add",
       interestModal_acceptButton: "Accept",
-      interestModa_newlyAdded: "Newly added interests",
+      interestModa_newlyAdded: "Newly added Hobbies",
+
+      interestModal_yourSelections: "Your Selections",
+      interestModal_existsTitle: "Hobby Exists",
+      interestModal_existsMsg:
+        "This hobby is already in the list and has been selected.",
+      interestModal_similarTitle: "Similar Hobby Found",
+      interestModal_similarMsg:
+        "This is very similar to '{{existingName}}'. Add '{{newName}}' anyway?",
+      interestModal_addAnyway: "Add Anyway",
+      interestModal_didYouMean: "Did you mean:",
+      interestModal_deselectDisclaimer:
+        "Clicking a selected hobby will de-select it.",
+      interestModal_suggestionAcceptedTitle: "Suggestion Accepted",
+      interestModal_suggestionAcceptedMsg:
+        "The hobby has been added to your selections",
 
       MainMenuScreen_ProfileButton: "Profile",
       MainMenuScreen_ActivitiesAndClassesButton: "Activities and Classes",
@@ -317,9 +332,9 @@ const resources = {
       ResidentSearchScreen_accordionClose: "Press to open search options",
       ResidentSearchScreen_accordionOpen: "Press to close search field",
 
-      ResidentSearchScreen_selectInterestsButton: "Choose interests to search",
+      ResidentSearchScreen_selectInterestsButton: "Choose Hobbies to search",
       ResidentSearchScreen_filteringByLabel: "Filtering by...",
-      ResidentSearchScreen_noInterestsSelected: "No interests selected",
+      ResidentSearchScreen_noInterestsSelected: "No Hobbies selected",
 
       ResidentsCommitte_nameUnavailable: "Name Unavailable",
       ResidentsCommitte_titleUnavailable: "Title Unavailable",
@@ -409,6 +424,13 @@ const resources = {
         "There are {{count}} empty spaces - registration inside!",
       EventFocus_SpacesAvailable:
         "There are {{count}} empty spaces - registration below!",
+
+      EventFocus_ThanksForMarking: "Thank you for marking attendance.",
+      EventFocus_WantToChange: "Would you like to make a change?",
+      EventFocus_ReEditButton: "Re-edit Participation",
+      Common_Edit: "Edit",
+      EventFocus_FinalizeDisclaimer: "Click once you've marked all attendants",
+      EventFocus_FinalizeButton: "Finalize Marking",
 
       // New Activity
 
@@ -545,6 +567,18 @@ const resources = {
       interestModal_addButton: "הוספה",
       interestModal_acceptButton: "אישור",
       interestModa_newlyAdded: "תחביבים חדשים",
+
+      interestModal_yourSelections: "הבחירות שלך",
+      interestModal_existsTitle: "תחביב קיים",
+      interestModal_existsMsg: "תחביב זה כבר קיים ברשימה והוא נבחר עבורך.",
+      interestModal_similarTitle: "נמצא תחביב דומה",
+      interestModal_similarMsg:
+        "ערך זה דומה מאוד ל-'{{existingName}}'. האם להוסיף את '{{newName}}' בכל זאת?",
+      interestModal_addAnyway: "הוסף בכל זאת",
+      interestModal_didYouMean: ":האם התכוונת ל",
+      interestModal_deselectDisclaimer: "לחיצה על תחביב מסומן תבטל את בחירתו",
+      interestModal_suggestionAcceptedTitle: "ההצעה התקבלה",
+      interestModal_suggestionAcceptedMsg: "התחביב נוסף לבחירות שלך",
 
       MainMenuScreen_ProfileButton: "פרופיל",
       MainMenuScreen_ActivitiesAndClassesButton: "חוגים ופעילויות",
@@ -849,6 +883,13 @@ const resources = {
         "נותרו {{count}} מקומות פנויים - ההרשמה בפנים!",
       EventFocus_SpacesAvailable:
         "נותרו {{count}} מקומות פנויים - להרשמה למטה!",
+
+      EventFocus_ThanksForMarking: "תודה שסימנת נוכחות.",
+      EventFocus_WantToChange: "האם ברצונך לבצע שינוי?",
+      EventFocus_ReEditButton: "עריכה מחדש",
+      Common_Edit: "עריכה",
+      EventFocus_FinalizeDisclaimer: "יש ללחוץ לאחר סימון כל הנוכחים.",
+      EventFocus_FinalizeButton: "סיום סימון",
 
       // New Activity
 

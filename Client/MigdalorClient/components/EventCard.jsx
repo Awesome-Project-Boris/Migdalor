@@ -1,9 +1,10 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { Image as ExpoImage } from "expo-image";
 import { Globals } from "@/app/constants/Globals";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
@@ -16,7 +17,6 @@ const EventCard = ({ event, onPress }) => {
 
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
 
-  // ✅ CHANGED: Logic to determine the image source
   const imageUrl = event.picturePath
     ? { uri: `${Globals.API_BASE_URL}${event.picturePath}` }
     : placeholderImage;
@@ -25,7 +25,6 @@ const EventCard = ({ event, onPress }) => {
     styles.cardDetails,
     { alignItems: isRtl ? "flex-end" : "flex-start" },
   ];
-  const textStyle = [styles.baseText, { textAlign: isRtl ? "right" : "left" }];
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
@@ -35,7 +34,7 @@ const EventCard = ({ event, onPress }) => {
         contentFit="cover"
       />
       <View style={cardDetailsStyle}>
-        <Text style={[styles.cardTitle, textStyle]}>{event.eventName}</Text>
+        <StyledText style={styles.cardTitle}>{event.eventName}</StyledText>
 
         {hostName && (
           <View
@@ -45,7 +44,7 @@ const EventCard = ({ event, onPress }) => {
             ]}
           >
             <Ionicons name="person-outline" size={16} color="#555" />
-            <Text style={[styles.initiatorText, textStyle]}>{hostName}</Text>
+            <StyledText style={styles.initiatorText}>{hostName}</StyledText>
           </View>
         )}
 
@@ -58,22 +57,24 @@ const EventCard = ({ event, onPress }) => {
               ]}
             >
               <Ionicons name="people-outline" size={16} color="#555" />
-              <Text style={[styles.registrationText, textStyle]}>
+              <StyledText style={styles.registrationText}>
                 {`${registeredCount} / ${event.capacity ?? "∞"} ${t(
                   "EventCard_Registered"
                 )}`}
-              </Text>
+              </StyledText>
             </View>
             {remainingSpots > 0 && event.capacity !== null && (
-              <Text style={styles.spotsAvailableText}>
+              <StyledText style={styles.spotsAvailableText}>
                 {t("EventCard_SpacesAvailable", { count: remainingSpots })}
-              </Text>
+              </StyledText>
             )}
           </>
         )}
       </View>
       <View style={styles.footer}>
-        <Text style={styles.footerText}>{t("EventCard_MoreDetails")}</Text>
+        <StyledText style={styles.footerText}>
+          {t("EventCard_MoreDetails")}
+        </StyledText>
       </View>
     </TouchableOpacity>
   );
@@ -111,16 +112,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 4,
   },
-  baseText: {
+  initiatorText: {
     fontSize: 16,
     color: "#666",
-  },
-  initiatorText: {
     fontWeight: "500",
     marginLeft: 6,
     marginRight: 6,
   },
   registrationText: {
+    fontSize: 16,
     color: "#005a9c",
     fontWeight: "bold",
     marginLeft: 6,
