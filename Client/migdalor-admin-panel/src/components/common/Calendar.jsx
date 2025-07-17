@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
- * A custom calendar component with month and year selection.
+ * A custom calendar component with month and year selection integrated into the header.
  * @param {object} props
  * @param {Set<string>} props.availableDates - A Set of dates in "YYYY-MM-DD" format that should be highlighted.
  * @param {Date} props.selectedDate - The currently selected date object.
@@ -10,27 +10,29 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
  */
 const Calendar = ({ availableDates, onDateSelect, selectedDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [isPickerVisible, setIsPickerVisible] = useState(false);
 
+  // Generate a list of years for the dropdown
   const years = Array.from(
     { length: 21 },
     (_, i) => new Date().getFullYear() - 10 + i
   );
+  // Generate a list of month names for the dropdown
   const months = Array.from({ length: 12 }, (_, i) =>
     new Date(0, i).toLocaleString("he-IL", { month: "long" })
   );
 
-  const handleMonthChange = (monthIndex) => {
+  const handleMonthSelect = (monthIndex) => {
     setCurrentDate(new Date(currentDate.getFullYear(), monthIndex, 1));
   };
 
-  const handleYearChange = (year) => {
+  const handleYearSelect = (year) => {
     setCurrentDate(new Date(year, currentDate.getMonth(), 1));
   };
 
   const handleReturnToToday = () => {
-    setCurrentDate(new Date());
-    setIsPickerVisible(false);
+    const today = new Date();
+    setCurrentDate(today);
+    onDateSelect(today); // Also select today's date
   };
 
   const changeMonthNavigate = (offset) => {
@@ -42,10 +44,6 @@ const Calendar = ({ availableDates, onDateSelect, selectedDate }) => {
   };
 
   const renderHeader = () => {
-    const monthFormat = new Intl.DateTimeFormat("he-IL", {
-      month: "long",
-      year: "numeric",
-    });
     return (
       <div className="flex justify-between items-center px-2 py-2">
         <button
@@ -54,12 +52,30 @@ const Calendar = ({ availableDates, onDateSelect, selectedDate }) => {
         >
           <ChevronRight size={20} />
         </button>
-        <button
-          onClick={() => setIsPickerVisible(true)}
-          className="font-semibold text-lg hover:bg-gray-100 px-2 py-1 rounded-md transition-colors"
-        >
-          {monthFormat.format(currentDate)}
-        </button>
+        <div className="flex items-center space-x-2 space-x-reverse gap-2">
+          <select
+            value={currentDate.getMonth()}
+            onChange={(e) => handleMonthSelect(e.target.value)}
+            className="p-1 border border-gray-300 rounded-md text-sm font-semibold"
+          >
+            {months.map((month, index) => (
+              <option key={month} value={index}>
+                {month}
+              </option>
+            ))}
+          </select>
+          <select
+            value={currentDate.getFullYear()}
+            onChange={(e) => handleYearSelect(e.target.value)}
+            className="p-1 border border-gray-300 rounded-md text-sm font-semibold"
+          >
+            {years.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
+        </div>
         <button
           onClick={() => changeMonthNavigate(1)}
           className="p-1 rounded-md hover:bg-gray-100"
@@ -70,53 +86,10 @@ const Calendar = ({ availableDates, onDateSelect, selectedDate }) => {
     );
   };
 
-  const renderPicker = () => (
-    <div className="p-4">
-      <div className="flex justify-center items-center space-x-2 space-x-reverse mb-4">
-        <select
-          value={currentDate.getMonth()}
-          onChange={(e) => handleMonthChange(e.target.value)}
-          className="p-2 border border-gray-300 rounded-md"
-        >
-          {months.map((month, index) => (
-            <option key={month} value={index}>
-              {month}
-            </option>
-          ))}
-        </select>
-        <select
-          value={currentDate.getFullYear()}
-          onChange={(e) => handleYearChange(e.target.value)}
-          className="p-2 border border-gray-300 rounded-md"
-        >
-          {years.map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="space-y-2">
-        <button
-          onClick={() => setIsPickerVisible(false)}
-          className="w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          חזור ללוח השנה
-        </button>
-        <button
-          onClick={handleReturnToToday}
-          className="w-full py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-        >
-          חזור להיום
-        </button>
-      </div>
-    </div>
-  );
-
   const renderDaysOfWeek = () => {
     const days = ["א", "ב", "ג", "ד", "ה", "ו", "ש"];
     return (
-      <div className="grid grid-cols-7 text-center text-sm text-gray-500">
+      <div className="grid grid-cols-7 text-center text-sm text-gray-500 mt-2">
         {days.map((day) => (
           <div key={day} className="py-2 font-medium">
             {day}
@@ -199,17 +172,23 @@ const Calendar = ({ availableDates, onDateSelect, selectedDate }) => {
     return <div>{rows}</div>;
   };
 
+  const renderFooter = () => (
+    <div className="pt-2 mt-2 border-t">
+      <button
+        onClick={handleReturnToToday}
+        className="w-full text-center py-2 text-sm font-semibold text-blue-600 hover:bg-gray-100 rounded-md"
+      >
+        היום
+      </button>
+    </div>
+  );
+
   return (
-    <div className="bg-white border rounded-lg p-3 shadow-sm max-w-md mx-auto">
-      {isPickerVisible ? (
-        renderPicker()
-      ) : (
-        <>
-          {renderHeader()}
-          {renderDaysOfWeek()}
-          {renderCells()}
-        </>
-      )}
+    <div className="bg-white border rounded-lg p-3 shadow-lg max-w-md mx-auto">
+      {renderHeader()}
+      {renderDaysOfWeek()}
+      {renderCells()}
+      {renderFooter()}
     </div>
   );
 };
