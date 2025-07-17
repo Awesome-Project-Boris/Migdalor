@@ -105,7 +105,7 @@ export default function EditProfile() {
   const maxLengths = {
     partner: 100,
     residentApartmentNumber: 10,
-    mobilePhone: 20,
+    mobilePhone: 10,
     email: 100,
     origin: 100,
     profession: 100,
@@ -325,6 +325,13 @@ export default function EditProfile() {
       return `${name} must be at most ${max} characters.`;
     }
 
+    const isRequired = (val) => {
+      if (!val || val.trim() === "") {
+        return t("Validation_FieldIsRequired", "This field is required.");
+      }
+      return null;
+    };
+
     switch (name) {
       case "partner":
         return value.trim() === "" || regexHebrewEnglish.test(value)
@@ -337,12 +344,17 @@ export default function EditProfile() {
           : t("EditProfileScreen_errorMessageApartmentNumber");
 
       case "mobilePhone":
-        return value.trim() === "" || /^0\d{9}$/.test(value)
+        const requiredError = isRequired(value);
+        if (requiredError) return requiredError;
+        return /^0\d{9}$/.test(value)
           ? null
           : t("EditProfileScreen_errorMessageMobilePhone");
 
       case "email":
-        return value.trim() === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+        const trimmedValue = value.trim(); 
+        const emailRequiredError = isRequired(trimmedValue);
+        if (emailRequiredError) return emailRequiredError;
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
           ? null
           : t("EditProfileScreen_errorMessageEmail");
 

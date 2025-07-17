@@ -7,22 +7,22 @@ using Microsoft.EntityFrameworkCore;
 namespace MigdalorServer.Models
 {
     [Table("OH_Participation")]
-    [Index("InstanceId", "ParticipantId", Name = "UQ_Attendance_Instance_Participant", IsUnique = true)]
+    [Index("EventId", "ParticipantId", Name = "UQ_Participation_Event_Participant", IsUnique = true)]
     public partial class OhParticipation
     {
         [Key]
-        [Column("AttendanceID")]
-        public int AttendanceId { get; set; }
-        [Column("InstanceID")]
-        public int InstanceId { get; set; }
+        [Column("ParticipationID")]
+        public int ParticipationId { get; set; }
+        [Column("EventID")]
+        public int EventId { get; set; }
         [Column("ParticipantID")]
         public Guid ParticipantId { get; set; }
-        public DateTime? SignInTime { get; set; }
+        public DateTime RegistrationTime { get; set; }
         [StringLength(50)]
         public string Status { get; set; } = null!;
 
-        [ForeignKey("InstanceId")]
+        [ForeignKey("EventId")]
         [InverseProperty("OhParticipations")]
-        public virtual OhEventInstance Instance { get; set; } = null!;
+        public virtual OhEvent Event { get; set; } = null!;
     }
 }

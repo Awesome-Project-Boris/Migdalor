@@ -6,14 +6,16 @@ import {
   ActivityIndicator,
   Button,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { Card, Paragraph, YStack, XStack, H2, Text } from "tamagui";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import { Card, YStack } from "tamagui"; // We only need YStack from Tamagui now
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
 
+// --- Custom Component and Utility Imports ---
 import Header from "@/components/Header";
 import { useTranslation } from "react-i18next";
 import { Globals } from "./constants/Globals";
+import StyledText from "@/components/StyledText";
 
 const formatDate = (dateTimeString) => {
   if (!dateTimeString) return "N/A";
@@ -45,9 +47,10 @@ export default function NoticeFocus() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get all params, including the sender names passed from the previous screen
   const { noticeId, hebSenderName, engSenderName } = useLocalSearchParams();
   const router = useRouter();
+
+  // All hooks and logic (fetchNoticeDetails, useFocusEffect) remain the same...
 
   const fetchNoticeDetails = useCallback(async () => {
     if (!noticeId) {
@@ -111,7 +114,7 @@ export default function NoticeFocus() {
       <>
         <Header />
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
+          <StyledText style={styles.errorText}>{error}</StyledText>
           <Button
             title={t("Common_backButton")}
             onPress={() => router.back()}
@@ -126,9 +129,9 @@ export default function NoticeFocus() {
       <>
         <Header />
         <View style={styles.centered}>
-          <Text style={styles.errorText}>
+          <StyledText style={styles.errorText}>
             {t("NoticeDetailsScreen_noDetailsFound")}
-          </Text>
+          </StyledText>
           <Button
             title={t("Common_backButton")}
             onPress={() => router.back()}
@@ -138,7 +141,6 @@ export default function NoticeFocus() {
     );
   }
 
-  // Determine which name to display based on current language
   const isRTL = i18n.dir() === "rtl";
   const senderName = isRTL ? hebSenderName : engSenderName;
 
@@ -157,75 +159,66 @@ export default function NoticeFocus() {
           backgroundColor="$background"
         >
           <YStack gap="$4">
-            <H2 textAlign="center" fontSize={28} color="$color11">
+            <StyledText style={styles.h2Style}>
               {noticeData.noticeTitle ?? "No Title"}
-            </H2>
+            </StyledText>
 
             <YStack
-              gap="$3" // Adjusted gap for better spacing
+              gap="$3"
               paddingVertical="$3"
               borderBottomWidth={1}
               borderColor="$borderColor"
             >
-              {/* Sender Info Section */}
+              {/* --- REFACTORED LAYOUT FOR METADATA --- */}
               {senderName && (
-                <XStack alignItems="center" gap="$2">
+                <View style={styles.metadataRow}>
                   <Ionicons
                     name="person-circle-outline"
                     size={24}
-                    color="$color10"
+                    color="#555"
                   />
-                  <Paragraph fontSize={16} color="$color10">
+                  <StyledText style={styles.paragraphStyle}>
                     {t("NoticeDetailsScreen_senderLabel", "Posted by:")}{" "}
                     {senderName}
-                  </Paragraph>
-                </XStack>
+                  </StyledText>
+                </View>
               )}
 
-              {/* Category with Icon */}
               {noticeData.noticeCategory && (
-                <XStack alignItems="center" gap="$2">
-                  <Ionicons
-                    name="pricetag-outline"
-                    size={24}
-                    color="$color10"
-                  />
-                  <Paragraph fontSize={16} color="$color10">
+                <View style={styles.metadataRow}>
+                  <Ionicons name="pricetag-outline" size={24} color="#555" />
+                  <StyledText style={styles.paragraphStyle}>
                     {t("NoticeDetailsScreen_categoryLabel", "Category:")}{" "}
                     {noticeData.noticeCategory}
                     {noticeData.noticeSubCategory
                       ? ` (${noticeData.noticeSubCategory})`
                       : ""}
-                  </Paragraph>
-                </XStack>
+                  </StyledText>
+                </View>
               )}
-              {/* Date/Time with Icon */}
-              <XStack alignItems="center" gap="$2">
-                <Ionicons name="calendar-outline" size={24} color="$color10" />
-                <Paragraph fontSize={16} color="$color10">
+
+              <View style={styles.metadataRow}>
+                <Ionicons name="calendar-outline" size={24} color="#555" />
+                <StyledText style={styles.paragraphStyle}>
                   {t("NoticeDetailsScreen_dateLabel", "Date:")}{" "}
                   {noticeData.creationDate
                     ? formatDate(noticeData.creationDate)
                     : "N/A"}
-                </Paragraph>
-              </XStack>
+                </StyledText>
+              </View>
             </YStack>
 
-            <Paragraph fontSize={22} lineHeight={30} color="$color12">
+            <StyledText style={styles.messageBodyStyle}>
               {noticeData.noticeMessage ?? "No Message"}
-            </Paragraph>
+            </StyledText>
           </YStack>
         </Card>
 
         <View style={styles.backButtonContainer}>
           <FlipButton style={styles.backButton} onPress={() => router.back()}>
-            <Text
-              style={styles.backButtonText}
-              color="$color12"
-              fontWeight="bold"
-            >
+            <StyledText style={styles.backButtonText}>
               {t("Common_backButton")}
-            </Text>
+            </StyledText>
           </FlipButton>
         </View>
       </ScrollView>
@@ -271,13 +264,34 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderWidth: 1,
     borderColor: "#d1d5db",
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
   },
   backButtonText: {
     fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  h2Style: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#333333",
+    marginBottom: 10,
+  },
+  // --- CORRECTED LAYOUT STYLES ---
+  metadataRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  paragraphStyle: {
+    fontSize: 16,
+    color: "#555555",
+    flex: 1,
+    lineHeight: 24, // <-- Explicit lineHeight added
+  },
+  messageBodyStyle: {
+    fontSize: 20,
+    lineHeight: 30, // <-- Explicit lineHeight added
+    color: "#333333",
   },
 });

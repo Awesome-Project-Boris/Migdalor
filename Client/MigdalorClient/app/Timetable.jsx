@@ -14,7 +14,6 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 
-// Removed direct import of i18n. It should be provided by a parent context.
 import { Globals } from "./constants/Globals";
 import Header from "../components/Header";
 import FlipButton from "../components/FlipButton";
@@ -81,7 +80,74 @@ const getWeekDays = (date) => {
   return week;
 };
 
-// --- Child Components (Moved outside main component to fix Hooks error) ---
+// --- New Layout Algorithm for Daily View ---
+const layoutEvents = (events) => {
+  if (!events || events.length === 0) {
+    return [];
+  }
+
+  const sortedEvents = [...events].sort(
+    (a, b) => new Date(a.startTime) - new Date(b.startTime)
+  );
+
+  const layouted = [];
+  let lastEndTime = null;
+  let currentCluster = [];
+
+  const processCluster = (cluster) => {
+    const columns = [];
+    cluster.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+    cluster.forEach((event) => {
+      let placed = false;
+      for (let i = 0; i < columns.length; i++) {
+        if (
+          new Date(columns[i][columns[i].length - 1].endTime) <=
+          new Date(event.startTime)
+        ) {
+          columns[i].push(event);
+          event.colIndex = i;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        columns.push([event]);
+        event.colIndex = columns.length - 1;
+      }
+    });
+
+    const numColumns = columns.length;
+    cluster.forEach((event) => {
+      event.width = 100 / numColumns;
+      event.left = event.colIndex * event.width;
+      layouted.push(event);
+    });
+  };
+
+  sortedEvents.forEach((event) => {
+    const eventStartTime = new Date(event.startTime);
+    if (lastEndTime !== null && eventStartTime >= lastEndTime) {
+      processCluster(currentCluster);
+      currentCluster = [];
+      lastEndTime = null;
+    }
+
+    currentCluster.push(event);
+    const eventEndTime = new Date(event.endTime);
+    if (lastEndTime === null || eventEndTime > lastEndTime) {
+      lastEndTime = eventEndTime;
+    }
+  });
+
+  if (currentCluster.length > 0) {
+    processCluster(currentCluster);
+  }
+
+  return layouted;
+};
+
+// --- Child Components ---
 
 const ViewSwitcher = ({ viewMode, setViewMode, onGoToToday, t }) => (
   <View style={styles.viewSwitcherContainer}>
@@ -119,6 +185,8 @@ const DailyView = ({ events, handleItemPress }) => {
   const hourHeight = 80;
   const hours = Array.from({ length: 16 }, (_, i) => i + 7); // 7 AM to 10 PM
 
+  const laidOutEvents = useMemo(() => layoutEvents(events), [events]);
+
   return (
     <ScrollView contentContainerStyle={styles.timelineContainer}>
       <View style={styles.hoursColumn}>
@@ -136,7 +204,7 @@ const DailyView = ({ events, handleItemPress }) => {
             style={[styles.hourLine, { top: (hour - 7) * hourHeight }]}
           />
         ))}
-        {events.map((event, index) => {
+        {laidOutEvents.map((event, index) => {
           const start = new Date(event.startTime);
           const end = new Date(event.endTime);
           const top =
@@ -151,8 +219,16 @@ const DailyView = ({ events, handleItemPress }) => {
 
           return (
             <TouchableOpacity
-              key={index}
-              style={[styles.eventBlock, { top, height }]}
+              key={event.id + index}
+              style={[
+                styles.eventBlock,
+                {
+                  top,
+                  height,
+                  left: `${event.left}%`,
+                  width: `${event.width}%`,
+                },
+              ]}
               onPress={() => handleItemPress(event)}
             >
               <Text style={styles.eventBlockTitle} numberOfLines={1}>
@@ -226,6 +302,7 @@ const ManualAdditionModal = ({ visible, onClose, item, isRtl, t }) => (
     onRequestClose={onClose}
   >
     <View style={styles.modalContainer}>
+      <Header />
       <ScrollView contentContainerStyle={styles.modalScrollContainer}>
         <View style={styles.modalHeader}>
           <FlipButton onPress={onClose} isFlipped={true}>
@@ -468,7 +545,6 @@ const TimetableScreen = () => {
   const ListHeader = () => (
     <>
       <Text style={styles.pageTitle}>{t("Timetable_Title", "לוח זמנים")}</Text>
-      <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle", "לוח זמנים")}</Text>
       <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
       <ViewSwitcher
         viewMode={viewMode}
@@ -557,23 +633,13 @@ const TimetableScreen = () => {
 
 // --- Styles ---
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fef1e6", paddingTop: 60 }, // Added padding for Header
+  container: { flex: 1, backgroundColor: "#fef1e6", paddingTop: 60 },
   pageTitle: {
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
     color: "#3D2B1F",
     marginTop: 15,
-  },
-  pageSubTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-    color: "#3D2B1F",
-    marginTop: 15,
-    marginBottom: 10,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
   },
   mainTitle: {
     fontSize: 22,
@@ -695,15 +761,14 @@ const styles = StyleSheet.create({
   },
   eventBlock: {
     position: "absolute",
-    left: 5,
-    right: 0,
     borderRadius: 8,
-    padding: 10,
+    padding: 8,
     justifyContent: "center",
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.1)",
     backgroundColor: "#005D8F",
-  },
+    paddingRight: 4,
+  }, // Added paddingRight for spacing
   eventBlockTitle: { color: "white", fontWeight: "bold", fontSize: 15 },
   eventBlockTime: { color: "white", fontSize: 12, marginTop: 2, opacity: 0.9 },
   eventBlockLocation: {
