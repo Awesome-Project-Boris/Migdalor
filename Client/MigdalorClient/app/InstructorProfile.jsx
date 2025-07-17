@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
-  Text,
   ScrollView,
   ActivityIndicator,
   Image,
@@ -16,6 +15,7 @@ import { Globals } from "@/app/constants/Globals";
 import { useAuth } from "@/context/AuthProvider";
 import FlipButton from "@/components/FlipButton";
 import BouncyButton from "@/components/BouncyButton";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -109,7 +109,7 @@ export default function InstructorProfile() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{t("Common_Loading")}</Text>
+        <StyledText>{t("Common_Loading")}</StyledText>
       </View>
     );
   }
@@ -120,14 +120,14 @@ export default function InstructorProfile() {
     
     return (
       <>
-        <Text style={[styles.label, { textAlign: isRtl ? 'right' : 'left' }]}>
+        <StyledText style={[styles.label, { textAlign: isRtl ? 'right' : 'left' }]}>
             {label}
-        </Text>
+        </StyledText>
         
         {/* Apply conditional text alignment to the value box */}
-        <Text style={[styles.box, { textAlign: isRtl ? 'right' : 'left' }]}>
+        <StyledText style={[styles.box, { textAlign: isRtl ? 'right' : 'left' }]}>
           {value || t("ProfileScreen_emptyDataField")}
-        </Text>
+        </StyledText>
       </>
     );
   };
@@ -168,9 +168,9 @@ export default function InstructorProfile() {
             textColor="black"
             style={styles.editProfileButton}
           >
-            <Text style={styles.editProfileButtonText}>
+            <StyledText style={styles.editProfileButtonText}>
               {t("ProfileScreen_editButton")}
-            </Text>
+            </StyledText>
           </FlipButton>
         )}
 
@@ -189,9 +189,9 @@ export default function InstructorProfile() {
         </View>
 
         <View style={styles.profileNameContainer}>
-          <Text style={styles.profileName}>
+          <StyledText style={styles.profileName}>
             {form.name || t("ProfileScreen_emptyDataField")}
-          </Text>
+          </StyledText>
         </View>
 
         {renderField(t("ProfileScreen_mobilePhone"), form.mobilePhone)}

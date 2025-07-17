@@ -617,18 +617,6 @@ const styles = StyleSheet.create({
     width: "90%",
     marginVertical: 10,
   },
-  saveButton: {
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#000",
-    borderRadius: 20,
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    marginTop: 20,
-  },
-  saveText: {
-    fontSize: 18,
-  },
   label: {
     fontSize: 18,
     fontWeight: "800",
