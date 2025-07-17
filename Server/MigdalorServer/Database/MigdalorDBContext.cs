@@ -8,7 +8,6 @@ namespace MigdalorServer.Database
 {
     public partial class MigdalorDBContext : DbContext
     {
-
         public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
             : base(options)
         {

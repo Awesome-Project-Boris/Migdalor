@@ -155,7 +155,7 @@ namespace MigdalorServer.Controllers
             try
             {
                 var attendanceRecord = await _context.OhParticipations
-                    .FirstOrDefaultAsync(a => a.InstanceId == attendanceDto.InstanceId && a.ParticipantId == attendanceDto.ParticipantId);
+                    .FirstOrDefaultAsync(a => a.EventId == attendanceDto.InstanceId && a.ParticipantId == attendanceDto.ParticipantId);
 
                 if (attendanceRecord != null)
                 {
@@ -166,10 +166,10 @@ namespace MigdalorServer.Controllers
                     // Use the correct class name 'OhParticipation' from the generated model.
                     var newRecord = new OhParticipation
                     {
-                        InstanceId = attendanceDto.InstanceId,
+                        EventId = attendanceDto.InstanceId,
                         ParticipantId = attendanceDto.ParticipantId,
                         Status = attendanceDto.Status,
-                        SignInTime = DateTime.UtcNow
+                        RegistrationTime = DateTime.UtcNow
                     };
                     _context.OhParticipations.Add(newRecord);
                 }
