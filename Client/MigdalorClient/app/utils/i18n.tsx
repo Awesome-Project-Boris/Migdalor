@@ -56,6 +56,7 @@ const resources = {
 
       EditProfileScreen_saveButton: "Save Changes",
       EditProfileScreen_cancelButton: "Cancel",
+      Validation_FieldIsRequired: "This field is required",
       EditProfileScreen_errorMessagePartner:
         "Partner name must contain only Hebrew and English letters",
       EditProfileScreen_errorMessageApartmentNumber:
@@ -506,6 +507,7 @@ const resources = {
 
       EditProfileScreen_saveButton: "שמור שינויים",
       EditProfileScreen_cancelButton: "ביטול",
+      Validation_FieldIsRequired: "שדה זה הוא חובה",
       EditProfileScreen_errorMessagePartner:
         "שדה 'בן/בת זוג' חייב להכיל רק אותיות בעברית ובאנגלית",
       EditProfileScreen_errorMessageApartmentNumber:
