@@ -223,16 +223,28 @@ export default function Events() {
 
         {selectedInstance && (
             <View style={styles.formContainer}>
-                <View style={styles.checkboxContainer}>
-                    <TouchableOpacity style={styles.checkbox} onPress={() => setIsRescheduling(!isRescheduling)}>
-                        {isRescheduling && <View style={styles.checkboxInner} />}
-                    </TouchableOpacity>
-                    <Text>{t("Events_MoveMeeting")}</Text>
+                <View style={{ flexDirection: Globals.userSelectedDirection === 'rtl' ? 'row-reverse' : 'row', alignItems: 'center' }}>
+                  <TouchableOpacity
+                    style={[
+                        styles.checkbox,
+                        {
+                            // If direction is RTL, add margin to the left. Otherwise, add it to the right.
+                            marginLeft: Globals.userSelectedDirection === 'rtl' ? 10 : 0,
+                            marginRight: Globals.userSelectedDirection === 'rtl' ? 0 : 10,
+                        }
+                    ]}
+                    onPress={() => setIsRescheduling(!isRescheduling)}
+                >
+                    {isRescheduling && <View style={styles.checkboxInner} />}
+                </TouchableOpacity>
+                  <Text>{t("Events_MoveMeeting")}</Text>
                 </View>
 
                 {isRescheduling && (
                     <View>
-                        <Text style={styles.label}>{t("Events_NewMeeting")}</Text>
+                        <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === 'rtl' ? 'right' : 'left' }]}>
+                          {t("Events_NewMeeting")}
+                        </Text>
                         <View style={styles.datePickerRow}>
                             <TouchableOpacity onPress={() => showMode('date')} style={styles.dateButton}>
                                 <Text style={styles.dateButtonText}>{newDate.toLocaleDateString()}</Text>
@@ -255,10 +267,12 @@ export default function Events() {
                     </View>
                 )}
 
-                <Text style={styles.label}>{isRescheduling ? t("Events_Reason_for_Move") : t("Events_Reason_for_Cancellation")}</Text>
+                <Text style={[styles.label, { textAlign: Globals.userSelectedDirection === 'rtl' ? 'right' : 'left' }]}>
+                  {isRescheduling ? t("Events_Reason_for_Move") : t("Events_Reason_for_Cancellation")}
+                </Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="e.g., Personal emergency, etc."
+                    placeholder={t("Events_DescriptionPlaceholder")}
                     value={notes}
                     onChangeText={setNotes}
                     multiline
@@ -291,7 +305,7 @@ const styles = StyleSheet.create({
   actionButton: { marginTop: 20, paddingVertical: 15 },
   buttonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
   checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  checkbox: { height: 24, width: 24, borderRadius: 4, borderWidth: 2, borderColor: '#007aff', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  checkbox: { height: 24, width: 24, borderRadius: 4, borderWidth: 2, borderColor: '#007aff', alignItems: 'center', justifyContent: 'center' },
   checkboxInner: { height: 12, width: 12, borderRadius: 2, backgroundColor: '#007aff' },
   datePickerRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 15 },
   dateButton: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 15, alignItems: 'center', flex: 1, marginHorizontal: 5 },
