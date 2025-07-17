@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
 import { Image as ExpoImage } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -25,9 +26,9 @@ import Header from "@/components/Header";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import FlipButton from "@/components/FlipButton";
 import ImageViewModal from "@/components/ImageViewModal";
-import StyledText from "@/components/StyledText"; // <-- IMPORT STYLEDTEXT
+import StyledText from "@/components/StyledText";
 import { Globals } from "@/app/constants/Globals";
-import { Card, Spinner, YStack } from "tamagui"; // <-- REMOVED H2 AND PARAGRAPH
+import { Card, Spinner, YStack } from "tamagui";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const API = Globals.API_BASE_URL;
@@ -87,6 +88,7 @@ export default function NewActivity() {
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [showImageViewModal, setShowImageViewModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false); // For AI pic generation
 
   const hasUnsavedChanges = () => {
     return (
@@ -118,6 +120,9 @@ export default function NewActivity() {
 
     if (!result.canceled && result.assets) {
       try {
+        if (imageUri) {
+          await safeDeleteFile(imageUri);
+        }
         const newUri = await copyImageToAppDir(
           result.assets[0].uri,
           "activity"
@@ -129,6 +134,101 @@ export default function NewActivity() {
           t("ImagePicker_saveLibraryImageFailure")
         );
       }
+    }
+  };
+
+  // In NewActivity.jsx
+
+  // In NewActivity.jsx
+
+  const generateAiImage = async () => {
+    Keyboard.dismiss();
+    if (!eventName.trim() && !description.trim()) {
+      Alert.alert(t("Common_Error"), t("NewActivity_GenAI_PromptError"));
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const authToken = await AsyncStorage.getItem("jwt");
+      const prompt = `An exciting activity: ${eventName.trim()}. ${description.trim()}`;
+
+      const response = await fetch(`${API}/api/Gemini/generate-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to generate image.");
+      }
+
+      const responseData = await response.json();
+      let base64Code = null;
+
+      // --- NEW: Automatically find the image data ---
+      // This code looks for a key in the response whose value is an array
+      // containing a long string (the Base64 data).
+      const dataKey = Object.keys(responseData).find(
+        (key) =>
+          Array.isArray(responseData[key]) &&
+          responseData[key].length > 0 &&
+          typeof responseData[key][0] === "string"
+      );
+
+      if (dataKey) {
+        base64Code = responseData[dataKey][0];
+      }
+      // --- End of new code ---
+
+      if (!base64Code) {
+        throw new Error(
+          "Could not automatically find image data in the API response. The response format may have changed."
+        );
+      }
+
+      const filename = `aigen-${Date.now()}.jpeg`;
+      const destinationUri = FileSystem.documentDirectory + filename;
+
+      await FileSystem.writeAsStringAsync(destinationUri, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      if (imageUri) {
+        await safeDeleteFile(imageUri);
+      }
+      setImageUri(destinationUri);
+    } catch (err) {
+      Alert.alert(t("Common_Error"), err.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const onChangeDate = (event, selectedDate) => {
+    // Hide the picker first (important for Android)
+    setShowDatePicker(false);
+    // Check if a date was actually selected
+    if (event.type === "set" && selectedDate) {
+      setDate(selectedDate);
+    }
+  };
+
+  const onChangeStartTime = (event, selectedTime) => {
+    setShowStartTimePicker(false);
+    if (event.type === "set" && selectedTime) {
+      setStartTime(selectedTime);
+    }
+  };
+
+  const onChangeEndTime = (event, selectedTime) => {
+    setShowEndTimePicker(false);
+    if (event.type === "set" && selectedTime) {
+      setEndTime(selectedTime);
     }
   };
 
@@ -193,7 +293,6 @@ export default function NewActivity() {
       });
     } catch (err) {
       console.error(`Failed to delete orphaned picture ID ${pictureId}:`, err);
-      // We don't show an error to the user for this background cleanup task.
     }
   };
 
@@ -397,7 +496,6 @@ export default function NewActivity() {
                 </Card.Background>
               ) : (
                 <YStack f={1} jc="center" ai="center" p="$2" bg="$background">
-                  {/* --- REPLACED TAMAGUI COMPONENTS --- */}
                   <StyledText style={styles.tamaguiH2}>
                     {t("NewActivity_Image")}
                   </StyledText>
@@ -411,6 +509,28 @@ export default function NewActivity() {
               )}
             </Card>
 
+            <FlipButton
+              onPress={generateAiImage}
+              style={styles.genAiButton}
+              disabled={
+                isGenerating || !eventName.trim() || !description.trim()
+              }
+            >
+              {isGenerating ? (
+                <Spinner color="black" />
+              ) : (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name="sparkles"
+                    size={22}
+                    style={{ marginRight: 8 }}
+                  />
+                  <StyledText>{t("NewActivity_GenAI_Button")}</StyledText>
+                </View>
+              )}
+            </FlipButton>
+
+            {/* --- CORRECTED DATE/TIME SECTION --- */}
             <StyledText style={styles.sectionTitle}>
               {t("EventFocus_Date")}
             </StyledText>
@@ -422,6 +542,15 @@ export default function NewActivity() {
                 {date.toLocaleDateString()}
               </StyledText>
             </TouchableOpacity>
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="default"
+                onChange={onChangeDate}
+              />
+            )}
 
             <View style={styles.timeRow}>
               <View style={{ flex: 1 }}>
@@ -452,20 +581,39 @@ export default function NewActivity() {
               </View>
             </View>
 
-            {/* The DateTimePicker modals do not contain any text to change */}
+            {showStartTimePicker && (
+              <DateTimePicker
+                value={startTime}
+                mode="time"
+                display="default"
+                is24Hour={true}
+                onChange={onChangeStartTime}
+              />
+            )}
+
+            {showEndTimePicker && (
+              <DateTimePicker
+                value={endTime}
+                mode="time"
+                display="default"
+                is24Hour={true}
+                onChange={onChangeEndTime}
+              />
+            )}
+            {/* --- END OF CORRECTED SECTION --- */}
 
             <View style={styles.buttonRow}>
               <FlipButton
                 onPress={handleCancel}
                 style={styles.cancelButton}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isGenerating}
               >
                 <StyledText>{t("NewActivity_CancelButton")}</StyledText>
               </FlipButton>
               <FlipButton
                 onPress={handleSubmit}
                 style={styles.submitButton}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isGenerating}
                 bgColor="#007bff"
                 textColor="#fff"
               >
@@ -552,6 +700,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
+    textAlign: "center",
     fontWeight: "600",
     color: "#444",
     marginTop: 20,
@@ -619,5 +768,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
-  confirmButton: { width: "48%" },
+  confirmButton: {
+    width: "48%",
+  },
+  genAiButton: {
+    marginTop: 15,
+    backgroundColor: "#e6f7ff", // A light blue color
+  },
 });

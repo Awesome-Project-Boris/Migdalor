@@ -112,9 +112,11 @@ const resources = {
       Events_SelectMeeting: "Select a Meeting",
       Events_NoMeetings: "No upcoming meetings",
       Events_MissingInformation: "Missing Information",
-      Events_MissingInformationMessage: "Please select a meeting and provide a reason.",
+      Events_MissingInformationMessage:
+        "Please select a meeting and provide a reason.",
       Events_InvalidDate: "Invalid Date",
-      Events_InvalidDateMessage: "Cannot reschedule a meeting to a time that has already passed.",
+      Events_InvalidDateMessage:
+        "Cannot reschedule a meeting to a time that has already passed.",
       Events_MoveMeeting: "Move meeting to another time",
       Events_NewMeeting: "New Meeting Date & Time",
       Events_Reason_for_Move: "Reason for Move",
@@ -122,7 +124,6 @@ const resources = {
       Events_Confirm_Cancellation: "Confirm Cancellation",
       Events_Confirm_Move: "Confirm Move",
       Events_DescriptionPlaceholder: "e.g., Personal emergency, etc.",
-
 
       SettingsPopup_SettingsButton: "Settings",
       SettingsPopup_HomeButton: "Home",
@@ -439,6 +440,8 @@ const resources = {
       NewActivity_KeepEditing: "Keep Editing",
       NewActivity_Capacity_Optional:
         "Capacity (optional, leave blank for unlimited)",
+      NewActivity_GenAI_Button: "Create AI Image for activity",
+
       EventFocus_Unlimited: "Unlimited",
 
       // Timetable
@@ -572,8 +575,6 @@ const resources = {
       Events_Confirm_Cancellation: "אשר ביטול",
       Events_Confirm_Move: "אשר העברה",
       Events_DescriptionPlaceholder: "לדוגמה, מקרה חירום אישי וכו'.",
-
-      
 
       SettingsPopup_SettingsButton: "הגדרות",
       SettingsPopup_HomeButton: "בית",
@@ -876,6 +877,8 @@ const resources = {
       NewActivity_KeepEditing: "המשך לערוך",
       NewActivity_Capacity_Optional:
         "כמות משתתפים (אופציונלי, השאר ריק ללא הגבלה)",
+      NewActivity_GenAI_Button: "יצירת תמונת AI לפעילות",
+
       EventFocus_Unlimited: "ללא הגבלה",
 
       // Timetable
