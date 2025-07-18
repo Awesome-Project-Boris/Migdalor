@@ -1,17 +1,12 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  Text,
-  ActivityIndicator,
-} from "react-native";
+import { View, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "@/app/constants/Globals";
 import Header from "@/components/Header";
-import ServiceCard from "@/components/ServiceCard"; // Correctly import the component
+import ServiceCard from "@/components/ServiceCard";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 export default function PublicServices() {
   const { t } = useTranslation();
@@ -49,7 +44,6 @@ export default function PublicServices() {
           }
 
           const data = await response.json();
-          console.log("This is services data: ", data);
           if (isActive) {
             setServices(data);
           }
@@ -85,7 +79,7 @@ export default function PublicServices() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{t("Common_Loading", "Loading...")}</Text>
+        <StyledText>{t("Common_Loading", "Loading...")}</StyledText>
       </View>
     );
   }
@@ -95,7 +89,7 @@ export default function PublicServices() {
       <View style={styles.container}>
         <Header />
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
+          <StyledText style={styles.errorText}>{error}</StyledText>
         </View>
       </View>
     );
@@ -107,9 +101,11 @@ export default function PublicServices() {
       <FlatList
         data={services}
         ListHeaderComponent={
-          <Text style={styles.mainTitle}>
-            {t("Services_Title", "Services")}
-          </Text>
+          <View style={styles.headerPlaque}>
+            <StyledText style={styles.mainTitle}>
+              {t("Services_Title", "Services")}
+            </StyledText>
+          </View>
         }
         renderItem={({ item }) =>
           item ? (
@@ -122,12 +118,12 @@ export default function PublicServices() {
         contentContainerStyle={styles.listContainer}
         ListEmptyComponent={() => (
           <View style={styles.centered}>
-            <Text>
+            <StyledText>
               {t(
                 "Services_No_Services_Available",
                 "No services available at the moment."
               )}
-            </Text>
+            </StyledText>
           </View>
         )}
       />
@@ -136,28 +132,44 @@ export default function PublicServices() {
 }
 
 const styles = StyleSheet.create({
+  headerPlaque: {
+    width: "100%",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 20,
+  },
   mainTitle: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
-    color: "#111",
-    paddingBottom: 40,
+    color: "#333",
   },
   container: {
     flex: 1,
-    backgroundColor: "#fef1e6",
+    backgroundColor: "#f7e7ce", // Champagne background
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fef1e6",
+    backgroundColor: "#f7e7ce",
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+    marginTop: 50, // Add margin to push content down from header
   },
   errorText: {
     fontSize: 18,

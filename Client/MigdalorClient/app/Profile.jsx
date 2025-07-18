@@ -19,6 +19,8 @@ import Header from "@/components/Header";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useSettings } from "@/context/SettingsContext";
+
 import FlipButton from "../components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Checkbox from "../components/CheckBox";
@@ -29,6 +31,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { G } from "react-native-svg";
 import BouncyButton from "@/components/BouncyButton";
 import InterestChip from "../components/InterestChip";
+import StyledText from "@/components/StyledText";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -37,6 +40,9 @@ export default function Profile() {
   const navigation = useNavigation();
   const router = useRouter();
   const localSearchParams = useLocalSearchParams();
+
+  const { settings } = useSettings();
+  const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
   const [form, setForm] = useState({
     name: "",
@@ -84,7 +90,7 @@ export default function Profile() {
         const date = new Date(form.arrivalYear);
         // Check if the date is valid before formatting
         if (!isNaN(date.getTime())) {
-          return date.toLocaleDateString('en-GB'); // Formats to DD/MM/YYYY
+          return date.toLocaleDateString("en-GB"); // Formats to DD/MM/YYYY
         }
       } catch (error) {
         console.error("Could not format date:", form.arrivalYear, error);
@@ -261,9 +267,6 @@ export default function Profile() {
     isVisible("showAdditionalPictures")
   );
 
-  
-
-
   const handleImagePress = (imageUriToView, altText = "") => {
     // if (!imageUriToView || imageUriToView === Globals.API_BASE_URL) {
     //   console.log("handleImagePress: No valid imageUri provided.");
@@ -295,7 +298,7 @@ export default function Profile() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{t("Common_Loading")}</Text>
+        <StyledText>{t("Common_Loading")}</StyledText>
       </View>
     );
   }
@@ -310,13 +313,13 @@ export default function Profile() {
             <Image source={defaultUserImage} style={styles.profileImage} />
           </View>
           <View style={styles.profileNameContainer}>
-            <Text style={styles.profileName}>
+            <StyledText style={styles.profileName}>
               {form.name || t("ProfileScreen_emptyDataField")}
-            </Text>
+            </StyledText>
           </View>
-          <Text style={styles.privateText}>
+          <StyledText style={styles.privateText}>
             {t("ProfileScreen_privateProfile")}
-          </Text>
+          </StyledText>
         </ScrollView>
       </View>
     );
@@ -326,7 +329,7 @@ export default function Profile() {
     if (!isVisible(fieldKey)) return null;
     return (
       <>
-        <Text
+        <StyledText
           style={[
             styles.label,
             {
@@ -336,8 +339,8 @@ export default function Profile() {
           ]}
         >
           {label}
-        </Text>
-        <Text
+        </StyledText>
+        <StyledText
           style={[
             styles.box,
             {
@@ -347,7 +350,7 @@ export default function Profile() {
           ]}
         >
           {value || t("ProfileScreen_emptyDataField")}
-        </Text>
+        </StyledText>
       </>
     );
   };
@@ -376,9 +379,9 @@ export default function Profile() {
             textColor="black"
             style={styles.editProfileButton}
           >
-            <Text style={styles.editProfileButtonText}>
+            <StyledText style={styles.editProfileButtonText}>
               {t("ProfileScreen_editButton")}
-            </Text>
+            </StyledText>
           </FlipButton>
         )}
         {/* This block will now show the default image if the profile picture is private */}
@@ -402,12 +405,12 @@ export default function Profile() {
         </View>
 
         <View style={styles.profileNameContainer}>
-          {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
+          {/* <StyledText style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</StyledText>  */}
 
           {/* !! Change this to full name  */}
-          <Text style={styles.profileName}>
+          <StyledText style={styles.profileName}>
             {form.name || t("ProfileScreen_emptyDataField")}
-          </Text>
+          </StyledText>
         </View>
 
         {renderField("showPartner", t("ProfileScreen_partner"), form.partner)}
@@ -435,7 +438,7 @@ export default function Profile() {
         )}
         {isVisible("showInterests") && (
           <>
-            <Text
+            <StyledText
               style={[
                 styles.label,
                 {
@@ -445,7 +448,7 @@ export default function Profile() {
               ]}
             >
               {t("ProfileScreen_interests")}
-            </Text>
+            </StyledText>
             <View style={styles.chipContainer}>
               {form.interests && form.interests.length > 0 ? (
                 form.interests.map((interestName) => (
@@ -456,15 +459,18 @@ export default function Profile() {
                   />
                 ))
               ) : (
-                <Text
+                <StyledText
                   style={{
                     ...styles.noInterestsText,
                     width: "100%", // Ensures the component fills the container
-                    textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left", // Correctly aligns the text
+                    textAlign:
+                      Globals.userSelectedDirection === "rtl"
+                        ? "right"
+                        : "left", // Correctly aligns the text
                   }}
                 >
                   {t("ProfileScreen_emptyDataField")}
-                </Text>
+                </StyledText>
               )}
             </View>
           </>
@@ -472,7 +478,7 @@ export default function Profile() {
         {renderField("showAboutMe", t("ProfileScreen_aboutMe"), form.aboutMe)}
         {isVisible("showAdditionalPictures") && (
           <>
-            <Text
+            <StyledText
               style={[
                 styles.label,
                 {
@@ -482,8 +488,13 @@ export default function Profile() {
               ]}
             >
               {t("ProfileScreen_extraImages")}
-            </Text>
-            <View style={styles.profileExtraImageContainer}>
+            </StyledText>
+            <View
+              style={[
+                styles.profileExtraImageContainer,
+                useColumnLayout && styles.extraImagesColumn,
+              ]}
+            >
               <BouncyButton
                 onPress={() =>
                   handleImagePress(
@@ -495,9 +506,12 @@ export default function Profile() {
                 disabled={additionalImage1Source === defaultUserImage}
               >
                 <Image
-                  alt={additionalPic1.PicAlt || "Extra picture 1"}
+                  alt={additionalPic1?.PicAlt || "Extra picture 1"}
                   source={additionalImage1Source}
-                  style={styles.profileImage}
+                  style={[
+                    styles.extraImage,
+                    useColumnLayout && styles.largeImage,
+                  ]}
                 />
               </BouncyButton>
               <BouncyButton
@@ -511,9 +525,12 @@ export default function Profile() {
                 disabled={additionalImage2Source === defaultUserImage}
               >
                 <Image
-                  alt={additionalPic2.PicAlt || "Extra picture 2"}
+                  alt={additionalPic2?.PicAlt || "Extra picture 2"}
                   source={additionalImage2Source}
-                  style={styles.profileImage}
+                  style={[
+                    styles.extraImage,
+                    useColumnLayout && styles.largeImage,
+                  ]}
                 />
               </BouncyButton>
             </View>
@@ -699,5 +716,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 20,
     textAlign: "center",
+  },
+  largeImage: {
+    width: 300,
+    height: 300,
+    borderRadius: 60,
   },
 });

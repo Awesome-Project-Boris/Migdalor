@@ -164,10 +164,10 @@ export default function PaginatedListDisplay({
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1, // Allow the component to fill space
+    width: "100%",
   },
   listContainer: {
     paddingBottom: 16,
-    width: SCREEN_WIDTH * 0.95,
   },
   centeredMessage: {
     flex: 1, // Make it take space if list is empty
