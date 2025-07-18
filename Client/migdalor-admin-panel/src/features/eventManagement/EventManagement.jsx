@@ -13,7 +13,8 @@ const EventManagement = () => {
   const [events, setEvents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeEvent, setActiveEvent] = useState(null);
+  // FIX: State now holds only the ID of the event to be edited
+  const [activeEventId, setActiveEventId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingEvent, setDeletingEvent] = useState(null);
 
@@ -46,31 +47,14 @@ const EventManagement = () => {
     fetchData();
   }, [fetchData]);
 
-  const handleOpenModal = async (eventSummary = null) => {
-    if (eventSummary) {
-      // If editing, fetch the full event details
-      try {
-        setIsLoading(true);
-        const fullEventDetails = await api.get(
-          `/events/${eventSummary.eventId}`,
-          token
-        );
-        setActiveEvent(fullEventDetails);
-      } catch (error) {
-        showToast("error", `שגיאה בטעינת פרטי האירוע: ${error.message}`);
-        return; // Don't open the modal if fetching fails
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      // If creating, set activeEvent to null
-      setActiveEvent(null);
-    }
+  // FIX: Simplified to just set the ID and open the modal.
+  const handleOpenModal = (eventSummary = null) => {
+    setActiveEventId(eventSummary ? eventSummary.eventId : null);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setActiveEvent(null);
+    setActiveEventId(null);
     setIsModalOpen(false);
   };
 
@@ -117,6 +101,8 @@ const EventManagement = () => {
       setDeletingEvent(null);
     }
   };
+
+  // EventManagement.jsx
 
   const columns = useMemo(
     () => [
@@ -218,7 +204,8 @@ const EventManagement = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleSaveEvent}
-        event={activeEvent}
+        // FIX: Pass the eventId to the modal
+        eventId={activeEventId}
         eventType={view}
       />
       {deletingEvent && (

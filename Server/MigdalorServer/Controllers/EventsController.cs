@@ -25,22 +25,38 @@ namespace MigdalorServer.Controllers
         }
 
         // GET: api/events/all
+        // EventsController.cs
+
+        // GET: api/events/all
+        // EventsController.cs
+
+        // GET: api/events/all
         [HttpGet("all")]
         public async Task<ActionResult<object>> GetEvents()
         {
-            var allEvents = await _context
-                .OhEvents.AsNoTracking()
-                .Select(e => new
-                {
-                    e.EventId,
-                    e.EventName,
-                    HostId = e.HostId,
-                    e.Location,
-                    e.StartDate,
-                    e.IsRecurring,
-                    e.RecurrenceRule,
-                    e.Capacity,
-                })
+            var allEvents = await _context.OhEvents
+                .AsNoTracking()
+                .GroupJoin(
+                    _context.OhPeople,
+                    e => e.HostId,
+                    p => p.PersonId,
+                    (e, p_group) => new { e, p_group }
+                )
+                .SelectMany(
+                    x => x.p_group.DefaultIfEmpty(),
+                    (x, p) => new
+                    {
+                        x.e.EventId,
+                        x.e.EventName,
+                        HostId = x.e.HostId,
+                        HostName = p != null ? p.HebFirstName + " " + p.HebLastName : "לא הוקצה", // Handle null host
+                        x.e.Location,
+                        x.e.StartDate,
+                        x.e.IsRecurring,
+                        x.e.RecurrenceRule,
+                        x.e.Capacity,
+                    }
+                )
                 .ToListAsync();
 
             var result = new

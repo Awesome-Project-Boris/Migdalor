@@ -1,30 +1,23 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { Check, ChevronsUpDown, X } from "lucide-react";
 
-/**
- * A command-style component for searching and selecting a spouse.
- * @param {object} props
- * @param {Array} props.users - The list of all users to search from.
- * @param {object} props.currentUser - The user currently being edited.
- * @param {string|null} props.selectedSpouseId - The ID of the currently selected spouse.
- * @param {Function} props.onSelectSpouse - Callback function to update the selected spouse ID.
- */
 const SpouseCommand = ({
   users,
   currentUser,
   selectedSpouseId,
   onSelectSpouse,
+  label = "בן/בת זוג",
+  placeholder = "בחר/י בן/בת זוג...",
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const popoverRef = useRef(null);
 
-  // Filter out the current user from the list of potential spouses.
   const availableSpouses = useMemo(() => {
+    if (!currentUser?.id) return users; // If no current user, all are available
     return users.filter((u) => u.id !== currentUser.id);
-  }, [users, currentUser.id]);
+  }, [users, currentUser?.id]);
 
-  // Filter spouses based on the search input.
   const filteredSpouses = useMemo(() => {
     if (!search) {
       return availableSpouses;
@@ -34,25 +27,21 @@ const SpouseCommand = ({
     );
   }, [search, availableSpouses]);
 
-  // Find the full user object for the selected spouse.
   const selectedSpouse = useMemo(() => {
     return users.find((u) => u.id === selectedSpouseId);
   }, [users, selectedSpouseId]);
 
-  // Handle selecting a spouse from the list.
   const handleSelect = (spouseId) => {
     onSelectSpouse(spouseId);
     setOpen(false);
     setSearch("");
   };
 
-  // Handle clearing the spouse selection.
   const handleClear = (e) => {
-    e.stopPropagation(); // Prevent the popover from opening
+    e.stopPropagation();
     onSelectSpouse(null);
   };
 
-  // Close the popover if clicking outside of it.
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (popoverRef.current && !popoverRef.current.contains(event.target)) {
@@ -67,16 +56,16 @@ const SpouseCommand = ({
 
   return (
     <div className="relative w-full" ref={popoverRef}>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        בן/בת זוג
+      <label className="block text-sm font-medium text-gray-700 mb-1 text-right">
+        {label}
       </label>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-right shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-full flex items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-right shadow-sm"
       >
         <span className="truncate">
-          {selectedSpouse ? selectedSpouse.fullName : "בחר/י בן/בת זוג..."}
+          {selectedSpouse ? selectedSpouse.fullName : placeholder}
         </span>
         <div className="flex items-center">
           {selectedSpouse && (
@@ -96,14 +85,14 @@ const SpouseCommand = ({
               placeholder="חיפוש..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md"
               autoFocus
             />
           </div>
           <ul className="max-h-60 overflow-y-auto">
             {filteredSpouses.length === 0 ? (
               <p className="p-4 text-sm text-center text-gray-500">
-                לא נמצאו דיירים.
+                לא נמצאו תוצאות.
               </p>
             ) : (
               filteredSpouses.map((spouse) => (
