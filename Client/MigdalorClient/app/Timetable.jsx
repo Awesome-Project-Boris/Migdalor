@@ -13,10 +13,12 @@ import { Calendar, LocaleConfig } from "react-native-calendars";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
+import { useSettings } from "@/context/SettingsContext";
 
 import { Globals } from "./constants/Globals";
 import Header from "../components/Header";
 import FlipButton from "../components/FlipButton";
+import StyledText from "@/components/StyledText";
 
 // --- Locale Configuration ---
 LocaleConfig.locales["he"] = {
@@ -250,46 +252,67 @@ const DailyView = ({ events, handleItemPress }) => {
   );
 };
 
+// Timetable.jsx
+
 const WeeklySelector = ({ selectedDate, setSelectedDate, items }) => {
   const weekDays = getWeekDays(new Date(selectedDate));
+
+  // Split the week into two rows for the new layout
+  const topRowDays = weekDays.slice(0, 4); // Sunday, Monday, Tuesday, Wednesday
+  const bottomRowDays = weekDays.slice(4, 7); // Thursday, Friday, Saturday
+
+  // Helper function to render a single day button, keeps the code clean
+  const renderDayButton = (day, isLastInRow) => {
+    const dayString = day.toISOString().split("T")[0];
+    const isSelected = dayString === selectedDate;
+
+    // Apply a different style if it's the last button in a row to remove the right border
+    const buttonStyle = [
+      styles.weekDayButton,
+      isSelected && styles.weekDayButtonSelected,
+      isLastInRow && { borderRightWidth: 0 }, // No border on the far right
+    ];
+
+    return (
+      <TouchableOpacity
+        key={dayString}
+        style={buttonStyle}
+        onPress={() => setSelectedDate(dayString)}
+      >
+        <Text
+          style={[styles.weekDayText, isSelected && styles.weekDayTextSelected]}
+        >
+          {LocaleConfig.locales["he"].dayNamesShort[day.getDay()]}
+        </Text>
+        <Text
+          style={[
+            styles.weekDateText,
+            isSelected && styles.weekDayTextSelected,
+          ]}
+        >
+          {day.getDate()}
+        </Text>
+        {items[dayString] && items[dayString].length > 0 && (
+          <View
+            style={[styles.dot, isSelected && { backgroundColor: "white" }]}
+          />
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.weekSelectorContainer}>
-      {weekDays.map((day) => {
-        const dayString = day.toISOString().split("T")[0];
-        const isSelected = dayString === selectedDate;
-        return (
-          <TouchableOpacity
-            key={dayString}
-            style={[
-              styles.weekDayButton,
-              isSelected && styles.weekDayButtonSelected,
-            ]}
-            onPress={() => setSelectedDate(dayString)}
-          >
-            <Text
-              style={[
-                styles.weekDayText,
-                isSelected && styles.weekDayTextSelected,
-              ]}
-            >
-              {LocaleConfig.locales["he"].dayNamesShort[day.getDay()]}
-            </Text>
-            <Text
-              style={[
-                styles.weekDateText,
-                isSelected && styles.weekDayTextSelected,
-              ]}
-            >
-              {day.getDate()}
-            </Text>
-            {items[dayString] && items[dayString].length > 0 && (
-              <View
-                style={[styles.dot, isSelected && { backgroundColor: "white" }]}
-              />
-            )}
-          </TouchableOpacity>
-        );
-      })}
+      <View style={styles.weekRow}>
+        {topRowDays.map((day, index) =>
+          renderDayButton(day, index === topRowDays.length - 1)
+        )}
+      </View>
+      <View style={styles.weekRow}>
+        {bottomRowDays.map((day, index) =>
+          renderDayButton(day, index === bottomRowDays.length - 1)
+        )}
+      </View>
     </View>
   );
 };
@@ -544,8 +567,12 @@ const TimetableScreen = () => {
 
   const ListHeader = () => (
     <>
-      <Text style={styles.pageTitle}>{t("Timetable_Title", "לוח זמנים")}</Text>
-      <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
+      <View style={styles.headerPlaque}>
+        <Text style={styles.pageTitle}>
+          {t("Timetable_Title", "לוח זמנים")}
+        </Text>
+        <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
+      </View>
       <ViewSwitcher
         viewMode={viewMode}
         setViewMode={setViewMode}
@@ -633,7 +660,11 @@ const TimetableScreen = () => {
 
 // --- Styles ---
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fef1e6", paddingTop: 60 },
+  container: {
+    flex: 1,
+    backgroundColor: "#fef1e6",
+    paddingTop: 60,
+  },
   pageTitle: {
     fontSize: 32,
     fontWeight: "bold",
@@ -678,7 +709,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   viewSwitcherButtonActive: { backgroundColor: "#005D8F", elevation: 3 },
-  viewSwitcherText: { fontSize: 16, color: "#3D2B1F", fontWeight: "500" },
+  viewSwitcherText: { fontSize: 20, color: "#3D2B1F", fontWeight: "500" },
   viewSwitcherTextActive: { color: "white", fontWeight: "bold" },
   todayButton: {
     paddingVertical: 10,
@@ -686,7 +717,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: "#f0f4f7",
   },
-  todayButtonText: { fontSize: 16, color: "#005D8F", fontWeight: "bold" },
+  todayButtonText: { fontSize: 20, color: "#005D8F", fontWeight: "bold" },
   calendar: {
     marginHorizontal: 10,
     borderRadius: 10,
@@ -713,10 +744,10 @@ const styles = StyleSheet.create({
     borderLeftWidth: 6,
     borderLeftColor: "#005D8F",
   },
-  itemTextName: { fontSize: 18, fontWeight: "bold", color: "#3D2B1F" },
-  itemTextTime: { fontSize: 15, color: "#444", marginTop: 4 },
+  itemTextName: { fontSize: 22, fontWeight: "bold", color: "#3D2B1F" },
+  itemTextTime: { fontSize: 18, color: "#444", marginTop: 4 },
   itemTextLocation: {
-    fontSize: 15,
+    fontSize: 18,
     color: "#666",
     marginTop: 4,
     fontStyle: "italic",
@@ -730,7 +761,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   itemDurationText: {
-    fontSize: 13,
+    fontSize: 18,
     color: "#005D8F",
     fontWeight: "600",
     marginLeft: 5,
@@ -741,7 +772,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 40,
   },
-  emptyDateText: { fontSize: 18, color: "#777" },
+  emptyDateText: { fontSize: 22, color: "#777" },
   rtlText: { writingDirection: "rtl", textAlign: "right" },
   timelineContainer: {
     flexDirection: "row",
@@ -750,7 +781,7 @@ const styles = StyleSheet.create({
     minHeight: 1280,
   },
   hoursColumn: { width: 60, paddingTop: 10 },
-  hourText: { position: "absolute", right: 0, fontSize: 12, color: "#666" },
+  hourText: { position: "absolute", right: 0, fontSize: 16, color: "#666" },
   eventsColumn: { flex: 1, marginLeft: 10 },
   hourLine: {
     position: "absolute",
@@ -769,35 +800,44 @@ const styles = StyleSheet.create({
     backgroundColor: "#005D8F",
     paddingRight: 4,
   }, // Added paddingRight for spacing
-  eventBlockTitle: { color: "white", fontWeight: "bold", fontSize: 15 },
-  eventBlockTime: { color: "white", fontSize: 12, marginTop: 2, opacity: 0.9 },
+  eventBlockTitle: { color: "white", fontWeight: "bold", fontSize: 18 },
+  eventBlockTime: { color: "white", fontSize: 14, marginTop: 2, opacity: 0.9 },
   eventBlockLocation: {
     color: "white",
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 2,
     fontStyle: "italic",
     opacity: 0.9,
   },
   weekSelectorContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: 10,
+    flexDirection: "column", // Stack the rows vertically
     backgroundColor: "#fff",
     marginHorizontal: 10,
     marginTop: 10,
     borderRadius: 10,
     elevation: 2,
+    width: "95%",
+    alignSelf: "center",
+    overflow: "hidden", // Ensures the inner border radius is clipped correctly
+    borderWidth: 1, // Optional: A border around the whole container
+    borderColor: "#e0c4a2", // Optional: A border around the whole container
+  },
+  weekRow: {
+    flexDirection: "row",
+    borderBottomWidth: 1, // A line between the two rows
+    borderBottomColor: "#e0c4a2",
   },
   weekDayButton: {
+    flex: 1, // Each button takes up equal space in its row
     alignItems: "center",
-    padding: 10,
-    borderRadius: 8,
-    width: 50,
+    paddingVertical: 10,
+    borderRightWidth: 1, // A line between the days
+    borderRightColor: "#e0c4a2",
   },
   weekDayButtonSelected: { backgroundColor: "#005D8F" },
   weekDayText: { fontSize: 14, color: "#3D2B1F" },
   weekDateText: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
     color: "#3D2B1F",
     marginTop: 2,
@@ -850,6 +890,23 @@ const styles = StyleSheet.create({
   iconRtl: { marginLeft: 15, color: "#5c4b33" },
   detailLabel: { fontSize: 18, fontWeight: "600", color: "#3D2B1F" },
   detailValue: { fontSize: 18, color: "#3D2B1F", flex: 1 },
+  headerPlaque: {
+    width: "90%",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 20,
+    marginTop: 20,
+    alignSelf: "center",
+  },
 });
 
 export default TimetableScreen;

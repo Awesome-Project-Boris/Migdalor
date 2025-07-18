@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
-  Text,
   ScrollView,
   Image,
   Alert,
@@ -21,6 +20,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import ImageViewModal from "../components/ImageViewModal";
 import ImageHistory from "@/components/ImageHistory";
+import StyledText from "@/components/StyledText"; // Import StyledText
+import { useSettings } from "@/context/SettingsContext"; // Import useSettings
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -28,6 +29,7 @@ export default function InstructorEditProfile() {
   const { t } = useTranslation();
   const router = useRouter();
   const { initialData, initialPic } = useLocalSearchParams();
+  const { settings } = useSettings(); // Get settings from context
 
   const [form, setForm] = useState({
     name: "",
@@ -73,11 +75,9 @@ export default function InstructorEditProfile() {
     };
 
     if (name === "mobilePhone") {
-      // 1. Check if the field is empty
       const requiredError = isRequired(value);
       if (requiredError) return requiredError;
 
-      // 2. Then, check the phone number format
       const phoneRegex = /^05\d{8}$/;
       if (!phoneRegex.test(value)) {
         return t(
@@ -88,11 +88,10 @@ export default function InstructorEditProfile() {
     }
 
     if (name === "email") {
-      const trimmedValue = value.trim(); 
+      const trimmedValue = value.trim();
       const requiredError = isRequired(trimmedValue);
       if (requiredError) return requiredError;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      // Test the trimmed value
       if (!emailRegex.test(trimmedValue)) {
           return t(
               "EditProfileScreen_errorMessageEmail",
@@ -113,10 +112,8 @@ export default function InstructorEditProfile() {
   const handleImagePress = () => {
     setImageToViewUri(profileImage.uri || null);
     if (!profilePic?.picPath) {
-      // If no picture exists, go directly to the add image flow.
       handleAddImage();
     } else {
-      // If a picture exists, open the modal to view it.
       setImageToViewUri(profileImage.uri || null);
       setShowImageViewModal(true);
     }
@@ -152,7 +149,7 @@ export default function InstructorEditProfile() {
   };
 
   const pickImage = async (source) => {
-    setShowImageViewModal(false); // Close the view modal first
+    setShowImageViewModal(false);
     let result;
     try {
         if (source === 'camera') {
@@ -224,17 +221,15 @@ export default function InstructorEditProfile() {
         text1: t("Common_ValidationErrorTitle", "Validation Error"),
         text2: phoneError || emailError,
       });
-      return; // Stop the function if there are errors
+      return;
     }
 
 
     let finalProfilePicData = profilePic;
     const initialPicParsed = initialPic ? JSON.parse(initialPic) : null;
 
-    // Case 1: A new local image was selected for upload
     if (profilePic?.picPath && profilePic.picPath.startsWith("file://")) {
         try {
-            // Delete the old picture if it existed
             if (initialPicParsed?.picId) {
                 await deletePictureOnServer(initialPicParsed.picId);
             }
@@ -267,11 +262,9 @@ export default function InstructorEditProfile() {
             return;
         }
     } else if (clearedPic && initialPicParsed?.picId) {
-        // Case 2: The image was explicitly removed
         await deletePictureOnServer(initialPicParsed.picId);
         finalProfilePicData = null;
     } else if (profilePic?.picId && initialPicParsed?.picId !== profilePic.picId) {
-        // Case 3: A different image was selected from history
         await deletePictureOnServer(initialPicParsed.picId);
     }
 
@@ -304,6 +297,18 @@ export default function InstructorEditProfile() {
     }
   };
 
+  const isMaxFontSize = settings.fontSizeMultiplier === 3;
+  
+  const buttonContainerStyle = [
+    styles.buttonRow,
+    isMaxFontSize && styles.buttonColumn,
+  ];
+
+  const buttonStyle = [
+    styles.actionButton,
+    isMaxFontSize && { width: '85%' },
+  ];
+
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -315,7 +320,7 @@ export default function InstructorEditProfile() {
         </View>
 
         <View style={styles.profileNameContainer}>
-          <Text style={styles.profileName}>{form.name}</Text>
+          <StyledText style={styles.profileName}>{form.name}</StyledText>
         </View>
 
         <View style={styles.editableContainer}>
@@ -329,7 +334,7 @@ export default function InstructorEditProfile() {
             maxLength={10}
           />
           {errors.mobilePhone && (
-            <Text style={styles.errorText}>{errors.mobilePhone}</Text>
+            <StyledText style={styles.errorText}>{errors.mobilePhone}</StyledText>
           )}
           <FloatingLabelInput
             style={styles.inputContainer}
@@ -340,15 +345,15 @@ export default function InstructorEditProfile() {
             keyboardType="email-address"
             maxLength={100}
           />
-          {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+          {errors.email && <StyledText style={styles.errorText}>{errors.email}</StyledText>}
         </View>
 
-        <View style={styles.buttonRow}>
-          <FlipButton onPress={handleSave} bgColor="white" textColor="black" style={styles.saveButton}>
-            <Text style={styles.buttonText}>{t("EditProfileScreen_saveButton")}</Text>
+        <View style={buttonContainerStyle}>
+          <FlipButton onPress={handleSave} bgColor="white" textColor="black" style={buttonStyle}>
+            <StyledText style={styles.buttonText}>{t("EditProfileScreen_saveButton")}</StyledText>
           </FlipButton>
-          <FlipButton onPress={() => router.back()} bgColor="white" textColor="black" style={styles.cancelButton}>
-            <Text style={styles.buttonText}>{t("EditProfileScreen_cancelButton")}</Text>
+          <FlipButton onPress={() => router.back()} bgColor="white" textColor="black" style={buttonStyle}>
+            <StyledText style={styles.buttonText}>{t("EditProfileScreen_cancelButton")}</StyledText>
           </FlipButton>
         </View>
       </ScrollView>
@@ -382,9 +387,23 @@ const styles = StyleSheet.create({
   profileName: { opacity: 0.9, padding: 10, fontWeight: "bold", fontSize: 22, paddingHorizontal: 16, paddingVertical: 8, width: "100%", textAlign: "center" },
   editableContainer: { width: "100%", alignItems: "center", marginTop: 30, gap: 30 },
   inputContainer: { width: "85%", alignSelf: "center" },
-  buttonRow: { flexDirection: "row", justifyContent: "space-evenly", marginTop: 40, width: "100%" },
-  saveButton: { paddingVertical: 12, borderRadius: 8, width: "40%", alignItems: "center" },
-  cancelButton: { paddingVertical: 12, borderRadius: 8, width: "40%", alignItems: "center" },
+  buttonRow: { 
+    flexDirection: "row", 
+    justifyContent: "space-evenly", 
+    marginTop: 40, 
+    width: "100%" 
+  },
+  buttonColumn: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 20,
+  },
+  actionButton: { 
+    paddingVertical: 12, 
+    borderRadius: 8, 
+    width: "40%", 
+    alignItems: "center" 
+  },
   buttonText: { fontSize: 26, fontWeight: "bold", textAlign: "center" },
   errorText: {
     color: "red",

@@ -6,38 +6,36 @@ import { useSettings } from "@/context/SettingsContext"; // Adjust path if neede
 
 const StyledText = (props) => {
   const { settings } = useSettings();
+  const isRTL = settings.language === "he";
 
-  // Destructure the new props for truncation alongside the existing ones.
-  const { style, numberOfLines, ellipsizeMode, ...rest } = props;
+  const { style, ...rest } = props;
 
   const flattenedStyle = StyleSheet.flatten(style);
 
-  // Separate fontSize and lineHeight from the rest of the styles
-  const { fontSize, lineHeight, ...restOfStyles } = flattenedStyle || {};
+  // Separate text-alignment from other styles to avoid conflicts
+  const { fontSize, lineHeight, textAlign, ...restOfStyles } =
+    flattenedStyle || {};
 
   const finalStyle = { ...restOfStyles };
 
-  // Check if a base fontSize was provided
+  // Apply font-size scaling from settings
   if (fontSize) {
-    // Calculate the new font size
     const newFontSize = fontSize * settings.fontSizeMultiplier;
     finalStyle.fontSize = newFontSize;
-
-    // If a lineHeight was provided, scale it proportionally.
     if (lineHeight) {
       finalStyle.lineHeight = lineHeight * settings.fontSizeMultiplier;
     }
   }
 
-  // Render the built-in Text component, passing down the new props.
-  return (
-    <Text
-      style={finalStyle}
-      numberOfLines={numberOfLines}
-      ellipsizeMode={ellipsizeMode || "tail"} // Default to 'tail' if not provided
-      {...rest}
-    />
-  );
+  // **THIS IS THE CRITICAL FIX**
+  // Set default text alignment based on language.
+  // A specific style like `textAlign: 'center'` will override this default.
+  finalStyle.textAlign = textAlign || (isRTL ? "right" : "left");
+
+  // Ensure the writing direction is set correctly for proper text rendering
+  finalStyle.writingDirection = isRTL ? "rtl" : "ltr";
+
+  return <Text style={finalStyle} {...rest} />;
 };
 
 export default StyledText;

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, forwardRef  } from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
+import { Modal, View, TouchableOpacity, StyleSheet, Keyboard } from 'react-native'; // 'Text' import removed
 import FloatingLabelInput from './FloatingLabelInput';
 import { useTranslation } from 'react-i18next';
+import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
 export default function MarketplaceSearchModal({ visible, onSearch, onCancel }) {
   const { t } = useTranslation();
@@ -27,7 +28,8 @@ export default function MarketplaceSearchModal({ visible, onSearch, onCancel }) 
     <Modal visible={visible} transparent={true} animationType="slide">
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <Text style={styles.title}>{t("MarketplaceSearchItem_Header")}</Text>
+          {/* Replaced Text with StyledText */}
+          <StyledText style={styles.title}>{t("MarketplaceSearchItem_Header")}</StyledText>
           <FloatingLabelInput
             label= ''
             value={localQuery}
@@ -38,10 +40,12 @@ export default function MarketplaceSearchModal({ visible, onSearch, onCancel }) 
           />
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.modalButton} onPress={handleSearch}>
-              <Text style={styles.buttonText}>{t("MarketplaceSearchItem_SearchButton")}</Text>
+              {/* Replaced Text with StyledText */}
+              <StyledText style={styles.buttonText}>{t("MarketplaceSearchItem_SearchButton")}</StyledText>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={onCancel}>
-              <Text style={styles.buttonText}>{t("MarketplaceSearchItem_CancelButton")}</Text>
+              {/* Replaced Text with StyledText */}
+              <StyledText style={styles.buttonText}>{t("MarketplaceSearchItem_CancelButton")}</StyledText>
             </TouchableOpacity>
           </View>
         </View>

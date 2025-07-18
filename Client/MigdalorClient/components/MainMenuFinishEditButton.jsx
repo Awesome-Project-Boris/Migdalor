@@ -2,9 +2,10 @@
 
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
-import { Text, StyleSheet } from "react-native";
-import React from 'react'; // Import React
+import { StyleSheet } from "react-native"; // 'Text' import removed
+import React from 'react';
 import { useTranslation } from "react-i18next";
+import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
 // Accept onSave prop
 export function EditToggleButton({ onSave }) {
@@ -29,8 +30,8 @@ export function EditToggleButton({ onSave }) {
       style={styles.toggleButton}
       flipborderwidth={3}
     >
-      {/* Assuming text is passed as children */}
-      <Text style={styles.toggleButtonText}>{t('MainMenuScreen_DoneButton')}</Text>
+      {/* Replaced Text with StyledText */}
+      <StyledText style={styles.toggleButtonText}>{t('MainMenuScreen_DoneButton')}</StyledText>
     </FlipButton>
   );
 }
@@ -55,11 +56,8 @@ const styles = StyleSheet.create({
   },
   toggleButtonText: {
     color: "#000000",
-    fontSize: 24,
-    fontWeight: 'bold', // Added font weight
-    textAlign: 'center', // Ensure text is centered
+    fontSize: 24, // Base font size is defined, so StyledText can scale it
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
-
-// Keep default export if needed elsewhere, otherwise just named export is fine
-// export default EditToggleButton;

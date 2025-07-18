@@ -1,8 +1,7 @@
 import React from "react";
-import { Pressable, StyleSheet } from "react-native";
-import StyledText from "@/components/StyledText"; // Import StyledText
+import { Pressable, StyleSheet, Text } from "react-native";
 
-const FlipButton = ({
+const FlipButtonSizeless = ({
   text = "Button",
   children,
   onPress = () => {},
@@ -41,7 +40,7 @@ const FlipButton = ({
 
         const renderChildWithStyle = (child) => {
           if (React.isValidElement(child)) {
-            // This logic correctly clones children (like other StyledText or Icon components)
+            // This logic correctly clones children (like other Text or Icon components)
             // and passes down the dynamic color style.
             return React.cloneElement(child, {
               style: [child.props.style, dynamicTextStyle],
@@ -51,21 +50,21 @@ const FlipButton = ({
             });
           }
 
-          // If a child is just a string, wrap it in StyledText.
+          // If a child is just a string, wrap it in the standard Text component.
           return (
-            <StyledText style={[styles.textBase, dynamicTextStyle]}>
+            <Text style={[styles.textBase, dynamicTextStyle]}>
               {child}
-            </StyledText>
+            </Text>
           );
         };
 
         return children ? (
           React.Children.map(children, renderChildWithStyle)
         ) : (
-          // The default case also uses StyledText now.
-          <StyledText style={[styles.textBase, dynamicTextStyle]}>
+          // The default case also uses the standard Text component now.
+          <Text style={[styles.textBase, dynamicTextStyle]}>
             {text}
-          </StyledText>
+          </Text>
         );
       }}
     </Pressable>
@@ -87,4 +86,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default FlipButton;
+export default FlipButtonSizeless;

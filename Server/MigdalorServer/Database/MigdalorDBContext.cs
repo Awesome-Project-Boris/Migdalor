@@ -17,13 +17,13 @@ namespace MigdalorServer.Database
         public virtual DbSet<OhApartment> OhApartments { get; set; } = null!;
         public virtual DbSet<OhBokerTov> OhBokerTovs { get; set; } = null!;
         public virtual DbSet<OhBuilding> OhBuildings { get; set; } = null!;
-        public virtual DbSet<OhBuildingEntrance> OhBuildingEntrances { get; set; } = null!;
         public virtual DbSet<OhCategory> OhCategories { get; set; } = null!;
         public virtual DbSet<OhEvent> OhEvents { get; set; } = null!;
         public virtual DbSet<OhEventInstance> OhEventInstances { get; set; } = null!;
         public virtual DbSet<OhEventRegistration> OhEventRegistrations { get; set; } = null!;
         public virtual DbSet<OhInterest> OhInterests { get; set; } = null!;
         public virtual DbSet<OhListing> OhListings { get; set; } = null!;
+        public virtual DbSet<OhMapNode> OhMapNodes { get; set; } = null!;
         public virtual DbSet<OhNotice> OhNotices { get; set; } = null!;
         public virtual DbSet<OhOpeningHour> OhOpeningHours { get; set; } = null!;
         public virtual DbSet<OhParticipation> OhParticipations { get; set; } = null!;
@@ -89,18 +89,23 @@ namespace MigdalorServer.Database
                     .HasName("PK__OH_Build__5463CDE4F2DE6EB5");
 
                 entity.Property(e => e.BuildingId).ValueGeneratedNever();
-            });
 
-            modelBuilder.Entity<OhBuildingEntrance>(entity =>
-            {
-                entity.HasKey(e => new { e.BuildingId, e.NodeId })
-                    .HasName("PK_BuildingEntrances");
+                entity.HasMany(d => d.Nodes)
+                    .WithMany(p => p.Buildings)
+                    .UsingEntity<Dictionary<string, object>>(
+                        "OhBuildingEntrance",
+                        l => l.HasOne<OhMapNode>().WithMany().HasForeignKey("NodeId").OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_BuildingEntrances_MapNodes"),
+                        r => r.HasOne<OhBuilding>().WithMany().HasForeignKey("BuildingId").OnDelete(DeleteBehavior.ClientSetNull).HasConstraintName("FK_BuildingEntrances_Buildings"),
+                        j =>
+                        {
+                            j.HasKey("BuildingId", "NodeId").HasName("PK_BuildingEntrances");
 
-                entity.HasOne(d => d.Building)
-                    .WithMany(p => p.OhBuildingEntrances)
-                    .HasForeignKey(d => d.BuildingId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_BuildingEntrances_Buildings");
+                            j.ToTable("OH_BuildingEntrances");
+
+                            j.IndexerProperty<Guid>("BuildingId").HasColumnName("BuildingID");
+
+                            j.IndexerProperty<int>("NodeId").HasColumnName("NodeID");
+                        });
             });
 
             modelBuilder.Entity<OhCategory>(entity =>
@@ -162,6 +167,14 @@ namespace MigdalorServer.Database
                     .HasForeignKey(d => d.SellerId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_OH_Listings_Seller");
+            });
+
+            modelBuilder.Entity<OhMapNode>(entity =>
+            {
+                entity.HasKey(e => e.NodeId)
+                    .HasName("PK__OH_MapNo__6BAE224388824ECF");
+
+                entity.Property(e => e.NodeId).ValueGeneratedNever();
             });
 
             modelBuilder.Entity<OhNotice>(entity =>

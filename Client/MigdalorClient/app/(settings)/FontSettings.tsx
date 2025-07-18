@@ -9,7 +9,7 @@ import StyledText from "@/components/StyledText.jsx";
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const CustomSliderTrack = styled(Slider.Track, {
-  backgroundColor: "#00b5d9",
+  backgroundColor: "#e0e0e0"
 });
 
 export default function FontSettingsPage() {
@@ -48,6 +48,7 @@ export default function FontSettingsPage() {
           />
           <View style={{ flex: 1, marginHorizontal: 10 }}>
             <Slider
+              dir="ltr"
               size="$6"
               width="100%"
               min={1}
@@ -61,7 +62,7 @@ export default function FontSettingsPage() {
               onSlideEnd={() => setScrollEnabled(true)}
             >
               <CustomSliderTrack>
-                <Slider.TrackActive />
+                <Slider.TrackActive style={{ backgroundColor: "#00b5d9" }} />
               </CustomSliderTrack>
               <Slider.Thumb circular index={0} />
             </Slider>

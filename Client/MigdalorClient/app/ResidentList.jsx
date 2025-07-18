@@ -7,467 +7,430 @@ import React, {
 } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Dimensions,
   ActivityIndicator,
   TouchableOpacity,
-  Keyboard,
   SafeAreaView,
-  ScrollView,
+  LayoutAnimation,
+  UIManager,
+  Platform,
 } from "react-native";
 
-// Component Imports (ensure paths are correct)
+// Component Imports
 import UserProfileCard from "../components/UserProfileCard";
-import Header from "@/components/Header"; // Assuming path is correct
+import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import FloatingLabelInput from "../components/FloatingLabelInput";
-import SearchAccordion from "@/components/SearchAccordion"; // Assuming path is correct
-import PaginatedListDisplay from "@/components/PaginatedListDisplay"; // Assuming path is correct
+import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import InterestModal from "@/components/InterestSelectionModal";
 import InterestChip from "@/components/InterestChip";
+import StyledText from "@/components/StyledText";
 
 // Icon and Translation Imports
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
 
-// Constants and Globals (ensure path is correct)
+// Constants and Globals
 import { Globals } from "./constants/Globals";
 
-// Constants
+// --- Setup for Layout Animation on Android ---
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// --- Constants ---
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 10;
-const API_BASE_URL = Globals.API_BASE_URL; // Ensure Globals.API_BASE_URL is defined
 
-// --- Component Definition ---
+// --- Memoized Header Component ---
+const ListHeader = React.memo(
+  ({
+    isAccordionOpen,
+    toggleAccordion,
+    searchType,
+    setSearchType,
+    nameInput, // ✅ Now correctly receives the instant input value
+    setNameInput, // ✅ Now correctly receives the instant setter
+    hobbyFilter,
+    clearHobbyFilter,
+    clearNameFilter,
+    setInterestModalVisible,
+    handleSearch,
+  }) => {
+    const { t } = useTranslation();
+
+    return (
+      <>
+        <View style={styles.headerPlaque}>
+          <StyledText style={styles.mainTitle}>
+            {t("ResidentsSearchScreen_title")}
+          </StyledText>
+        </View>
+
+        <View style={styles.accordionContainer}>
+          <TouchableOpacity style={styles.header} onPress={toggleAccordion}>
+            <StyledText style={styles.headerText}>
+              {isAccordionOpen
+                ? t("ResidentSearchScreen_accordionOpen")
+                : t("ResidentSearchScreen_accordionClose")}
+            </StyledText>
+            <Ionicons
+              name={isAccordionOpen ? "chevron-up" : "chevron-down"}
+              size={20}
+              color="#333"
+            />
+          </TouchableOpacity>
+
+          {isAccordionOpen && (
+            <View style={styles.content}>
+              <TouchableOpacity
+                onPress={() =>
+                  setSearchType(searchType === "name" ? "hobby" : "name")
+                }
+                style={styles.searchTypeButton}
+              >
+                <StyledText style={styles.searchTypeText}>
+                  {t("ResidentSearchScreen_searchByLabel")}
+                  <StyledText style={{ fontWeight: "bold" }}>
+                    {searchType === "name"
+                      ? t("ResidentSearchScreen_searchByName")
+                      : t("ResidentSearchScreen_searchByHobby")}
+                  </StyledText>
+                </StyledText>
+              </TouchableOpacity>
+
+              {searchType === "name" ? (
+                <FloatingLabelInput
+                  label={t("ResidentSearchScreen_enterNamePlaceholder")}
+                  value={nameInput} // ✅ Use the instant value
+                  onChangeText={setNameInput} // ✅ Use the instant setter
+                  style={styles.searchInputContainer}
+                />
+              ) : (
+                <>
+                  <FlipButton
+                    onPress={() => setInterestModalVisible(true)}
+                    style={styles.selectButton}
+                  >
+                    <StyledText style={styles.selectButtonText}>
+                      {t("ResidentSearchScreen_selectInterestsButton")}
+                    </StyledText>
+                  </FlipButton>
+                  <View style={styles.chipDisplayArea}>
+                    {hobbyFilter.length > 0 ? (
+                      hobbyFilter.map((name) => (
+                        <InterestChip key={name} mode="display" label={name} />
+                      ))
+                    ) : (
+                      <StyledText style={styles.noFilterText}>
+                        {t("ResidentSearchScreen_noInterestsSelected")}
+                      </StyledText>
+                    )}
+                  </View>
+                </>
+              )}
+              <FlipButton
+                onPress={handleSearch}
+                style={styles.searchSubmitButton}
+              >
+                <View style={styles.buttonContent}>
+                  <Ionicons
+                    name="search"
+                    size={20}
+                    color="white"
+                    style={styles.buttonIcon}
+                  />
+                  <StyledText style={styles.searchButtonText}>
+                    {t("MarketplaceScreen_SearchButton")}
+                  </StyledText>
+                </View>
+              </FlipButton>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.activeFiltersContainer}>
+          {hobbyFilter.length > 0 && (
+            <View style={styles.filterChip}>
+              <StyledText style={styles.filterChipText}>
+                <StyledText style={{ fontWeight: "bold", fontSize: 20 }}>
+                  {t("ResidentList_searchingByHobbies")}
+                </StyledText>
+                {hobbyFilter.join(", ")}
+              </StyledText>
+              <TouchableOpacity
+                onPress={clearHobbyFilter}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close-circle" size={22} color="#6c757d" />
+              </TouchableOpacity>
+            </View>
+          )}
+          {/* ✅ Show the chip based on instant input to feel responsive */}
+          {nameInput.trim().length > 0 && (
+            <View style={styles.filterChip}>
+              <StyledText style={styles.filterChipText}>
+                <StyledText style={{ fontWeight: "bold", fontSize: 20 }}>
+                  {t("ResidentList_searchingByName")}
+                </StyledText>
+                {nameInput}
+              </StyledText>
+              <TouchableOpacity
+                onPress={clearNameFilter}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close-circle" size={22} color="#6c757d" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </>
+    );
+  }
+);
+
+// --- Main Component Definition ---
 export default function ResidentList() {
   const { t } = useTranslation();
   const router = useRouter();
+  const flatListRef = useRef(null);
 
-  // --- State Variables ---
-  const [allUsers, setAllUsers] = useState([]); // Holds ALL fetched users from API
-  const [isLoading, setIsLoading] = useState(true); // For initial data load
-  const [error, setError] = useState(null); // For API fetch errors
-  const [currentPage, setCurrentPage] = useState(1); // For pagination
-  const [searchInput, setSearchInput] = useState(""); // User's current text in search input
-  const [searchType, setSearchType] = useState("name"); // 'name' or 'hobby' for search type
-
-  // Interest based search states
+  const [sourceUsers, setSourceUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [searchType, setSearchType] = useState("name");
+  const [hobbyFilter, setHobbyFilter] = useState([]);
+  const [nameInput, setNameInput] = useState("");
+  const [nameFilter, setNameFilter] = useState("");
   const [isInterestModalVisible, setInterestModalVisible] = useState(false);
-  const [allInterests, setAllInterests] = useState([]); // To hold all possible interests
-  const [filterByInterests, setFilterByInterests] = useState([]); // To hold the selected names for filtering
+  const [allInterests, setAllInterests] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // --- Refs ---
-  const flatListRef = useRef(null); // For scrolling FlatList to top
-
-  // --- Callbacks for Data Fetching ---
-  const fetchAllUsersCallback = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    setAllUsers([]); // Clear previous users before fetching
-    try {
-      const apiUrl = `${API_BASE_URL}/api/People/ActiveDigests`;
-      console.log(`Fetching users from: ${apiUrl}`);
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(
-          `HTTP error ${response.status}: ${response.statusText}. ${errorBody}`
-        );
-      }
-      const data = await response.json();
-      console.log(`API returned ${data?.length ?? 0} users.`);
-      setAllUsers(data || []); // Set fetched users, ensuring it's an array
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-      setError(err.message || "Failed to load users.");
-      // Keep allUsers as empty array on error
-    } finally {
-      setIsLoading(false); // Loading finished
-    }
-  }, []); // No dependencies, API_BASE_URL is from constant
-
-  // --- Effects ---
-  // Fetch users on initial mount
   useEffect(() => {
-    fetchAllUsersCallback();
-  }, [fetchAllUsersCallback]);
+    const timer = setTimeout(() => {
+      setNameFilter(nameInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [nameInput]);
 
-  const initialSelectedNamesForModal = useMemo(
-    () => filterByInterests,
-    [filterByInterests]
+  const fetchUsers = useCallback(
+    async (hobbies = []) => {
+      setIsLoading(true);
+      setError(null);
+      let apiUrl = `${Globals.API_BASE_URL}/api/People/ActiveDigests`;
+      let options = { method: "GET" };
+
+      if (hobbies.length > 0) {
+        apiUrl = `${Globals.API_BASE_URL}/api/People/SearchByInterests`;
+        options = {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(hobbies),
+        };
+      }
+      try {
+        const response = await fetch(apiUrl, options);
+        if (!response.ok) throw new Error(t("ResidentSearchScreen_fetchError"));
+        const data = await response.json();
+        setSourceUsers(data || []);
+      } catch (err) {
+        setError(err.message);
+        setSourceUsers([]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [t]
   );
 
-  // Pulling all the interests !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
   useEffect(() => {
+    fetchUsers();
     const fetchAllInterestsFromDB = async () => {
       try {
         const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
         const data = await response.json();
-        // The API returns an array of strings, we need to convert them to objects
-        // for our filtering logic to work consistently.
         setAllInterests(data ? data.map((name) => ({ name })) : []);
       } catch (err) {
         console.error("Failed to fetch all interests:", err);
       }
     };
     fetchAllInterestsFromDB();
-  }, []);
+  }, [fetchUsers]);
 
-  const handleApplyInterestFilter = ({ selectedNames }) => {
-    setFilterByInterests(selectedNames);
+  const displayedUsers = useMemo(() => {
+    if (!nameFilter.trim()) return sourceUsers;
+    const lowerCaseQuery = nameFilter.trim().toLowerCase();
+    return sourceUsers.filter((user) =>
+      `${user.hebFirstName?.toLowerCase() || ""} ${
+        user.hebLastName?.toLowerCase() || ""
+      }`.includes(lowerCaseQuery)
+    );
+  }, [sourceUsers, nameFilter]);
+
+  const totalPages = Math.ceil(displayedUsers.length / ITEMS_PER_PAGE);
+  const itemsForCurrentPage = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return displayedUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [displayedUsers, currentPage]);
+
+  useEffect(() => {
+    if (currentPage !== 1) setCurrentPage(1);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [nameFilter, hobbyFilter]);
+
+  const toggleAccordion = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsAccordionOpen((prev) => !prev);
+  };
+
+  const handleSelectHobbies = ({ selectedNames }) => {
+    setHobbyFilter(selectedNames);
     setInterestModalVisible(false);
   };
 
-  // --- Filtering Logic (Memoized) ---
-  const filteredUsers = useMemo(() => {
-    const query = searchInput.trim(); // Use live search input
-    const type = searchType;
+  const handleSearch = () => {
+    fetchUsers(hobbyFilter);
+  };
 
-    if (!query) {
-      return allUsers; // Return all if no search query
-    }
+  const clearHobbyFilter = () => {
+    setHobbyFilter([]);
+    fetchUsers([]);
+  };
 
-    const lowerCaseQuery = query.toLowerCase();
+  const clearNameFilter = () => {
+    setNameInput("");
+    setNameFilter("");
+  };
 
-    return allUsers.filter((user) => {
-      if (type === "name") {
-        const hebFirstName = user.hebFirstName?.toLowerCase() || "";
-        const hebLastName = user.hebLastName?.toLowerCase() || "";
-        const engFirstName = user.engFirstName?.toLowerCase() || "";
-        const engLastName = user.engLastName?.toLowerCase() || "";
-        // Check individual names and combined full names
-        return (
-          hebFirstName.includes(lowerCaseQuery) ||
-          hebLastName.includes(lowerCaseQuery) ||
-          engFirstName.includes(lowerCaseQuery) ||
-          engLastName.includes(lowerCaseQuery) ||
-          `${hebFirstName} ${hebLastName}`.trim().includes(lowerCaseQuery) ||
-          `${engFirstName} ${engLastName}`.trim().includes(lowerCaseQuery)
-        );
-      } else if (type === "hobby") {
-        // WARNING: Hobby filtering still requires backend data for `user.hobbies`
-        return (
-          Array.isArray(user.hobbies) &&
-          user.hobbies.some((hobby) =>
-            hobby?.toLowerCase().includes(lowerCaseQuery)
-          )
-        );
-      }
-      return false;
-    });
-  }, [allUsers, searchInput, searchType]); // Re-filter when master list, input, or type changes
-
-  // --- Pagination Calculation ---
-  const totalItems = filteredUsers.length;
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-
-  // Effect to reset page if filters make current page invalid
-  useEffect(() => {
-    const safeTotalPages = Math.max(1, totalPages);
-    if (currentPage > safeTotalPages) {
-      setCurrentPage(safeTotalPages); // Go to last valid page
-    }
-    // No need to reset to 1 if currentPage is 0, as it starts at 1
-  }, [currentPage, totalPages]); // Run when page or total pages change
-
-  // Calculate items for the current page (Memoized)
-  const itemsForCurrentPage = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
-    return filteredUsers.slice(startIndex, endIndex);
-  }, [filteredUsers, currentPage]); // Recalculate when filtered list or page changes
-
-  // --- Callback for Page Changes ---
-  const handlePageChange = useCallback(
-    (newPage) => {
-      const safeTotalPages = Math.max(1, totalPages);
-      if (newPage >= 1 && newPage <= safeTotalPages) {
-        setCurrentPage(newPage);
-        // Scroll to top when page changes
-        flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
-      }
-    },
-    [totalPages] // Dependency: totalPages needed for boundary check
-  );
-
-  // --- Callbacks for Rendering List Items ---
   const renderUserItem = useCallback(
     ({ item }) => (
       <UserProfileCard
         data={item}
-        onPress={() => {
-          router.push({
-            // Example pathname, adjust to your actual route
-            pathname: "/Profile", // Or maybe './ProfileScreen', etc.
-            params: { userId: item.userId }, // Pass userId as a parameter
-          });
-          console.log(`Navigating to profile for user ID: ${item.userId}`);
-        }}
+        onPress={() =>
+          router.push({ pathname: "/Profile", params: { userId: item.userId } })
+        }
       />
     ),
-    [router] // Add router as a dependency
+    [router]
   );
-
-  const keyExtractor = useCallback((item) => item.userId.toString(), []);
-
-  // --- Callbacks for UI Interactions ---
-  const toggleSearchType = useCallback(() => {
-    setSearchType((prevType) => (prevType === "name" ? "hobby" : "name"));
-    setCurrentPage(1); // Reset page when search type changes
-  }, []); // No dependencies
-
-  const handleSearchPress = useCallback(() => {
-    Keyboard.dismiss();
-
-    if (searchType === "hobby") {
-      // If searching by hobby, call our new dedicated function
-      searchByInterests();
-    } else {
-      // If searching by name, the client-side filter handles it automatically.
-      // We don't need to do anything extra here.
-      setCurrentPage(1);
-    }
-  }, [searchType, filterByInterests]);
-
-  // Search by interests ///////////////////////////////////////////////////////////////
-
-  const searchByInterests = async () => {
-    if (filterByInterests.length === 0) {
-      // Fetches the default list if no interests are selected for filtering
-      fetchAllUsersCallback();
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    const apiUrl = `${Globals.API_BASE_URL}/api/People/SearchByInterests`;
-
-    try {
-      const response = await fetch(apiUrl, {
-        method: "POST", // 1. Specify the method is POST
-        headers: {
-          "Content-Type": "application/json", // 2. Set the content type header
-        },
-        // 3. Send the array in the request body as a JSON string
-        body: JSON.stringify(filterByInterests),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = await response.json();
-      setAllUsers(data || []); // Update the user list with the filtered results
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-
-  const handleSearchInputChange = useCallback((text) => {
-    setSearchInput(text); // Update the search input state
-    setCurrentPage(1); // Reset to page 1 on every keystroke for live filtering
-  }, []); // No dependencies
-
-  // --- Component for Empty List State (Memoized) ---
-  const CustomEmptyComponent = useMemo(() => {
-    // Show loading indicator only on initial load
-    if (isLoading && allUsers.length === 0) {
-      return (
-        <ActivityIndicator
-          size="large"
-          color="#0000ff"
-          style={styles.centeredMessage}
-        />
-      );
-    }
-    // Show error if fetching failed
-    if (error) {
-      return (
-        <Text style={[styles.infoText, styles.errorText]}>Error: {error}</Text>
-      );
-    }
-    // Show 'no match' if there's a query but results are empty
-    if (searchInput.trim() && filteredUsers.length === 0) {
-      return (
-        <Text style={styles.infoText}>
-          {t("ResidentSearchScreen_noMatchMessage")}
-        </Text>
-      );
-    }
-    // Show 'no users' if not loading, no query, and master list is empty
-    if (!searchInput.trim() && !isLoading && allUsers.length === 0) {
-      return (
-        <Text style={styles.infoText}>
-          {t("ResidentSearchScreen_noUsersMessage")}
-        </Text>
-      );
-    }
-    // Otherwise, render nothing (FlatList will be empty or show items)
-    return null;
-  }, [isLoading, error, searchInput, allUsers, filteredUsers, t]); // Dependencies for empty state
-
-  // --- Render Component JSX ---
 
   return (
     <SafeAreaView style={styles.container}>
       <Header />
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContentContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* 1. The accordion is at the top of the scrollable area */}
-        <Text style={styles.mainTitle}>{t("ResidentsSearchScreen_title")}</Text>
-        <SearchAccordion
-          headerOpenTextKey="ResidentSearchScreen_accordionOpen"
-          headerClosedTextKey="ResidentSearchScreen_accordionClose"
-          containerStyle={styles.accordionContainer}
-          headerStyle={{
-            justifyContent:
-              Globals.userSelectedDirection === "rtl"
-                ? "flex-end"
-                : "space-between",
-            gap: 10,
-          }}
-        >
-          {/* All your original accordion content goes here */}
-          <TouchableOpacity
-            onPress={toggleSearchType}
-            style={styles.searchTypeButton}
-          >
-            <Text style={styles.searchTypeText}>
-              {t("ResidentSearchScreen_searchByLabel")}
-              <Text style={{ fontWeight: "bold" }}>
-                {searchType === "name"
-                  ? t("ResidentSearchScreen_searchByName")
-                  : t("ResidentSearchScreen_searchByHobby")}
-              </Text>
-            </Text>
-          </TouchableOpacity>
-
-          {searchType === "name" ? (
-            <FloatingLabelInput
-              label={t("ResidentSearchScreen_enterNamePlaceholder")}
-              value={searchInput}
-              onChangeText={handleSearchInputChange}
-              returnKeyType="search"
-              onSubmitEditing={handleSearchPress}
-              style={styles.searchInputContainer}
-              inputStyle={styles.searchInput}
-              alignRight={Globals.userSelectedDirection === "rtl"}
-            />
-          ) : (
-            <View>
-              <FlipButton
-                onPress={() => setInterestModalVisible(true)}
-                style={styles.selectButton}
-              >
-                <Text style={styles.selectButtonText}>
-                  {t("ResidentSearchScreen_selectInterestsButton")}
-                </Text>
-              </FlipButton>
-              <Text style={styles.filterLabel}>
-                {t("ResidentSearchScreen_filteringByLabel")}
-              </Text>
-              <View style={styles.chipDisplayArea}>
-                {filterByInterests.length > 0 ? (
-                  filterByInterests.map((name) => (
-                    <InterestChip key={name} mode="display" label={name} />
-                  ))
-                ) : (
-                  <Text style={styles.noFilterText}>
-                    {t("ResidentSearchScreen_noInterestsSelected")}
-                  </Text>
-                )}
-              </View>
-            </View>
-          )}
-
-          <FlipButton
-            onPress={handleSearchPress}
-            style={styles.searchSubmitButton}
-            bgColor="#007bff"
-            textColor="#fff"
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons
-                name="search"
-                size={20}
-                color="white"
-                style={styles.buttonIcon}
-              />
-              <Text style={styles.searchButtonText}>
-                {t("MarketplaceScreen_SearchButton")}
-              </Text>
-            </View>
-          </FlipButton>
-        </SearchAccordion>
-
-        {/* 2. The resident list is below it */}
+      <View style={styles.centerPagination}>
         <PaginatedListDisplay
+          flatListRef={flatListRef}
           items={itemsForCurrentPage}
           renderItem={renderUserItem}
-          itemKeyExtractor={keyExtractor}
-          isLoading={isLoading && allUsers.length === 0}
-          ListEmptyComponent={CustomEmptyComponent}
+          itemKeyExtractor={(item) => item.userId.toString()}
+          isLoading={isLoading}
+          ListHeaderComponent={
+            <ListHeader
+              isAccordionOpen={isAccordionOpen}
+              toggleAccordion={toggleAccordion}
+              searchType={searchType}
+              setSearchType={setSearchType}
+              nameInput={nameInput} // ✅ Pass the instant state
+              setNameInput={setNameInput} // ✅ Pass the instant setter
+              hobbyFilter={hobbyFilter}
+              clearHobbyFilter={clearHobbyFilter}
+              clearNameFilter={clearNameFilter}
+              setInterestModalVisible={setInterestModalVisible}
+              handleSearch={handleSearch}
+            />
+          }
+          contentContainerStyle={styles.listContentContainer}
+          ListEmptyComponent={
+            !isLoading && (
+              <StyledText style={styles.infoText}>
+                {t("ResidentSearchScreen_noMatchMessage")}
+              </StyledText>
+            )
+          }
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={handlePageChange}
-          listContainerStyle={styles.listContainerStyle}
-          flatListRef={flatListRef}
+          onPageChange={setCurrentPage}
         />
-      </ScrollView>
-
+      </View>
       <InterestModal
         visible={isInterestModalVisible}
         mode="filter"
         allInterests={allInterests}
-        initialSelectedNames={initialSelectedNamesForModal}
+        initialSelectedNames={hobbyFilter}
         onClose={() => setInterestModalVisible(false)}
-        onConfirm={handleApplyInterestFilter}
+        onConfirm={handleSelectHobbies}
       />
     </SafeAreaView>
   );
 }
 
 // --- Styles ---
-// --- Styles ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f7f7f7",
+    backgroundColor: "#f7e7ce",
   },
-  scrollContainer: {
-    width: "100%",
-    marginTop: 60,
-  },
-  scrollContentContainer: {
+  centerPagination: {
     alignItems: "center",
-    paddingBottom: 50, // Ensures space at the very bottom
+    alignSelf: "center",
+    marginTop: 20,
+    // paddingBottom: 50,
+  },
+  headerPlaque: {
+    width: "90%",
+    alignSelf: "center",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginTop: 70,
   },
   mainTitle: {
     fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
-    marginTop: 20, // Adjusted top margin
-    marginBottom: 10,
     color: "#111",
   },
   accordionContainer: {
     width: SCREEN_WIDTH * 0.9,
-    marginVertical: 10,
+    alignSelf: "center",
+    marginVertical: 15,
     backgroundColor: "#fff",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
     overflow: "hidden",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+  },
+  headerText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
+  content: {
+    padding: 15,
+    borderTopWidth: 1,
+    borderColor: "#eee",
   },
   searchTypeButton: {
     paddingVertical: 10,
@@ -475,24 +438,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#e7e7e7",
     borderRadius: 6,
-    marginHorizontal: 15,
-    marginTop: 15,
   },
   searchTypeText: {
     fontSize: 16,
     color: "#333",
   },
   searchInputContainer: {
-    marginHorizontal: 15,
     marginBottom: 10,
   },
-  searchInput: {
-    fontSize: 16,
-    color: "#333",
-  },
   selectButton: {
-    marginHorizontal: 15,
-    marginTop: 15,
     paddingVertical: 12,
   },
   selectButtonText: {
@@ -500,19 +454,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  filterLabel: {
-    marginHorizontal: 15,
-    marginTop: 20,
-    marginBottom: 10,
-    fontSize: 14,
-    color: "#666",
-  },
   chipDisplayArea: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "flex-start",
-    marginHorizontal: 15,
-    marginBottom: 10,
+    marginTop: 10,
     padding: 5,
     backgroundColor: "#f8f8f8",
     borderRadius: 8,
@@ -527,9 +473,8 @@ const styles = StyleSheet.create({
   },
   searchSubmitButton: {
     paddingVertical: 12,
-    marginHorizontal: 15,
-    marginBottom: 15,
-    marginTop: 10,
+    marginTop: 15,
+    backgroundColor: "#007bff",
   },
   buttonContent: {
     flexDirection: "row",
@@ -544,18 +489,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "white",
   },
-  listContainerStyle: {
-    paddingHorizontal: 0,
-    width: "100%",
-    alignItems: "center",
-  },
-  centeredMessage: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-    marginTop: 50,
-  },
   infoText: {
     fontSize: 18,
     color: "#666",
@@ -563,11 +496,26 @@ const styles = StyleSheet.create({
     marginTop: 50,
     paddingHorizontal: 20,
   },
-  errorText: {
-    fontSize: 18,
-    color: "red",
-    textAlign: "center",
-    marginTop: 50,
-    paddingHorizontal: 20,
+  activeFiltersContainer: {
+    width: "90%",
+    alignSelf: "center",
+    flexDirection: "column",
+    gap: 10,
+    marginTop: 15,
+  },
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#e9ecef",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+  },
+  filterChipText: {
+    fontSize: 22,
+    color: "#495057",
+    flexShrink: 1,
+    marginRight: 10,
   },
 });

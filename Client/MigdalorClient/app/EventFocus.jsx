@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ActivityIndicator,
-  Image,
   Alert,
   TouchableOpacity,
   ScrollView,
@@ -17,7 +15,9 @@ import { Globals } from "@/app/constants/Globals";
 import AttendanceDrawer from "@/components/AttendanceDrawer";
 import FlipButton from "@/components/FlipButton";
 import Header from "@/components/Header";
-import { Image as ExpoImage } from "expo-image"; // Use Expo Image for better performance and caching
+import { Image as ExpoImage } from "expo-image";
+import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext.jsx"; // Import useSettings
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
@@ -32,17 +32,27 @@ const formatTime = (dateString) => {
 };
 
 export default function EventFocusScreen() {
-  const { eventId } = useLocalSearchParams();
+  const { eventId: eventIdFromParams } = useLocalSearchParams();
+  const [eventId, setEventId] = useState(null);
   const { i18n, t } = useTranslation();
   const router = useRouter();
+  const { settings } = useSettings(); // Get settings from context
 
   const [currentUserId, setCurrentUserId] = useState(null);
   const [event, setEvent] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const isRtl = i18n.dir() === "rtl";
+
+  useEffect(() => {
+    if (eventIdFromParams) {
+      const numericEventId = parseInt(eventIdFromParams, 10);
+      if (!isNaN(numericEventId)) {
+        setEventId(numericEventId);
+      }
+    }
+  }, [eventIdFromParams]);
 
   useEffect(() => {
     const getUserIdFromStorage = async () => {
@@ -64,16 +74,19 @@ export default function EventFocusScreen() {
 
   const fetchData = useCallback(async () => {
     if (!eventId || !currentUserId) return;
+
     setIsLoading(true);
     try {
       const [eventResponse, participantsResponse] = await Promise.all([
         fetch(`${Globals.API_BASE_URL}/api/events/${eventId}`),
         fetch(`${Globals.API_BASE_URL}/api/events/${eventId}/participants`),
       ]);
+
       if (!eventResponse.ok)
         throw new Error(
           t("Errors_Event_Fetch", "Could not fetch event details.")
         );
+
       const eventData = await eventResponse.json();
       setEvent(eventData);
 
@@ -89,10 +102,10 @@ export default function EventFocusScreen() {
   }, [eventId, currentUserId, t]);
 
   useEffect(() => {
-    if (currentUserId) {
+    if (currentUserId && eventId) {
       fetchData();
     }
-  }, [fetchData, currentUserId]);
+  }, [fetchData, currentUserId, eventId]);
 
   const handleRegister = () => {
     Alert.alert(
@@ -107,11 +120,15 @@ export default function EventFocusScreen() {
           text: t("Common_Register", "Register"),
           onPress: async () => {
             try {
+              const authToken = await AsyncStorage.getItem("jwt");
               const response = await fetch(
                 `${Globals.API_BASE_URL}/api/events/register`,
                 {
                   method: "POST",
-                  headers: { "Content-Type": "application/json" },
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${authToken}`,
+                  },
                   body: JSON.stringify({
                     eventId: event.eventId,
                     participantId: currentUserId,
@@ -134,21 +151,9 @@ export default function EventFocusScreen() {
     );
   };
 
-  const handleMarkAttendance = async (participantId, status) => {
-    Alert.alert(
-      "Attendance",
-      `Marked user as ${status}. (Implementation pending)`
-    );
-  };
-
   const handleHostPress = () => {
-    // This function is now correctly placed before the return statement.
     if (!event?.host?.hostId || event.host.role === "Admin") return;
-
-    // This logic correctly determines where to navigate.
     const pathname = event.isRecurring ? "/InstructorProfile" : "/Profile";
-    //const pathname = "/Profile";
-    //alert(`Navigating to ${pathname} with userId: ${event.host.hostId}`);
     router.push({
       pathname,
       params: { userId: event.host.hostId },
@@ -165,15 +170,14 @@ export default function EventFocusScreen() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
+        <StyledText style={styles.errorText}>{error}</StyledText>
       </View>
     );
   }
-
   if (!event) {
     return (
       <View style={styles.centered}>
-        <Text>{t("Common_NotFound", "Event not found.")}</Text>
+        <StyledText>{t("Common_NotFound", "Event not found.")}</StyledText>
       </View>
     );
   }
@@ -194,6 +198,9 @@ export default function EventFocusScreen() {
     ? { uri: `${Globals.API_BASE_URL}${event.picturePath}` }
     : placeholderImage;
 
+  // NEW: Check for large font setting
+  const isLargeFont = settings.fontSizeMultiplier >= 2;
+
   const DetailRow = ({
     icon,
     label,
@@ -201,51 +208,90 @@ export default function EventFocusScreen() {
     onPress,
     isLink,
     isLast = false,
-  }) => (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={!onPress}
-      style={[
-        styles.detailRow(isLast),
-        { flexDirection: isRtl ? "row-reverse" : "row" },
-      ]}
-    >
-      <Ionicons
-        name={icon}
-        size={24}
-        color="#8c7a6b"
-        style={isRtl ? styles.iconRtl : styles.iconLtr}
-      />
-      <Text style={styles.detailLabel}>{label}:</Text>
-      <Text
+  }) => {
+    // Render a vertical layout for large fonts
+    if (isLargeFont) {
+      return (
+        <TouchableOpacity
+          onPress={onPress}
+          disabled={!onPress}
+          style={[styles.detailColumn(isLast)]}
+        >
+          <View
+            style={[
+              styles.detailHeader,
+              { flexDirection: isRtl ? "row-reverse" : "row" },
+            ]}
+          >
+            <Ionicons
+              name={icon}
+              size={24 * settings.fontSizeMultiplier} // Scale icon with font
+              color="#8c7a6b"
+              style={isRtl ? styles.iconRtl : styles.iconLtr}
+            />
+            <StyledText style={styles.detailLabel}>{label}:</StyledText>
+          </View>
+          <StyledText
+            style={[
+              styles.detailValue,
+              isLink && styles.linkText,
+              styles.detailValueColumn,
+              { textAlign: isRtl ? "right" : "left" },
+            ]}
+          >
+            {value}
+          </StyledText>
+        </TouchableOpacity>
+      );
+    }
+
+    // Original row layout for default font size
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={!onPress}
         style={[
-          styles.detailValue,
-          isLink && styles.linkText,
-          { textAlign: isRtl ? "left" : "right" },
+          styles.detailRow(isLast),
+          { flexDirection: isRtl ? "row-reverse" : "row" },
         ]}
       >
-        {value}
-      </Text>
-    </TouchableOpacity>
-  );
+        <Ionicons
+          name={icon}
+          size={24}
+          color="#8c7a6b"
+          style={isRtl ? styles.iconRtl : styles.iconLtr}
+        />
+        <StyledText style={styles.detailLabel}>{label}:</StyledText>
+        <StyledText
+          style={[
+            styles.detailValue,
+            isLink && styles.linkText,
+            { textAlign: isRtl ? "left" : "right" },
+          ]}
+        >
+          {value}
+        </StyledText>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "#fef1e6" }}>
       <Header />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <ExpoImage source={imageUrl} style={styles.image} contentFit="cover" />
-        <Text style={[styles.title, { textAlign: "center" }]}>
+        <StyledText style={[styles.title, { textAlign: "center" }]}>
           {event.eventName}
-        </Text>
-        <Text style={[styles.description, { textAlign: "center" }]}>
+        </StyledText>
+        <StyledText style={[styles.description, { textAlign: "center" }]}>
           {event.description}
-        </Text>
+        </StyledText>
 
         <View style={styles.detailsContainer}>
           <DetailRow
             icon="calendar-outline"
             label={t("EventFocus_Date", "Date")}
-            value={new Date(event.startDate).toLocaleDateString()}
+            value={new Date(event.startDate).toLocaleDateString("en-GB")}
           />
           <DetailRow
             icon="time-outline"
@@ -285,24 +331,24 @@ export default function EventFocusScreen() {
           <View style={styles.actionContainer}>
             {isCreator && (
               <AttendanceDrawer
-                event={event}
+                eventId={eventId}
                 participants={participants}
                 canMarkAttendance={canMarkAttendance}
-                onMarkAttendance={handleMarkAttendance}
+                isFinalized={event.participationChecked}
               />
             )}
             {!isCreator && (
               <>
                 {remainingSpots > 0 && event.capacity !== null && (
-                  <Text style={styles.spotsAvailableText}>
+                  <StyledText style={styles.spotsAvailableText}>
                     {t("EventFocus_SpacesAvailable", { count: remainingSpots })}
-                  </Text>
+                  </StyledText>
                 )}
                 {isRegistered ? (
                   <View style={styles.statusContainer}>
-                    <Text style={styles.statusText}>
+                    <StyledText style={styles.statusText}>
                       {t("EventFocus_YouAreRegistered", "You are registered!")}
-                    </Text>
+                    </StyledText>
                   </View>
                 ) : isFull ? (
                   <View
@@ -311,9 +357,9 @@ export default function EventFocusScreen() {
                       { backgroundColor: "#f8d7da" },
                     ]}
                   >
-                    <Text style={[styles.statusText, styles.fullText]}>
+                    <StyledText style={[styles.statusText, styles.fullText]}>
                       {t("EventFocus_ActivityFull", "This activity is full.")}
-                    </Text>
+                    </StyledText>
                   </View>
                 ) : (
                   <FlipButton
@@ -322,9 +368,9 @@ export default function EventFocusScreen() {
                     bgColor="#007bff"
                     textColor="#ffffff"
                   >
-                    <Text style={styles.buttonText}>
+                    <StyledText style={styles.buttonText}>
                       {t("Common_Register", "Register")}
-                    </Text>
+                    </StyledText>
                   </FlipButton>
                 )}
               </>
@@ -362,7 +408,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#e0e0e0",
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "bold",
     color: "#333",
     marginBottom: 12,
@@ -390,6 +436,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: isLast ? 0 : 1,
     borderBottomColor: "#f5eadd",
   }),
+  // NEW STYLES FOR VERTICAL LAYOUT
+  detailColumn: (isLast = false) => ({
+    flexDirection: "column",
+    paddingVertical: 12,
+    borderBottomWidth: isLast ? 0 : 1,
+    borderBottomColor: "#f5eadd",
+  }),
+  detailHeader: {
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  detailValueColumn: {
+    paddingHorizontal: 8,
+  },
+  // END NEW STYLES
   iconLtr: {
     marginRight: 15,
     color: "#8c7a6b",
@@ -402,11 +463,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: "#5c4b33",
+    alignSelf: "center",
   },
   detailValue: {
-    fontSize: 18,
+    fontSize: 16,
     color: "#333",
     flex: 1,
+    alignSelf: "center",
   },
   linkText: {
     color: "#007bff",
@@ -418,7 +481,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   registerButton: {
-    paddingVertical: 0,
+    paddingVertical: 10,
     borderRadius: 8,
     marginTop: 10,
     width: "100%",

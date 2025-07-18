@@ -1,22 +1,23 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   ActivityIndicator,
   Dimensions,
   Linking,
+  Alert,
 } from "react-native";
 import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import CommitteeMemberCard from "../components/CommitteeMemberCard";
 import { useTranslation } from "react-i18next";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const fetchCommitteeMembersAPI = async () => {
-  console.log(`Workspaceing committee members...`);
+  console.log(`Fetching committee members...`);
   await new Promise((resolve) => setTimeout(resolve, 600));
   const mockMembers = [
     {
@@ -88,7 +89,7 @@ export default function CommitteePage() {
           console.warn(`Cannot handle URL type MAIL with URL: ${url}`);
           Alert.alert(
             t("MarketplaceItemScreen_CannotHandleContactTitle"),
-            t("MarketplaceItemScreen_CannotHandleContactMsg", { type: type })
+            t("MarketplaceItemScreen_CannotHandleContactMsg", { type: "mail" })
           );
         } else {
           return Linking.openURL(url);
@@ -96,7 +97,7 @@ export default function CommitteePage() {
       })
       .catch((err) => {
         console.error(
-          `An error occurred trying to open ${type} link: ${url}`,
+          `An error occurred trying to open mail link: ${url}`,
           err
         );
         Alert.alert(
@@ -118,11 +119,11 @@ export default function CommitteePage() {
         <FlatList
           ListHeaderComponent={
             <>
-              <Text style={styles.mainTitle}>
+              <StyledText style={styles.mainTitle}>
                 {t("ResidentsCommittePage_title")}
-              </Text>
+              </StyledText>
 
-              <Text style={styles.introParagraph}>{introText}</Text>
+              <StyledText style={styles.introParagraph}>{introText}</StyledText>
 
               <View style={styles.buttonContainer}>
                 <FlipButton
@@ -131,9 +132,9 @@ export default function CommitteePage() {
                   bgColor="#ffffff"
                   textColor="#000000"
                 >
-                  <Text style={styles.contactButtonText}>
+                  <StyledText style={styles.contactButtonText}>
                     {t("ResidentsCommittePage_contact")}
-                  </Text>
+                  </StyledText>
                 </FlipButton>
               </View>
 
@@ -157,9 +158,9 @@ export default function CommitteePage() {
           ItemSeparatorComponent={Separator}
           ListEmptyComponent={
             !isLoading ? (
-              <Text style={styles.emptyListText}>
+              <StyledText style={styles.emptyListText}>
                 {t("ResidentsCommittePage_committeeNotFound")}
-              </Text>
+              </StyledText>
             ) : null
           }
         />
@@ -202,14 +203,13 @@ const styles = StyleSheet.create({
   },
   contactButton: {
     width: SCREEN_WIDTH * 0.6,
-    maxWidth: SCREEN_WIDTH * 0.95,
     maxWidth: 300,
     paddingVertical: 15,
   },
   contactButtonText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#fff",
+    color: "#000", // Changed to black to be visible on white button BG
     textAlign: "center",
   },
   loadingIndicator: {

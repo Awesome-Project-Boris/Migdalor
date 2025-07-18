@@ -1,27 +1,28 @@
 // components/CommitteeMemberCard.jsx
 import React from "react";
-import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
+import { View, Image, StyleSheet, Dimensions } from "react-native";
 import { useTranslation } from "react-i18next";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_IMAGE_WIDTH = SCREEN_WIDTH * 0.7; // Image takes 70% of screen width
+const CARD_IMAGE_WIDTH = SCREEN_WIDTH * 0.7;
 
-// Assuming data structure: { memberId: '...', name: '...', title: '...', photoUrl: '...' }
 function CommitteeMemberCard({ data }) {
   const { t } = useTranslation();
-  // Basic placeholder image if photoUrl is missing
-  const placeholderImage = require("../assets/images/tempItem.jpg"); // ADJUST PATH
+  const placeholderImage = require("../assets/images/tempItem.jpg");
   const imageUrl = data?.photoUrl ? { uri: data.photoUrl } : placeholderImage;
 
   return (
     <View style={styles.cardContainer}>
       <Image source={imageUrl} style={styles.photo} resizeMode="cover" />
-      <Text style={styles.name}>
+      {/* Replaced Text with StyledText */}
+      <StyledText style={styles.name}>
         {data?.name || t("ResidentsCommitte_nameUnavailable")}
-      </Text>
-      <Text style={styles.title}>
+      </StyledText>
+      {/* Replaced Text with StyledText */}
+      <StyledText style={styles.title}>
         {data?.title || t("ResidentsCommitte_titleUnavailable")}
-      </Text>
+      </StyledText>
     </View>
   );
 }

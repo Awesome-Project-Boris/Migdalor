@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
-  Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
@@ -11,6 +10,8 @@ import FlipButton from "./FlipButton";
 import Checkbox from "./CheckBox";
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals";
+import StyledText from "@/components/StyledText.jsx";
+import { useSettings } from "@/context/SettingsContext.jsx";
 
 export default function FilterModal({
   visible,
@@ -20,6 +21,9 @@ export default function FilterModal({
   onApply,
 }) {
   const { t } = useTranslation();
+  const { settings } = useSettings();
+
+  const isLargeFont = settings.fontSizeMultiplier === 3;
 
   const [tempSelectedCategories, setTempSelectedCategories] = useState(
     initialSelectedCategories || []
@@ -54,14 +58,44 @@ export default function FilterModal({
   };
 
   const renderCategoryItem = ({ item: category }) => (
-    <Checkbox
-      text={category}
-      isChecked={tempSelectedCategories.includes(category)}
-      onPress={() => handleToggleCategory(category)}
-      alignRight={Globals.userSelectedDirection === "rtl"}
-      fillColor="#007bff"
-      unFillColor="transparent"
-    />
+    <View style={styles.checkboxItem}>
+      <Checkbox
+        text={category}
+        isChecked={tempSelectedCategories.includes(category)}
+        onPress={() => handleToggleCategory(category)}
+        alignRight={Globals.userSelectedDirection === "rtl"}
+        fillColor="#007bff"
+        unFillColor="transparent"
+      />
+    </View>
+  );
+
+  const ListHeader = () => (
+    <>
+      <StyledText style={styles.modalTitle}>
+        {t("NoticeFilterModal_modalTitle")}
+      </StyledText>
+      <View
+        style={[
+          styles.selectAllContainer,
+          isLargeFont && styles.selectAllContainerVertical,
+        ]}
+      >
+        <TouchableOpacity onPress={handleSelectAll} style={styles.selectButton}>
+          <StyledText style={styles.selectButtonText}>
+            {t("NoticeFilterModal_selectAll")}
+          </StyledText>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handleDeselectAll}
+          style={styles.selectButton}
+        >
+          <StyledText style={styles.selectButtonText}>
+            {t("NoticeFilterModal_deselectAll")}
+          </StyledText>
+        </TouchableOpacity>
+      </View>
+    </>
   );
 
   return (
@@ -73,52 +107,43 @@ export default function FilterModal({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>
-            {t("NoticeFilterModal_modalTitle")}
-          </Text>
-          <View style={styles.selectAllContainer}>
-            <TouchableOpacity
-              onPress={handleSelectAll}
-              style={styles.selectButton}
-            >
-              <Text style={styles.selectButtonText}>
-                {t("NoticeFilterModal_selectAll")}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleDeselectAll}
-              style={styles.selectButton}
-            >
-              <Text style={styles.selectButtonText}>
-                {t("NoticeFilterModal_deselectAll")}
-              </Text>
-            </TouchableOpacity>
-          </View>
           <FlatList
+            ListHeaderComponent={ListHeader}
             data={allCategories}
             renderItem={renderCategoryItem}
             keyExtractor={(item) => item}
             style={styles.list}
-            contentContainerStyle={styles.listContent}
           />
-          <View style={styles.modalActions}>
+
+          <View
+            style={[
+              styles.modalActions,
+              isLargeFont && styles.modalActionsVertical,
+            ]}
+          >
             <FlipButton
               onPress={onClose}
-              style={styles.actionButton}
+              style={[
+                styles.actionButton,
+                isLargeFont && styles.actionButtonVertical,
+              ]}
               bgColor="#ccc"
             >
-              <Text style={styles.actionButtonText}>
+              <StyledText style={styles.actionButtonText}>
                 {t("NoticeFilterModal_cancelButton")}
-              </Text>
+              </StyledText>
             </FlipButton>
             <FlipButton
               onPress={handleApply}
-              style={styles.actionButton}
+              style={[
+                styles.actionButton,
+                isLargeFont && styles.actionButtonVertical,
+              ]}
               bgColor="#007bff"
             >
-              <Text style={styles.actionButtonText}>
+              <StyledText style={styles.actionButtonText}>
                 {t("NoticeFilterModal_applyFilter")}
-              </Text>
+              </StyledText>
             </FlipButton>
           </View>
         </View>
@@ -140,25 +165,33 @@ const styles = StyleSheet.create({
     maxHeight: "80%",
     backgroundColor: "white",
     borderRadius: 15,
-    padding: 20,
-    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    overflow: "hidden",
+    flexDirection: "column",
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
+    textAlign: "center",
+    paddingTop: 20,
+    paddingHorizontal: 20,
     marginBottom: 20,
   },
   selectAllContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-around",
     width: "100%",
     marginBottom: 15,
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
+  },
+  selectAllContainerVertical: {
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 15,
   },
   selectButton: {
     paddingVertical: 8,
@@ -168,24 +201,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#007bff",
     fontWeight: "500",
+    textAlign: "center",
   },
   list: {
     width: "100%",
-    marginBottom: 20,
   },
-  listContent: {
-    paddingBottom: 10,
+  checkboxItem: {
+    paddingHorizontal: 20,
+    paddingVertical: 5, // Increased vertical padding for more spacing
+    alignItems: Globals.userSelectedDirection === "rtl" ? "flex-end" : "flex-start", // Align items to the correct side
   },
   modalActions: {
     flexDirection: "row",
     justifyContent: "space-around",
     width: "100%",
-    marginTop: 10,
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    backgroundColor: "white",
+  },
+  modalActionsVertical: {
+    flexDirection: "column",
+    gap: 12,
+    paddingTop: 15,
+    paddingBottom: 15,
   },
   actionButton: {
     flex: 1,
     marginHorizontal: 10,
     paddingVertical: 12,
+  },
+  actionButtonVertical: {
+    flex: 0,
+    marginHorizontal: 0,
   },
   actionButtonText: {
     fontSize: 16,

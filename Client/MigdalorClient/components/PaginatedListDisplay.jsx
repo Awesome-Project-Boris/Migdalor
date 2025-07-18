@@ -1,7 +1,6 @@
-import React, { useMemo, useCallback, useRef } from "react";
+import React, { useMemo } from "react";
 import {
   View,
-  Text,
   FlatList,
   StyleSheet,
   ActivityIndicator,
@@ -9,6 +8,9 @@ import {
   Dimensions,
 } from "react-native";
 import { useTranslation } from "react-i18next";
+import { Ionicons } from "@expo/vector-icons"; // Import icons
+import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -40,6 +42,10 @@ export default function PaginatedListDisplay({
   flatListRef = null, // Accept optional ref
 }) {
   const { t } = useTranslation();
+  const { settings } = useSettings();
+
+  // Check if the font size is the largest setting
+  const isLargeFont = settings.fontSizeMultiplier === 3;
 
   // Calculate visible page numbers (same logic as before)
   const pagesToShow = useMemo(() => {
@@ -64,7 +70,9 @@ export default function PaginatedListDisplay({
       {isLoading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-        <Text style={styles.infoText}>{t("PaginatedList_noItems")}</Text>
+        <StyledText style={styles.infoText}>
+          {t("PaginatedList_noItems")}
+        </StyledText>
       )}
     </View>
   );
@@ -93,14 +101,19 @@ export default function PaginatedListDisplay({
           <TouchableOpacity
             style={[
               styles.paginationButton,
+              isLargeFont && styles.paginationButtonIcon, // Add specific style for icon layout
               currentPage === 1 && styles.disabledButton,
             ]}
             onPress={() => onPageChange(currentPage - 1)} // Call prop handler
             disabled={currentPage === 1 || isLoading} // Disable if loading
           >
-            <Text style={styles.paginationButtonText}>
-              {t("PaginatedList_PreviousButton")}
-            </Text>
+            {isLargeFont ? (
+              <Ionicons name="chevron-back" size={22} color="#495057" />
+            ) : (
+              <StyledText style={styles.paginationButtonText}>
+                {t("PaginatedList_PreviousButton")}
+              </StyledText>
+            )}
           </TouchableOpacity>
 
           {pagesToShow.map((p) => (
@@ -113,28 +126,33 @@ export default function PaginatedListDisplay({
               onPress={() => onPageChange(p)} // Call prop handler
               disabled={p === currentPage || isLoading} // Disable if loading
             >
-              <Text
+              <StyledText
                 style={[
                   styles.paginationButtonText,
                   p === currentPage && styles.activePaginationButtonText,
                 ]}
               >
                 {p}
-              </Text>
+              </StyledText>
             </TouchableOpacity>
           ))}
 
           <TouchableOpacity
             style={[
               styles.paginationButton,
+              isLargeFont && styles.paginationButtonIcon, // Add specific style for icon layout
               currentPage === totalPages && styles.disabledButton,
             ]}
             onPress={() => onPageChange(currentPage + 1)} // Call prop handler
             disabled={currentPage === totalPages || isLoading} // Disable if loading
           >
-            <Text style={styles.paginationButtonText}>
-              {t("PaginatedList_NextButton")}
-            </Text>
+            {isLargeFont ? (
+              <Ionicons name="chevron-forward" size={22} color="#495057" />
+            ) : (
+              <StyledText style={styles.paginationButtonText}>
+                {t("PaginatedList_NextButton")}
+              </StyledText>
+            )}
           </TouchableOpacity>
         </View>
       )}
@@ -146,10 +164,10 @@ export default function PaginatedListDisplay({
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1, // Allow the component to fill space
+    width: "100%",
   },
   listContainer: {
     paddingBottom: 16,
-    width: SCREEN_WIDTH * 0.95,
   },
   centeredMessage: {
     flex: 1, // Make it take space if list is empty
@@ -180,6 +198,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     minWidth: 40,
     alignItems: "center",
+    justifyContent: "center", // Center content inside button
+  },
+  // New style for buttons when they only contain an icon
+  paginationButtonIcon: {
+    paddingHorizontal: 12,
   },
   paginationButtonText: {
     fontSize: 16,

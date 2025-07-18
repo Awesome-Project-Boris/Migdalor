@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Image,
@@ -9,6 +8,7 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  Dimensions,
 } from "react-native";
 import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -16,12 +16,15 @@ import { Globals } from "@/app/constants/Globals";
 import Header from "@/components/Header";
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
-import { SCREEN_WIDTH } from "@gorhom/bottom-sheet";
-import BouncyButton from "@/components/BouncyButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
 
+// --- Custom Component and Context Imports ---
+import { useSettings } from "@/context/SettingsContext";
+import StyledText from "@/components/StyledText";
+
 const placeholderImage = require("../assets/images/tempItem.jpg");
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const formatPhoneNumberForWhatsApp = (phone) => {
   if (!phone) return null;
@@ -44,6 +47,7 @@ export default function MarketplaceItemScreen() {
   const params = useLocalSearchParams();
   const { listingId } = params;
   const router = useRouter();
+  const { settings } = useSettings();
 
   const [listingDetails, setListingDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,9 +55,10 @@ export default function MarketplaceItemScreen() {
   const [isOwner, setIsOwner] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
 
+  const useColumnLayout = settings.fontSizeMultiplier >= 2.0;
+
   const fetchDetails = useCallback(async () => {
     setError(null);
-    console.log(`Fetching details for listing ID: ${listingId}...`);
     try {
       const response = await fetch(
         `${Globals.API_BASE_URL}/api/Listings/Details/${listingId}`
@@ -71,10 +76,8 @@ export default function MarketplaceItemScreen() {
         );
       }
       const data = await response.json();
-      console.log("Fetched details:", data);
       setListingDetails(data);
     } catch (err) {
-      console.error("Failed to fetch listing details:", err);
       setError(err.message);
       setListingDetails(null);
     } finally {
@@ -84,8 +87,6 @@ export default function MarketplaceItemScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("MarketplaceItemScreen focused, fetching details...");
-
       setIsLoading(true);
       if (listingId) {
         fetchDetails();
@@ -101,78 +102,43 @@ export default function MarketplaceItemScreen() {
       try {
         const storedUserID = await AsyncStorage.getItem("userID");
         if (storedUserID) {
-          console.log(
-            "MarketplaceItemScreen: Fetched UserID from AsyncStorage:",
-            storedUserID
-          );
-          setCurrentUserId(storedUserID);
+          setCurrentUserId(storedUserID.replace(/"/g, ""));
         } else {
-          console.warn(
-            "MarketplaceItemScreen: UserID not found in AsyncStorage."
-          );
           setCurrentUserId(null);
         }
       } catch (e) {
-        console.error(
-          "MarketplaceItemScreen: Failed to fetch userID from storage",
-          e
-        );
         setCurrentUserId(null);
       }
     };
-
     fetchUserId();
   }, []);
 
   useEffect(() => {
     if (listingDetails && currentUserId) {
-      console.log(
-        `Comparing UserID (${currentUserId}) with SellerID (${listingDetails.sellerId})`
-      );
-
-      setIsOwner(
-        String(listingDetails.sellerId).toLowerCase() ===
-          String(currentUserId).toLowerCase()
-      );
+      setIsOwner(String(listingDetails.sellerId) === String(currentUserId));
     } else {
       setIsOwner(false);
     }
   }, [listingDetails, currentUserId]);
 
   const handleImagePress = (imageUriToView, altText = "") => {
-    if (!imageUriToView) {
-      console.log("handleImagePress: No valid imageUri provided.");
-      return;
-    }
-
-    const paramsToPass = {
-      imageUri: imageUriToView,
-      altText: altText,
-    };
-
-    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
-
+    if (!imageUriToView) return;
     router.push({
       pathname: "/ImageViewScreen",
-      params: paramsToPass,
+      params: { imageUri: imageUriToView, altText: altText },
     });
   };
 
   const handleEditListing = () => {
     if (!listingDetails) return;
-    console.log("Navigating to Edit with data:", listingDetails);
     router.push({
       pathname: "/MarketplaceNewItem",
-      params: {
-        mode: "edit",
-        listingData: JSON.stringify(listingDetails),
-      },
+      params: { mode: "edit", listingData: JSON.stringify(listingDetails) },
     });
   };
 
   const handleDeleteListing = async () => {
     if (!listingDetails) return;
-
     Alert.alert(
       t("MarketplaceItemScreen_DeleteConfirmTitle"),
       t("MarketplaceItemScreen_DeleteConfirmMsg"),
@@ -182,19 +148,12 @@ export default function MarketplaceItemScreen() {
           text: t("Common_DeleteButton"),
           style: "destructive",
           onPress: async () => {
-            console.log(
-              `Attempting to delete listing ID: ${listingDetails.listingId}`
-            );
-
             try {
               setIsLoading(true);
               const response = await fetch(
                 `${Globals.API_BASE_URL}/api/Listings/${listingDetails.listingId}`,
-                {
-                  method: "DELETE",
-                }
+                { method: "DELETE" }
               );
-
               if (!response.ok) {
                 let errorMsg = `HTTP error ${response.status}`;
                 try {
@@ -203,14 +162,12 @@ export default function MarketplaceItemScreen() {
                 } catch {}
                 throw new Error(errorMsg);
               }
-
               Toast.show({
                 type: "success",
                 text1: t("MarketplaceItemScreen_DeleteSuccessMsg"),
               });
               router.back();
             } catch (err) {
-              console.error("Failed to delete listing:", err);
               Toast.show({
                 type: "error",
                 text1: t("MarketplaceItemScreen_DeleteErrorMsg"),
@@ -226,10 +183,8 @@ export default function MarketplaceItemScreen() {
 
   const handleContactPress = (type) => {
     if (!listingDetails || !listingDetails.sellerId) return;
-
     let url = "";
     let contactValue = null;
-
     if (type === "email" && listingDetails.sellerEmail) {
       contactValue = listingDetails.sellerEmail;
       url = `mailto:${contactValue}`;
@@ -248,7 +203,6 @@ export default function MarketplaceItemScreen() {
         return;
       }
     }
-
     if (!url || !contactValue) {
       Alert.alert(
         t("MarketplaceItemScreen_ContactNotAvailableTitle"),
@@ -256,11 +210,9 @@ export default function MarketplaceItemScreen() {
       );
       return;
     }
-
     Linking.canOpenURL(url)
       .then((supported) => {
         if (!supported) {
-          console.warn(`Cannot handle URL type: ${type} with URL: ${url}`);
           Alert.alert(
             t("MarketplaceItemScreen_CannotHandleContactTitle"),
             t("MarketplaceItemScreen_CannotHandleContactMsg", { type: type })
@@ -270,10 +222,6 @@ export default function MarketplaceItemScreen() {
         }
       })
       .catch((err) => {
-        console.error(
-          `An error occurred trying to open ${type} link: ${url}`,
-          err
-        );
         Alert.alert(
           t("Common_Error"),
           t("MarketplaceItemScreen_ErrorOpeningLink")
@@ -285,44 +233,44 @@ export default function MarketplaceItemScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />
-        <Text style={styles.loadingText}>
+        <StyledText style={styles.loadingText}>
           {t("MarketplaceItemScreen_Loading")}
-        </Text>
+        </StyledText>
       </View>
     );
   }
   if (error) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor: "#fef1e6" }]}>
         <Header />
-        <Text style={styles.errorText}>{error}</Text>
+        <StyledText style={styles.errorText}>{error}</StyledText>
         <FlipButton
           onPress={() => router.back()}
           style={styles.backButton}
           bgColor="#f8f9fa"
           textColor="#343a40"
         >
-          <Text style={styles.backButtonText}>
+          <StyledText style={styles.backButtonText}>
             {t("Common_BackButtonShort")}
-          </Text>
+          </StyledText>
         </FlipButton>
       </View>
     );
   }
   if (!listingDetails) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { backgroundColor: "#fef1e6" }]}>
         <Header />
-        <Text>{t("MarketplaceItemScreen_NoDetails")}</Text>
+        <StyledText>{t("MarketplaceItemScreen_NoDetails")}</StyledText>
         <FlipButton
           onPress={() => router.back()}
           style={styles.backButton}
           bgColor="#f8f9fa"
           textColor="#343a40"
         >
-          <Text style={styles.backButtonText}>
+          <StyledText style={styles.backButtonText}>
             {t("Common_BackButtonShort")}
-          </Text>
+          </StyledText>
         </FlipButton>
       </View>
     );
@@ -349,16 +297,17 @@ export default function MarketplaceItemScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.contentContainer}>
-          {/* Title, Date ... */}
-          <Text style={styles.title}>{listingDetails.title}</Text>
-          <Text style={styles.dateText}>
+          <View style={styles.plaqueContainer}>
+            <StyledText style={styles.title}>{listingDetails.title}</StyledText>
+          </View>
+          <StyledText style={styles.dateText}>
             {t("MarketplaceItemScreen_PublishedDate")}
             {new Date(listingDetails.date).toLocaleDateString("en-GB")}
-          </Text>
+          </StyledText>
 
-          {/* Images ... */}
-          <View style={styles.imageRow}>
-            {/* Image rendering remains the same */}
+          <View
+            style={[styles.imageRowBase, useColumnLayout && styles.imageColumn]}
+          >
             <TouchableOpacity
               onPress={() =>
                 handleImagePress(
@@ -368,11 +317,16 @@ export default function MarketplaceItemScreen() {
               }
               disabled={!mainImageUrl}
             >
-              <Image source={mainImageSource} style={styles.image} />
+              <Image
+                source={mainImageSource}
+                style={[styles.image, useColumnLayout && styles.largeImage]}
+              />
               {!mainImageUrl && (
-                <Text style={styles.noImageText}>
-                  {t("MarketplaceNewItemScreen_MainImage")}
-                </Text>
+                <View style={styles.noImageOverlay}>
+                  <StyledText style={styles.noImageText}>
+                    {t("MarketplaceNewItemScreen_MainImage")}
+                  </StyledText>
+                </View>
               )}
             </TouchableOpacity>
             {(extraImageUrl || mainImageUrl) && (
@@ -390,27 +344,28 @@ export default function MarketplaceItemScreen() {
                   style={[
                     styles.image,
                     !extraImageUrl && styles.imagePlaceholder,
+                    useColumnLayout && styles.largeImage,
                   ]}
                 />
                 {!extraImageUrl && (
-                  <Text style={styles.noImageText}>
-                    {t("MarketplaceNewItemScreen_ExtraImage")}
-                  </Text>
+                  <View style={styles.noImageOverlay}>
+                    <StyledText style={styles.noImageText}>
+                      {t("MarketplaceNewItemScreen_ExtraImage")}
+                    </StyledText>
+                  </View>
                 )}
               </TouchableOpacity>
             )}
           </View>
 
-          {/* Description ... */}
           {listingDetails.description && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
+              <StyledText style={styles.sectionTitle}>
                 {t("MarketplaceItemScreen_DescriptionTitle")}
-              </Text>
-              <Text
+              </StyledText>
+              <StyledText
                 style={[
                   styles.descriptionText,
-
                   {
                     textAlign: /[\u0590-\u05FF]/.test(
                       listingDetails.description
@@ -421,71 +376,68 @@ export default function MarketplaceItemScreen() {
                 ]}
               >
                 {listingDetails.description}
-              </Text>
+              </StyledText>
             </View>
           )}
 
-          {/* Seller Info & Contact Buttons... */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
+            <StyledText style={styles.sectionTitle}>
               {t("MarketplaceItemScreen_SellerTitle")}
-            </Text>
-            <Text style={styles.sellerText}>{listingDetails.sellerName}</Text>
-            <View style={styles.contactColumn}>
-              {/* Refactored Buttons to use text prop */}
+            </StyledText>
+            <StyledText style={styles.sellerText}>
+              {listingDetails.sellerName}
+            </StyledText>
+            <View
+              style={
+                useColumnLayout
+                  ? styles.contactContainerColumn
+                  : styles.contactContainerRow
+              }
+            >
               {listingDetails.sellerEmail && (
                 <FlipButton
-                  style={[styles.contactButton, styles.emailButton]}
-                  onPress={() => handleContactPress("email")}
+                  style={styles.contactButton}
                   bgColor="#e0f0ff"
                   textColor="#007bff"
+                  onPress={() => handleContactPress("email")}
                 >
-                  <Ionicons
-                    name="mail"
-                    size={28}
-                    color="#007bff"
-                    style={styles.icon}
-                  />
-                  <Text>{t("MarketplaceItemScreen_ContactEmail")}</Text>
+                  <Ionicons name="mail" size={24} color="#007bff" />
+                  <StyledText style={styles.contactButtonText}>
+                    {t("MarketplaceItemScreen_ContactEmail")}
+                  </StyledText>
                 </FlipButton>
               )}
               {listingDetails.sellerPhone && (
                 <FlipButton
-                  style={[styles.contactButton, styles.phoneButton]}
-                  onPress={() => handleContactPress("phone")}
+                  style={styles.contactButton}
                   bgColor="#d4edda"
                   textColor="#155724"
+                  onPress={() => handleContactPress("phone")}
                 >
-                  <Ionicons
-                    name="home"
-                    size={28}
-                    color="#155724"
-                    style={styles.icon}
-                  />
-                  <Text>{t("MarketplaceItemScreen_ContactPhone")}</Text>
+                  <Ionicons name="call" size={24} color="#155724" />
+                  <StyledText style={styles.contactButtonText}>
+                    {t("MarketplaceItemScreen_ContactPhone")}
+                  </StyledText>
                 </FlipButton>
               )}
               {listingDetails.sellerPhone && (
                 <FlipButton
-                  style={[styles.contactButton, styles.whatsappButton]}
-                  onPress={() => handleContactPress("whatsapp")}
+                  style={styles.contactButton}
                   bgColor="#d1f8d1"
                   textColor="#1f9e44"
+                  onPress={() => handleContactPress("whatsapp")}
                 >
-                  <Ionicons
-                    name="logo-whatsapp"
-                    size={28}
-                    color="#1f9e44"
-                    style={styles.icon}
-                  />
-                  <Text>{t("MarketplaceItemScreen_ContactWhatsApp")}</Text>
+                  <Ionicons name="logo-whatsapp" size={24} color="#1f9e44" />
+                  <StyledText style={styles.contactButtonText}>
+                    {t("MarketplaceItemScreen_ContactWhatsApp")}
+                  </StyledText>
                 </FlipButton>
               )}
             </View>
             {!listingDetails.sellerEmail && !listingDetails.sellerPhone && (
-              <Text style={styles.noContactText}>
+              <StyledText style={styles.noContactText}>
                 {t("MarketplaceItemScreen_NoContactInfo")}
-              </Text>
+              </StyledText>
             )}
 
             {isOwner && (
@@ -493,47 +445,35 @@ export default function MarketplaceItemScreen() {
                 <FlipButton
                   onPress={handleEditListing}
                   style={[styles.ownerButton, styles.editButton]}
-                  bgColor="#28a745"
-                  textColor="#fff"
                 >
-                  <Ionicons
-                    name="create-outline"
-                    size={20}
-                    color="#fff"
-                    style={styles.ownerIcon}
-                  />
-                  <Text style={styles.ownerButtonText}>
+                  <Ionicons name="create-outline" size={20} color="#fff" />
+                  <StyledText style={styles.ownerButtonText}>
                     {t("MarketplaceItemScreen_EditButton")}
-                  </Text>
+                  </StyledText>
                 </FlipButton>
                 <FlipButton
                   onPress={handleDeleteListing}
                   style={[styles.ownerButton, styles.deleteButton]}
-                  bgColor="#dc3545"
-                  textColor="#fff"
                 >
-                  <Ionicons
-                    name="trash-outline"
-                    size={20}
-                    color="#fff"
-                    style={styles.ownerIcon}
-                  />
-                  <Text style={styles.ownerButtonText}>
+                  <Ionicons name="trash-outline" size={20} color="#fff" />
+                  <StyledText style={styles.ownerButtonText}>
                     {t("MarketplaceItemScreen_DeleteButton")}
-                  </Text>
+                  </StyledText>
                 </FlipButton>
               </View>
             )}
           </View>
 
-          {/* Refactored Back Button */}
           <FlipButton
-            text={t("Common_BackButtonShort")}
             onPress={() => router.back()}
             style={styles.backButton}
             bgColor="#f8f9fa"
             textColor="#343a40"
-          />
+          >
+            <StyledText style={styles.backButtonText}>
+              {t("Common_BackButtonShort")}
+            </StyledText>
+          </FlipButton>
         </View>
       </ScrollView>
     </>
@@ -543,8 +483,7 @@ export default function MarketplaceItemScreen() {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    backgroundColor: "#f7f7f7",
-    marginTop: 70,
+    backgroundColor: "#fef1e6",
   },
   scrollContent: {
     flexGrow: 1,
@@ -560,23 +499,44 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingVertical: 20,
   },
+  plaqueContainer: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    padding: 20,
+    marginBottom: 8,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginTop: 60,
+  },
   title: {
     fontSize: 30,
     fontWeight: "bold",
-    marginBottom: 8,
     textAlign: "center",
+    lineHeight: 38,
+    color: "#333",
   },
   dateText: {
     fontSize: 15,
     color: "#666",
     textAlign: "center",
     marginBottom: 25,
+    lineHeight: 20,
   },
-  imageRow: {
+  imageRowBase: {
     flexDirection: "row",
     justifyContent: "space-evenly",
     alignItems: "center",
     marginBottom: 30,
+  },
+  imageColumn: {
+    flexDirection: "column",
+    gap: 20,
   },
   image: {
     width: 150,
@@ -586,23 +546,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
   },
+  largeImage: {
+    width: SCREEN_WIDTH * 0.8,
+    height: SCREEN_WIDTH * 0.8,
+  },
   imagePlaceholder: {
     opacity: 0.5,
-    backgroundColor: "#eee",
-    justifyContent: "center",
-    alignItems: "center",
   },
-  noImageText: {
+  noImageOverlay: {
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    textAlign: "center",
-    textAlignVertical: "center",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(238, 238, 238, 0.8)",
+    borderRadius: 10,
+  },
+  noImageText: {
     color: "#888",
     fontWeight: "bold",
     fontSize: 16,
+    textAlign: "center",
   },
   section: {
     marginBottom: 30,
@@ -611,7 +577,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#eee",
-    alignItems: "center",
   },
   sectionTitle: {
     fontSize: 22,
@@ -622,12 +587,12 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     textAlign: "center",
     width: "100%",
+    lineHeight: 28,
   },
   descriptionText: {
     fontSize: 17,
     lineHeight: 26,
     color: "#333",
-    //textAlign: "left",
     alignSelf: "stretch",
   },
   sellerText: {
@@ -636,36 +601,46 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: "#333",
     textAlign: "center",
+    lineHeight: 26,
   },
-  contactColumn: {
-    alignItems: "center",
-    marginTop: 10,
-    width: "100%",
+  contactContainerRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
+    width: "100%",
+  },
+  contactContainerColumn: {
+    flexDirection: "column",
+    alignItems: "center",
+    width: "100%",
   },
   contactButton: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 25,
     borderWidth: 1,
-    width: SCREEN_WIDTH * 0.75,
-    maxWidth: 350,
-    marginVertical: 8,
+    margin: 6,
+    minWidth: 180,
+    width: "90%",
   },
-  emailButton: { backgroundColor: "#e0f0ff", borderColor: "#a0c8ff" },
-  phoneButton: { backgroundColor: "#d4edda", borderColor: "#a3d1a4" },
-  whatsappButton: { backgroundColor: "#d1f8d1", borderColor: "#9ae6b4" },
-
+  contactButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   noContactText: {
     fontSize: 15,
     color: "#777",
     fontStyle: "italic",
     textAlign: "center",
     marginTop: 15,
+    lineHeight: 20,
   },
   backButton: {
-    marginTop: 40,
+    marginTop: 20,
     paddingVertical: 14,
     paddingHorizontal: 25,
     alignSelf: "center",
@@ -675,49 +650,50 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
   },
-
+  backButtonText: {
+    fontWeight: "bold",
+  },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
     color: "#555",
+    lineHeight: 22,
   },
   errorText: {
     color: "red",
     fontSize: 17,
     textAlign: "center",
     marginBottom: 20,
+    lineHeight: 24,
   },
   ownerActionsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-evenly",
+    flexDirection: "column",
+    alignItems: "center",
     marginTop: 20,
-    marginBottom: 20,
-    paddingVertical: 10,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    width: "100%",
   },
   ownerButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
-    paddingHorizontal: 18,
     borderRadius: 8,
-    width: "45%",
-    borderWidth: 1,
+    width: "80%",
+    marginVertical: 8,
   },
   editButton: {
     backgroundColor: "#28a745",
-    borderColor: "#1c7430",
   },
   deleteButton: {
     backgroundColor: "#dc3545",
-    borderColor: "#b02a37",
   },
   ownerButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
-  },
-  ownerIcon: {
-    marginRight: 8,
+    marginLeft: 8,
   },
 });

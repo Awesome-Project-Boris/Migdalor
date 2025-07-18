@@ -82,6 +82,7 @@ namespace MigdalorServer.Controllers
                                              PictureId = e.PictureId,
                                              PicturePath = pg.PicPath, 
                                              IsRecurring = e.IsRecurring,
+                                             ParticipationChecked = e.ParticipationChecked,
                                              StartDate = e.StartDate,
                                              EndDate = e.EndDate,
                                              Capacity = e.Capacity,
@@ -134,42 +135,7 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        // 4. POST: api/events/attendance
-        // CORRECTED: Uses 'OhParticipation' which matches your DbContext.
-        [HttpPost("attendance")]
-        public async Task<IActionResult> UpdateAttendance([FromBody] UpdateAttendanceDto attendanceDto)
-        {
-            try
-            {
-                var attendanceRecord = await _context.OhParticipations
-                    .FirstOrDefaultAsync(a => a.EventId == attendanceDto.InstanceId && a.ParticipantId == attendanceDto.ParticipantId);
-
-                if (attendanceRecord != null)
-                {
-                    attendanceRecord.Status = attendanceDto.Status;
-                }
-                else
-                {
-                    // Use the correct class name 'OhParticipation' from the generated model.
-                    var newRecord = new OhParticipation
-                    {
-                        EventId = attendanceDto.InstanceId,
-                        ParticipantId = attendanceDto.ParticipantId,
-                        Status = attendanceDto.Status,
-                        RegistrationTime = DateTime.UtcNow
-                    };
-                    _context.OhParticipations.Add(newRecord);
-                }
-
-                await _context.SaveChangesAsync();
-                return Ok("Attendance updated successfully.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, $"Error updating attendance: {ex.Message}");
-            }
-        }
-
+        
         // 5. GET: api/events/host/{hostId}
         // Pulls all events hosted by a specific person
         [HttpGet("host/{hostId}")]
@@ -269,5 +235,37 @@ namespace MigdalorServer.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        [HttpPost("{eventId}/mark-checked")]
+        [Authorize]
+        public async Task<IActionResult> MarkParticipationAsChecked(int eventId)
+        {
+            try
+            {
+                var eventToUpdate = await _context.OhEvents.FindAsync(eventId);
+
+                if (eventToUpdate == null)
+                {
+                    return NotFound("Event not found.");
+                }
+
+                // --- FIX: Toggle the boolean value ---
+                eventToUpdate.ParticipationChecked = !eventToUpdate.ParticipationChecked;
+                await _context.SaveChangesAsync();
+
+                // Return a clear message and the new status
+                var message = eventToUpdate.ParticipationChecked
+                    ? "Event participation has been successfully marked as checked."
+                    : "Event participation marking has been reopened.";
+
+                return Ok(new { message, isChecked = eventToUpdate.ParticipationChecked });
+            }
+            catch (Exception ex)
+            {
+                // In a real app, you would log the exception ex
+                return StatusCode(StatusCodes.Status500InternalServerError, "An internal server error occurred.");
+            }
+        }
+
     }
 }

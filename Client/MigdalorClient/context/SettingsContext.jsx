@@ -42,7 +42,7 @@ export const SettingsProvider = ({ children }) => {
         if (loadedSettings.language) {
             await i18n.changeLanguage(loadedSettings.language);
             Globals.userSelectedLanguage = loadedSettings.language;
-            Globals.userSelectedDirection = loadedSettings.language === 'he' ? 'rtl' : 'ltr';
+            Globals.userSelectedDirection = loadedSettings.language === "he" ? 'rtl' : 'ltr';
         }
 
       } catch (e) {
@@ -69,7 +69,7 @@ export const SettingsProvider = ({ children }) => {
           await AsyncStorage.setItem(LANGUAGE_KEY, value);
           await i18n.changeLanguage(value);
           Globals.userSelectedLanguage = value;
-          Globals.userSelectedDirection = value === 'he' ? 'rtl' : 'ltr';
+          Globals.userSelectedDirection = value === "he" ? 'rtl' : 'ltr';
           break;
         case 'notificationSetting':
           await AsyncStorage.setItem(NOTIFICATION_KEY, value);

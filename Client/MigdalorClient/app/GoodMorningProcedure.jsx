@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Image,
   Animated,
   Easing,
   ActivityIndicator,
+  ScrollView, // Import ScrollView
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,8 +15,8 @@ import { Toast } from "toastify-react-native";
 import { Globals } from "./constants/Globals";
 import FlipButton from "../components/FlipButton";
 import Header from "@/components/Header";
+import StyledText from "@/components/StyledText";
 
-// Assuming sun.png is in assets/images
 const sunImage = require("../assets/images/sun.png");
 
 export default function GoodMorningProcedure() {
@@ -28,7 +28,6 @@ export default function GoodMorningProcedure() {
   const [isSpouseSignedIn, setIsSpouseSignedIn] = useState(false);
   const [userId, setUserId] = useState(null);
 
-  // Animation value
   const sunAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -40,31 +39,21 @@ export default function GoodMorningProcedure() {
     }).start();
 
     const fetchUserData = async () => {
+      // ... (fetchUserData logic remains the same)
       try {
         const storedToken = await AsyncStorage.getItem("jwt");
         const storedUserId = await AsyncStorage.getItem("userID");
 
         if (!storedToken || !storedUserId) {
-          Toast.show({
-            type: "error",
-            text1: t("Common_Error"),
-            text2: "Authentication session not found.",
-          });
           router.replace("/LoginScreen");
           return;
         }
 
         setUserId(storedUserId);
-        console.log("THIS IS USER ID: ", userId);
 
         const response = await fetch(
           `${Globals.API_BASE_URL}/api/People/details/${storedUserId}`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
+          { headers: { "Content-Type": "application/json" } }
         );
 
         if (!response.ok) throw new Error(await response.text());
@@ -85,6 +74,7 @@ export default function GoodMorningProcedure() {
   }, [sunAnimation]);
 
   const handleSignIn = async (includeSpouse) => {
+    // ... (handleSignIn logic remains the same)
     setIsLoading(true);
     try {
       const storedToken = await AsyncStorage.getItem("jwt");
@@ -108,7 +98,6 @@ export default function GoodMorningProcedure() {
 
       if (!response.ok) throw new Error(await response.text());
 
-      // Update state to disable buttons based on the action
       setIsPrimarySignedIn(true);
       if (includeSpouse) {
         setIsSpouseSignedIn(true);
@@ -119,7 +108,6 @@ export default function GoodMorningProcedure() {
         text1: t("GoodMorning_signInSuccessTitle"),
         text2: t("GoodMorning_signInSuccessMessage"),
         position: "top",
-        visibilityTime: 4000,
       });
     } catch (error) {
       Toast.show({
@@ -127,7 +115,6 @@ export default function GoodMorningProcedure() {
         text1: t("Common_Error"),
         text2: error.message,
         position: "top",
-        visibilityTime: 5000,
       });
     } finally {
       setIsLoading(false);
@@ -144,9 +131,9 @@ export default function GoodMorningProcedure() {
   });
 
   return (
-    <>
+    <View style={styles.rootContainer}>
       <Header />
-      <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Animated.View
           style={[
             styles.sunContainer,
@@ -157,7 +144,7 @@ export default function GoodMorningProcedure() {
         </Animated.View>
 
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{t("GoodMorning_title")}</Text>
+          <StyledText style={styles.title}>{t("GoodMorning_title")}</StyledText>
         </View>
 
         {isLoading ? (
@@ -166,45 +153,51 @@ export default function GoodMorningProcedure() {
           <View style={styles.buttonContainer}>
             <FlipButton
               onPress={() => handleSignIn(false)}
-              disabled={isPrimarySignedIn || isLoading} // Only disabled if primary is signed in
+              disabled={isPrimarySignedIn || isLoading}
               style={styles.button}
               bgColor="#fbbf24"
               textColor="black"
             >
-              <Text style={styles.buttonText}>{t("GoodMorning_signInMe")}</Text>
+              <StyledText style={styles.buttonText}>
+                {t("GoodMorning_signInMe")}
+              </StyledText>
             </FlipButton>
 
             {hasSpouse && (
               <FlipButton
                 onPress={() => handleSignIn(true)}
-                disabled={isSpouseSignedIn || isLoading} // CORRECTED: Only disabled if spouse is signed in
+                disabled={isSpouseSignedIn || isLoading}
                 style={styles.button}
                 bgColor="#fca5a5"
                 textColor="black"
               >
-                <Text style={styles.buttonText}>
+                <StyledText style={styles.buttonText}>
                   {t("GoodMorning_signInBoth")}
-                </Text>
+                </StyledText>
               </FlipButton>
             )}
           </View>
         )}
-      </View>
-    </>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  rootContainer: {
     flex: 1,
     backgroundColor: "#87CEEB",
+  },
+  scrollContainer: {
+    flexGrow: 1, // Ensures the container can grow
     alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 80,
+    justifyContent: "space-around", // Distributes elements vertically
+    paddingVertical: 40,
+    paddingTop: 80, // Added padding to account for the header
   },
   sunContainer: {
-    position: "absolute",
-    top: "20%",
+    // Removed absolute positioning
+    alignItems: "center",
   },
   sun: {
     width: 200,
@@ -212,24 +205,25 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   titleContainer: {
-    position: "absolute",
-    top: "50%",
+    // Removed absolute positioning
     alignItems: "center",
+    marginVertical: 20, // Added space around the title
   },
   title: {
     fontSize: 32,
     fontWeight: "bold",
     color: "white",
+    textAlign: "center", // Ensures text is centered if it wraps
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   buttonContainer: {
-    position: "absolute",
-    bottom: 80,
+    // Removed absolute positioning
     width: "100%",
     alignItems: "center",
     gap: 20,
+    marginTop: 20, // Added space above buttons
   },
   button: {
     width: "80%",

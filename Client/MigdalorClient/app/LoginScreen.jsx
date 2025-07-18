@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Platform,
@@ -21,6 +20,7 @@ import { Globals } from "./constants/Globals";
 import { router, Stack } from "expo-router";
 import { useAuth } from "@/context/AuthProvider";
 import { useTranslation } from "react-i18next";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 const LoginScreen = () => {
   const { t } = useTranslation();
@@ -105,10 +105,10 @@ const LoginScreen = () => {
                     flipborderwidth={5}
                     disabled={loginLoading}
                   >
-                    <XStack gap={5} style={{ paddingStart: 15 }}>
-                      <Text style={styles.loginButtonText}>
+                    <XStack gap={5} alignItems="center" style={{ paddingStart: 15 }}>
+                      <StyledText style={styles.loginButtonText}>
                         {t("LoginScreen_loginButton")}
-                      </Text>
+                      </StyledText>
                       {loginLoading ? (
                         <ActivityIndicator size="large" />
                       ) : (

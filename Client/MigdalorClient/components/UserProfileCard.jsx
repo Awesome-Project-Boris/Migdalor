@@ -1,17 +1,15 @@
-// components/UserProfileCard.jsx
-import React, { useMemo} from "react";
+import React, { useMemo } from "react";
 import {
   View,
-  Text,
   Image,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-} from "react-native";
+} from "react-native"; // 'Text' import removed
 import BouncyButton from "./BouncyButton";
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals";
-
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const API_BASE_URL = Globals.API_BASE_URL;
@@ -19,7 +17,7 @@ const API_BASE_URL = Globals.API_BASE_URL;
 // Assuming data structure: { userId: '...', name: '...', photoUrl: '...' }
 function UserProfileCard({ data, onPress }) {
   const { t } = useTranslation();
-  
+
   // Basic placeholder image if photoUrl is missing
   const placeholderImage = require("../assets/images/tempItem.jpg");
 
@@ -28,14 +26,14 @@ function UserProfileCard({ data, onPress }) {
     if (data?.photoUrl) {
       // data.photoUrl now contains the relative path like "path/to/image.jpg"
       // Prepend the base URL
-      const relativePath = data.photoUrl.startsWith('/')
-                           ? data.photoUrl.substring(1) // Avoid double slash if path starts with /
-                           : data.photoUrl;
+      const relativePath = data.photoUrl.startsWith("/")
+        ? data.photoUrl.substring(1) // Avoid double slash if path starts with /
+        : data.photoUrl;
       return { uri: `${API_BASE_URL}/${relativePath}` }; // Combine base URL and relative path
     } else {
       return placeholderImage; // Use placeholder if no relative path provided
     }
-  }, [data?.photoUrl]); 
+  }, [data?.photoUrl]);
 
   const displayName = useMemo(() => {
     const engFirst = data?.engFirstName?.trim();
@@ -51,6 +49,9 @@ function UserProfileCard({ data, onPress }) {
       return t("UserProfileCard_unnamedUser");
     }
   }, [data, t]);
+  
+  // Logic to determine how text should wrap or shrink
+  const isSingleWord = !displayName?.trim().includes(" ");
 
   return (
     <BouncyButton
@@ -60,11 +61,22 @@ function UserProfileCard({ data, onPress }) {
       onPress={onPress}
     >
       {/* Image source now uses the dynamically constructed full URL or placeholder */}
-      <Image source={imageUrl} style={styles.photo} onError={(e) => console.log(`Failed to load image: ${imageUrl?.uri}`, e.nativeEvent.error)} />
+      <Image
+        source={imageUrl}
+        style={styles.photo}
+        onError={(e) =>
+          console.log(`Failed to load image: ${imageUrl?.uri}`, e.nativeEvent.error)
+        }
+      />
       <View style={styles.infoContainer}>
-        <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
-             {displayName}
-        </Text>
+        <StyledText
+          style={styles.name}
+          numberOfLines={isSingleWord ? 1 : 0}
+          adjustsFontSizeToFit={isSingleWord}
+          ellipsizeMode="tail"
+        >
+          {displayName}
+        </StyledText>
       </View>
     </BouncyButton>
   );

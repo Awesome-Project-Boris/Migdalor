@@ -6,7 +6,7 @@ import BottomSheet, {
 import { View, StyleSheet, Dimensions, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FlipButton from "./FlipButton";
+import FlipButtonSizeless from "./FlipButtonSizeless";
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
 import { Link, usePathname, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -71,7 +71,7 @@ export const BottomSheetProvider = ({ children }) => {
         <BottomSheetView style={styles.sheetContent}>
           {/* Row 1 */}
           <View style={styles.row}>
-            <FlipButton
+            <FlipButtonSizeless
               style={styles.button}
               onPress={() => {
                 router.navigate("/");
@@ -91,9 +91,9 @@ export const BottomSheetProvider = ({ children }) => {
               <Text style={styles.buttonText}>
                 {t("SettingsPopup_HomeButton")}
               </Text>
-            </FlipButton>
+            </FlipButtonSizeless>
 
-            <FlipButton
+            <FlipButtonSizeless
               style={styles.button}
               onPress={() => {
                 router.replace("/FontSettings");
@@ -113,12 +113,12 @@ export const BottomSheetProvider = ({ children }) => {
               <Text style={styles.buttonText}>
                 {t("SettingsPopup_SettingsButton")}
               </Text>
-            </FlipButton>
+            </FlipButtonSizeless>
           </View>
 
           {/* Row 2 */}
           <View style={styles.row}>
-            <FlipButton
+            <FlipButtonSizeless
               style={styles.button}
               onPress={handleProfileNavigation}
               bgColor={styles.button.backgroundColor}
@@ -134,11 +134,11 @@ export const BottomSheetProvider = ({ children }) => {
               <Text style={styles.buttonText}>
                 {t("SettingsPopup_ProfileButton")}
               </Text>
-            </FlipButton>
+            </FlipButtonSizeless>
 
             {/* The "Change Layout" button will now only appear for non-instructors on the MainMenu screen. */}
             {pathname === "/MainMenu" && user?.personRole !== "Instructor" && (
-              <FlipButton
+              <FlipButtonSizeless
                 style={styles.button}
                 onPress={() => {
                   setEditing(true);
@@ -157,7 +157,7 @@ export const BottomSheetProvider = ({ children }) => {
                 <Text style={styles.buttonText}>
                   {t("SettingsPopup_ChangeLayoutButton")}
                 </Text>
-              </FlipButton>
+              </FlipButtonSizeless>
             )}
           </View>
         </BottomSheetView>
