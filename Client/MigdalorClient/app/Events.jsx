@@ -20,10 +20,12 @@ import { Globals } from "@/app/constants/Globals";
 import FlipButton from "@/components/FlipButton";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import StyledText from "@/components/StyledText"; // Import StyledText
+import { useSettings } from "@/context/SettingsContext.jsx";
 
 export default function Events() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { settings } = useSettings();
 
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -37,6 +39,16 @@ export default function Events() {
   const [newDate, setNewDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState('date');
+
+  const checkboxBaseSize = 24;
+  const dynamicCheckboxStyle = {
+    height: checkboxBaseSize * settings.fontSizeMultiplier,
+    width: checkboxBaseSize * settings.fontSizeMultiplier,
+  };
+  const dynamicCheckboxInnerStyle = {
+    height: (checkboxBaseSize / 2) * settings.fontSizeMultiplier,
+    width: (checkboxBaseSize / 2) * settings.fontSizeMultiplier,
+  };
 
   const fetchInstructorEvents = useCallback(async () => {
     if (!user) return;
@@ -222,18 +234,14 @@ export default function Events() {
             <View style={styles.formContainer}>
                 <View style={{ flexDirection: Globals.userSelectedDirection === 'rtl' ? 'row-reverse' : 'row', alignItems: 'center' }}>
                   <TouchableOpacity
-                    style={[
-                        styles.checkbox,
-                        {
-                            marginLeft: Globals.userSelectedDirection === 'rtl' ? 10 : 0,
-                            marginRight: Globals.userSelectedDirection === 'rtl' ? 0 : 10,
-                        }
-                    ]}
+                    style={[styles.checkbox, dynamicCheckboxStyle]} 
                     onPress={() => setIsRescheduling(!isRescheduling)}
-                >
-                    {isRescheduling && <View style={styles.checkboxInner} />}
-                </TouchableOpacity>
-                  <StyledText>{t("Events_MoveMeeting")}</StyledText>
+                  >
+                    {isRescheduling && <View style={[styles.checkboxInner, dynamicCheckboxInnerStyle]} />} 
+                  </TouchableOpacity>
+                  <StyledText style={styles.checkboxLabel}>
+                    {t("Events_MoveMeeting")}
+                  </StyledText>
                 </View>
 
                 {isRescheduling && (
@@ -267,7 +275,7 @@ export default function Events() {
                   {isRescheduling ? t("Events_Reason_for_Move") : t("Events_Reason_for_Cancellation")}
                 </StyledText>
                 <TextInput
-                    style={styles.input}
+                    style={[styles.input, { fontSize: 16 * settings.fontSizeMultiplier }]}
                     placeholder={t("Events_DescriptionPlaceholder")}
                     value={notes}
                     onChangeText={setNotes}
@@ -300,9 +308,23 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, minHeight: 100, backgroundColor: '#f9f9f9', fontSize: 16, textAlignVertical: 'top' },
   actionButton: { marginTop: 20, paddingVertical: 15 },
   buttonText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  checkbox: { 
+    borderRadius: 4, 
+    borderWidth: 2, 
+    borderColor: '#007aff', 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
   checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
-  checkbox: { height: 24, width: 24, borderRadius: 4, borderWidth: 2, borderColor: '#007aff', alignItems: 'center', justifyContent: 'center' },
-  checkboxInner: { height: 12, width: 12, borderRadius: 2, backgroundColor: '#007aff' },
+  checkboxInner: { 
+    borderRadius: 2, 
+    backgroundColor: '#007aff' 
+  },
+  checkboxLabel: {
+    fontSize: 18, 
+    fontWeight: '600',
+    flexShrink: 1, 
+  },
   datePickerRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 15 },
   dateButton: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 15, alignItems: 'center', flex: 1, marginHorizontal: 5 },
   dateButtonText: { fontSize: 16 },
