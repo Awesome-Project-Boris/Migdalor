@@ -407,7 +407,7 @@ namespace MigdalorServer.Controllers
 
         // POST: api/events/admin
         [HttpPost("admin")]
-        [Authorize(Roles = "Admin")] // Example authorization
+        //[Authorize(Roles = "admin")] // Example authorization
         public async Task<ActionResult<OhEvent>> CreateEventForAdmin([FromBody] AdminCreateEventDto createDto)
         {
             if (!ModelState.IsValid)
@@ -437,7 +437,7 @@ namespace MigdalorServer.Controllers
 
         // PUT: api/events/admin/{id}
         [HttpPut("admin/{id}")]
-        [Authorize(Roles = "Admin")] // Example authorization
+        [Authorize(Roles = "admin")] // Example authorization
         public async Task<IActionResult> UpdateEventForAdmin(int id, [FromBody] AdminUpdateEventDto updateDto)
         {
             var eventToUpdate = await _context.OhEvents.FindAsync(id);
@@ -478,7 +478,7 @@ namespace MigdalorServer.Controllers
 
         // DELETE: api/events/admin/{id}
         [HttpDelete("admin/{id}")]
-        [Authorize(Roles = "Admin")] // Example authorization
+        [Authorize(Roles = "admin")] // Example authorization
         public async Task<IActionResult> DeleteEventForAdmin(int id)
         {
             var ohEvent = await _context.OhEvents.FindAsync(id);

@@ -5,6 +5,19 @@ import CheckboxField from "../../components/common/CheckboxField";
 import RRuleGenerator from "./RRuleGenerator";
 import { useAuth } from "../../auth/AuthContext";
 
+// Helper function to convert UTC date strings to local datetime-local input format
+const convertToInputFormat = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  // Adjust for the timezone offset to get the correct local time
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 const EventModal = ({ isOpen, onClose, onSave, event, eventType }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({});
@@ -18,8 +31,12 @@ const EventModal = ({ isOpen, onClose, onSave, event, eventType }) => {
     : eventType;
 
   useEffect(() => {
+    // This function now correctly populates the form for both creating and editing events.
     const getInitialFormData = () => {
       if (isEditMode) {
+        // When editing, use the detailed 'event' object passed in props.
+        // This object is fetched from the server in the parent component.
+        console.log("Editing event. Full data received:", event);
         return {
           EventName: event.eventName || "",
           Description: event.description || "",
@@ -27,15 +44,12 @@ const EventModal = ({ isOpen, onClose, onSave, event, eventType }) => {
           Capacity: event.capacity || 0,
           IsRecurring: event.isRecurring || false,
           RecurrenceRule: event.recurrenceRule || "",
-          StartDate: event.startDate
-            ? new Date(event.startDate).toISOString().slice(0, 16)
-            : "",
-          EndDate: event.endDate
-            ? new Date(event.endDate).toISOString().slice(0, 16)
-            : "",
-          HostId: event.hostId || user.id, // Keep existing host or use current admin
+          StartDate: convertToInputFormat(event.startDate),
+          EndDate: convertToInputFormat(event.endDate),
+          HostId: event.host?.hostId || user.id, // Correctly access nested hostId
         };
       } else {
+        // When creating a new event, return a blank form.
         return {
           EventName: "",
           Description: "",
@@ -46,7 +60,7 @@ const EventModal = ({ isOpen, onClose, onSave, event, eventType }) => {
             currentEventType === "class" ? "FREQ=WEEKLY;INTERVAL=1" : "",
           StartDate: "",
           EndDate: "",
-          HostId: user.id, // Assign current admin as host for new events
+          HostId: user.id, // Default to the current user as the host
         };
       }
     };
@@ -72,24 +86,23 @@ const EventModal = ({ isOpen, onClose, onSave, event, eventType }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Convert capacity to a number
     const finalFormData = {
       ...formData,
       Capacity: Number(formData.Capacity) || 0,
     };
 
     try {
-      await onSave(finalFormData, isEditMode ? event.eventID : null);
+      await onSave(finalFormData, isEditMode ? event.eventId : null);
       handleClose();
     } catch (error) {
-      // Parent component handles the toast
+      // The parent component (EventManagement) is responsible for showing error toasts.
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    setFormData({}); // Clear form data on close
+    setFormData({}); // Clear form data on close to prevent stale data
     onClose();
   };
 
@@ -143,6 +156,13 @@ const EventModal = ({ isOpen, onClose, onSave, event, eventType }) => {
               value={formData.StartDate || ""}
               onChange={handleChange}
               required
+            />
+            <InputField
+              label="תאריך סיום"
+              name="EndDate"
+              type="datetime-local"
+              value={formData.EndDate || ""}
+              onChange={handleChange}
             />
           </div>
 

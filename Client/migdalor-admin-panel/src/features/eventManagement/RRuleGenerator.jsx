@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 /**
  * A GUI for building iCalendar RRULE strings.
@@ -10,7 +10,7 @@ const RRuleGenerator = ({ value, onChange }) => {
   const [freq, setFreq] = useState("WEEKLY");
   const [interval, setInterval] = useState(1);
   const [byDay, setByDay] = useState([]);
-  const [endCondition, setEndCondition] = useState("never");
+  const [endCondition, setEndCondition] = useState("never"); // 'never', 'on', 'after'
   const [until, setUntil] = useState("");
   const [count, setCount] = useState(10);
 
@@ -24,8 +24,53 @@ const RRuleGenerator = ({ value, onChange }) => {
     { label: "שבת", value: "SA", short: "ש" },
   ];
 
-  // This effect constructs the RRULE string whenever a setting changes
+  // This effect parses the incoming RRULE string to set the component's state
   useEffect(() => {
+    if (!value) {
+      // If no value, reset to a default state
+      setFreq("WEEKLY");
+      setInterval(1);
+      setByDay([]);
+      setEndCondition("never");
+      setUntil("");
+      setCount(10);
+      return;
+    }
+
+    const parts = value.split(";");
+    const rule = parts.reduce((acc, part) => {
+      const [key, val] = part.split("=");
+      if (key && val) {
+        acc[key.toUpperCase()] = val;
+      }
+      return acc;
+    }, {});
+
+    setFreq(rule.FREQ || "WEEKLY");
+    setInterval(parseInt(rule.INTERVAL, 10) || 1);
+    setByDay(rule.BYDAY ? rule.BYDAY.split(",") : []);
+
+    if (rule.UNTIL) {
+      setEndCondition("on");
+      // Convert iCalendar UTC format (YYYYMMDDTHHMMSSZ) to YYYY-MM-DD for the date input
+      const y = rule.UNTIL.substring(0, 4);
+      const m = rule.UNTIL.substring(4, 6);
+      const d = rule.UNTIL.substring(6, 8);
+      setUntil(`${y}-${m}-${d}`);
+      setCount(10); // Reset count when until is present
+    } else if (rule.COUNT) {
+      setEndCondition("after");
+      setCount(parseInt(rule.COUNT, 10));
+      setUntil(""); // Reset until when count is present
+    } else {
+      setEndCondition("never");
+      setUntil("");
+      setCount(10);
+    }
+  }, [value]);
+
+  // This effect constructs the RRULE string whenever a setting changes
+  const buildRuleString = useCallback(() => {
     let rule = `FREQ=${freq}`;
     if (interval > 1) {
       rule += `;INTERVAL=${interval}`;
@@ -34,14 +79,23 @@ const RRuleGenerator = ({ value, onChange }) => {
       rule += `;BYDAY=${byDay.join(",")}`;
     }
     if (endCondition === "on" && until) {
-      const utcDate =
-        new Date(until).toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
-      rule += `;UNTIL=${utcDate}`;
+      // Convert YYYY-MM-DD to iCalendar UTC format (YYYYMMDDTHHMMSSZ)
+      const date = new Date(until);
+      const utcDate = new Date(
+        date.getTime() + date.getTimezoneOffset() * 60000
+      );
+      const formattedDate =
+        utcDate.toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
+      rule += `;UNTIL=${formattedDate}`;
     } else if (endCondition === "after" && count > 0) {
       rule += `;COUNT=${count}`;
     }
     onChange(rule);
   }, [freq, interval, byDay, endCondition, until, count, onChange]);
+
+  useEffect(() => {
+    buildRuleString();
+  }, [buildRuleString]);
 
   const handleWeekdayToggle = (dayValue) => {
     setByDay((prev) =>
@@ -60,7 +114,7 @@ const RRuleGenerator = ({ value, onChange }) => {
           type="number"
           value={interval}
           onChange={(e) =>
-            setInterval(Math.max(1, parseInt(e.target.value, 10)))
+            setInterval(Math.max(1, parseInt(e.target.value, 10) || 1))
           }
           className="w-16 p-1 mx-1 border rounded-md text-center"
         />
@@ -155,7 +209,7 @@ const RRuleGenerator = ({ value, onChange }) => {
             <input
               type="number"
               value={count}
-              onChange={(e) => setCount(parseInt(e.target.value, 10))}
+              onChange={(e) => setCount(parseInt(e.target.value, 10) || 1)}
               disabled={endCondition !== "after"}
               className="w-16 p-1 border rounded-md text-center mr-2 disabled:bg-gray-100"
             />

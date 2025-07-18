@@ -32,7 +32,6 @@ const EventManagement = () => {
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // API call to fetch both events and classes
       const response = await api.get("/events/all", token);
       setEvents(response.events || []);
       setClasses(response.classes || []);
@@ -47,8 +46,26 @@ const EventManagement = () => {
     fetchData();
   }, [fetchData]);
 
-  const handleOpenModal = (event = null) => {
-    setActiveEvent(event);
+  const handleOpenModal = async (eventSummary = null) => {
+    if (eventSummary) {
+      // If editing, fetch the full event details
+      try {
+        setIsLoading(true);
+        const fullEventDetails = await api.get(
+          `/events/${eventSummary.eventId}`,
+          token
+        );
+        setActiveEvent(fullEventDetails);
+      } catch (error) {
+        showToast("error", `שגיאה בטעינת פרטי האירוע: ${error.message}`);
+        return; // Don't open the modal if fetching fails
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      // If creating, set activeEvent to null
+      setActiveEvent(null);
+    }
     setIsModalOpen(true);
   };
 
@@ -60,6 +77,7 @@ const EventManagement = () => {
   const handleSaveEvent = async (eventData, eventId) => {
     const isEditMode = !!eventId;
     const typeText = eventData.IsRecurring ? "חוג" : "אירוע";
+
     const serverEventData = {
       eventName: eventData.EventName,
       description: eventData.Description,
@@ -68,9 +86,10 @@ const EventManagement = () => {
       isRecurring: eventData.IsRecurring,
       recurrenceRule: eventData.RecurrenceRule,
       startDate: eventData.StartDate,
-      endDate: eventData.EndDate,
+      endDate: eventData.EndDate || null,
       hostId: eventData.HostId,
     };
+
     try {
       if (isEditMode) {
         await api.put(`/events/admin/${eventId}`, serverEventData, token);
@@ -89,7 +108,7 @@ const EventManagement = () => {
   const handleDeleteConfirm = async () => {
     if (!deletingEvent) return;
     try {
-      await api.delete(`/events/admin/${deletingEvent.eventID}`, token);
+      await api.delete(`/events/admin/${deletingEvent.eventId}`, token);
       showToast("success", `האירוע "${deletingEvent.eventName}" נמחק בהצלחה.`);
       setDeletingEvent(null);
       fetchData();
