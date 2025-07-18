@@ -35,6 +35,19 @@ import StyledText from "@/components/StyledText";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
+const getApartmentNumberFromGuid = (guid) => {
+  if (!guid || typeof guid !== "string") {
+    return "";
+  }
+  // This logic finds the 'A' and parses the number that follows.
+  const parts = guid.toUpperCase().split("A");
+  const numberPart = parts.pop();
+  if (numberPart && !isNaN(parseInt(numberPart, 10))) {
+    return String(parseInt(numberPart, 10));
+  }
+  return ""; // Return empty string if format is unexpected or invalid
+};
+
 export default function Profile() {
   const { t } = useTranslation();
   const navigation = useNavigation();
@@ -132,6 +145,11 @@ export default function Profile() {
             throw new Error(`Failed to fetch profile: HTTP ${response.status}`);
           }
           const userData = await response.json();
+
+          const apartmentDisplayNumber = getApartmentNumberFromGuid(
+            userData.residentApartmentNumber
+          );
+
           if (!isActive) return;
           setForm({
             mobilePhone: userData.phoneNumber || "",
@@ -143,9 +161,7 @@ export default function Profile() {
               userData.residentInterests?.map((interest) => interest.name) ||
               [],
             aboutMe: userData.residentDescription || "",
-            residentApartmentNumber: String(
-              userData.residentApartmentNumber || ""
-            ),
+            residentApartmentNumber: apartmentDisplayNumber || "",
           });
           console.log(
             "userData.profilePicture looking for image:",

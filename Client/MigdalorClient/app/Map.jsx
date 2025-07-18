@@ -3383,7 +3383,6 @@ const buildingsAndInfoForDb = [
     apartments: [],
   },
 ];
-
 const buildingsToRender = buildingsAndInfoForDb
   .map((building) => {
     // The coordinates are strings, so we need to parse them into objects

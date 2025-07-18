@@ -37,6 +37,8 @@ import { Globals } from "@/app/constants/Globals";
 import InterestModal from "@/components/InterestSelectionModal";
 import ImageHistory from "@/components/ImageHistory";
 import PrivacySettingsModal from "@/components/PrivacySettingsModal";
+import ApartmentSelector from "@/components/ApartmentSelector";
+
 import { useSettings } from "@/context/SettingsContext.jsx";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
@@ -121,7 +123,6 @@ export default function EditProfile() {
   const [historyRole, setHistoryRole] = useState("");
   const [historyTargetSlot, setHistoryTargetSlot] = useState(null);
 
-
   const openHistoryModal = (role, target) => {
     setIsNavigatingBack(true);
     setHistoryRole(role);
@@ -129,23 +130,29 @@ export default function EditProfile() {
     setHistoryModalVisible(true);
   };
   useEffect(() => {
-  console.log("The profilePic state has now been updated to:", profilePic);
-}, [profilePic]);
+    console.log("The profilePic state has now been updated to:", profilePic);
+  }, [profilePic]);
 
   useEffect(() => {
-  console.log("3. The 'additionalPic1' state was updated to:", JSON.stringify(additionalPic1, null, 2));
-}, [additionalPic1]);
+    console.log(
+      "3. The 'additionalPic1' state was updated to:",
+      JSON.stringify(additionalPic1, null, 2)
+    );
+  }, [additionalPic1]);
 
   const handleSelectFromHistory = (selectedImage) => {
-    console.log("2. Received in EditProfile:", JSON.stringify(selectedImage, null, 2));
+    console.log(
+      "2. Received in EditProfile:",
+      JSON.stringify(selectedImage, null, 2)
+    );
     switch (historyTargetSlot) {
-      case 'main':
+      case "main":
         setProfilePic(selectedImage);
         break;
-      case 'add1':
+      case "add1":
         setAdditionalPic1(selectedImage);
         break;
-      case 'add2':
+      case "add2":
         setAdditionalPic2(selectedImage);
         break;
       default:
@@ -173,30 +180,24 @@ export default function EditProfile() {
       }
       if (initialPics) {
         const pics = JSON.parse(initialPics);
-        setProfilePic(
-          {
-            PicId: pics.profilePic?.picId || null,
-            PicName: pics.profilePic?.picName || "",
-            PicPath: pics.profilePic?.picPath || "",
-            PicAlt: pics.profilePic?.picAlt || "",
-          }
-        );
-        setAdditionalPic1(
-          {
-            PicId: pics.additionalPic1?.picId || null,
-            PicName: pics.additionalPic1?.picName || "",
-            PicPath: pics.additionalPic1?.picPath || "",
-            PicAlt: pics.additionalPic1?.picAlt || "",
-          }
-        );
-        setAdditionalPic2(
-          {
-            PicId: pics.additionalPic2?.picId || null,
-            PicName: pics.additionalPic2?.picName || "",
-            PicPath: pics.additionalPic2?.picPath || "",
-            PicAlt: pics.additionalPic2?.picAlt || "",
-          }
-        );
+        setProfilePic({
+          PicId: pics.profilePic?.picId || null,
+          PicName: pics.profilePic?.picName || "",
+          PicPath: pics.profilePic?.picPath || "",
+          PicAlt: pics.profilePic?.picAlt || "",
+        });
+        setAdditionalPic1({
+          PicId: pics.additionalPic1?.picId || null,
+          PicName: pics.additionalPic1?.picName || "",
+          PicPath: pics.additionalPic1?.picPath || "",
+          PicAlt: pics.additionalPic1?.picAlt || "",
+        });
+        setAdditionalPic2({
+          PicId: pics.additionalPic2?.picId || null,
+          PicName: pics.additionalPic2?.picName || "",
+          PicPath: pics.additionalPic2?.picPath || "",
+          PicAlt: pics.additionalPic2?.picAlt || "",
+        });
       }
       const fetchAllInterestsFromDB = async () => {
         try {
@@ -278,10 +279,10 @@ export default function EditProfile() {
         return value.trim() === "" || regexHebrewEnglish.test(value)
           ? null
           : t("EditProfileScreen_errorMessagePartner");
-      case "residentApartmentNumber":
-        return value.trim() === "" || /^[0-9]+$/.test(value)
-          ? null
-          : t("EditProfileScreen_errorMessageApartmentNumber");
+      // case "residentApartmentNumber":
+      //   return value.trim() === "" || /^[0-9]+$/.test(value)
+      //     ? null
+      //     : t("EditProfileScreen_errorMessageApartmentNumber");
       case "mobilePhone":
         const requiredError = isRequired(value);
         if (requiredError) return requiredError;
@@ -289,7 +290,7 @@ export default function EditProfile() {
           ? null
           : t("EditProfileScreen_errorMessageMobilePhone");
       case "email":
-        const trimmedValue = value.trim(); 
+        const trimmedValue = value.trim();
         const emailRequiredError = isRequired(trimmedValue);
         if (emailRequiredError) return emailRequiredError;
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
@@ -341,10 +342,17 @@ export default function EditProfile() {
 
   const handleAddImage = async () => {
     switch (imageTypeToClear) {
-      case "main": pickImage("main", setProfilePic); break;
-      case "add1": pickImage("add1", setAdditionalPic1); break;
-      case "add2": pickImage("add2", setAdditionalPic2); break;
-      default: console.error("Invalid image type:", imageTypeToClear);
+      case "main":
+        pickImage("main", setProfilePic);
+        break;
+      case "add1":
+        pickImage("add1", setAdditionalPic1);
+        break;
+      case "add2":
+        pickImage("add2", setAdditionalPic2);
+        break;
+      default:
+        console.error("Invalid image type:", imageTypeToClear);
     }
   };
 
@@ -355,15 +363,29 @@ export default function EditProfile() {
     const formData = new FormData();
     const fileType = imageUri.substring(imageUri.lastIndexOf(".") + 1);
     const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
-    formData.append("files", { uri: imageUri, name: `${role}.${fileType}`, type: mimeType });
+    formData.append("files", {
+      uri: imageUri,
+      name: `${role}.${fileType}`,
+      type: mimeType,
+    });
     formData.append("picRoles", role);
     formData.append("picAlts", altText);
     formData.append("uploaderId", uploaderId);
     try {
-      const uploadResponse = await fetch(`${Globals.API_BASE_URL}/api/Picture`, { method: "POST", body: formData });
+      const uploadResponse = await fetch(
+        `${Globals.API_BASE_URL}/api/Picture`,
+        { method: "POST", body: formData }
+      );
       const uploadResults = await uploadResponse.json();
-      if (!uploadResponse.ok || !Array.isArray(uploadResults) || uploadResults.length === 0 || !uploadResults[0].success) {
-        const errorMsg = uploadResults?.[0]?.errorMessage || `Image upload failed (HTTP ${uploadResponse.status})`;
+      if (
+        !uploadResponse.ok ||
+        !Array.isArray(uploadResults) ||
+        uploadResults.length === 0 ||
+        !uploadResults[0].success
+      ) {
+        const errorMsg =
+          uploadResults?.[0]?.errorMessage ||
+          `Image upload failed (HTTP ${uploadResponse.status})`;
         throw new Error(errorMsg);
       }
       await safeDeleteFile(imageUri);
@@ -377,7 +399,12 @@ export default function EditProfile() {
         DateTime: new Date().toISOString(),
       };
     } catch (error) {
-      Toast.show({ type: "error", text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"), text2: error.message, position: "top" });
+      Toast.show({
+        type: "error",
+        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
+        text2: error.message,
+        position: "top",
+      });
       throw error;
     }
   };
@@ -390,7 +417,12 @@ export default function EditProfile() {
       setProfilePic(parsedInitialPics.profilePic);
       setAdditionalPic1(parsedInitialPics.additionalPic1);
       setAdditionalPic2(parsedInitialPics.additionalPic2);
-      Toast.show({ type: "info", text1: t("EditProfileScreen_ProfileUpdateCancelled"), duration: 3500, position: "top" });
+      Toast.show({
+        type: "info",
+        text1: t("EditProfileScreen_ProfileUpdateCancelled"),
+        duration: 3500,
+        position: "top",
+      });
       router.back();
     } catch (err) {
       console.warn("Failed to parse initialData during cancel:", err);
@@ -414,7 +446,9 @@ export default function EditProfile() {
 
   useEffect(() => {
     if (additionalPic1.PicPath?.trim().startsWith("/Images/")) {
-      setAdditionalImage1({ uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}` });
+      setAdditionalImage1({
+        uri: `${Globals.API_BASE_URL}${additionalPic1.PicPath}`,
+      });
     } else if (additionalPic1.PicPath?.startsWith("file://")) {
       setAdditionalImage1({ uri: additionalPic1.PicPath });
     } else {
@@ -424,7 +458,9 @@ export default function EditProfile() {
 
   useEffect(() => {
     if (additionalPic2.PicPath?.trim().startsWith("/Images/")) {
-      setAdditionalImage2({ uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}` });
+      setAdditionalImage2({
+        uri: `${Globals.API_BASE_URL}${additionalPic2.PicPath}`,
+      });
     } else if (additionalPic2.PicPath?.startsWith("file://")) {
       setAdditionalImage2({ uri: additionalPic2.PicPath });
     } else {
@@ -437,7 +473,9 @@ export default function EditProfile() {
       try {
         const storedUserID = await AsyncStorage.getItem("userID");
         if (!storedUserID) return;
-        const response = await fetch(`${Globals.API_BASE_URL}/api/People/PrivacySettings/${storedUserID}`);
+        const response = await fetch(
+          `${Globals.API_BASE_URL}/api/People/PrivacySettings/${storedUserID}`
+        );
         if (response.ok) {
           const data = await response.json();
           setPrivacySettings(data);
@@ -455,10 +493,14 @@ export default function EditProfile() {
 
   const getDisplayUriForType = (type) => {
     switch (type) {
-      case "main": return profileImage.uri || "";
-      case "add1": return additionalImage1.uri || "";
-      case "add2": return additionalImage2.uri || "";
-      default: return "";
+      case "main":
+        return profileImage.uri || "";
+      case "add1":
+        return additionalImage1.uri || "";
+      case "add2":
+        return additionalImage2.uri || "";
+      default:
+        return "";
     }
   };
 
@@ -496,62 +538,134 @@ export default function EditProfile() {
 
   const pickImage = async (type, setFn) => {
     const role = type === "main" ? "Profile picture" : "Extra picture";
-    const libraryPermission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const libraryPermission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (libraryPermission.status !== "granted") {
-      Alert.alert(t("ImagePicker_permissionDeniedTitle"), t("ImagePicker_libraryPermissionDeniedMessage"), [{ text: t("ImagePicker_cancelButton") }]);
+      Alert.alert(
+        t("ImagePicker_permissionDeniedTitle"),
+        t("ImagePicker_libraryPermissionDeniedMessage"),
+        [{ text: t("ImagePicker_cancelButton") }]
+      );
       return;
     }
-    Alert.alert(t("ImagePicker_selectSourceTitle"), t("ImagePicker_selectSourceMessage"), [
-      { text: t("ImagePicker_takePhotoButton"), onPress: async () => {
-          const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
-          if (cameraPermission.status !== "granted") {
-            Alert.alert(t("ImagePicker_permissionDeniedTitle"), t("ImagePicker_cameraPermissionDeniedMessage"), [{ text: t("ImagePicker_cancelButton") }]);
-            return;
-          }
-          const result = await ImagePicker.launchCameraAsync({ allowsEditing: true, quality: 0.5 });
-          if (!result.canceled && result.assets?.[0]?.uri) {
-            try {
-              const newUri = await copyImageToAppDir(result.assets[0].uri, "camera");
-              let defaultAlt = type === "main" ? "Profile picture" : (type === "add1" ? "Extra picture 1" : "Extra picture 2");
-              setFn((prev) => ({ ...prev, PicPath: newUri, PicAlt: defaultAlt }));
-              setImageToViewUri(newUri);
-            } catch (copyError) {
-              Alert.alert(t("ImagePicker_errorTitle"), t("ImagePicker_saveCameraImageFailure"), [{ text: t("ImagePicker_cancelButton") }]);
+    Alert.alert(
+      t("ImagePicker_selectSourceTitle"),
+      t("ImagePicker_selectSourceMessage"),
+      [
+        {
+          text: t("ImagePicker_takePhotoButton"),
+          onPress: async () => {
+            const cameraPermission =
+              await ImagePicker.requestCameraPermissionsAsync();
+            if (cameraPermission.status !== "granted") {
+              Alert.alert(
+                t("ImagePicker_permissionDeniedTitle"),
+                t("ImagePicker_cameraPermissionDeniedMessage"),
+                [{ text: t("ImagePicker_cancelButton") }]
+              );
+              return;
             }
-          }
-        }},
-      { text: t("ImagePicker_chooseFromLibraryButton"), onPress: async () => {
-          try {
-            let result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.7 });
+            const result = await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              quality: 0.5,
+            });
             if (!result.canceled && result.assets?.[0]?.uri) {
               try {
-                const newUri = await copyImageToAppDir(result.assets[0].uri, "library");
-                let defaultAlt = type === "main" ? "Profile picture" : (type === "add1" ? "Extra picture 1" : "Extra picture 2");
-                setFn((prev) => ({ ...prev, PicPath: newUri, PicAlt: defaultAlt }));
+                const newUri = await copyImageToAppDir(
+                  result.assets[0].uri,
+                  "camera"
+                );
+                let defaultAlt =
+                  type === "main"
+                    ? "Profile picture"
+                    : type === "add1"
+                    ? "Extra picture 1"
+                    : "Extra picture 2";
+                setFn((prev) => ({
+                  ...prev,
+                  PicPath: newUri,
+                  PicAlt: defaultAlt,
+                }));
                 setImageToViewUri(newUri);
               } catch (copyError) {
-                Alert.alert(t("ImagePicker_errorTitle"), t("ImagePicker_saveLibraryImageFailure"), [{ text: t("ImagePicker_cancelButton") }]);
+                Alert.alert(
+                  t("ImagePicker_errorTitle"),
+                  t("ImagePicker_saveCameraImageFailure"),
+                  [{ text: t("ImagePicker_cancelButton") }]
+                );
               }
             }
-          } catch (error) {
-            Alert.alert(t("ImagePicker_errorTitle"), t("ImagePicker_openLibraryFailure"), [{ text: t("ImagePicker_cancelButton") }]);
-          }
-        }},
-      { text: t("ImagePicker_chooseFromHistoryButton", "History"), onPress: () => {
-          setShowImageViewModal(false);
-          openHistoryModal(role, type);
-        }},
-      { text: t("ImagePicker_cancelButton"), style: "cancel" },
-    ]);
+          },
+        },
+        {
+          text: t("ImagePicker_chooseFromLibraryButton"),
+          onPress: async () => {
+            try {
+              let result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                quality: 0.7,
+              });
+              if (!result.canceled && result.assets?.[0]?.uri) {
+                try {
+                  const newUri = await copyImageToAppDir(
+                    result.assets[0].uri,
+                    "library"
+                  );
+                  let defaultAlt =
+                    type === "main"
+                      ? "Profile picture"
+                      : type === "add1"
+                      ? "Extra picture 1"
+                      : "Extra picture 2";
+                  setFn((prev) => ({
+                    ...prev,
+                    PicPath: newUri,
+                    PicAlt: defaultAlt,
+                  }));
+                  setImageToViewUri(newUri);
+                } catch (copyError) {
+                  Alert.alert(
+                    t("ImagePicker_errorTitle"),
+                    t("ImagePicker_saveLibraryImageFailure"),
+                    [{ text: t("ImagePicker_cancelButton") }]
+                  );
+                }
+              }
+            } catch (error) {
+              Alert.alert(
+                t("ImagePicker_errorTitle"),
+                t("ImagePicker_openLibraryFailure"),
+                [{ text: t("ImagePicker_cancelButton") }]
+              );
+            }
+          },
+        },
+        {
+          text: t("ImagePicker_chooseFromHistoryButton", "History"),
+          onPress: () => {
+            setShowImageViewModal(false);
+            openHistoryModal(role, type);
+          },
+        },
+        { text: t("ImagePicker_cancelButton"), style: "cancel" },
+      ]
+    );
   };
 
   const deletePicture = async (pictureId) => {
     if (!pictureId) return;
     try {
-      const response = await fetch(`${Globals.API_BASE_URL}/api/Picture/${pictureId}`, { method: "DELETE" });
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/Picture/${pictureId}`,
+        { method: "DELETE" }
+      );
       if (!response.ok) {
         let errorMsg = `Failed to delete picture ${pictureId} (HTTP ${response.status})`;
-        try { const errData = await response.json(); errorMsg = errData.message || errorMsg; } catch {}
+        try {
+          const errData = await response.json();
+          errorMsg = errData.message || errorMsg;
+        } catch {}
         throw new Error(errorMsg);
       }
     } catch (err) {}
@@ -577,7 +691,9 @@ export default function EditProfile() {
       const ref = inputRefs[firstErrorField];
       if (ref?.current) {
         ref.current.blur();
-        setTimeout(() => { ref.current?.focus(); }, 10);
+        setTimeout(() => {
+          ref.current?.focus();
+        }, 10);
       }
       return;
     }
@@ -586,21 +702,76 @@ export default function EditProfile() {
     try {
       const storedUserID = await AsyncStorage.getItem("userID");
       if (!storedUserID) return;
-      cleanedForm.residentApartmentNumber = parseInt(cleanedForm.residentApartmentNumber);
-      form.residentApartmentNumber = parseInt(form.residentApartmentNumber);
+
+      let apartmentGuid = null;
+      const apartmentNum = parseInt(cleanedForm.residentApartmentNumber);
+
+      if (!isNaN(apartmentNum) && apartmentNum > 0) {
+        // Step 1: Call the find-or-create endpoint first.
+        const apartmentResponse = await fetch(
+          `${Globals.API_BASE_URL}/api/apartments/find-or-create`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ apartmentNumber: apartmentNum }),
+          }
+        );
+
+        if (!apartmentResponse.ok) {
+          const errorData = await apartmentResponse.json();
+          // If the apartment number is invalid, show an error and stop.
+          Toast.show({
+            type: "error",
+            text1: t(
+              "EditProfileScreen_ApartmentErrorTitle",
+              "Apartment Error"
+            ),
+            text2:
+              errorData.message ||
+              t(
+                "EditProfileScreen_InvalidApartmentNumber",
+                "Invalid apartment number."
+              ),
+          });
+          return;
+        }
+
+        const apartmentData = await apartmentResponse.json();
+        // Step 2: Extract the GUID from the response.
+        apartmentGuid = apartmentData.apartmentNumber;
+      }
 
       const allExistingNames = new Set(allInterests.map((i) => i.name));
-      const finalSelectedNames = userInterests.filter((i) => allExistingNames.has(i.name)).map((i) => i.name);
-      const finalNewInterestNames = userInterests.filter((i) => !allExistingNames.has(i.name)).map((i) => i.name);
+      const finalSelectedNames = userInterests
+        .filter((i) => allExistingNames.has(i.name))
+        .map((i) => i.name);
+      const finalNewInterestNames = userInterests
+        .filter((i) => !allExistingNames.has(i.name))
+        .map((i) => i.name);
 
       const initialPicsParsed = JSON.parse(initialPics);
-      const processImage = async (currentPic, initialPic, clearedFlag, role, altText) => {
+      const processImage = async (
+        currentPic,
+        initialPic,
+        clearedFlag,
+        role,
+        altText
+      ) => {
         if (currentPic.PicPath?.startsWith("file://")) {
           if (initialPic?.picId) await deletePicture(initialPic.picId, role);
-          return await uploadAndWrap(currentPic, role, currentPic.PicAlt || altText, storedUserID);
+          return await uploadAndWrap(
+            currentPic,
+            role,
+            currentPic.PicAlt || altText,
+            storedUserID
+          );
         }
         if (currentPic.PicPath?.startsWith("/Images/")) {
-          if (initialPic?.picId && initialPic.picId !== (currentPic.PicID || currentPic.PicId)) await deletePicture(initialPic.picId, role);
+          if (
+            initialPic?.picId &&
+            initialPic.picId !== (currentPic.PicID || currentPic.PicId)
+          )
+            await deletePicture(initialPic.picId, role);
           return currentPic;
         }
         if (clearedFlag) {
@@ -610,18 +781,66 @@ export default function EditProfile() {
         return null;
       };
 
-      const finalProfilePicData = await processImage(profilePic, initialPicsParsed.profilePic, clearedPics.profile, "profile_picture", "Profile picture");
-      const finalAdd1PicData = await processImage(additionalPic1, initialPicsParsed.additionalPic1, clearedPics.add1, "secondary_profile", "Extra picture 1");
-      const finalAdd2PicData = await processImage(additionalPic2, initialPicsParsed.additionalPic2, clearedPics.add2, "secondary_profile", "Extra picture 2");
-      
-      setProfilePic(finalProfilePicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-      setAdditionalPic1(finalAdd1PicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
-      setAdditionalPic2(finalAdd2PicData || { PicID: null, PicName: "", PicPath: "", PicAlt: "" });
+      const finalProfilePicData = await processImage(
+        profilePic,
+        initialPicsParsed.profilePic,
+        clearedPics.profile,
+        "profile_picture",
+        "Profile picture"
+      );
+      const finalAdd1PicData = await processImage(
+        additionalPic1,
+        initialPicsParsed.additionalPic1,
+        clearedPics.add1,
+        "secondary_profile",
+        "Extra picture 1"
+      );
+      const finalAdd2PicData = await processImage(
+        additionalPic2,
+        initialPicsParsed.additionalPic2,
+        clearedPics.add2,
+        "secondary_profile",
+        "Extra picture 2"
+      );
+
+      setProfilePic(
+        finalProfilePicData || {
+          PicID: null,
+          PicName: "",
+          PicPath: "",
+          PicAlt: "",
+        }
+      );
+      setAdditionalPic1(
+        finalAdd1PicData || {
+          PicID: null,
+          PicName: "",
+          PicPath: "",
+          PicAlt: "",
+        }
+      );
+      setAdditionalPic2(
+        finalAdd2PicData || {
+          PicID: null,
+          PicName: "",
+          PicPath: "",
+          PicAlt: "",
+        }
+      );
       setClearedPics({ profile: false, add1: false, add2: false });
 
       const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`;
       const requestBody = {
-        ...cleanedForm,
+        // Manually map properties from cleanedForm
+        name: cleanedForm.name,
+        partner: cleanedForm.partner,
+        mobilePhone: cleanedForm.mobilePhone,
+        email: cleanedForm.email,
+        origin: cleanedForm.origin,
+        profession: cleanedForm.profession,
+        aboutMe: cleanedForm.aboutMe,
+        // Use the fetched GUID with the correct property name
+        ResidentApartmentNumber: apartmentGuid,
         PersonId: storedUserID,
         profilePicture: finalProfilePicData,
         additionalPicture1: finalAdd1PicData,
@@ -631,13 +850,28 @@ export default function EditProfile() {
         privacySettings: privacySettings,
       };
 
-      const response = await fetch(apiurl, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestBody) });
+      console.log("THIS IS THE OUTGOING FORM: ", cleanedForm);
+
+      const response = await fetch(apiurl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
       if (!response.ok) {
         let errorData = {};
-        try { errorData = await response.json(); } catch (e) {}
-        throw new Error(errorData?.message || `Profile update failed: HTTP ${response.status}`);
+        try {
+          errorData = await response.json();
+        } catch (e) {}
+        throw new Error(
+          errorData?.message || `Profile update failed: HTTP ${response.status}`
+        );
       }
-      Toast.show({ type: "success", text1: t("EditProfileScreen_ProfileUpdated"), duration: 3500, position: "top" });
+      Toast.show({
+        type: "success",
+        text1: t("EditProfileScreen_ProfileUpdated"),
+        duration: 3500,
+        position: "top",
+      });
       router.back();
     } catch (error) {
       console.error("Error during save:", error);
@@ -652,37 +886,70 @@ export default function EditProfile() {
 
   const initialPicsParsed = JSON.parse(initialPics);
   const clearedPictureIds = [];
-  if (clearedPics.profile && initialPicsParsed.profilePic) clearedPictureIds.push(initialPicsParsed.profilePic.picId);
-  if (clearedPics.add1 && initialPicsParsed.additionalPic1) clearedPictureIds.push(initialPicsParsed.additionalPic1.picId);
-  if (clearedPics.add2 && initialPicsParsed.additionalPic2) clearedPictureIds.push(initialPicsParsed.additionalPic2.picId);
+  if (clearedPics.profile && initialPicsParsed.profilePic)
+    clearedPictureIds.push(initialPicsParsed.profilePic.picId);
+  if (clearedPics.add1 && initialPicsParsed.additionalPic1)
+    clearedPictureIds.push(initialPicsParsed.additionalPic1.picId);
+  if (clearedPics.add2 && initialPicsParsed.additionalPic2)
+    clearedPictureIds.push(initialPicsParsed.additionalPic2.picId);
 
   const isMaxFontSize = settings.fontSizeMultiplier === 3;
-  
+
   const buttonContainerStyle = [
     styles.buttonRow,
-    isMaxFontSize && styles.buttonColumn
+    isMaxFontSize && styles.buttonColumn,
   ];
 
   const buttonStyle = [
     styles.actionButton, // A new base style for both buttons
-    isMaxFontSize && { width: '85%' } // Wider buttons for column layout
+    isMaxFontSize && { width: "85%" }, // Wider buttons for column layout
   ];
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+      >
         <Header />
         <View style={styles.profileImageContainer}>
-          <BouncyButton shrinkScale={0.95} onPress={() => handleImagePress("main")} disabled={!profilePic.PicPath?.trim()}>
+          <BouncyButton
+            shrinkScale={0.95}
+            onPress={() => handleImagePress("main")}
+            disabled={!profilePic.PicPath?.trim()}
+          >
             {profilePic.PicPath === "" ? (
               <>
-                <Image alt={profilePic.PicAlt} source={profilePic.PicPath ? { uri: profilePic.PicPath } : defaultUserImage} style={styles.profileImage}/>
+                <Image
+                  alt={profilePic.PicAlt}
+                  source={
+                    profilePic.PicPath
+                      ? { uri: profilePic.PicPath }
+                      : defaultUserImage
+                  }
+                  style={styles.profileImage}
+                />
                 <Card.Background></Card.Background>
-                <YStack f={1} jc="center" ai="center" backgroundColor="rgba(0,0,0,0.4)"></YStack>
+                <YStack
+                  f={1}
+                  jc="center"
+                  ai="center"
+                  backgroundColor="rgba(0,0,0,0.4)"
+                ></YStack>
               </>
             ) : (
-              <YStack f={1} jc="center" ai="center" p="$2" style={{ direction: Globals.userSelectedDirection }}>
-                <Image alt={profilePic.PicAlt} source={profileImage} style={styles.profileImage}/>
+              <YStack
+                f={1}
+                jc="center"
+                ai="center"
+                p="$2"
+                style={{ direction: Globals.userSelectedDirection }}
+              >
+                <Image
+                  alt={profilePic.PicAlt}
+                  source={profileImage}
+                  style={styles.profileImage}
+                />
               </YStack>
             )}
           </BouncyButton>
@@ -695,13 +962,15 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.editableContainer}>
-          <FloatingLabelInput
+          {/* <FloatingLabelInput
             maxLength={maxLengths.residentApartmentNumber}
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
             label={t("ProfileScreen_apartmentNumber")}
             value={form.residentApartmentNumber}
-            onChangeText={(text) => handleFormChange("residentApartmentNumber", text)}
+            onChangeText={(text) =>
+              handleFormChange("residentApartmentNumber", text)
+            }
             keyboardType="numeric"
             ref={inputRefs.residentApartmentNumber}
           />
@@ -709,7 +978,15 @@ export default function EditProfile() {
             <StyledText style={styles.errorText}>
               {formErrors.residentApartmentNumber}
             </StyledText>
-          )}
+          )} */}
+
+          <ApartmentSelector
+            value={form.residentApartmentNumber}
+            onApartmentChange={(text) =>
+              handleFormChange("residentApartmentNumber", text)
+            }
+            error={formErrors.residentApartmentNumber}
+          />
 
           <FloatingLabelInput
             maxLength={maxLengths.mobilePhone}
@@ -722,7 +999,9 @@ export default function EditProfile() {
             ref={inputRefs.mobilePhone}
           />
           {formErrors.mobilePhone && (
-            <StyledText style={styles.errorText}>{formErrors.mobilePhone}</StyledText>
+            <StyledText style={styles.errorText}>
+              {formErrors.mobilePhone}
+            </StyledText>
           )}
 
           <FloatingLabelInput
@@ -749,7 +1028,9 @@ export default function EditProfile() {
             ref={inputRefs.origin}
           />
           {formErrors.origin && (
-            <StyledText style={styles.errorText}>{formErrors.origin}</StyledText>
+            <StyledText style={styles.errorText}>
+              {formErrors.origin}
+            </StyledText>
           )}
 
           <FloatingLabelInput
@@ -764,16 +1045,25 @@ export default function EditProfile() {
             ref={inputRefs.profession}
           />
           {formErrors.profession && (
-            <StyledText style={styles.errorText}>{formErrors.profession}</StyledText>
+            <StyledText style={styles.errorText}>
+              {formErrors.profession}
+            </StyledText>
           )}
 
           <View style={styles.interestSectionContainer}>
-            <StyledText style={styles.label}>{t("ProfileScreen_interests")}</StyledText>
+            <StyledText style={styles.label}>
+              {t("ProfileScreen_interests")}
+            </StyledText>
             <View style={styles.interestChipDisplay}>
               {userInterests.length > 0 ? (
                 userInterests.map((interest) => (
-                  <View key={interest.interestID || interest.name} style={styles.chipReadOnly}>
-                    <StyledText style={styles.chipTextReadOnly}>{interest.name}</StyledText>
+                  <View
+                    key={interest.interestID || interest.name}
+                    style={styles.chipReadOnly}
+                  >
+                    <StyledText style={styles.chipTextReadOnly}>
+                      {interest.name}
+                    </StyledText>
                   </View>
                 ))
               ) : (
@@ -782,7 +1072,10 @@ export default function EditProfile() {
                 </StyledText>
               )}
             </View>
-            <FlipButton onPress={() => setInterestModalVisible(true)} style={styles.editInterestsButton}>
+            <FlipButton
+              onPress={() => setInterestModalVisible(true)}
+              style={styles.editInterestsButton}
+            >
               <StyledText style={styles.editInterestsButtonText}>
                 {t("EditProfileScreen_editInterestsButton")}
               </StyledText>
@@ -803,29 +1096,60 @@ export default function EditProfile() {
             textAlignVertical="top"
           />
           {formErrors.aboutMe && (
-            <StyledText style={styles.errorText}>{formErrors.aboutMe}</StyledText>
+            <StyledText style={styles.errorText}>
+              {formErrors.aboutMe}
+            </StyledText>
           )}
 
-          <StyledText style={[styles.label, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+          <StyledText
+            style={[
+              styles.label,
+              {
+                textAlign:
+                  Globals.userSelectedDirection === "rtl" ? "right" : "left",
+              },
+            ]}
+          >
             {t("ProfileScreen_extraImages")}
           </StyledText>
 
           <View style={styles.profileExtraImageContainer}>
-            <BouncyButton shrinkScale={0.95} onPress={() => handleImagePress("add1")} disabled={!additionalPic1.PicPath?.trim()}>
-              <Image alt={additionalPic1.PicAlt} source={additionalImage1} style={styles.profileImage} />
+            <BouncyButton
+              shrinkScale={0.95}
+              onPress={() => handleImagePress("add1")}
+              disabled={!additionalPic1.PicPath?.trim()}
+            >
+              <Image
+                alt={additionalPic1.PicAlt}
+                source={additionalImage1}
+                style={styles.profileImage}
+              />
             </BouncyButton>
-            <BouncyButton shrinkScale={0.95} onPress={() => handleImagePress("add2")} disabled={!additionalPic2.PicPath?.trim()}>
-              <Image alt={additionalPic2.PicAlt} source={additionalImage2} style={styles.profileImage} />
+            <BouncyButton
+              shrinkScale={0.95}
+              onPress={() => handleImagePress("add2")}
+              disabled={!additionalPic2.PicPath?.trim()}
+            >
+              <Image
+                alt={additionalPic2.PicAlt}
+                source={additionalImage2}
+                style={styles.profileImage}
+              />
             </BouncyButton>
           </View>
         </View>
 
         <View style={styles.privacyButtonContainer}>
-            <FlipButton onPress={() => setPrivacyModalVisible(true)} style={styles.privacyButton}>
-                <StyledText style={styles.privacyButtonText}>{t('PrivacySettings_title')}</StyledText>
-            </FlipButton>
+          <FlipButton
+            onPress={() => setPrivacyModalVisible(true)}
+            style={styles.privacyButton}
+          >
+            <StyledText style={styles.privacyButtonText}>
+              {t("PrivacySettings_title")}
+            </StyledText>
+          </FlipButton>
         </View>
-        
+
         <View style={buttonContainerStyle}>
           <FlipButton
             onPress={handleSave}
@@ -945,15 +1269,15 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   buttonRow: {
-    width: '90%',
+    width: "90%",
     flexDirection: "row",
     justifyContent: "space-evenly",
     marginTop: 40,
     gap: 30,
   },
   buttonColumn: {
-    flexDirection: 'column',
-    alignItems: 'center',
+    flexDirection: "column",
+    alignItems: "center",
   },
   actionButton: {
     paddingVertical: 12,
@@ -1060,20 +1384,20 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   privacyButtonContainer: {
-    width: '85%',
-    alignSelf: 'center',
+    width: "85%",
+    alignSelf: "center",
     marginTop: 40,
   },
   privacyButton: {
     paddingVertical: 15,
     borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#6c757d',
+    alignItems: "center",
+    backgroundColor: "#6c757d",
   },
   privacyButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#ffffff'
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#ffffff",
   },
 });

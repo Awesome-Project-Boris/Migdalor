@@ -82,6 +82,12 @@ const resources = {
       EditProfileScreen_noInterests: "No Hobbies to display",
       EditProfileScreen_editInterestsButton: "Select Hobbies",
 
+      ApartmentSelector_Exists: "This apartment is already in our system.",
+      ApartmentSelector_Potential:
+        "This is a valid apartment. It will be added to our system upon saving.",
+      ApartmentSelector_Invalid:
+        "This apartment number is not within the valid range.",
+
       interestModal_title: "Edit Hobbies",
       interestModal_searchPlaceholder: "Search for an Hobbies...",
       interestModal_selectExisting: "Select from existing",
@@ -560,6 +566,11 @@ const resources = {
 
       EditProfileScreen_noInterests: "אין תחביבים להציג",
       EditProfileScreen_editInterestsButton: "לבחירת תחביבים",
+
+      ApartmentSelector_Exists: "דירה זו כבר קיימת במערכת",
+      ApartmentSelector_Potential:
+        "זוהי דירה חוקית, היא תתווסף למערכת במהלך השמירה",
+      ApartmentSelector_Invalid: "מספר דירה זה אינו בטווח החוקי",
 
       interestModal_title: "עריכת תחביבים",
       interestModal_searchPlaceholder: "חיפוש תחביב...",
