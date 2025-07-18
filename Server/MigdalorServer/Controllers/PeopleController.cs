@@ -66,7 +66,7 @@ namespace MigdalorServer.Controllers
             _configuration = configuration;
         }
 
-        // NEW: Endpoint to update a user's role
+        // NEW: Endpoint to get all staff/admin users
         [HttpPut("UpdateRole/{id}")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> UpdateRole(Guid id, [FromBody] UpdateRoleDto dto)
@@ -82,6 +82,24 @@ namespace MigdalorServer.Controllers
 
             return NoContent();
         }
+
+        // NEW ENDPOINT: Gets a list of all people with their ID and Hebrew full name.
+        [HttpGet("all-names")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetAllNames()
+        {
+            var peopleNames = await _context.OhPeople
+                .Where(p => p.OhResident.IsActive == true) // Ensure we only get active people
+                .Select(p => new
+                {
+                    Id = p.PersonId,
+                    FullName = p.HebFirstName + " " + p.HebLastName
+                })
+                .ToListAsync();
+
+            return Ok(peopleNames);
+        }
+
 
         // NEW: Endpoint to get all staff/admin users
         [HttpGet("admins")]

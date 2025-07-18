@@ -9,10 +9,12 @@ import { Edit, Trash2, PlusCircle, Calendar, Users } from "lucide-react";
 
 const EventManagement = () => {
   const { token } = useAuth();
-  const [view, setView] = useState("events"); // 'events' or 'classes'
-  const [data, setData] = useState([]);
+  const [view, setView] = useState("events");
+  const [events, setEvents] = useState([]);
+  const [classes, setClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeEvent, setActiveEvent] = useState(null);
+  // FIX: State now holds only the ID of the event to be edited
+  const [activeEventId, setActiveEventId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingEvent, setDeletingEvent] = useState(null);
 
@@ -30,47 +32,59 @@ const EventManagement = () => {
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
-    const isRecurring = view === "classes";
     try {
-      const result = await api.get(`/events?isRecurring=${isRecurring}`, token);
-      setData(Array.isArray(result) ? result : []);
+      const response = await api.get("/events/all", token);
+      setEvents(response.events || []);
+      setClasses(response.classes || []);
     } catch (error) {
-      showToast("error", `שגיאה בטעינת הנתונים: ${error.message}`);
-      setData([]); // Clear data on error
+      showToast("error", `שגיאה בטעינת נתונים: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
-  }, [view, token]);
+  }, [token]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const handleOpenModal = (event = null) => {
-    setActiveEvent(event);
+  // FIX: Simplified to just set the ID and open the modal.
+  const handleOpenModal = (eventSummary = null) => {
+    setActiveEventId(eventSummary ? eventSummary.eventId : null);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setActiveEvent(null);
+    setActiveEventId(null);
     setIsModalOpen(false);
   };
 
   const handleSaveEvent = async (eventData, eventId) => {
     const isEditMode = !!eventId;
-    const action = isEditMode ? "עדכון" : "יצירת";
-    const typeText = eventData.IsRecurring ? "החוג" : "האירוע";
+    const typeText = eventData.IsRecurring ? "חוג" : "אירוע";
+
+    const serverEventData = {
+      eventName: eventData.EventName,
+      description: eventData.Description,
+      location: eventData.Location,
+      capacity: eventData.Capacity,
+      isRecurring: eventData.IsRecurring,
+      recurrenceRule: eventData.RecurrenceRule,
+      startDate: eventData.StartDate,
+      endDate: eventData.EndDate || null,
+      hostId: eventData.HostId,
+    };
 
     try {
       if (isEditMode) {
-        await api.put(`/events/${eventId}`, eventData, token);
+        await api.put(`/events/admin/${eventId}`, serverEventData, token);
+        showToast("success", `${typeText} עודכן בהצלחה!`);
       } else {
-        await api.post("/events", eventData, token);
+        await api.post("/events/admin", serverEventData, token);
+        showToast("success", `${typeText} נוצר בהצלחה!`);
       }
-      showToast("success", `${typeText} נשמר בהצלחה!`);
-      fetchData(); // Refresh data from server
+      fetchData(); // Refresh data on success
     } catch (error) {
-      showToast("error", `${action} ${typeText} נכשל: ${error.message}`);
+      showToast("error", `שגיאה בשמירת ה${typeText}: ${error.message}`);
       throw error; // Re-throw to keep modal open
     }
   };
@@ -78,15 +92,17 @@ const EventManagement = () => {
   const handleDeleteConfirm = async () => {
     if (!deletingEvent) return;
     try {
-      await api.delete(`/events/${deletingEvent.eventID}`, token);
+      await api.delete(`/events/admin/${deletingEvent.eventId}`, token);
       showToast("success", `האירוע "${deletingEvent.eventName}" נמחק בהצלחה.`);
       setDeletingEvent(null);
-      fetchData(); // Refresh data from server
+      fetchData();
     } catch (error) {
-      showToast("error", `מחיקת האירוע נכשלה: ${error.message}`);
+      showToast("error", `שגיאה במחיקת האירוע: ${error.message}`);
       setDeletingEvent(null);
     }
   };
+
+  // EventManagement.jsx
 
   const columns = useMemo(
     () => [
@@ -97,10 +113,7 @@ const EventManagement = () => {
         accessorKey: "startDate",
         header: "תאריך התחלה",
         cell: ({ row }) =>
-          new Date(row.original.startDate).toLocaleString("he-IL", {
-            dateStyle: "short",
-            timeStyle: "short",
-          }),
+          new Date(row.original.startDate).toLocaleString("he-IL"),
       },
       { accessorKey: "capacity", header: "קיבולת" },
       {
@@ -111,14 +124,12 @@ const EventManagement = () => {
             <button
               onClick={() => handleOpenModal(row.original)}
               className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
-              title="ערוך"
             >
               <Edit size={20} />
             </button>
             <button
               onClick={() => setDeletingEvent(row.original)}
               className="p-2 rounded-full text-red-600 hover:bg-red-100"
-              title="מחק"
             >
               <Trash2 size={20} />
             </button>
@@ -129,6 +140,8 @@ const EventManagement = () => {
     []
   );
 
+  const dataToDisplay = view === "events" ? events : classes;
+
   return (
     <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
       <Toast
@@ -137,7 +150,6 @@ const EventManagement = () => {
         variant={toastState.variant}
         onClose={handleCloseToast}
       />
-
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold text-gray-800">
           ניהול אירועים וחוגים
@@ -167,7 +179,6 @@ const EventManagement = () => {
           </button>
         </div>
       </div>
-
       <div className="flex justify-end mb-4">
         <button
           onClick={() => handleOpenModal()}
@@ -177,12 +188,11 @@ const EventManagement = () => {
           {view === "events" ? "צור אירוע חדש" : "צור חוג חדש"}
         </button>
       </div>
-
       {isLoading ? (
         <div className="text-center p-4">טוען נתונים...</div>
       ) : (
         <SharedTable
-          data={data}
+          data={dataToDisplay}
           columns={columns}
           globalFilter={globalFilter}
           setGlobalFilter={setGlobalFilter}
@@ -190,16 +200,14 @@ const EventManagement = () => {
           setSorting={setSorting}
         />
       )}
-
       <EventModal
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleSaveEvent}
-        showToast={showToast}
-        event={activeEvent}
-        eventType={view === "events" ? "event" : "class"}
+        // FIX: Pass the eventId to the modal
+        eventId={activeEventId}
+        eventType={view}
       />
-
       {deletingEvent && (
         <ConfirmationModal
           title="אישור מחיקה"
