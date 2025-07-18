@@ -19,7 +19,7 @@ import FloatingLabelInput from "./FloatingLabelInput";
 import FlipButton from "./FlipButton";
 import StyledText from "@/components/StyledText";
 import { useSettings } from "@/context/SettingsContext";
-import { Globals } from "../app/constants/Globals";
+
 import { hebrewLevenshtein } from "../utils/stringSimilarityHeb";
 
 export default function InterestModal({
@@ -33,7 +33,165 @@ export default function InterestModal({
 }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
-  const isRTL = Globals.userSelectedDirection === "rtl";
+  const isRTL = settings.language === "he";
+
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: "#f9f9f9" },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 15,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: "#e0e0e0",
+      backgroundColor: "#fff",
+    },
+    headerColumn: {
+      flexDirection: "column",
+      alignItems: "stretch",
+      paddingBottom: 15,
+      borderBottomWidth: 0,
+      marginTop: 15,
+    },
+    headerButton: {
+      padding: 5,
+      alignSelf: "flex-start",
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: "#111",
+      flexShrink: 1,
+      paddingHorizontal: 10,
+    },
+    titleColumn: {
+      textAlign: "center",
+      marginVertical: 15,
+      fontSize: 22,
+    },
+    acceptButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 15,
+      borderRadius: 8,
+    },
+    acceptButtonText: {
+      fontSize: 16,
+      color: "#fff",
+      fontWeight: "bold",
+    },
+    scrollContent: {
+      paddingHorizontal: 20,
+      paddingBottom: 40,
+    },
+    subHeader: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: "#444",
+      marginTop: 25,
+      marginBottom: 15,
+    },
+    // --- NEW STYLE for disclaimer ---
+    disclaimerText: {
+      fontSize: 14,
+      color: "#6c757d",
+      marginBottom: 15,
+      marginTop: -10, // Pull it closer to the sub-header above it
+      fontStyle: "italic",
+    },
+    inputContainer: {
+      marginBottom: 5,
+    },
+    interestContainer: {
+      flexDirection: isRTL ? "row-reverse" : "row",
+      flexWrap: "wrap",
+      backgroundColor: "#fff",
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: "#e0e0e0",
+      padding: 5,
+      minHeight: 100,
+      justifyContent: "flex-start",
+    },
+    noResultsText: {
+      flex: 1,
+      textAlign: "center",
+      color: "#888",
+      marginTop: 30,
+      fontSize: 16,
+    },
+    addContainer: {
+      flexDirection: isRTL ? "row-reverse" : "row",
+      alignItems: "center",
+    },
+    addContainerColumn: {
+      flexDirection: "column",
+      alignItems: "stretch",
+    },
+    inputRow: {
+      flex: 1,
+      marginRight: isRTL ? 0 : 10,
+      marginLeft: isRTL ? 10 : 0,
+    },
+    inputColumn: {
+      marginBottom: 15,
+    },
+    addButton: {
+      paddingVertical: 12,
+      paddingHorizontal: 25,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    buttonColumn: {
+      width: "100%",
+    },
+    addButtonText: {
+      fontSize: 16,
+      color: "#fff",
+      fontWeight: "bold",
+    },
+    suggestionContainer: {
+      position: "absolute",
+      top: 80,
+      left: 20,
+      right: 20,
+      zIndex: 10,
+    },
+    suggestionBox: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: "#fff",
+      borderRadius: 12,
+      padding: 12,
+      paddingRight: 40,
+      elevation: 8,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 5,
+      borderWidth: 1,
+      borderColor: "#ddd",
+    },
+    suggestionBoxColumn: {
+      flexDirection: "column",
+      alignItems: "center",
+      paddingBottom: 15,
+    },
+    suggestionText: {
+      fontSize: 16,
+      color: "#333",
+      fontWeight: "600",
+      marginRight: 10,
+      marginBottom: 5,
+    },
+    suggestionClose: {
+      position: "absolute",
+      top: 5,
+      right: 5,
+      padding: 5,
+    },
+  });
 
   // State Management
   const [searchTerm, setSearchTerm] = useState("");
@@ -343,162 +501,3 @@ export default function InterestModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9f9f9" },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
-    backgroundColor: "#fff",
-  },
-  headerColumn: {
-    flexDirection: "column",
-    alignItems: "stretch",
-    paddingBottom: 15,
-    borderBottomWidth: 0,
-    marginTop: 15,
-  },
-  headerButton: {
-    padding: 5,
-    alignSelf: "flex-start",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#111",
-    flexShrink: 1,
-    paddingHorizontal: 10,
-  },
-  titleColumn: {
-    textAlign: "center",
-    marginVertical: 15,
-    fontSize: 22,
-  },
-  acceptButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-  },
-  acceptButtonText: {
-    fontSize: 16,
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-  subHeader: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#444",
-    marginTop: 25,
-    marginBottom: 15,
-    textAlign: "left",
-  },
-  // --- NEW STYLE for disclaimer ---
-  disclaimerText: {
-    fontSize: 14,
-    color: "#6c757d",
-    textAlign: "left",
-    marginBottom: 15,
-    marginTop: -10, // Pull it closer to the sub-header above it
-    fontStyle: "italic",
-  },
-  inputContainer: {
-    marginBottom: 5,
-  },
-  interestContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    backgroundColor: "#fff",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    padding: 5,
-    minHeight: 100,
-    justifyContent: "flex-start",
-  },
-  noResultsText: {
-    flex: 1,
-    textAlign: "center",
-    color: "#888",
-    marginTop: 30,
-    fontSize: 16,
-  },
-  addContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  addContainerColumn: {
-    flexDirection: "column",
-    alignItems: "stretch",
-  },
-  inputRow: {
-    flex: 1,
-    marginRight: 10,
-  },
-  inputColumn: {
-    marginBottom: 15,
-  },
-  addButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  buttonColumn: {
-    width: "100%",
-  },
-  addButtonText: {
-    fontSize: 16,
-    color: "#fff",
-    fontWeight: "bold",
-  },
-  suggestionContainer: {
-    position: "absolute",
-    top: 80,
-    left: 20,
-    right: 20,
-    zIndex: 10,
-  },
-  suggestionBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 12,
-    paddingRight: 40,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  suggestionBoxColumn: {
-    flexDirection: "column",
-    alignItems: "center",
-    paddingBottom: 15,
-  },
-  suggestionText: {
-    fontSize: 16,
-    color: "#333",
-    fontWeight: "600",
-    marginRight: 10,
-    marginBottom: 5,
-  },
-  suggestionClose: {
-    position: "absolute",
-    top: 5,
-    right: 5,
-    padding: 5,
-  },
-});

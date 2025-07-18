@@ -336,6 +336,8 @@ const resources = {
       ResidentSearchScreen_selectInterestsButton: "Choose Hobbies to search",
       ResidentSearchScreen_filteringByLabel: "Filtering by...",
       ResidentSearchScreen_noInterestsSelected: "No Hobbies selected",
+      ResidentList_searchingByHobbies: "Searching by Hobbies: ",
+      ResidentList_searchingByName: "Searching by Name: ",
 
       ResidentsCommitte_nameUnavailable: "Name Unavailable",
       ResidentsCommitte_titleUnavailable: "Title Unavailable",
@@ -798,6 +800,9 @@ const resources = {
       ResidentSearchScreen_selectInterestsButton: "הזינו תחביבים לחיפוש",
       ResidentSearchScreen_filteringByLabel: "מסנן לפי...",
       ResidentSearchScreen_noInterestsSelected: "לא נבחרו תחביבים",
+
+      ResidentList_searchingByHobbies: "חיפוש לפי תחביבים: ",
+      ResidentList_searchingByName: "חיפוש לפי שם: ",
 
       ResidentsCommitte_nameUnavailable: "שם לא זמין",
       ResidentsCommitte_titleUnavailable: "תואר לא זמין",

@@ -5,416 +5,373 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { View, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
-import { useRouter } from "expo-router";
-import { useFocusEffect } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  ActivityIndicator,
+  TouchableOpacity,
+  Keyboard,
+  SafeAreaView,
+  LayoutAnimation,
+  UIManager,
+  Platform,
+} from "react-native";
 
-import NoticeCard from "../components/NoticeCard";
+// Component Imports
+import UserProfileCard from "../components/UserProfileCard";
 import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
-import FilterModal from "../components/NoticeFilterModal";
+import FloatingLabelInput from "../components/FloatingLabelInput";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
+import InterestModal from "@/components/InterestSelectionModal";
+import InterestChip from "@/components/InterestChip";
 import StyledText from "@/components/StyledText";
-import { useSettings } from "@/context/SettingsContext";
 
+// Icon and Translation Imports
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import { Globals } from "../app/constants/Globals";
+import { useRouter } from "expo-router";
 
+// Constants and Globals
+import { Globals } from "./constants/Globals";
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === "android") {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
+
+// --- Constants ---
+const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 10;
 
-// --- Fetch Functions ---
-const fetchNotices = async () => {
-  const response = await fetch(`${Globals.API_BASE_URL}/api/Notices`);
-  if (!response.ok) {
-    throw new Error(`Failed to load notices: HTTP ${response.status}`);
-  }
-  const notices = await response.json();
-  return notices || [];
-};
-
-const fetchCategories = async () => {
-  const response = await fetch(`${Globals.API_BASE_URL}/api/Categories`);
-  if (!response.ok) {
-    throw new Error(`Failed to load categories: HTTP ${response.status}`);
-  }
-  const rawCategories = await response.json();
-  return rawCategories || [];
-};
-
-export default function NoticesScreen() {
+// --- Main Component ---
+export default function ResidentList() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const flatListRef = useRef(null);
-  const { settings } = useSettings();
-  const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
-  const [allNotices, setAllNotices] = useState([]);
+  // --- State Management ---
+
+  // Data & Loading States
+  const [sourceUsers, setSourceUsers] = useState([]); // Master list from the last DB fetch
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [allCategories, setAllCategories] = useState([]);
-  const [isCategoryLoading, setIsCategoryLoading] = useState(true);
-  const [categoryError, setCategoryError] = useState(null);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [sortOrder, setSortOrder] = useState("recent");
-  const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isAdminLoading, setIsAdminLoading] = useState(true);
 
-  const fetchNoticesCallback = useCallback(async () => {
+  // Accordion & Search Type States
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [searchType, setSearchType] = useState("name"); // 'name' or 'hobby'
+
+  // Filter States
+  const [hobbyFilter, setHobbyFilter] = useState([]); // Selected hobby names for DB query
+  const [nameFilter, setNameFilter] = useState(""); // Text for client-side name search
+
+  // Modal & Interest Data States
+  const [isInterestModalVisible, setInterestModalVisible] = useState(false);
+  const [allInterests, setAllInterests] = useState([]);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // --- Data Fetching ---
+
+  // Fetches the full, unfiltered list of all active residents.
+  const fetchAllUsers = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchNotices();
-      setAllNotices(data);
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/People/ActiveDigests`
+      );
+      if (!response.ok) throw new Error("Failed to fetch residents.");
+      const data = await response.json();
+      setSourceUsers(data || []);
     } catch (err) {
-      console.error("Failed to fetch notices:", err);
-      setError(err.message || "Failed to load notices.");
-      setAllNotices([]);
+      setError(err.message);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const fetchCategoriesCallback = useCallback(async () => {
-    setIsCategoryLoading(true);
-    setCategoryError(null);
-    try {
-      const cats = await fetchCategories();
-      setAllCategories(cats);
-    } catch (err) {
-      console.error("Failed to load categories:", err);
-      setCategoryError(err.message || "Failed to load categories.");
-      setAllCategories([]);
-    } finally {
-      setIsCategoryLoading(false);
+  // Fetches a list of residents filtered by selected hobbies from the database.
+  const fetchUsersByHobbies = useCallback(async () => {
+    if (hobbyFilter.length === 0) {
+      fetchAllUsers(); // If no hobbies, fetch everyone
+      return;
     }
-  }, []);
-
-  useEffect(() => {
-    setCurrentPage(1);
-    fetchNoticesCallback();
-    fetchCategoriesCallback();
-  }, [fetchNoticesCallback, fetchCategoriesCallback]);
-
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      let currentUserId = null;
-      try {
-        currentUserId = await AsyncStorage.getItem("userID");
-        if (!currentUserId) {
-          setIsAdmin(false);
-          setIsAdminLoading(false);
-          return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `${Globals.API_BASE_URL}/api/People/SearchByInterests`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(hobbyFilter),
         }
-      } catch (storageError) {
-        setIsAdmin(false);
-        setIsAdminLoading(false);
-        return;
-      }
+      );
+      if (!response.ok) throw new Error("Failed to search by hobbies.");
+      const data = await response.json();
+      setSourceUsers(data || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [hobbyFilter, fetchAllUsers]);
 
-      setIsAdminLoading(true);
+  // Initial data load on component mount.
+  useEffect(() => {
+    fetchAllUsers();
+    const fetchAllInterestsFromDB = async () => {
       try {
-        const response = await fetch(
-          `${Globals.API_BASE_URL}/api/People/isadmin/${currentUserId}`
-        );
-        if (!response.ok) {
-          throw new Error("Failed to verify admin status");
-        }
-        const isAdminResult = await response.json();
-        setIsAdmin(
-          typeof isAdminResult.isAdmin === "boolean"
-            ? isAdminResult.isAdmin
-            : false
-        );
+        const response = await fetch(`${Globals.API_BASE_URL}/api/Interests`);
+        const data = await response.json();
+        setAllInterests(data ? data.map((name) => ({ name })) : []);
       } catch (err) {
-        setIsAdmin(false);
-      } finally {
-        setIsAdminLoading(false);
+        console.error("Failed to fetch all interests:", err);
       }
     };
-
-    checkAdminStatus();
+    fetchAllInterestsFromDB();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      const intervalId = setInterval(() => {
-        fetchNoticesCallback();
-      }, 3000);
-      return () => clearInterval(intervalId);
-    }, [fetchNoticesCallback])
-  );
+  // --- Filtering & Pagination Logic ---
 
-  const processedNotices = useMemo(() => {
-    if (!Array.isArray(allNotices)) {
-      return [];
+  // This is the core logic: it takes the source data and applies the client-side name filter.
+  const displayedUsers = useMemo(() => {
+    if (!nameFilter.trim()) {
+      return sourceUsers; // No name filter applied
     }
-    let filtered = [...allNotices];
-
-    if (selectedCategories.length > 0) {
-      const isRTL = i18n.dir() === "rtl";
-      const selectedHebrewNames = isRTL
-        ? selectedCategories
-        : selectedCategories
-            .map((engName) => {
-              const cat = allCategories.find(
-                (c) => c.categoryEngName === engName
-              );
-              return cat ? cat.categoryHebName : null;
-            })
-            .filter(Boolean);
-
-      filtered = filtered.filter(
-        (n) =>
-          n.noticeCategory && selectedHebrewNames.includes(n.noticeCategory)
-      );
-    }
-
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.creationDate);
-      const dateB = new Date(b.creationDate);
-      if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
-      if (isNaN(dateA.getTime())) return 1;
-      if (isNaN(dateB.getTime())) return -1;
-      return sortOrder === "recent" ? dateB - dateA : dateA - dateB;
+    const lowerCaseQuery = nameFilter.trim().toLowerCase();
+    return sourceUsers.filter((user) => {
+      const hebFirstName = user.hebFirstName?.toLowerCase() || "";
+      const hebLastName = user.hebLastName?.toLowerCase() || "";
+      const fullName = `${hebFirstName} ${hebLastName}`;
+      return fullName.includes(lowerCaseQuery);
     });
-    return filtered;
-  }, [allNotices, selectedCategories, sortOrder, allCategories, i18n.language]);
+  }, [sourceUsers, nameFilter]);
 
-  const totalItems = processedNotices.length;
+  // Pagination is calculated based on the final, displayed list.
+  const totalItems = displayedUsers.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
   const itemsForCurrentPage = useMemo(() => {
-    const start = (currentPage - 1) * ITEMS_PER_PAGE;
-    return processedNotices.slice(start, start + ITEMS_PER_PAGE);
-  }, [processedNotices, currentPage]);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return displayedUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [displayedUsers, currentPage]);
 
+  // Reset to page 1 whenever filters change
   useEffect(() => {
-    const newTotalPages = Math.max(
-      1,
-      Math.ceil(processedNotices.length / ITEMS_PER_PAGE)
-    );
-    if (currentPage > newTotalPages) {
-      setCurrentPage(newTotalPages);
-    }
-  }, [processedNotices, currentPage]);
-
-  const handlePageChange = useCallback(
-    (newPage) => {
-      const safeTotalPages = Math.max(1, totalPages);
-      if (newPage >= 1 && newPage <= safeTotalPages) {
-        setCurrentPage(newPage);
-        flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
-      }
-    },
-    [totalPages]
-  );
-
-  const toggleSortOrder = useCallback(() => {
     setCurrentPage(1);
-    setSortOrder((prev) => (prev === "recent" ? "oldest" : "recent"));
-  }, []);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [nameFilter, hobbyFilter]);
 
-  const handleApplyFilter = useCallback((cats) => {
-    setCurrentPage(1);
-    setSelectedCategories(cats);
-    setIsFilterModalVisible(false);
-  }, []);
+  // --- Event Handlers ---
 
-  const renderNoticeItem = useCallback(
+  const toggleAccordion = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsAccordionOpen(!isAccordionOpen);
+  };
+
+  const handleApplyHobbyFilter = (selectedHobbies) => {
+    setHobbyFilter(selectedHobbies.selectedNames);
+    setInterestModalVisible(false);
+    fetchUsersByHobbies(); // Trigger the API call
+  };
+
+  const clearHobbyFilter = () => {
+    setHobbyFilter([]);
+    fetchAllUsers(); // Fetch all users again
+  };
+
+  const clearNameFilter = () => {
+    setNameFilter("");
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
+  // --- Render Functions ---
+
+  const renderUserItem = useCallback(
     ({ item }) => (
-      <View style={styles.cardContainer}>
-        <NoticeCard
-          data={item}
-          onPress={() =>
-            router.push({
-              pathname: "/NoticeFocus",
-              params: {
-                noticeId: item.noticeId,
-                senderNameHeb: item.senderNameHeb,
-                senderNameEng: item.senderNameEng,
-              },
-            })
-          }
-        />
-      </View>
+      <UserProfileCard
+        data={item}
+        onPress={() =>
+          router.push({ pathname: "/Profile", params: { userId: item.userId } })
+        }
+      />
     ),
     [router]
   );
 
-  const keyExtractor = useCallback((item) => item.noticeId.toString(), []);
-
-  const CustomEmptyComponent = useMemo(() => {
-    if (isLoading && allNotices.length === 0)
-      return (
-        <ActivityIndicator
-          size="large"
-          color="#0000ff"
-          style={{ marginTop: 50 }}
-        />
-      );
-    if (error)
-      return (
-        <StyledText style={styles.errorText}>{`Error: ${error}`}</StyledText>
-      );
-    if (selectedCategories.length > 0 && processedNotices.length === 0)
-      return (
-        <StyledText style={styles.infoText}>
-          {t("NoticeBoardScreen_noMatchMessage")}
-        </StyledText>
-      );
-    if (!isLoading && !error && allNotices.length === 0)
-      return (
-        <StyledText style={styles.infoText}>
-          {t("NoticeBoardScreen_noNoticesMessage")}
-        </StyledText>
-      );
-    return null;
-  }, [isLoading, error, selectedCategories, allNotices, processedNotices, t]);
-
-  const categoryNamesForFilter = useMemo(() => {
-    const isRTL = i18n.dir() === "rtl";
-    return allCategories.map((c) =>
-      isRTL ? c.categoryHebName : c.categoryEngName
-    );
-  }, [allCategories, i18n.language]);
-
-  const renderListHeader = () => (
-    <View style={styles.headerFooterContainer}>
-      <View style={styles.headerPlaque}>
-        <StyledText style={styles.pageTitle}>
-          {t("NoticeBoardScreen_boardTitle")}
-        </StyledText>
-      </View>
-
-      {!isAdminLoading && isAdmin && (
-        <View style={styles.newNoticeButtonContainer}>
-          <FlipButton
-            onPress={() => router.push("/NewNotice")}
-            style={styles.newNoticeButton}
-            bgColor="#007bff"
-            textColor="#ffffff"
-          >
-            <Ionicons
-              name="add-circle-outline"
-              size={22}
-              color="white"
-              style={styles.buttonIcon}
-            />
-            <StyledText style={styles.newNoticeButtonText}>
-              {t("NoticesScreen_NewNoticeButton")}
-            </StyledText>
-          </FlipButton>
-        </View>
-      )}
-
-      <View style={styles.contentPlaque}>
-        <View
-          style={[
-            styles.controlsContainer,
-            useColumnLayout && styles.controlsColumn,
-          ]}
-        >
-          <FlipButton
-            onPress={() => setIsFilterModalVisible(true)}
-            style={[
-              styles.controlButton,
-              useColumnLayout && styles.fullWidthButton,
-            ]}
-            disabled={isCategoryLoading}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons
-                name="filter"
-                size={20}
-                color="black"
-                style={styles.buttonIcon}
-              />
-              <StyledText style={styles.buttonText}>
-                {t("NoticeBoardScreen_filterButton")} (
-                {selectedCategories.length > 0
-                  ? selectedCategories.length
-                  : t("NoticeBoardScreen_all")}
-                )
-              </StyledText>
-            </View>
-          </FlipButton>
-          <FlipButton
-            onPress={toggleSortOrder}
-            style={[
-              styles.controlButton,
-              useColumnLayout && styles.fullWidthButton,
-            ]}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons
-                name={sortOrder === "recent" ? "arrow-down" : "arrow-up"}
-                size={20}
-                color="black"
-                style={styles.buttonIcon}
-              />
-              <StyledText style={styles.buttonText}>
-                {t("NoticeBoardScreen_filterLabel")}{" "}
-                {sortOrder === "recent"
-                  ? t("NoticeBoardScreen_sortNewest")
-                  : t("NoticeBoardScreen_sortOldest")}
-              </StyledText>
-            </View>
-          </FlipButton>
-        </View>
-      </View>
-    </View>
-  );
-
-  return (
+  // This is the new, integrated search component that will be used as the list header.
+  const ListHeaderComponent = () => (
     <>
-      <Header />
-      <View style={styles.pageWrapper}>
-        <PaginatedListDisplay
-          items={itemsForCurrentPage}
-          renderItem={renderNoticeItem}
-          itemKeyExtractor={keyExtractor}
-          isLoading={isLoading && allNotices.length === 0}
-          ListEmptyComponent={CustomEmptyComponent}
-          ListHeaderComponent={renderListHeader}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          flatListRef={flatListRef}
-          listContainerStyle={styles.listContainerStyle}
-        />
+      <View style={styles.headerPlaque}>
+        <StyledText style={styles.mainTitle}>
+          {t("ResidentsSearchScreen_title")}
+        </StyledText>
+      </View>
 
-        <FilterModal
-          visible={isFilterModalVisible}
-          onClose={() => setIsFilterModalVisible(false)}
-          allCategories={categoryNamesForFilter}
-          initialSelectedCategories={selectedCategories}
-          onApply={handleApplyFilter}
-        />
+      {/* Active Filter Indicators */}
+      <View style={styles.activeFiltersContainer}>
+        {hobbyFilter.length > 0 && (
+          <View style={styles.filterChip}>
+            <StyledText style={styles.filterChipText}>
+              {t("ResidentSearchScreen_filteringByLabel")}{" "}
+              {hobbyFilter.join(", ")}
+            </StyledText>
+            <TouchableOpacity onPress={clearHobbyFilter}>
+              <Ionicons name="close-circle" size={20} color="#6c757d" />
+            </TouchableOpacity>
+          </View>
+        )}
+        {nameFilter.trim().length > 0 && (
+          <View style={styles.filterChip}>
+            <StyledText style={styles.filterChipText}>
+              {t("ResidentSearchScreen_searchByName")}: {nameFilter}
+            </StyledText>
+            <TouchableOpacity onPress={clearNameFilter}>
+              <Ionicons name="close-circle" size={20} color="#6c757d" />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* The Accordion Logic */}
+      <View style={styles.accordionContainer}>
+        <TouchableOpacity style={styles.header} onPress={toggleAccordion}>
+          <StyledText style={styles.headerText}>
+            {isAccordionOpen
+              ? t("ResidentSearchScreen_accordionOpen")
+              : t("ResidentSearchScreen_accordionClose")}
+          </StyledText>
+          <Ionicons
+            name={isAccordionOpen ? "chevron-up" : "chevron-down"}
+            size={20}
+            color="#333"
+          />
+        </TouchableOpacity>
+
+        {isAccordionOpen && (
+          <View style={styles.content}>
+            <TouchableOpacity
+              onPress={() =>
+                setSearchType(searchType === "name" ? "hobby" : "name")
+              }
+              style={styles.searchTypeButton}
+            >
+              <StyledText style={styles.searchTypeText}>
+                {t("ResidentSearchScreen_searchByLabel")}
+                <StyledText style={{ fontWeight: "bold" }}>
+                  {searchType === "name"
+                    ? t("ResidentSearchScreen_searchByName")
+                    : t("ResidentSearchScreen_searchByHobby")}
+                </StyledText>
+              </StyledText>
+            </TouchableOpacity>
+
+            {searchType === "name" ? (
+              <FloatingLabelInput
+                label={t("ResidentSearchScreen_enterNamePlaceholder")}
+                value={nameFilter}
+                onChangeText={setNameFilter}
+                style={styles.searchInputContainer}
+              />
+            ) : (
+              <>
+                <FlipButton
+                  onPress={() => setInterestModalVisible(true)}
+                  style={styles.selectButton}
+                >
+                  <StyledText style={styles.selectButtonText}>
+                    {t("ResidentSearchScreen_selectInterestsButton")}
+                  </StyledText>
+                </FlipButton>
+                <View style={styles.chipDisplayArea}>
+                  {hobbyFilter.length > 0 ? (
+                    hobbyFilter.map((name) => (
+                      <InterestChip key={name} mode="display" label={name} />
+                    ))
+                  ) : (
+                    <StyledText style={styles.noFilterText}>
+                      {t("ResidentSearchScreen_noInterestsSelected")}
+                    </StyledText>
+                  )}
+                </View>
+              </>
+            )}
+
+            {searchType === "hobby" && (
+              <FlipButton
+                onPress={fetchUsersByHobbies}
+                style={styles.searchSubmitButton}
+              >
+                <View style={styles.buttonContent}>
+                  <Ionicons
+                    name="search"
+                    size={20}
+                    color="white"
+                    style={styles.buttonIcon}
+                  />
+                  <StyledText style={styles.searchButtonText}>
+                    {t("MarketplaceScreen_SearchButton")}
+                  </StyledText>
+                </View>
+              </FlipButton>
+            )}
+          </View>
+        )}
       </View>
     </>
   );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Header />
+      <PaginatedListDisplay
+        flatListRef={flatListRef}
+        items={itemsForCurrentPage}
+        renderItem={renderUserItem}
+        itemKeyExtractor={(item) => item.userId.toString()}
+        isLoading={isLoading}
+        ListHeaderComponent={ListHeaderComponent}
+        ListEmptyComponent={
+          !isLoading && (
+            <StyledText style={styles.infoText}>
+              {t("ResidentSearchScreen_noMatchMessage")}
+            </StyledText>
+          )
+        }
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+      />
+      <InterestModal
+        visible={isInterestModalVisible}
+        mode="filter"
+        allInterests={allInterests}
+        initialSelectedNames={hobbyFilter}
+        onClose={() => setInterestModalVisible(false)}
+        onConfirm={handleApplyHobbyFilter}
+      />
+    </SafeAreaView>
+  );
 }
 
+// --- Styles ---
 const styles = StyleSheet.create({
-  pageWrapper: {
+  container: {
     flex: 1,
     backgroundColor: "#f7e7ce",
-    alignItems: "center",
-    paddingTop: 60,
-  },
-  screenContainer: {
-    flex: 1,
-    backgroundColor: "#f8f9fa", // Light background for the list area
-    paddingTop: 60,
-  },
-  headerFooterContainer: {
-    paddingTop: 20,
   },
   headerPlaque: {
-    width: "100%",
+    width: "90%",
+    alignSelf: "center",
     backgroundColor: "#f8f9fa",
     borderRadius: 15,
     borderWidth: 1,
@@ -427,71 +384,84 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     marginBottom: 20,
+    marginTop: 20,
   },
-  pageTitle: {
-    fontSize: 26,
+  mainTitle: {
+    fontSize: 32,
     fontWeight: "bold",
-    color: "#333",
     textAlign: "center",
+    color: "#111",
   },
-  newNoticeButtonContainer: {
-    width: "100%",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  newNoticeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    width: "100%",
-    maxWidth: 400,
-  },
-  newNoticeButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  contentPlaque: {
-    width: "100%",
+  accordionContainer: {
+    width: SCREEN_WIDTH * 0.9,
+    alignSelf: "center",
+    marginVertical: 10,
     backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    padding: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-    marginBottom: 10,
-  },
-  controlsContainer: {
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  controlsColumn: {
-    flexDirection: "column",
-    alignItems: "stretch",
-  },
-  controlButton: {
-    backgroundColor: "#f0f0f0",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
-    flexGrow: 1,
+    overflow: "hidden",
   },
-  fullWidthButton: {
-    width: "100%",
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+  },
+  headerText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#333",
+  },
+  content: {
+    padding: 15,
+    borderTopWidth: 1,
+    borderColor: "#eee",
+  },
+  searchTypeButton: {
+    paddingVertical: 10,
+    marginBottom: 15,
+    alignItems: "center",
+    backgroundColor: "#e7e7e7",
+    borderRadius: 6,
+  },
+  searchTypeText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  searchInputContainer: {
+    marginBottom: 10,
+  },
+  selectButton: {
+    paddingVertical: 12,
+  },
+  selectButtonText: {
+    textAlign: "center",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  chipDisplayArea: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "flex-start",
+    marginTop: 10,
+    padding: 5,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#eee",
+    minHeight: 50,
+  },
+  noFilterText: {
+    color: "#999",
+    fontStyle: "italic",
+    padding: 10,
+  },
+  searchSubmitButton: {
+    paddingVertical: 12,
+    marginTop: 15,
+    backgroundColor: "#007bff",
   },
   buttonContent: {
     flexDirection: "row",
@@ -501,31 +471,37 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  listContainerStyle: {
-    paddingHorizontal: 10, // Reduced padding for wider content
-    paddingBottom: 20,
-  },
-  cardContainer: {
-    width: "100%",
-    marginBottom: 15,
-  },
-  errorText: {
-    textAlign: "center",
+  searchButtonText: {
     fontSize: 16,
-    marginVertical: 20,
-    color: "red",
-    paddingHorizontal: 20,
+    fontWeight: "bold",
+    color: "white",
   },
   infoText: {
-    textAlign: "center",
-    fontSize: 16,
-    marginVertical: 20,
+    fontSize: 18,
     color: "#666",
+    textAlign: "center",
+    marginTop: 50,
     paddingHorizontal: 20,
+  },
+  activeFiltersContainer: {
+    width: "90%",
+    alignSelf: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 10,
+  },
+  filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e9ecef",
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  filterChipText: {
+    fontSize: 14,
+    color: "#495057",
   },
 });

@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   registerButton: {
-    paddingVertical: 0,
+    paddingVertical: 10,
     borderRadius: 8,
     marginTop: 10,
     width: "100%",
