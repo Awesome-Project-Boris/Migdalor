@@ -11,6 +11,9 @@ const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => 
   const { settings: appSettings } = useSettings();
   const [settings, setSettings] = useState(initialSettings);
 
+  // 1. Renamed variable for clarity
+  const useColumnLayout = appSettings.fontSizeMultiplier >= 2;
+
   useEffect(() => {
     if (visible) {
       setSettings(initialSettings);
@@ -49,7 +52,8 @@ const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => 
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <ScrollView style={styles.scrollView}>
+          {/* 2. The ScrollView now wraps everything, including the buttons */}
+          <ScrollView contentContainerStyle={styles.scrollContent}>
             <StyledText style={styles.modalTitle}>{t('PrivacySettings_title')}</StyledText>
             <StyledText style={styles.modalSubTitle}>{t('PrivacySettings_SubTitle')}</StyledText>
             
@@ -77,16 +81,23 @@ const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => 
                 </View>
               );
             })}
-          </ScrollView>
 
-          <View style={styles.buttonRow}>
-            <FlipButton onPress={handleSaveChanges} style={styles.button}>
-              <StyledText style={styles.buttonText}>{t('EditProfileScreen_saveButton')}</StyledText>
-            </FlipButton>
-            <FlipButton onPress={onClose} style={[styles.button, styles.cancelButton]}>
-              <StyledText style={styles.buttonText}>{t('EditProfileScreen_cancelButton')}</StyledText>
-            </FlipButton>
-          </View>
+            {/* 3. Buttons are now inside the ScrollView */}
+            <View style={[styles.buttonRow, useColumnLayout && styles.buttonColumn]}>
+              <FlipButton 
+                onPress={handleSaveChanges} 
+                style={[styles.button, useColumnLayout && styles.largeButton]}
+              >
+                <StyledText style={styles.buttonText}>{t('EditProfileScreen_saveButton')}</StyledText>
+              </FlipButton>
+              <FlipButton 
+                onPress={onClose} 
+                style={[styles.button, styles.cancelButton, useColumnLayout && styles.largeButton]}
+              >
+                <StyledText style={styles.buttonText}>{t('EditProfileScreen_cancelButton')}</StyledText>
+              </FlipButton>
+            </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -113,7 +124,6 @@ const styles = StyleSheet.create({
     width: Dimensions.get('window').width * 0.9,
     maxHeight: Dimensions.get('window').height * 0.8,
     overflow: 'hidden', 
-    flexDirection: 'column',
   },
   modalTitle: {
     fontSize: 22,
@@ -128,9 +138,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  scrollView: {
+  // 4. Styles updated for the new layout
+  scrollContent: {
     width: '100%',
     paddingHorizontal: 25,
+    paddingBottom: 20, // Ensures space at the bottom
   },
   optionRow: {
     flexDirection: 'row',
@@ -152,12 +164,11 @@ const styles = StyleSheet.create({
     transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }],
   },
   buttonRow: {
+    alignSelf: 'center',
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    padding: 20, 
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    marginTop: 30, // Adds space above the buttons
   },
   button: {
     borderRadius: 20,
@@ -175,6 +186,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     fontSize: 16,
+  },
+  buttonColumn: {
+    flexDirection: 'column',
+    alignItems: 'center', 
+    gap: 15, 
+  },
+  largeButton: {
+    width: '90%', 
   },
 });
 
