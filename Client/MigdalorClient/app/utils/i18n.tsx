@@ -70,6 +70,9 @@ const resources = {
       Upload_Successful: "Upload Successful!",
       Upload_Failed: "Upload Failed",
 
+      Activities: "Activities",
+      Classes: "Classes",
+
       Common_Loading: "Loading...",
 
       interestModal_newlyAdded: "Newly Added Hobbies",
@@ -578,6 +581,9 @@ const resources = {
       Gallery_access_is_required: "דרושה גישה לגלריה.",
       Upload_Successful: "העלאה הצליחה!",
       Upload_Failed: "העלאה נכשלה",
+
+      Activities: "פעילויות",
+      Classes: "חוגים",
 
       Common_Loading: "טוען...",
 

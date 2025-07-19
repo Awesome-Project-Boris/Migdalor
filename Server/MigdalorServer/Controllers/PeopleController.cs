@@ -467,26 +467,42 @@ namespace MigdalorServer.Controllers
 
 
         [HttpGet("ActiveDigests")]
-        public async Task<ActionResult<IEnumerable<ResidentDigest>>> GetActiveResidentDigests()
+        public async Task<ActionResult<IEnumerable<object>>> GetActiveResidentDigests()
         {
             try
             {
-                // 1. Get the original list of all active user digests
-                var allDigests = await OhPerson.GetActiveResidentDigestsAsync(_context);
-
-                // 2. Get the IDs of all users from that list
-                var userIds = allDigests.Select(d => d.UserId).ToList();
-
-                // 3. Find which of those IDs belong to a "Resident" or have a null role
-                var residentIds = await _context.OhPeople
-                    .Where(p => userIds.Contains(p.PersonId) && (p.PersonRole == "Resident" || p.PersonRole == null))
-                    .Select(p => p.PersonId)
+                var digests = await _context.OhPeople
+                    .Where(p => p.PersonRole == "Resident" || p.PersonRole == null)
+                    // Left Join with Pictures
+                    .GroupJoin(_context.OhPictures,
+                               person => person.ProfilePicId,
+                               picture => picture.PicId,
+                               (person, pictures) => new { person, pictures })
+                    .SelectMany(x => x.pictures.DefaultIfEmpty(),
+                                (x, picture) => new { x.person, picture })
+                    // Left Join with PrivacySettings
+                    .GroupJoin(_context.OhPrivacySettings,
+                               combined => combined.person.PersonId,
+                               settings => settings.PersonId,
+                               (combined, settings) => new { combined.person, combined.picture, settings })
+                    .SelectMany(y => y.settings.DefaultIfEmpty(),
+                                (y, settings) => new
+                                {
+                                    UserId = y.person.PersonId,
+                                    y.person.HebFirstName,
+                                    y.person.HebLastName,
+                                    y.person.EngFirstName,
+                                    y.person.EngLastName,
+                                    // **THE FIX IS HERE**
+                                    // Conditionally select the PhotoUrl based on privacy settings.
+                                    // The '?? true' defaults to showing the picture if no setting exists for the user.
+                                    PhotoUrl = (settings == null || settings.ShowProfilePicture == true) && y.picture != null
+                                               ? y.picture.PicPath
+                                               : null
+                                })
                     .ToListAsync();
 
-                // 4. Filter the original digest list to only include residents
-                var filteredDigests = allDigests.Where(d => residentIds.Contains(d.UserId)).ToList();
-
-                return Ok(filteredDigests);
+                return Ok(digests);
             }
             catch (Exception ex)
             {

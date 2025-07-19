@@ -1,11 +1,13 @@
 import React from "react";
 import { Tabs } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useTranslation } from "react-i18next";
 // If you're using translations, you can import it here
 // import { useTranslation } from "react-i18next";
 
 export default function EventsTabLayout() {
-  // const { t } = useTranslation(); // Uncomment if you use translations
+  const { t } = useTranslation();
+
 
   return (
     <Tabs
@@ -23,7 +25,7 @@ export default function EventsTabLayout() {
         name="Classes"
         options={{
           // title: t("Events_ClassesTab"), // Example with translation
-          title: "Classes",
+          title: t("Classes"),
           tabBarIcon: ({ color }) => (
             <FontAwesome size={30} name="calendar" color={color} />
           ),
@@ -33,7 +35,7 @@ export default function EventsTabLayout() {
         name="Activities"
         options={{
           // title: t("Events_ActivitiesTab"), // Example with translation
-          title: "Activities",
+          title: t("Activities"),
           tabBarIcon: ({ color }) => (
             <FontAwesome size={30} name="star" color={color} />
           ),
