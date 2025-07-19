@@ -55,20 +55,6 @@ namespace MigdalorServer.Database
                     .HasConstraintName("FK_Activities_Pic");
             });
 
-            //////// ADDITION TO BUILDING ENTRANCE /////////
-
-            modelBuilder.Entity<OhBuildingEntrance>(entity =>
-            {
-                // This defines the composite primary key using both BuildingId and NodeId
-                entity.HasKey(e => new { e.BuildingId, e.NodeId });
-            });
-
-            // It's good practice to call the base method if you override it
-            base.OnModelCreating(modelBuilder);
-
-            ////////////////////////////////////////////
-            ///
-
             modelBuilder.Entity<OhApartment>(entity =>
             {
                 entity.HasKey(e => e.ApartmentNumber)
