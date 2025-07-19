@@ -31,7 +31,8 @@ const ImageUpload = ({
   useEffect(() => {
     // Set the initial preview if an existing image is provided
     if (existingImage) {
-      setPreview(existingImage);
+      // FIX: Prepend the API_BASE_URL to the existing image path
+      setPreview(`${api.API_BASE_URL.substring(0, api.API_BASE_URL.length - 4)}${existingImage}`);
     }
     // Update the prompt whenever the event name or description changes
     const defaultPrompt = `${eventName || ""}: ${
@@ -54,9 +55,11 @@ const ImageUpload = ({
     setError(null);
     setGeneratedImage(null);
     try {
+      // FIX: Add "without any text" to the prompt
+      const finalPrompt = `${prompt}, without any text`;
       const response = await api.post(
         "/gemini/generate-image",
-        { prompt },
+        { prompt: finalPrompt },
         token
       );
       if (response.images && response.images.length > 0) {
@@ -75,7 +78,6 @@ const ImageUpload = ({
 
   const handleAcceptGeneratedImage = () => {
     if (generatedImage) {
-      // Generate a unique filename using UUID and timestamp
       const uniqueFilename = `${crypto.randomUUID()}-${Date.now()}.png`;
       const file = base64ToFile(generatedImage, uniqueFilename);
       handleUpload(file);
@@ -88,13 +90,12 @@ const ImageUpload = ({
     formData.append("file", fileToUpload);
 
     try {
-      // Use the new api.postFormData method for file uploads
       const picId = await api.postFormData(
         "/picture/UploadAdmin",
         formData,
         token
       );
-      onImageUploadSuccess(picId); // Notify parent component of the new picture ID
+      onImageUploadSuccess(picId);
     } catch (err) {
       setError(`שגיאה בהעלאת התמונה: ${err.message}`);
     }
@@ -109,10 +110,11 @@ const ImageUpload = ({
       {/* Image Preview */}
       {preview && (
         <div className="relative w-full h-48 bg-gray-200 rounded-md overflow-hidden">
+          {/* FIX: Change object-cover to object-contain to show the full image */}
           <img
             src={preview}
             alt="תצוגה מקדימה"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
           {generatedImage && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center space-x-4 space-x-reverse">
