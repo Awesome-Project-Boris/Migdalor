@@ -1,22 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, View, StyleSheet, ScrollView, Switch, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { Modal, View, StyleSheet, ScrollView, Switch, Dimensions, Animated, Easing } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import FlipButton from './FlipButton';
 import { Globals } from '@/app/constants/Globals';
 import StyledText from '@/components/StyledText';
 import { useSettings } from '@/context/SettingsContext';
+import { Ionicons } from "@expo/vector-icons";
 
 const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => {
   const { t } = useTranslation();
   const { settings: appSettings } = useSettings();
   const [settings, setSettings] = useState(initialSettings);
 
-  // 1. Renamed variable for clarity
   const useColumnLayout = appSettings.fontSizeMultiplier >= 2;
+
+  // --- START: Added for scroll indicator ---
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+  const bounceValue = useRef(new Animated.Value(0)).current;
+  const indicatorOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // This creates a looping bouncing animation
+    const bounceAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceValue, {
+          toValue: 10,
+          duration: 800,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+        Animated.timing(bounceValue, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+      ])
+    );
+    // Only start animation if the modal is visible
+    if (visible) {
+        bounceAnimation.start();
+    }
+    return () => bounceAnimation.stop(); // Clean up the animation
+  }, [bounceValue, visible]);
+
+  const handleScroll = (event) => {
+    // When the user scrolls down more than 20 pixels
+    if (event.nativeEvent.contentOffset.y > 20 && showScrollIndicator) {
+      // Fade out the indicator and then remove it from the screen
+      Animated.timing(indicatorOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setShowScrollIndicator(false));
+    }
+  };
+  // --- END: Added for scroll indicator ---
 
   useEffect(() => {
     if (visible) {
       setSettings(initialSettings);
+      // Reset scroll indicator visibility when modal opens
+      setShowScrollIndicator(true);
+      indicatorOpacity.setValue(1);
     }
   }, [initialSettings, visible]);
 
@@ -52,8 +98,11 @@ const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => 
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          {/* 2. The ScrollView now wraps everything, including the buttons */}
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContent}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
             <StyledText style={styles.modalTitle}>{t('PrivacySettings_title')}</StyledText>
             <StyledText style={styles.modalSubTitle}>{t('PrivacySettings_SubTitle')}</StyledText>
             
@@ -82,7 +131,6 @@ const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => 
               );
             })}
 
-            {/* 3. Buttons are now inside the ScrollView */}
             <View style={[styles.buttonRow, useColumnLayout && styles.buttonColumn]}>
               <FlipButton 
                 onPress={handleSaveChanges} 
@@ -98,6 +146,20 @@ const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => 
               </FlipButton>
             </View>
           </ScrollView>
+          {showScrollIndicator && (
+            <Animated.View
+              style={[
+                styles.scrollIndicator,
+                {
+                  opacity: indicatorOpacity,
+                  transform: [{ translateY: bounceValue }],
+                },
+              ]}
+              pointerEvents="none"
+            >
+              <Ionicons name="chevron-down" size={40} color="#FFFFFF" />
+            </Animated.View>
+          )}
         </View>
       </View>
     </Modal>
@@ -138,11 +200,10 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  // 4. Styles updated for the new layout
   scrollContent: {
     width: '100%',
     paddingHorizontal: 25,
-    paddingBottom: 20, // Ensures space at the bottom
+    paddingBottom: 20,
   },
   optionRow: {
     flexDirection: 'row',
@@ -168,7 +229,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginTop: 30, // Adds space above the buttons
+    marginTop: 30,
   },
   button: {
     borderRadius: 20,
@@ -194,6 +255,23 @@ const styles = StyleSheet.create({
   },
   largeButton: {
     width: '90%', 
+  },
+  scrollIndicator: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    zIndex: 10,
+    height: 60,
+    width: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
   },
 });
 

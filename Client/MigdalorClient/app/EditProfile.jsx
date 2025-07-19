@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, forwardRef, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   Modal,
   Alert,
+  Animated,
+  Easing,
 } from "react-native";
 import StyledText from "@/components/StyledText"; // Import StyledText
 
@@ -122,6 +124,46 @@ export default function EditProfile() {
   const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
   const [historyRole, setHistoryRole] = useState("");
   const [historyTargetSlot, setHistoryTargetSlot] = useState(null);
+
+  // --- START: Added for scroll indicator ---
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+  const bounceValue = useRef(new Animated.Value(0)).current;
+  const indicatorOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // This creates a looping bouncing animation
+    const bounceAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceValue, {
+          toValue: 10,
+          duration: 800,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+        Animated.timing(bounceValue, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+      ])
+    );
+    bounceAnimation.start();
+    return () => bounceAnimation.stop(); // Clean up the animation
+  }, [bounceValue]);
+
+  const handleScroll = (event) => {
+    // When the user scrolls down more than 20 pixels
+    if (event.nativeEvent.contentOffset.y > 20 && showScrollIndicator) {
+      // Fade out the indicator and then remove it from the screen
+      Animated.timing(indicatorOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setShowScrollIndicator(false));
+    }
+  };
+  // --- END: Added for scroll indicator ---
 
   const openHistoryModal = (role, target) => {
     setIsNavigatingBack(true);
@@ -824,6 +866,7 @@ export default function EditProfile() {
           PicID: null,
           PicName: "",
           PicPath: "",
+
           PicAlt: "",
         }
       );
@@ -910,6 +953,8 @@ export default function EditProfile() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         <Header />
         <View style={styles.profileImageContainer}>
@@ -962,24 +1007,6 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.editableContainer}>
-          {/* <FloatingLabelInput
-            maxLength={maxLengths.residentApartmentNumber}
-            style={styles.inputContainer}
-            alignRight={Globals.userSelectedDirection === "rtl"}
-            label={t("ProfileScreen_apartmentNumber")}
-            value={form.residentApartmentNumber}
-            onChangeText={(text) =>
-              handleFormChange("residentApartmentNumber", text)
-            }
-            keyboardType="numeric"
-            ref={inputRefs.residentApartmentNumber}
-          />
-          {formErrors.residentApartmentNumber && (
-            <StyledText style={styles.errorText}>
-              {formErrors.residentApartmentNumber}
-            </StyledText>
-          )} */}
-
           <ApartmentSelector
             value={form.residentApartmentNumber}
             onApartmentChange={(text) =>
@@ -1174,6 +1201,24 @@ export default function EditProfile() {
           </FlipButton>
         </View>
       </ScrollView>
+
+      {/* --- START: Scroll indicator view --- */}
+      {showScrollIndicator && (
+        <Animated.View
+          style={[
+            styles.scrollIndicator,
+            {
+              opacity: indicatorOpacity,
+              transform: [{ translateY: bounceValue }],
+            },
+          ]}
+          pointerEvents="none" // Allows touches to pass through the indicator
+        >
+          <Ionicons name="chevron-down" size={40} color="#FFFFFF" />
+        </Animated.View>
+      )}
+      {/* --- END: Scroll indicator view --- */}
+
       <ImageHistory
         visible={isHistoryModalVisible}
         picRole={historyRole}
@@ -1399,5 +1444,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#ffffff",
+  },
+  scrollIndicator: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    zIndex: 10,
+    height: 60,
+    width: 60,
+    borderRadius: 30, // This makes it a circle
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3, // Adds a subtle shadow on Android
+    shadowColor: '#000', // Adds a subtle shadow on iOS
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
   },
 });

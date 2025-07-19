@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -9,6 +9,8 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
+  Easing,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useCallback } from "react";
@@ -96,6 +98,44 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [viewingUserId, setViewingUserId] = useState(null);
+
+  const [showScrollIndicator, setShowScrollIndicator] = useState(true);
+  const bounceValue = useRef(new Animated.Value(0)).current;
+  const indicatorOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // This creates a looping bouncing animation
+    const bounceAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceValue, {
+          toValue: 10,
+          duration: 800,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+        Animated.timing(bounceValue, {
+          toValue: 0,
+          duration: 800,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.quad),
+        }),
+      ])
+    );
+    bounceAnimation.start();
+    return () => bounceAnimation.stop(); // Clean up the animation
+  }, [bounceValue]);
+
+  const handleScroll = (event) => {
+    // When the user scrolls down more than 20 pixels
+    if (event.nativeEvent.contentOffset.y > 20 && showScrollIndicator) {
+      // Fade out the indicator and then remove it from the screen
+      Animated.timing(indicatorOpacity, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setShowScrollIndicator(false));
+    }
+  };
 
   const formattedArrivalDate = useMemo(() => {
     if (form.arrivalYear) {
@@ -373,7 +413,11 @@ export default function Profile() {
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         <Header />
 
         {isOwnProfile && (
@@ -553,6 +597,20 @@ export default function Profile() {
           </>
         )}
       </ScrollView>
+      {showScrollIndicator && (
+        <Animated.View
+          style={[
+            styles.scrollIndicator,
+            {
+              opacity: indicatorOpacity,
+              transform: [{ translateY: bounceValue }],
+            },
+          ]}
+          pointerEvents="none" // Allows touches to pass through the indicator
+        >
+          <Ionicons name="chevron-down" size={40} color="#FFFFFF" />
+        </Animated.View>
+      )}
     </View>
   );
 }
@@ -737,5 +795,22 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 60,
+  },
+  scrollIndicator: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    zIndex: 10,
+    height: 60,
+    width: 60,
+    borderRadius: 30, // This makes it a circle
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3, // Adds a subtle shadow on Android
+    shadowColor: '#000', // Adds a subtle shadow on iOS
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
   },
 });
