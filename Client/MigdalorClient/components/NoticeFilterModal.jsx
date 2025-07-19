@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
     marginHorizontal: 10,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   actionButtonVertical: {
     flex: 0,

@@ -20,6 +20,7 @@ import StyledText from "@/components/StyledText";
 import { useSettings } from "@/context/SettingsContext";
 import { Globals } from "../app/constants/Globals";
 import * as ImagePicker from "expo-image-picker";
+import { t } from "i18next";
 
 const { width } = Dimensions.get("window");
 
@@ -34,7 +35,7 @@ export default function ImageHistory({
   const [pictures, setPictures] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState("");
-  const [maxSlots, setMaxSlots] = useState(0);
+  const [maxSlots, setMaxSlots] = useState(0); 
 
   const fetchImageHistory = useCallback(async () => {
     setIsLoading(true);
@@ -85,10 +86,10 @@ export default function ImageHistory({
   useEffect(() => {
     if (visible && picRole) {
       if (picRole === "Profile picture") {
-        setTitle("Your Profile Pictures");
+        setTitle(t("Your_Profile_Pictures"));
         setMaxSlots(5);
       } else {
-        setTitle("Your Extra Pictures");
+        setTitle(t("Your_Extra_Pictures"));
         setMaxSlots(3);
       }
       fetchImageHistory();
@@ -144,12 +145,12 @@ export default function ImageHistory({
       return;
     }
     Alert.alert(
-      "Confirm Deletion",
-      "Are you sure you want to permanently delete this picture?",
+      t("Confirm_Deletion"),
+      t("Confirm_Deletion_Message"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("Cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("Delete"),
           onPress: async () => {
             try {
               const userId = await AsyncStorage.getItem("userID");
@@ -176,12 +177,12 @@ export default function ImageHistory({
                 );
               }
               setPictures((prev) => prev.filter((p) => p.picId !== pictureId));
-              Toast.show({ type: "success", text1: "Picture Deleted" });
+              Toast.show({ type: "success", text1: t("Picture_Deleted") });
             } catch (error) {
               Toast.show({
                 type: "error",
-                text1: "Deletion Failed",
-                text2: "The picture is currently in use",
+                text1: t("Deletion_Failed"),
+                text2: t("PictureIsInUse"),
               });
             }
           },
@@ -197,7 +198,7 @@ export default function ImageHistory({
       const cameraPermission =
         await ImagePicker.requestCameraPermissionsAsync();
       if (cameraPermission.status !== "granted") {
-        Alert.alert("Permission denied", "Camera access is required.");
+        Alert.alert(t("Permission_denied"), t("Camera_access_is_required"));
         return;
       }
       result = await ImagePicker.launchCameraAsync({
@@ -208,7 +209,7 @@ export default function ImageHistory({
       const libraryPermission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (libraryPermission.status !== "granted") {
-        Alert.alert("Permission denied", "Gallery access is required.");
+        Alert.alert(t("Permission_denied"), t("Gallery_access_is_required"));
         return;
       }
       result = await ImagePicker.launchImageLibraryAsync({
@@ -248,13 +249,13 @@ export default function ImageHistory({
         const errorBody = await response.text();
         throw new Error(`Upload failed: ${errorBody}`);
       }
-      Toast.show({ type: "success", text1: "Upload Successful!" });
+      Toast.show({ type: "success", text1: t("Upload_Successful") });
       fetchImageHistory();
     } catch (error) {
       console.error("Upload failed:", error);
       Toast.show({
         type: "error",
-        text1: "Upload Failed",
+        text1: t("Upload_Failed"),
         text2: error.message,
       });
     } finally {
@@ -263,10 +264,10 @@ export default function ImageHistory({
   };
 
   const handleAddPhoto = async () => {
-    Alert.alert("Add a New Photo", "Choose a source for your new picture.", [
-      { text: "Camera", onPress: () => pickAndUploadImage("camera") },
-      { text: "Gallery", onPress: () => pickAndUploadImage("gallery") },
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("Add_a_New_Photo"), t("Choose_a_source_for_your_new_picture"), [
+      { text: t("Camera"), onPress: () => pickAndUploadImage("camera") },
+      { text: t("Gallery"), onPress: () => pickAndUploadImage("gallery") },
+      { text: t("Cancel"), style: "cancel" },
     ]);
   };
 
@@ -308,7 +309,7 @@ export default function ImageHistory({
           onPress={handleAddPhoto}
         >
           <Ionicons name="image-outline" size={50} color="#a0a0a0" />
-          <StyledText style={styles.addPhotoText}>Add Photo</StyledText>
+          <StyledText style={styles.addPhotoText}>{t("Add_Image")}</StyledText>
         </TouchableOpacity>
       );
     }
@@ -327,7 +328,7 @@ export default function ImageHistory({
           <View style={styles.header}>
             <StyledText style={styles.title}>{title}</StyledText>
             <StyledText style={styles.subtitle}>
-              You can manage up to {maxSlots} pictures.
+              {t('Manage_Pictures_Subtitle', { maxSlots: maxSlots })}
             </StyledText>
           </View>
 
@@ -344,7 +345,7 @@ export default function ImageHistory({
 
         <View style={styles.footer}>
           <FlipButton onPress={onClose} style={styles.returnButton}>
-            <StyledText style={styles.returnButtonText}>Return</StyledText>
+            <StyledText style={styles.returnButtonText}>{t("Return_Image")}</StyledText>
           </FlipButton>
         </View>
       </SafeAreaView>

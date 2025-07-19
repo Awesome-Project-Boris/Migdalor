@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import FlipButton from "./FlipButton";
 import StyledText from "@/components/StyledText";
 import { useSettings } from "@/context/SettingsContext";
+import { t } from "i18next";
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
 
@@ -43,7 +44,7 @@ function ImageViewModal({ visible, imageUri, onClose, onRemove, onAdd }) {
               <View style={styles.noImageContainer}>
                 <Ionicons name="image-outline" size={80} color="#a0a0a0" />
                 <StyledText style={styles.noImageText}>
-                  No Image Available
+                  {t("No_Image_Available")}
                 </StyledText>
               </View>
             ) : (
@@ -75,7 +76,7 @@ function ImageViewModal({ visible, imageUri, onClose, onRemove, onAdd }) {
                 color="#fff"
               />
               <StyledText style={styles.buttonText}>
-                {noImage ? "Add Image" : "Remove"}
+                {noImage ? t("Add_Image") : t("Remove_Image")}
               </StyledText>
             </FlipButton>
 
@@ -88,7 +89,7 @@ function ImageViewModal({ visible, imageUri, onClose, onRemove, onAdd }) {
               ]}
             >
               <Ionicons name="arrow-back-outline" size={24} color="#fff" />
-              <StyledText style={styles.buttonText}>Return</StyledText>
+              <StyledText style={styles.buttonText}>{t("Return_Image")}</StyledText>
             </FlipButton>
           </View>
         </View>
