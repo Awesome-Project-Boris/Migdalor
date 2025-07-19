@@ -21,7 +21,7 @@ const Reports = () => {
   ];
 
   return (
-    <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
+    <div className="w-full bg-white p-6 rounded-lg shadow-md">
         <TabsGroup tabs={reportTabs} />
     </div>
   );
