@@ -264,14 +264,27 @@ export default function ResidentList() {
   }, [fetchUsers]);
 
   const displayedUsers = useMemo(() => {
-    if (!nameFilter.trim()) return sourceUsers;
+    // If there's no filter text, return the original list of users
+    if (!nameFilter.trim()) {
+      return sourceUsers;
+    }
+  
+    // Convert the user's search query to lowercase for case-insensitive matching
     const lowerCaseQuery = nameFilter.trim().toLowerCase();
-    return sourceUsers.filter((user) =>
-      `${user.hebFirstName?.toLowerCase() || ""} ${
-        user.hebLastName?.toLowerCase() || ""
-      }`.includes(lowerCaseQuery)
-    );
-  }, [sourceUsers, nameFilter]);
+
+    return sourceUsers.filter((user) => {
+      // Combine all name fields (Hebrew and English) into a single searchable string
+      const searchableString = `
+        ${user.hebFirstName || ""}
+        ${user.hebLastName || ""}
+        ${user.engFirstName || ""}
+        ${user.engLastName || ""}
+      `.toLowerCase(); // Convert the combined names to lowercase
+
+      // Check if the combined string includes the search query
+      return searchableString.includes(lowerCaseQuery);
+    });
+}, [sourceUsers, nameFilter]);
 
   const totalPages = Math.ceil(displayedUsers.length / ITEMS_PER_PAGE);
   const itemsForCurrentPage = useMemo(() => {
