@@ -9,11 +9,16 @@ namespace MigdalorServer.Models
     [Table("OH_Buildings")]
     public partial class OhBuilding
     {
+
+        [InverseProperty("Building")] // This attribute links to the 'Building' property in the OhBuildingEntrance class
+        public virtual ICollection<OhBuildingEntrance> OhBuildingEntrances { get; set; }
+
         public OhBuilding()
         {
             OhApartmentAccessBuildings = new HashSet<OhApartment>();
             OhApartmentPhysicalBuildings = new HashSet<OhApartment>();
             OhBuildingEntrances = new HashSet<OhBuildingEntrance>();
+            Nodes = new HashSet<OhMapNode>();
         }
 
         [Key]
