@@ -109,7 +109,7 @@ const ActivitiesAndClassesReport = () => {
 
   if (selectedEvent) {
     return (
-      <div>
+      <div dir="rtl">
         <Button onClick={() => setSelectedEvent(null)} className="mb-4">
           <ArrowRight className="ml-2 h-4 w-4" />
           חזור לרשימת האירועים
@@ -141,14 +141,14 @@ const ActivitiesAndClassesReport = () => {
   }
 
   return (
-    <div>
+    <div dir="rtl">
       <Toast
         show={toastState.show}
         message={toastState.message}
         variant={toastState.variant}
         onClose={() => setToastState({ ...toastState, show: false })}
       />
-      <div className="flex items-center space-x-4 space-x-reverse mb-4">
+      <div className="flex items-center space-x-4 mb-4">
         <div>
           <label
             htmlFor="startDate"
