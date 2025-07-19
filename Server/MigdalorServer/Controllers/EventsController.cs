@@ -192,12 +192,12 @@ namespace MigdalorServer.Controllers
 
         // POST: api/events/attendance
         [HttpPost("attendance")]
-        public async Task<IActionResult> UpdateAttendance([FromBody] UpdateAttendanceDto attendanceDto)
+        public async Task<IActionResult> UpdateAttendance([FromBody] UpdateParticipationDto attendanceDto)
         {
             try
             {
                 var attendanceRecord = await _context.OhParticipations
-                    .FirstOrDefaultAsync(a => a.EventId == attendanceDto.InstanceId && a.ParticipantId == attendanceDto.ParticipantId);
+                    .FirstOrDefaultAsync(a => a.EventId == attendanceDto.EventId && a.ParticipantId == attendanceDto.ParticipantId);
 
                 if (attendanceRecord != null)
                 {
@@ -207,7 +207,7 @@ namespace MigdalorServer.Controllers
                 {
                     var newRecord = new OhParticipation
                     {
-                        EventId = attendanceDto.InstanceId,
+                        EventId = attendanceDto.EventId,
                         ParticipantId = attendanceDto.ParticipantId,
                         Status = attendanceDto.Status,
                         RegistrationTime = DateTime.UtcNow
@@ -423,7 +423,7 @@ namespace MigdalorServer.Controllers
 
         // POST: api/events/admin
         [HttpPost("admin")]
-        //[Authorize(Roles = "admin")] // Example authorization
+        [Authorize(Roles = "admin")] // Example authorization
         public async Task<ActionResult<OhEvent>> CreateEventForAdmin([FromBody] AdminCreateEventDto createDto)
         {
             if (!ModelState.IsValid)
@@ -442,6 +442,7 @@ namespace MigdalorServer.Controllers
                 RecurrenceRule = createDto.IsRecurring ? createDto.RecurrenceRule : null,
                 StartDate = createDto.StartDate,
                 EndDate = createDto.EndDate,
+                PictureId = createDto.PictureId, // Add this line
                 ParticipationChecked = false
             };
 
@@ -472,6 +473,7 @@ namespace MigdalorServer.Controllers
             eventToUpdate.RecurrenceRule = updateDto.IsRecurring ? updateDto.RecurrenceRule : null;
             eventToUpdate.StartDate = updateDto.StartDate;
             eventToUpdate.EndDate = updateDto.EndDate;
+            eventToUpdate.PictureId = updateDto.PictureId; // Add this line
 
             try
             {

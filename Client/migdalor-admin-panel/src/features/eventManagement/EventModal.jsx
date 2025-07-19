@@ -6,6 +6,7 @@ import RRuleGenerator from "./RRuleGenerator";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import SpouseCommand from "../../components/common/SpouseCommand";
+import ImageUpload from "./ImageUpload"; // Import the new component
 
 // Helper function to convert UTC date strings to the format needed by <input type="datetime-local">
 const convertToInputFormat = (dateString) => {
@@ -19,17 +20,16 @@ const convertToInputFormat = (dateString) => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-// The modal now receives `eventId` instead of a full `event` object.
 const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
   const { user, token } = useAuth();
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hosts, setHosts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [existingImage, setExistingImage] = useState(null);
 
   const isEditMode = !!eventId;
 
-  // Effect to fetch the list of potential hosts when the modal opens.
   useEffect(() => {
     const fetchHosts = async () => {
       if (isOpen) {
@@ -44,13 +44,11 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
     fetchHosts();
   }, [isOpen, token]);
 
-  // Effect to either fetch full event details (in edit mode) or set defaults for a new event.
   useEffect(() => {
     const fetchEventDetails = async () => {
       setIsLoading(true);
       try {
         const eventDetails = await api.get(`/events/${eventId}`, token);
-        // Populate the form with the detailed data from the server.
         setFormData({
           EventName: eventDetails.eventName || "",
           Description: eventDetails.description || "",
@@ -61,17 +59,20 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
           StartDate: convertToInputFormat(eventDetails.startDate),
           EndDate: convertToInputFormat(eventDetails.endDate),
           HostId: eventDetails.host?.hostId || null,
+          PictureId: eventDetails.pictureId || null, // Add PictureId to form data
         });
+        if (eventDetails.picturePath) {
+          setExistingImage(eventDetails.picturePath);
+        }
       } catch (error) {
         console.error("Failed to fetch event details", error);
-        onClose(); // Close the modal if there's an error fetching data.
+        onClose();
       } finally {
         setIsLoading(false);
       }
     };
 
     const initializeNewEventForm = () => {
-      // Set up a blank form for creating a new event.
       setFormData({
         EventName: "",
         Description: "",
@@ -81,8 +82,10 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
         RecurrenceRule: eventType === "classes" ? "FREQ=WEEKLY;INTERVAL=1" : "",
         StartDate: "",
         EndDate: "",
-        HostId: user.id, // Default host to the current admin user.
+        HostId: user.id,
+        PictureId: null, // Initialize PictureId
       });
+      setExistingImage(null);
     };
 
     if (isOpen) {
@@ -99,7 +102,7 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
 
     if (name === "StartDate") {
       const startDate = new Date(value);
-      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Add 1 hour
+      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
 
       const formatForInput = (date) => {
         if (!date || isNaN(date.getTime())) return "";
@@ -128,9 +131,14 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
     setFormData((prev) => ({ ...prev, HostId: hostId }));
   };
 
-const handleRruleChange = useCallback((newRrule) => {
-  setFormData((prev) => ({ ...prev, RecurrenceRule: newRrule }));
-}, []);
+  const handleRruleChange = useCallback((newRrule) => {
+    setFormData((prev) => ({ ...prev, RecurrenceRule: newRrule }));
+  }, []);
+
+  // Callback for when an image is successfully uploaded
+  const handleImageUploadSuccess = (picId) => {
+    setFormData((prev) => ({ ...prev, PictureId: picId }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -150,7 +158,7 @@ const handleRruleChange = useCallback((newRrule) => {
   };
 
   const handleClose = () => {
-    setFormData({}); // Clear form data to prevent stale state.
+    setFormData({});
     onClose();
   };
 
@@ -236,6 +244,16 @@ const handleRruleChange = useCallback((newRrule) => {
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
               />
             </div>
+
+            {/* --- Image Upload Component Integration --- */}
+            <ImageUpload
+              token={token}
+              eventName={formData.EventName}
+              eventDescription={formData.Description}
+              onImageUploadSuccess={handleImageUploadSuccess}
+              existingImage={existingImage}
+            />
+
             <div className="p-4 border rounded-md bg-gray-50 space-y-4">
               <CheckboxField
                 label="אירוע קבוע (חוג)"

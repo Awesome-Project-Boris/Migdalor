@@ -15,6 +15,7 @@ namespace MigdalorServer.Models.DTOs
         public string RecurrenceRule { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public int? PictureId { get; set; } // Add this line
     }
 
     // DTO for updating an event from the admin panel
@@ -29,6 +30,7 @@ namespace MigdalorServer.Models.DTOs
         public string RecurrenceRule { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public int? PictureId { get; set; } // Add this line
     }
 
     // DTO for canceling an event instance

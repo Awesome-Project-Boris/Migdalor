@@ -52,7 +52,7 @@ export const api = {
     },
 
     /**
-     * Performs a POST request.
+     * Performs a POST request with a JSON body.
      * @param {string} endpoint - The API endpoint to call.
      * @param {object} body - The request payload.
      * @param {string} [token] - The user's authentication token (optional).
@@ -69,6 +69,29 @@ export const api = {
             method: "POST",
             headers,
             body: JSON.stringify(body),
+        });
+        return handleResponse(response);
+    },
+
+    /**
+     * FIX: Added a new method specifically for file uploads using FormData.
+     * This method correctly sends multipart/form-data requests.
+     * @param {string} endpoint - The API endpoint to call.
+     * @param {FormData} formData - The FormData object containing the file(s).
+     * @param {string} [token] - The user's authentication token (optional).
+     * @returns {Promise<any>} The response data.
+     */
+    async postFormData(endpoint, formData, token) {
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        // Note: We do NOT set 'Content-Type'. The browser automatically sets it
+        // to 'multipart/form-data' with the correct boundary when the body is a FormData object.
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: "POST",
+            headers,
+            body: formData,
         });
         return handleResponse(response);
     },

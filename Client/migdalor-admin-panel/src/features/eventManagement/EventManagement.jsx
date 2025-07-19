@@ -13,7 +13,6 @@ const EventManagement = () => {
   const [events, setEvents] = useState([]);
   const [classes, setClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  // FIX: State now holds only the ID of the event to be edited
   const [activeEventId, setActiveEventId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletingEvent, setDeletingEvent] = useState(null);
@@ -47,7 +46,6 @@ const EventManagement = () => {
     fetchData();
   }, [fetchData]);
 
-  // FIX: Simplified to just set the ID and open the modal.
   const handleOpenModal = (eventSummary = null) => {
     setActiveEventId(eventSummary ? eventSummary.eventId : null);
     setIsModalOpen(true);
@@ -62,6 +60,7 @@ const EventManagement = () => {
     const isEditMode = !!eventId;
     const typeText = eventData.IsRecurring ? "חוג" : "אירוע";
 
+    // FIX: Map the client-side formData to the server-side DTO, including the PictureId
     const serverEventData = {
       eventName: eventData.EventName,
       description: eventData.Description,
@@ -72,6 +71,7 @@ const EventManagement = () => {
       startDate: eventData.StartDate,
       endDate: eventData.EndDate || null,
       hostId: eventData.HostId,
+      pictureId: eventData.PictureId, // Add this line to send the PictureId to the server
     };
 
     try {
@@ -101,8 +101,6 @@ const EventManagement = () => {
       setDeletingEvent(null);
     }
   };
-
-  // EventManagement.jsx
 
   const columns = useMemo(
     () => [
@@ -204,7 +202,6 @@ const EventManagement = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSave={handleSaveEvent}
-        // FIX: Pass the eventId to the modal
         eventId={activeEventId}
         eventType={view}
       />
