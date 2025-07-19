@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
+using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
 using System;
 using System.Linq;
@@ -22,6 +23,7 @@ public class MapController : ControllerBase
     {
         try
         {
+            // 1. Fetch all map nodes.
             var allNodes = await _context.OhMapNodes
                 .Select(n => new MapNodeDto
                 {
@@ -32,45 +34,56 @@ public class MapController : ControllerBase
                 })
                 .ToListAsync();
 
-            var residentData = await _context.OhResidents
+            // 2. Fetch all residents and group them by apartment for fast lookup.
+            var residentsByApartment = (await _context.OhResidents
                 .Where(r => r.ResidentApartmentNumber != null)
-                .Include(r => r.Resident)
                 .Select(r => new {
                     ApartmentGuid = r.ResidentApartmentNumber.Value,
                     ResidentId = r.ResidentId,
-                    HebFirstName = r.Resident.HebFirstName,
-                    HebLastName = r.Resident.HebLastName,
-                    EngFirstName = r.Resident.EngFirstName,
-                    EngLastName = r.Resident.EngLastName
+                    // Make sure the r.Resident navigation property is correctly configured.
+                    FullNameHe = r.Resident.HebFirstName + " " + r.Resident.HebLastName,
+                    FullNameEn = r.Resident.EngFirstName + " " + r.Resident.EngLastName
                 })
-                .ToListAsync();
-
-            var residentsByApartment = residentData
+                .ToListAsync())
                 .GroupBy(x => x.ApartmentGuid)
                 .ToDictionary(
                     g => g.Key,
                     g => g.Select(x => new MapResidentDto
                     {
                         ResidentId = x.ResidentId,
-                        FullNameHe = $"{x.HebFirstName} {x.HebLastName}",
-                        FullNameEn = $"{x.EngFirstName} {x.EngLastName}"
+                        FullNameHe = x.FullNameHe,
+                        FullNameEn = x.FullNameEn
                     }).ToList()
                 );
 
+            // 3. Fetch all building entrances separately and group them by BuildingID.
+            // This is the key step that avoids the error.
+            var entrancesByBuilding = (await _context.Set<OhBuildingEntrance>()
+    .Select(e => new { e.BuildingId, e.NodeId })
+                .ToListAsync())
+                .GroupBy(e => e.BuildingId)
+                .ToDictionary(g => g.Key, g => g.Select(e => e.NodeId).ToList());
+
+            // 4. Fetch all buildings. We will attach related data manually.
             var buildings = await _context.OhBuildings
-                .Include(b => b.OhApartmentPhysicalBuildings)
-                .Include(b => b.OhBuildingEntrances) // This will now work correctly
+                .Include(b => b.OhApartmentPhysicalBuildings) // This include works because the property exists
                 .Select(b => new BuildingDto
                 {
                     BuildingID = b.BuildingId,
                     BuildingName = b.BuildingName,
                     Coordinates = b.Coordinates,
-                    EntranceNodeIds = b.OhBuildingEntrances.Select(e => e.NodeId).ToList(),
+
+                    // Manually look up the entrances from the dictionary created in step 3.
+                    EntranceNodeIds = entrancesByBuilding.ContainsKey(b.BuildingId)
+                                      ? entrancesByBuilding[b.BuildingId]
+                                      : new List<int>(),
+
+                    // Map the apartments from the included navigation property.
                     Apartments = b.OhApartmentPhysicalBuildings.Select(apt => new MapApartmentDto
                     {
                         ApartmentNumber = apt.ApartmentNumber,
                         ApartmentName = apt.ApartmentName,
-                        DisplayNumber = GetApartmentNumberFromGuid(apt.ApartmentNumber),
+                        DisplayNumber = GetApartmentNumberFromGuid(apt.ApartmentNumber), // Assuming this helper method exists
                         Residents = residentsByApartment.ContainsKey(apt.ApartmentNumber)
                                     ? residentsByApartment[apt.ApartmentNumber]
                                     : new List<MapResidentDto>()
