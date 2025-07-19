@@ -1,28 +1,23 @@
-import React, { useState, useEffect } from "react";
 import { StyleSheet, Dimensions, ScrollView, View } from "react-native";
-import { Globals } from "@/app/constants/Globals";
-import FlipButton from "../../components/FlipButton";
-import { Slider, XStack, YStack, Text, styled } from "tamagui";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import Header from "@/components/Header";
-import { Divider } from "react-native-paper";
+import { YStack } from "tamagui";
+
+// --- Custom Component and Context Imports ---
+import { useSettings } from "@/context/SettingsContext.jsx";
+import FlipButton from "@/components/FlipButton";
+import StyledText from "@/components/StyledText.jsx";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 export default function NotificationSettingsPage() {
   const { t } = useTranslation();
-  const [notificationsSetting, setNotificationsSetting] = useState(
-    Globals.userNotificationsSetting
-  );
+  const { settings, updateSetting } = useSettings();
 
-  useEffect(() => {
-    Globals.userNotificationsSetting = notificationsSetting;
-  }, [notificationsSetting]);
-
+  // --- This is the two-button configuration from your teammate ---
   const options: { label: string; value: string }[] = [
-    { label: t("NotificationSettingsPage_both"), value: "both" },
-    { label: t("NotificationSettingsPage_sound"), value: "sound" },
-    { label: t("NotificationSettingsPage_vibrate"), value: "vibration" },
+    { label: t("NotificationSettingsPage_normal"), value: "both" },
     { label: t("NotificationSettingsPage_silent"), value: "none" },
   ];
 
@@ -31,31 +26,29 @@ export default function NotificationSettingsPage() {
       <Header />
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingTop: 60,
-          paddingBottom: 160,
-          alignItems: "center",
-        }}
+        contentContainerStyle={styles.scrollContent}
       >
         <YStack width="100%" alignItems="center" gap="$5">
-          <Text
-            fontSize={40}
-            fontWeight={800}
-            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+          <StyledText
+            style={styles.headerText}
+            writingDirection={settings.language === "he" ? "rtl" : "ltr"}
           >
             {t("NotificationSettingsPage_header")}
-          </Text>
+          </StyledText>
 
           {options.map(({ label, value }) => (
             <FlipButton
               key={value}
               style={styles.button}
-              bgColor={notificationsSetting === value ? "#00007a" : "#ffffff"}
-              textColor={notificationsSetting === value ? "#ffffff" : "#0b0908"}
-              onPress={() => setNotificationsSetting(value)}
+              bgColor={
+                settings.notificationSetting === value ? "#00007a" : "#ffffff"
+              }
+              textColor={
+                settings.notificationSetting === value ? "#ffffff" : "#0b0908"
+              }
+              onPress={() => updateSetting("notificationSetting", value)}
             >
-              <Text style={styles.buttonText}>{label}</Text>
+              <StyledText style={styles.buttonText}>{label}</StyledText>
             </FlipButton>
           ))}
         </YStack>
@@ -65,13 +58,24 @@ export default function NotificationSettingsPage() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    paddingTop: 60,
+    paddingBottom: 160,
+    alignItems: "center",
+  },
+  headerText: {
+    fontSize: 30,
+    fontWeight: "800",
+    textAlign: "center",
+    lineHeight: 50,
+  },
   button: {
     width: SCREEN_WIDTH * 0.7,
     minHeight: 100,
     borderRadius: 8,
     justifyContent: "center",
     alignSelf: "center",
-    backgroundColor: "#4CAF50",
   },
   buttonText: {
     fontSize: 18,

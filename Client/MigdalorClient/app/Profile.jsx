@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -19,6 +19,8 @@ import Header from "@/components/Header";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Ionicons } from "@expo/vector-icons";
 
+import { useSettings } from "@/context/SettingsContext";
+
 import FlipButton from "../components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Checkbox from "../components/CheckBox";
@@ -29,14 +31,31 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { G } from "react-native-svg";
 import BouncyButton from "@/components/BouncyButton";
 import InterestChip from "../components/InterestChip";
+import StyledText from "@/components/StyledText";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
+
+const getApartmentNumberFromGuid = (guid) => {
+  if (!guid || typeof guid !== "string") {
+    return "";
+  }
+  // This logic finds the 'A' and parses the number that follows.
+  const parts = guid.toUpperCase().split("A");
+  const numberPart = parts.pop();
+  if (numberPart && !isNaN(parseInt(numberPart, 10))) {
+    return String(parseInt(numberPart, 10));
+  }
+  return ""; // Return empty string if format is unexpected or invalid
+};
 
 export default function Profile() {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const router = useRouter();
   const localSearchParams = useLocalSearchParams();
+
+  const { settings } = useSettings();
+  const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
   const [form, setForm] = useState({
     name: "",
@@ -78,6 +97,23 @@ export default function Profile() {
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [viewingUserId, setViewingUserId] = useState(null);
 
+  const formattedArrivalDate = useMemo(() => {
+    if (form.arrivalYear) {
+      try {
+        const date = new Date(form.arrivalYear);
+        // Check if the date is valid before formatting
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString("en-GB"); // Formats to DD/MM/YYYY
+        }
+      } catch (error) {
+        console.error("Could not format date:", form.arrivalYear, error);
+      }
+      // Fallback to original string if it's not a valid date
+      return form.arrivalYear;
+    }
+    return "";
+  }, [form.arrivalYear]);
+
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -109,6 +145,11 @@ export default function Profile() {
             throw new Error(`Failed to fetch profile: HTTP ${response.status}`);
           }
           const userData = await response.json();
+
+          const apartmentDisplayNumber = getApartmentNumberFromGuid(
+            userData.residentApartmentNumber
+          );
+
           if (!isActive) return;
           setForm({
             mobilePhone: userData.phoneNumber || "",
@@ -120,9 +161,7 @@ export default function Profile() {
               userData.residentInterests?.map((interest) => interest.name) ||
               [],
             aboutMe: userData.residentDescription || "",
-            residentApartmentNumber: String(
-              userData.residentApartmentNumber || ""
-            ),
+            residentApartmentNumber: apartmentDisplayNumber || "",
           });
           console.log(
             "userData.profilePicture looking for image:",
@@ -244,9 +283,6 @@ export default function Profile() {
     isVisible("showAdditionalPictures")
   );
 
-  
-
-
   const handleImagePress = (imageUriToView, altText = "") => {
     // if (!imageUriToView || imageUriToView === Globals.API_BASE_URL) {
     //   console.log("handleImagePress: No valid imageUri provided.");
@@ -278,7 +314,7 @@ export default function Profile() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>{t("Common_Loading")}</Text>
+        <StyledText>{t("Common_Loading")}</StyledText>
       </View>
     );
   }
@@ -293,13 +329,13 @@ export default function Profile() {
             <Image source={defaultUserImage} style={styles.profileImage} />
           </View>
           <View style={styles.profileNameContainer}>
-            <Text style={styles.profileName}>
+            <StyledText style={styles.profileName}>
               {form.name || t("ProfileScreen_emptyDataField")}
-            </Text>
+            </StyledText>
           </View>
-          <Text style={styles.privateText}>
+          <StyledText style={styles.privateText}>
             {t("ProfileScreen_privateProfile")}
-          </Text>
+          </StyledText>
         </ScrollView>
       </View>
     );
@@ -309,7 +345,7 @@ export default function Profile() {
     if (!isVisible(fieldKey)) return null;
     return (
       <>
-        <Text
+        <StyledText
           style={[
             styles.label,
             {
@@ -319,8 +355,8 @@ export default function Profile() {
           ]}
         >
           {label}
-        </Text>
-        <Text
+        </StyledText>
+        <StyledText
           style={[
             styles.box,
             {
@@ -330,7 +366,7 @@ export default function Profile() {
           ]}
         >
           {value || t("ProfileScreen_emptyDataField")}
-        </Text>
+        </StyledText>
       </>
     );
   };
@@ -359,9 +395,9 @@ export default function Profile() {
             textColor="black"
             style={styles.editProfileButton}
           >
-            <Text style={styles.editProfileButtonText}>
+            <StyledText style={styles.editProfileButtonText}>
               {t("ProfileScreen_editButton")}
-            </Text>
+            </StyledText>
           </FlipButton>
         )}
         {/* This block will now show the default image if the profile picture is private */}
@@ -385,12 +421,12 @@ export default function Profile() {
         </View>
 
         <View style={styles.profileNameContainer}>
-          {/* <Text style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</Text>  */}
+          {/* <StyledText style={styles.profileName}>Israelasdaasda sdasdsdasd Israeliasdas dasdasdasdasdasd Israeliasdasdas dasdasdasdas</StyledText>  */}
 
           {/* !! Change this to full name  */}
-          <Text style={styles.profileName}>
+          <StyledText style={styles.profileName}>
             {form.name || t("ProfileScreen_emptyDataField")}
-          </Text>
+          </StyledText>
         </View>
 
         {renderField("showPartner", t("ProfileScreen_partner"), form.partner)}
@@ -408,7 +444,7 @@ export default function Profile() {
         {renderField(
           "showArrivalYear",
           t("ProfileScreen_arrivalYear"),
-          form.arrivalYear
+          formattedArrivalDate
         )}
         {renderField("showOrigin", t("ProfileScreen_origin"), form.origin)}
         {renderField(
@@ -418,7 +454,7 @@ export default function Profile() {
         )}
         {isVisible("showInterests") && (
           <>
-            <Text
+            <StyledText
               style={[
                 styles.label,
                 {
@@ -428,7 +464,7 @@ export default function Profile() {
               ]}
             >
               {t("ProfileScreen_interests")}
-            </Text>
+            </StyledText>
             <View style={styles.chipContainer}>
               {form.interests && form.interests.length > 0 ? (
                 form.interests.map((interestName) => (
@@ -439,9 +475,18 @@ export default function Profile() {
                   />
                 ))
               ) : (
-                <Text style={styles.noInterestsText}>
+                <StyledText
+                  style={{
+                    ...styles.noInterestsText,
+                    width: "100%", // Ensures the component fills the container
+                    textAlign:
+                      Globals.userSelectedDirection === "rtl"
+                        ? "right"
+                        : "left", // Correctly aligns the text
+                  }}
+                >
                   {t("ProfileScreen_emptyDataField")}
-                </Text>
+                </StyledText>
               )}
             </View>
           </>
@@ -449,7 +494,7 @@ export default function Profile() {
         {renderField("showAboutMe", t("ProfileScreen_aboutMe"), form.aboutMe)}
         {isVisible("showAdditionalPictures") && (
           <>
-            <Text
+            <StyledText
               style={[
                 styles.label,
                 {
@@ -459,8 +504,13 @@ export default function Profile() {
               ]}
             >
               {t("ProfileScreen_extraImages")}
-            </Text>
-            <View style={styles.profileExtraImageContainer}>
+            </StyledText>
+            <View
+              style={[
+                styles.profileExtraImageContainer,
+                useColumnLayout && styles.extraImagesColumn,
+              ]}
+            >
               <BouncyButton
                 onPress={() =>
                   handleImagePress(
@@ -472,9 +522,12 @@ export default function Profile() {
                 disabled={additionalImage1Source === defaultUserImage}
               >
                 <Image
-                  alt={additionalPic1.PicAlt || "Extra picture 1"}
+                  alt={additionalPic1?.PicAlt || "Extra picture 1"}
                   source={additionalImage1Source}
-                  style={styles.profileImage}
+                  style={[
+                    styles.extraImage,
+                    useColumnLayout && styles.largeImage,
+                  ]}
                 />
               </BouncyButton>
               <BouncyButton
@@ -488,9 +541,12 @@ export default function Profile() {
                 disabled={additionalImage2Source === defaultUserImage}
               >
                 <Image
-                  alt={additionalPic2.PicAlt || "Extra picture 2"}
+                  alt={additionalPic2?.PicAlt || "Extra picture 2"}
                   source={additionalImage2Source}
-                  style={styles.profileImage}
+                  style={[
+                    styles.extraImage,
+                    useColumnLayout && styles.largeImage,
+                  ]}
                 />
               </BouncyButton>
             </View>
@@ -594,18 +650,6 @@ const styles = StyleSheet.create({
     width: "90%",
     marginVertical: 10,
   },
-  saveButton: {
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#000",
-    borderRadius: 20,
-    paddingHorizontal: 30,
-    paddingVertical: 10,
-    marginTop: 20,
-  },
-  saveText: {
-    fontSize: 18,
-  },
   label: {
     fontSize: 18,
     fontWeight: "800",
@@ -688,5 +732,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 20,
     textAlign: "center",
+  },
+  largeImage: {
+    width: 300,
+    height: 300,
+    borderRadius: 60,
   },
 });

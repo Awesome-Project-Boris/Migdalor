@@ -1,13 +1,32 @@
-// /src/auth/AuthContext.js
-
 import React, {
-    useState,
-    useEffect,
-    createContext,
-    useContext,
-    useCallback,
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  useCallback,
 } from "react";
 import { api } from "../api/apiService";
+
+// Helper function to decode a JWT payload
+const decodeJwt = (token) => {
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error("Invalid token:", error);
+    return null;
+  }
+};
 
 // Create the context with a default null value.
 const AuthContext = createContext(null);
@@ -17,91 +36,87 @@ const AuthContext = createContext(null);
  * Manages user token, admin status, user details, and loading state.
  */
 export const AuthProvider = ({ children }) => {
-    const [token, setToken] = useState(
-        localStorage.getItem("migdalor_admin_token")
-    );
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [user, setUser] = useState(null);
+  const [token, setToken] = useState(
+    localStorage.getItem("migdalor_admin_token")
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
-    /**
-     * Verifies the current user's token to check if they are an administrator.
-     * Fetches user details if verification is successful.
-     */
-    const verifyAdminStatus = useCallback(async (currentToken) => {
-        if (!currentToken) {
-            setIsAdmin(false);
-            setIsLoading(false);
-            setUser(null);
-            return;
+  // This effect runs when the component mounts or the token changes.
+  // It decodes the token to set the user state.
+  useEffect(() => {
+    if (token) {
+      const decoded = decodeJwt(token);
+      // Check if the token is valid and not expired
+      if (decoded && decoded.exp * 1000 > Date.now()) {
+        const isAdmin =
+          decoded[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ] === "admin";
+        if (isAdmin) {
+          setUser({
+            id: decoded[
+              "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+            ],
+            hebFirstName:
+              decoded[
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
+              ],
+            hebLastName:
+              decoded[
+                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+              ],
+            role: "admin",
+          });
+        } else {
+          // If the user is not an admin, log them out
+          logout();
         }
+      } else {
+        // If token is expired or invalid, log out
+        logout();
+      }
+    }
+    setIsLoading(false);
+  }, [token]);
 
-        try {
-            // Check if the user has admin privileges.
-            const adminStatus = await api.get("/People/IsAdmin", currentToken);
-            if (adminStatus) {
-                setIsAdmin(true);
-                // If they are an admin, fetch their details.
-                const userDetails = await api.get("/People/AdminDetails", currentToken);
-                setUser(userDetails);
-            } else {
-                // If not an admin, treat as an error to force logout.
-                throw new Error("User is not an admin.");
-            }
-        } catch (error) {
-            console.error("Admin verification failed:", error.message);
-            // Clear out stale/invalid token and user state.
-            localStorage.removeItem("migdalor_admin_token");
-            setToken(null);
-            setIsAdmin(false);
-            setUser(null);
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+  /**
+   * Logs in the user by calling the API and storing the received token.
+   * @param {string} phoneNumber
+   * @param {string} password
+   */
+  const login = async (phoneNumber, password) => {
+    try {
+      setIsLoading(true);
+      const response = await api.post("/People/login", {
+        PhoneNumber: phoneNumber,
+        Password: password,
+      });
+      const newToken = response; // Assuming the response is the token string.
+      localStorage.setItem("migdalor_admin_token", newToken);
+      setToken(newToken);
+      // Verification and user state update will be triggered by the useEffect hook.
+    } catch (error) {
+      console.error("Login failed:", error);
+      setIsLoading(false); // Stop loading on failure.
+      throw error; // Re-throw to be caught by the UI.
+    }
+  };
 
-    // Effect to run verification whenever the component mounts or the token changes.
-    useEffect(() => {
-        verifyAdminStatus(token);
-    }, [token, verifyAdminStatus]);
+  /**
+   * Logs out the user by clearing the token from state and localStorage.
+   */
+  const logout = () => {
+    localStorage.removeItem("migdalor_admin_token");
+    setToken(null);
+    setUser(null);
+  };
 
-    /**
-     * Logs in the user by calling the API and storing the received token.
-     * @param {string} phoneNumber
-     * @param {string} password
-     */
-    const login = async (phoneNumber, password) => {
-        try {
-            setIsLoading(true);
-            const response = await api.post("/People/login", {
-                PhoneNumber: phoneNumber,
-                Password: password,
-            });
-            const newToken = response; // Assuming the response is the token string.
-            localStorage.setItem("migdalor_admin_token", newToken);
-            setToken(newToken);
-            // Verification will be triggered automatically by the useEffect hook.
-        } catch (error) {
-            console.error("Login failed:", error);
-            setIsLoading(false); // Stop loading on failure.
-            throw error; // Re-throw to be caught by the UI.
-        }
-    };
+  // The value provided to consuming components.
+  // isAdmin is now derived directly from the user object.
+  const value = { token, isAdmin: !!user, user, isLoading, login, logout };
 
-    /**
-     * Logs out the user by clearing the token from state and localStorage.
-     */
-    const logout = () => {
-        localStorage.removeItem("migdalor_admin_token");
-        setToken(null);
-        setIsAdmin(false);
-        setUser(null);
-    };
-
-    // The value provided to consuming components.
-    const value = { token, isAdmin, user, isLoading, login, logout };
-
-    return  <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 /**
@@ -109,10 +124,9 @@ export const AuthProvider = ({ children }) => {
  * // @returns {object} The authentication context value.
  */
 export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
-    }
-    return context;
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 };
-  

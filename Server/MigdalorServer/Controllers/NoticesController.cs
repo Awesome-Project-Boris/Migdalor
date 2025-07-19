@@ -37,12 +37,12 @@ namespace MigdalorServer.Controllers
         }
 
         private readonly MigdalorDBContext _context;
-        private readonly ILogger<NoticesController> _logger; 
+        private readonly ILogger<NoticesController> _logger;
 
-        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger) 
+        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger)
         {
             _context = context;
-            _logger = logger; 
+            _logger = logger;
         }
 
         // GET api/<NoticeController>/5
@@ -155,10 +155,46 @@ namespace MigdalorServer.Controllers
 
         // PUT api/<NoticeController>/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value) { }
+        [Authorize(Roles = "admin")]
+        public IActionResult Put(int id, [FromBody] NewNotice notice)
+        {
+            try
+            {
+                return Ok(OhNotice.UpdateNotice(id, notice));
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "Notice not found")
+                    return NotFound(e.Message);
+                else
+                    return StatusCode(
+                        StatusCodes.Status500InternalServerError,
+                        e.InnerException?.Message ?? e.Message
+                    );
+            }
+        }
+
 
         // DELETE api/<NoticeController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id) { }
+        [Authorize(Roles = "admin")]
+        public IActionResult Delete(int id)
+        {
+            try
+            {
+                OhNotice.DeleteNotice(id);
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                if (e.Message == "Notice not found")
+                    return NotFound(e.Message);
+                else
+                    return StatusCode(
+                        StatusCodes.Status500InternalServerError,
+                        e.InnerException?.Message ?? e.Message
+                    );
+            }
+        }
     }
 }

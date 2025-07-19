@@ -5,15 +5,20 @@ import {
   ScrollView,
   ActivityIndicator,
   Button,
+  Dimensions,
 } from "react-native";
-import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
-import { Card, Paragraph, YStack, XStack, H2, Text } from "tamagui";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
 
+// --- Custom Component and Utility Imports ---
 import Header from "@/components/Header";
 import { useTranslation } from "react-i18next";
 import { Globals } from "./constants/Globals";
+import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext"; // Import useSettings
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const formatDate = (dateTimeString) => {
   if (!dateTimeString) return "N/A";
@@ -41,11 +46,13 @@ const formatDate = (dateTimeString) => {
 
 export default function NoticeFocus() {
   const { t, i18n } = useTranslation();
+  const { settings } = useSettings();
+  const useColumnLayout = settings.fontSizeMultiplier >= 2;
+
   const [noticeData, setNoticeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get all params, including the sender names passed from the previous screen
   const { noticeId, hebSenderName, engSenderName } = useLocalSearchParams();
   const router = useRouter();
 
@@ -86,14 +93,14 @@ export default function NoticeFocus() {
     }
   }, [noticeId, t]);
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
+    if (noticeId) {
       setIsLoading(true);
       setNoticeData(null);
       setError(null);
       fetchNoticeDetails();
-    }, [fetchNoticeDetails])
-  );
+    }
+  }, [noticeId, fetchNoticeDetails]);
 
   if (isLoading) {
     return (
@@ -111,7 +118,7 @@ export default function NoticeFocus() {
       <>
         <Header />
         <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
+          <StyledText style={styles.errorText}>{error}</StyledText>
           <Button
             title={t("Common_backButton")}
             onPress={() => router.back()}
@@ -126,9 +133,9 @@ export default function NoticeFocus() {
       <>
         <Header />
         <View style={styles.centered}>
-          <Text style={styles.errorText}>
+          <StyledText style={styles.errorText}>
             {t("NoticeDetailsScreen_noDetailsFound")}
-          </Text>
+          </StyledText>
           <Button
             title={t("Common_backButton")}
             onPress={() => router.back()}
@@ -138,9 +145,9 @@ export default function NoticeFocus() {
     );
   }
 
-  // Determine which name to display based on current language
   const isRTL = i18n.dir() === "rtl";
   const senderName = isRTL ? hebSenderName : engSenderName;
+  const textAlignStyle = { textAlign: isRTL ? "right" : "left" };
 
   return (
     <>
@@ -149,83 +156,76 @@ export default function NoticeFocus() {
         style={styles.screenContainer}
         contentContainerStyle={styles.scrollContentContainer}
       >
-        <Card
-          elevate
-          bordered
-          padding="$4"
-          borderRadius="$4"
-          backgroundColor="$background"
-        >
-          <YStack gap="$4">
-            <H2 textAlign="center" fontSize={28} color="$color11">
-              {noticeData.noticeTitle ?? "No Title"}
-            </H2>
+        <View style={styles.headerPlaque}>
+          <StyledText style={styles.subTitle}>
+            {t("NoticeDetailsScreen_messageTitle", "Message title")}
+          </StyledText>
+          <StyledText style={styles.title}>
+            {noticeData.noticeTitle ?? "No Title"}
+          </StyledText>
+        </View>
 
-            <YStack
-              gap="$3" // Adjusted gap for better spacing
-              paddingVertical="$3"
-              borderBottomWidth={1}
-              borderColor="$borderColor"
+        <View style={styles.contentPlaque}>
+          <View style={styles.metadataSection}>
+            {senderName && (
+              <View
+                style={[
+                  styles.metadataRow,
+                  useColumnLayout && styles.metadataColumn,
+                ]}
+              >
+                <Ionicons name="person-circle-outline" size={24} color="#555" />
+                <StyledText style={[styles.metadataText, textAlignStyle]}>
+                  {t("NoticeDetailsScreen_senderLabel", "Posted by:")}{" "}
+                  {senderName}
+                </StyledText>
+              </View>
+            )}
+
+            {noticeData.noticeCategory && (
+              <View
+                style={[
+                  styles.metadataRow,
+                  useColumnLayout && styles.metadataColumn,
+                ]}
+              >
+                <Ionicons name="pricetag-outline" size={24} color="#555" />
+                <StyledText style={[styles.metadataText, textAlignStyle]}>
+                  {t("NoticeDetailsScreen_categoryLabel", "Category:")}{" "}
+                  {noticeData.noticeCategory}
+                  {noticeData.noticeSubCategory
+                    ? ` (${noticeData.noticeSubCategory})`
+                    : ""}
+                </StyledText>
+              </View>
+            )}
+
+            <View
+              style={[
+                styles.metadataRow,
+                useColumnLayout && styles.metadataColumn,
+              ]}
             >
-              {/* Sender Info Section */}
-              {senderName && (
-                <XStack alignItems="center" gap="$2">
-                  <Ionicons
-                    name="person-circle-outline"
-                    size={24}
-                    color="$color10"
-                  />
-                  <Paragraph fontSize={16} color="$color10">
-                    {t("NoticeDetailsScreen_senderLabel", "Posted by:")}{" "}
-                    {senderName}
-                  </Paragraph>
-                </XStack>
-              )}
+              <Ionicons name="calendar-outline" size={24} color="#555" />
+              <StyledText style={[styles.metadataText, textAlignStyle]}>
+                {t("NoticeDetailsScreen_dateLabel", "Date:")}{" "}
+                {noticeData.creationDate
+                  ? formatDate(noticeData.creationDate)
+                  : "N/A"}
+              </StyledText>
+            </View>
+          </View>
 
-              {/* Category with Icon */}
-              {noticeData.noticeCategory && (
-                <XStack alignItems="center" gap="$2">
-                  <Ionicons
-                    name="pricetag-outline"
-                    size={24}
-                    color="$color10"
-                  />
-                  <Paragraph fontSize={16} color="$color10">
-                    {t("NoticeDetailsScreen_categoryLabel", "Category:")}{" "}
-                    {noticeData.noticeCategory}
-                    {noticeData.noticeSubCategory
-                      ? ` (${noticeData.noticeSubCategory})`
-                      : ""}
-                  </Paragraph>
-                </XStack>
-              )}
-              {/* Date/Time with Icon */}
-              <XStack alignItems="center" gap="$2">
-                <Ionicons name="calendar-outline" size={24} color="$color10" />
-                <Paragraph fontSize={16} color="$color10">
-                  {t("NoticeDetailsScreen_dateLabel", "Date:")}{" "}
-                  {noticeData.creationDate
-                    ? formatDate(noticeData.creationDate)
-                    : "N/A"}
-                </Paragraph>
-              </XStack>
-            </YStack>
-
-            <Paragraph fontSize={22} lineHeight={30} color="$color12">
-              {noticeData.noticeMessage ?? "No Message"}
-            </Paragraph>
-          </YStack>
-        </Card>
+          <StyledText style={[styles.messageBody, textAlignStyle]}>
+            {noticeData.noticeMessage ?? "No Message"}
+          </StyledText>
+        </View>
 
         <View style={styles.backButtonContainer}>
           <FlipButton style={styles.backButton} onPress={() => router.back()}>
-            <Text
-              style={styles.backButtonText}
-              color="$color12"
-              fontWeight="bold"
-            >
+            <StyledText style={styles.backButtonText}>
               {t("Common_backButton")}
-            </Text>
+            </StyledText>
           </FlipButton>
         </View>
       </ScrollView>
@@ -236,19 +236,86 @@ export default function NoticeFocus() {
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    backgroundColor: "#f0f2f5",
-    marginTop: 60,
+    backgroundColor: "#f7e7ce", // Champagne background
   },
   scrollContentContainer: {
-    padding: 15,
+    padding: 20,
     paddingBottom: 40,
+    paddingTop: 80,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f0f2f5",
+    backgroundColor: "#f7e7ce",
+  },
+  headerPlaque: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    padding: 20,
+    marginBottom: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  contentPlaque: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  subTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 5,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#333333",
+  },
+  metadataSection: {
+    gap: 15,
+    paddingBottom: 15,
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+  metadataRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  metadataColumn: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 5,
+  },
+  metadataText: {
+    fontSize: 16,
+    color: "#555555",
+    flex: 1,
+    lineHeight: 24,
+  },
+  messageBody: {
+    fontSize: 20,
+    lineHeight: 30,
+    color: "#333333",
   },
   errorText: {
     color: "#B00020",
@@ -271,13 +338,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
     borderWidth: 1,
     borderColor: "#d1d5db",
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 1,
   },
   backButtonText: {
     fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
   },
 });

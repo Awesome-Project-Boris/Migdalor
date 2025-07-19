@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, RefreshCw, Printer, Copy } from "lucide-react";
-import { api } from "../../api/apiService";
 import InputField from "../../components/common/InputField";
 
 // --- Mock shadcn/ui Dialog Components ---
@@ -61,7 +60,13 @@ const DialogDescription = React.forwardRef((props, ref) => (
 
 // --- Main ResetPasswordModal Component ---
 
-const ResetPasswordModal = ({ isOpen, onClose, user, onPasswordReset }) => {
+const ResetPasswordModal = ({
+  isOpen,
+  onClose,
+  user,
+  onPasswordReset,
+  showToast,
+}) => {
   const [newPassword, setNewPassword] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,15 +100,16 @@ const ResetPasswordModal = ({ isOpen, onClose, user, onPasswordReset }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newPassword || newPassword.length < 8) {
-      alert("הסיסמה חייבת להיות באורך 8 תווים לפחות.");
+      showToast("warning", "הסיסמה חייבת להיות באורך 8 תווים לפחות.");
       return;
     }
     setIsSubmitting(true);
     try {
       await onPasswordReset(user.id, newPassword);
+      showToast("success", "הסיסמה אופסה בהצלחה.");
       setShowConfirmation(true);
     } catch (error) {
-      alert(`שגיאה באיפוס סיסמה: ${error.message}`);
+      showToast("error", `שגיאה באיפוס סיסמה: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -133,7 +139,7 @@ const ResetPasswordModal = ({ isOpen, onClose, user, onPasswordReset }) => {
     navigator.clipboard.writeText(
       `שם משתמש: ${user.phoneNumber}\nסיסמה חדשה: ${newPassword}`
     );
-    alert("פרטי המשתמש הועתקו.");
+    showToast("info", "פרטי המשתמש הועתקו.");
   };
 
   if (!isOpen || !user) return null;

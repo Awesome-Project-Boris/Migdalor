@@ -5,7 +5,7 @@ import React, {
   useRef,
   useCallback,
 } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -15,6 +15,8 @@ import Header from "@/components/Header";
 import FlipButton from "../components/FlipButton";
 import FilterModal from "../components/NoticeFilterModal";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
+import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext";
 
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -32,38 +34,32 @@ const fetchNotices = async () => {
   return notices || [];
 };
 
-/**
- * Fetches the full list of category objects from the server.
- * Each object contains both Hebrew and English names.
- */
 const fetchCategories = async () => {
   const response = await fetch(`${Globals.API_BASE_URL}/api/Categories`);
   if (!response.ok) {
     throw new Error(`Failed to load categories: HTTP ${response.status}`);
   }
-  // Returns the full array of category objects, e.g., [{ categoryHebName, categoryEngName, ... }]
   const rawCategories = await response.json();
   return rawCategories || [];
 };
 
 export default function NoticesScreen() {
-  const { t, i18n } = useTranslation(); // Get i18n for language detection
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const flatListRef = useRef(null);
+  const { settings } = useSettings();
+  const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
   const [allNotices, setAllNotices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  // allCategories will now store the full category objects
   const [allCategories, setAllCategories] = useState([]);
   const [isCategoryLoading, setIsCategoryLoading] = useState(true);
   const [categoryError, setCategoryError] = useState(null);
-  // selectedCategories will store the names in the currently displayed language
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [sortOrder, setSortOrder] = useState("recent");
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
-
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(true);
 
@@ -97,14 +93,12 @@ export default function NoticesScreen() {
     }
   }, []);
 
-  // Initial data load
   useEffect(() => {
     setCurrentPage(1);
     fetchNoticesCallback();
     fetchCategoriesCallback();
   }, [fetchNoticesCallback, fetchCategoriesCallback]);
 
-  // Effect to Check Admin Status
   useEffect(() => {
     const checkAdminStatus = async () => {
       let currentUserId = null;
@@ -145,7 +139,6 @@ export default function NoticesScreen() {
     checkAdminStatus();
   }, []);
 
-  // Live refresh while screen is focused
   useFocusEffect(
     useCallback(() => {
       const intervalId = setInterval(() => {
@@ -155,7 +148,6 @@ export default function NoticesScreen() {
     }, [fetchNoticesCallback])
   );
 
-  // Filtering & sorting logic
   const processedNotices = useMemo(() => {
     if (!Array.isArray(allNotices)) {
       return [];
@@ -164,8 +156,6 @@ export default function NoticesScreen() {
 
     if (selectedCategories.length > 0) {
       const isRTL = i18n.dir() === "rtl";
-      // The notice data (`n.noticeCategory`) uses the Hebrew name as the key.
-      // If the user selected English names, we must convert them to their Hebrew equivalents to filter correctly.
       const selectedHebrewNames = isRTL
         ? selectedCategories
         : selectedCategories
@@ -235,19 +225,21 @@ export default function NoticesScreen() {
 
   const renderNoticeItem = useCallback(
     ({ item }) => (
-      <NoticeCard
-        data={item}
-        onPress={() =>
-          router.push({
-            pathname: "/NoticeFocus",
-            params: {
-              noticeId: item.noticeId,
-              senderNameHeb: item.senderNameHeb,
-              senderNameEng: item.senderNameEng,
-            },
-          })
-        }
-      />
+      <View style={styles.cardContainer}>
+        <NoticeCard
+          data={item}
+          onPress={() =>
+            router.push({
+              pathname: "/NoticeFocus",
+              params: {
+                noticeId: item.noticeId,
+                senderNameHeb: item.senderNameHeb,
+                senderNameEng: item.senderNameEng,
+              },
+            })
+          }
+        />
+      </View>
     ),
     [router]
   );
@@ -263,23 +255,25 @@ export default function NoticesScreen() {
           style={{ marginTop: 50 }}
         />
       );
-    if (error) return <Text style={styles.errorText}>{`Error: ${error}`}</Text>;
+    if (error)
+      return (
+        <StyledText style={styles.errorText}>{`Error: ${error}`}</StyledText>
+      );
     if (selectedCategories.length > 0 && processedNotices.length === 0)
       return (
-        <Text style={styles.infoText}>
+        <StyledText style={styles.infoText}>
           {t("NoticeBoardScreen_noMatchMessage")}
-        </Text>
+        </StyledText>
       );
     if (!isLoading && !error && allNotices.length === 0)
       return (
-        <Text style={styles.infoText}>
+        <StyledText style={styles.infoText}>
           {t("NoticeBoardScreen_noNoticesMessage")}
-        </Text>
+        </StyledText>
       );
     return null;
   }, [isLoading, error, selectedCategories, allNotices, processedNotices, t]);
 
-  // Create a list of category names (string[]) for the filter modal based on language
   const categoryNamesForFilter = useMemo(() => {
     const isRTL = i18n.dir() === "rtl";
     return allCategories.map((c) =>
@@ -287,39 +281,48 @@ export default function NoticesScreen() {
     );
   }, [allCategories, i18n.language]);
 
-  return (
-    <>
-      <Header />
-      <View style={styles.pageContainer}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.pageTitle}>
-            {t("NoticeBoardScreen_boardTitle")}
-          </Text>
+  const renderListHeader = () => (
+    <View style={styles.headerFooterContainer}>
+      <View style={styles.headerPlaque}>
+        <StyledText style={styles.pageTitle}>
+          {t("NoticeBoardScreen_boardTitle")}
+        </StyledText>
+      </View>
+
+      {!isAdminLoading && isAdmin && (
+        <View style={styles.newNoticeButtonContainer}>
+          <FlipButton
+            onPress={() => router.push("/NewNotice")}
+            style={styles.newNoticeButton}
+            bgColor="#007bff"
+            textColor="#ffffff"
+          >
+            <Ionicons
+              name="add-circle-outline"
+              size={22}
+              color="white"
+              style={styles.buttonIcon}
+            />
+            <StyledText style={styles.newNoticeButtonText}>
+              {t("NoticesScreen_NewNoticeButton")}
+            </StyledText>
+          </FlipButton>
         </View>
-        {!isAdminLoading && isAdmin && (
-          <View style={styles.newNoticeButtonContainer}>
-            <FlipButton
-              onPress={() => router.push("/NewNotice")}
-              style={styles.newNoticeButton}
-              bgColor="#ffffff"
-              textColor="#000000"
-            >
-              <Ionicons
-                name="add-circle-outline"
-                size={20}
-                color="white"
-                style={styles.buttonIcon}
-              />
-              <Text style={[styles.buttonText, styles.newNoticeButtonText]}>
-                {t("NoticesScreen_NewNoticeButton")}
-              </Text>
-            </FlipButton>
-          </View>
-        )}
-        <View style={styles.controlsContainer}>
+      )}
+
+      <View style={styles.contentPlaque}>
+        <View
+          style={[
+            styles.controlsContainer,
+            useColumnLayout && styles.controlsColumn,
+          ]}
+        >
           <FlipButton
             onPress={() => setIsFilterModalVisible(true)}
-            style={styles.controlButton}
+            style={[
+              styles.controlButton,
+              useColumnLayout && styles.fullWidthButton,
+            ]}
             disabled={isCategoryLoading}
           >
             <View style={styles.buttonContent}>
@@ -329,16 +332,22 @@ export default function NoticesScreen() {
                 color="black"
                 style={styles.buttonIcon}
               />
-              <Text style={styles.buttonText}>
+              <StyledText style={styles.buttonText}>
                 {t("NoticeBoardScreen_filterButton")} (
                 {selectedCategories.length > 0
                   ? selectedCategories.length
                   : t("NoticeBoardScreen_all")}
                 )
-              </Text>
+              </StyledText>
             </View>
           </FlipButton>
-          <FlipButton onPress={toggleSortOrder} style={styles.controlButton}>
+          <FlipButton
+            onPress={toggleSortOrder}
+            style={[
+              styles.controlButton,
+              useColumnLayout && styles.fullWidthButton,
+            ]}
+          >
             <View style={styles.buttonContent}>
               <Ionicons
                 name={sortOrder === "recent" ? "arrow-down" : "arrow-up"}
@@ -346,23 +355,30 @@ export default function NoticesScreen() {
                 color="black"
                 style={styles.buttonIcon}
               />
-              <Text style={styles.buttonText}>
+              <StyledText style={styles.buttonText}>
                 {t("NoticeBoardScreen_filterLabel")}{" "}
                 {sortOrder === "recent"
                   ? t("NoticeBoardScreen_sortNewest")
                   : t("NoticeBoardScreen_sortOldest")}
-              </Text>
+              </StyledText>
             </View>
           </FlipButton>
-          {isAdminLoading && <View style={styles.adminButtonPlaceholder} />}
         </View>
+      </View>
+    </View>
+  );
 
+  return (
+    <>
+      <Header />
+      <View style={styles.pageWrapper}>
         <PaginatedListDisplay
           items={itemsForCurrentPage}
           renderItem={renderNoticeItem}
           itemKeyExtractor={keyExtractor}
           isLoading={isLoading && allNotices.length === 0}
           ListEmptyComponent={CustomEmptyComponent}
+          ListHeaderComponent={renderListHeader}
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={handlePageChange}
@@ -383,66 +399,120 @@ export default function NoticesScreen() {
 }
 
 const styles = StyleSheet.create({
-  pageContainer: { flex: 1, backgroundColor: "#f7f7f7", alignItems: "center" },
-  headerContainer: { alignItems: "center", width: "80%", marginTop: 70 },
+  pageWrapper: {
+    flex: 1,
+    backgroundColor: "#f7e7ce",
+    alignItems: "center",
+    paddingTop: 60,
+  },
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#f8f9fa", // Light background for the list area
+    paddingTop: 60,
+  },
+  headerFooterContainer: {
+    paddingTop: 20,
+  },
+  headerPlaque: {
+    width: "100%",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    padding: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginBottom: 20,
+  },
   pageTitle: {
-    width: "80%",
     fontSize: 26,
     fontWeight: "bold",
     color: "#333",
     textAlign: "center",
+  },
+  newNoticeButtonContainer: {
+    width: "100%",
+    alignItems: "center",
     marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 25,
+  },
+  newNoticeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    width: "100%",
+    maxWidth: 400,
+  },
+  newNoticeButtonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  contentPlaque: {
+    width: "100%",
     backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    padding: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    marginBottom: 10,
   },
   controlsContainer: {
     flexDirection: "row",
-    gap: 15,
+    gap: 10,
     justifyContent: "center",
     alignItems: "center",
-    width: "90%",
-    paddingVertical: 10,
-    paddingHorizontal: 10,
+    padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
-    backgroundColor: "#fff",
-    marginBottom: 5,
+  },
+  controlsColumn: {
+    flexDirection: "column",
+    alignItems: "stretch",
   },
   controlButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 6,
-    flexShrink: 1,
+    backgroundColor: "#f0f0f0",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    flexGrow: 1,
   },
-  newNoticeButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    borderRadius: 6,
-    flexShrink: 1,
-    width: 300,
-    marginBottom: 15,
+  fullWidthButton: {
+    width: "100%",
   },
-  newNoticeButtonText: { color: "#ffffff" },
-  newNoticeButtonContainer: { width: "100%", alignItems: "center" },
   buttonContent: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
   },
-  buttonIcon: { marginRight: 5 },
-  buttonText: { fontSize: 14, fontWeight: "600", textAlign: "center" },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   listContainerStyle: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 10, // Reduced padding for wider content
+    paddingBottom: 20,
+  },
+  cardContainer: {
     width: "100%",
-    alignItems: "center",
+    marginBottom: 15,
   },
   errorText: {
     textAlign: "center",
@@ -457,11 +527,5 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     color: "#666",
     paddingHorizontal: 20,
-  },
-
-  adminButtonPlaceholder: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    opacity: 0,
   },
 });

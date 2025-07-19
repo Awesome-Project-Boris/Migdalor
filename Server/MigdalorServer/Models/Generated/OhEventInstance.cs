@@ -9,11 +9,6 @@ namespace MigdalorServer.Models
     [Table("OH_EventInstances")]
     public partial class OhEventInstance
     {
-        public OhEventInstance()
-        {
-            OhParticipations = new HashSet<OhParticipation>();
-        }
-
         [Key]
         [Column("InstanceID")]
         public int InstanceId { get; set; }
@@ -29,7 +24,5 @@ namespace MigdalorServer.Models
         [ForeignKey("EventId")]
         [InverseProperty("OhEventInstances")]
         public virtual OhEvent Event { get; set; } = null!;
-        [InverseProperty("Instance")]
-        public virtual ICollection<OhParticipation> OhParticipations { get; set; }
     }
 }

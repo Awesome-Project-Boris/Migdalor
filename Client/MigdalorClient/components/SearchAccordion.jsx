@@ -1,11 +1,12 @@
 // components/SearchAccordion.jsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet } from 'react-native'; // 'Text' import removed
 import Accordion from 'react-native-collapsible/Accordion';
 import * as Animatable from 'react-native-animatable';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Globals } from '@/app/constants/Globals';
+import StyledText from '@/components/StyledText'; // Import StyledText
 
 const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
 
@@ -27,12 +28,15 @@ const defaultStyles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 15,
   },
+  // Added a container for the text to ensure stable layout
+  headerTextContainer: {
+    flex: 1, 
+    marginRight: 10,
+  },
   headerText: {
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
-    flex: 1, //
-    marginRight: 10, 
   },
   content: {
     padding: 15,
@@ -62,16 +66,24 @@ export default function SearchAccordion({
   const SECTIONS = [{ id: 'content' }]; // Simple structure
 
   const renderHeader = (section, index, isActive) => {
+    const headerText = isActive ? t(headerOpenTextKey) : t(headerClosedTextKey);
+    const isSingleWord = !headerText.trim().includes(' ');
+
     return (
       <Animatable.View
         duration={300}
         transition="backgroundColor"
         style={[defaultStyles.header, headerStyle, isActive ? defaultStyles.active : defaultStyles.inactive]}
       >
-        <Text style={ headerTextStyle || defaultStyles.headerText}>
-
-          {isActive ? t(headerOpenTextKey) : t(headerClosedTextKey)}
-        </Text>
+        <View style={defaultStyles.headerTextContainer}>
+          <StyledText
+            style={{ ...headerTextStyle || defaultStyles.headerText, textAlign: Globals.userSelectedDirection == 'rtl' ? 'right' : 'left' }}
+            numberOfLines={isSingleWord ? 1 : 0}
+            adjustsFontSizeToFit={isSingleWord}
+          >
+            {headerText}
+          </StyledText>
+        </View>
         <Ionicons
           name={isActive ? 'chevron-up' : 'chevron-down'}
           size={20}

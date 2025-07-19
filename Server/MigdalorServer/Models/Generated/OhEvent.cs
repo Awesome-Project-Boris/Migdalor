@@ -14,6 +14,7 @@ namespace MigdalorServer.Models
         {
             OhEventInstances = new HashSet<OhEventInstance>();
             OhEventRegistrations = new HashSet<OhEventRegistration>();
+            OhParticipations = new HashSet<OhParticipation>();
         }
 
         [Key]
@@ -33,10 +34,13 @@ namespace MigdalorServer.Models
         public string? RecurrenceRule { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
+        public bool ParticipationChecked { get; set; }
 
         [InverseProperty("Event")]
         public virtual ICollection<OhEventInstance> OhEventInstances { get; set; }
         [InverseProperty("Event")]
         public virtual ICollection<OhEventRegistration> OhEventRegistrations { get; set; }
+        [InverseProperty("Event")]
+        public virtual ICollection<OhParticipation> OhParticipations { get; set; }
     }
 }

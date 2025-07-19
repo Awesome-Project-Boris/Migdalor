@@ -5,9 +5,6 @@ import CheckboxField from "../../components/common/CheckboxField";
 import SpouseCommand from "../../components/common/SpouseCommand";
 
 // --- Mock shadcn/ui Dialog Components ---
-// In a real project, you would import these from your UI library.
-// For this example, they are defined here to make the component self-contained.
-
 const Dialog = ({ open, onOpenChange, children }) => {
   if (!open) return null;
   return (
@@ -86,6 +83,7 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
   };
 
   const [formData, setFormData] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -109,6 +107,7 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
         residentDescription: user.residentDescription || "",
         residentApartmentNumber: user.roomNumber || "",
       });
+      setIsSubmitting(false);
     }
   }, [user]);
 
@@ -124,14 +123,26 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
     setFormData((prev) => ({ ...prev, spouseId }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     const payload = { ...formData };
-
     payload.spouseId = payload.spouseId || null;
 
-    onSave(user.id, payload);
-    onClose();
+    try {
+      // The onSave function from the parent handles the API call,
+      // success toast, and closing the modal.
+      await onSave(user.id, payload);
+    } catch (error) {
+      // The parent's onSave function will show an error toast.
+      // We just need to catch the error to stop the process here.
+      console.error("Failed to save user:", error);
+    } finally {
+      // We don't set submitting to false here because the modal
+      // will be closed by the parent on success. If it fails,
+      // we want the user to be able to try again.
+      setIsSubmitting(false);
+    }
   };
 
   if (!isOpen || !user) {
@@ -281,15 +292,17 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2 mx-1 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 transition-colors"
+              disabled={isSubmitting}
+              className="px-5 py-2 mx-1 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400 transition-colors disabled:opacity-50"
             >
               ביטול
             </button>
             <button
               type="submit"
-              className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+              disabled={isSubmitting}
+              className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-blue-300"
             >
-              שמור שינויים
+              {isSubmitting ? "שומר..." : "שמור שינויים"}
             </button>
           </DialogFooter>
         </form>

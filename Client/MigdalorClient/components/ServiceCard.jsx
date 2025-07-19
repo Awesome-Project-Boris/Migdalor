@@ -1,7 +1,8 @@
 import React from "react";
-import { View, StyleSheet, TouchableOpacity, Text, Image } from "react-native";
+import { View, StyleSheet, TouchableOpacity, Image } from "react-native"; // 'Text' import removed
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 const placeholderImage = require("../assets/images/ServicesPlaceholder.png");
 
@@ -25,21 +26,42 @@ const ServiceCard = ({ service, onPress }) => {
     return placeholderImage;
   };
 
+  // Logic to determine how text should wrap or shrink
+  const isNameSingleWord = !name?.trim().includes(' ');
+  const isDescSingleWord = !description?.trim().includes(' ');
+  const footerTextContent = t("Services_Click_For_Details", "Click for details");
+  const isFooterSingleWord = !footerTextContent.trim().includes(' ');
+
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <Image source={getImageUrl()} style={styles.cardImage} />
       <View style={styles.detailsContainer}>
-        <Text style={[styles.cardTitle, isRtl && styles.rtlText]}>{name}</Text>
+        <StyledText 
+          style={[styles.cardTitle, isRtl && styles.rtlText]}
+          numberOfLines={isNameSingleWord ? 1 : 0}
+          adjustsFontSizeToFit={isNameSingleWord}
+        >
+          {name}
+        </StyledText>
         {description && (
-          <Text style={[styles.cardDescription, isRtl && styles.rtlText]}>
+          <StyledText 
+            style={[styles.cardDescription, isRtl && styles.rtlText]}
+            numberOfLines={isDescSingleWord ? 1 : 0}
+            adjustsFontSizeToFit={isDescSingleWord}
+          >
             {description}
-          </Text>
+          </StyledText>
         )}
       </View>
       <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          {t("Services_Click_For_Details", "Click for details")}
-        </Text>
+        <StyledText 
+          style={styles.footerText}
+          numberOfLines={isFooterSingleWord ? 1 : 0}
+          adjustsFontSizeToFit={isFooterSingleWord}
+        >
+          {footerTextContent}
+        </StyledText>
       </View>
     </TouchableOpacity>
   );

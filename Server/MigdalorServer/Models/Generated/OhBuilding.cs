@@ -17,7 +17,6 @@ namespace MigdalorServer.Models
         {
             OhApartmentAccessBuildings = new HashSet<OhApartment>();
             OhApartmentPhysicalBuildings = new HashSet<OhApartment>();
-            OhBuildingEntrances = new HashSet<OhBuildingEntrance>();
             Nodes = new HashSet<OhMapNode>();
         }
 
@@ -33,7 +32,9 @@ namespace MigdalorServer.Models
         public virtual ICollection<OhApartment> OhApartmentAccessBuildings { get; set; }
         [InverseProperty("PhysicalBuilding")]
         public virtual ICollection<OhApartment> OhApartmentPhysicalBuildings { get; set; }
-        [InverseProperty("Building")]
-        public virtual ICollection<OhBuildingEntrance> OhBuildingEntrances { get; set; }
+
+        [ForeignKey("BuildingId")]
+        [InverseProperty("Buildings")]
+        public virtual ICollection<OhMapNode> Nodes { get; set; }
     }
 }

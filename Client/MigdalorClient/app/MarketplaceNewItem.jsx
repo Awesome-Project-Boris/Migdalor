@@ -1,6 +1,5 @@
 import React, {
   useState,
-  useContext,
   useEffect,
   useRef,
   useCallback,
@@ -9,11 +8,11 @@ import React, {
 import {
   Modal,
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Dimensions,
   Alert,
+  Keyboard,
 } from "react-native";
 import { Image as ExpoImage } from "expo-image";
 import * as FileSystem from "expo-file-system";
@@ -26,10 +25,11 @@ import FloatingLabelInput from "../components/FloatingLabelInput";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Globals } from "@/app/constants/Globals";
-import { Keyboard } from "react-native";
 import Header from "@/components/Header";
+import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext"; // Import useSettings
 
-import { Card, H2, Paragraph, XStack, YStack, Spinner } from "tamagui";
+import { Card, YStack, Spinner } from "tamagui";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
@@ -43,26 +43,27 @@ function estimateEscapedLength(str) {
 
 export default function AddNewItem() {
   const { t } = useTranslation();
+  const { settings } = useSettings(); // Get settings from context
+  const useColumnLayout = settings.fontSizeMultiplier >= 2; // Determine layout based on font size
+
   const [itemName, setItemName] = useState("");
   const [itemDescription, setItemDescription] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false); // "Are you sure?" modal
-  const [isSubmitting, setIsSubmitting] = useState(false); // Submission process has begun
-  const [formErrors, setFormErrors] = useState({}); // Do we have any errors?
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
-  const [originalMainPicId, setOriginalMainPicId] = useState(null); // Store original ID for deletion check
+  const [originalMainPicId, setOriginalMainPicId] = useState(null);
   const [originalExtraPicId, setOriginalExtraPicId] = useState(null);
 
-  const params = useLocalSearchParams(); // Are we on edit or new item mode?
+  const params = useLocalSearchParams();
   const API = Globals.API_BASE_URL;
 
   const isEditMode = params.mode === "edit";
 
   const initialData = useMemo(() => {
-    // Do we have initial data ( are we editing a listing )?
     if (!params.listingData) {
       return null;
     }
-
     try {
       return JSON.parse(params.listingData);
     } catch (e) {
@@ -84,7 +85,6 @@ export default function AddNewItem() {
   const ESCAPED_DESCRIPTION_LIMIT = 400;
 
   const copyImageToAppDir = async (sourceUri, prefix) => {
-    // Copying a temporary image before server upload to a local library
     try {
       const filename = `${prefix}-${Date.now()}-${sourceUri.split("/").pop()}`;
       const destinationUri = FileSystem.documentDirectory + filename;
@@ -99,13 +99,11 @@ export default function AddNewItem() {
   };
 
   useEffect(() => {
-    // if we're editing a listing, we populate the variables for the form
     if (isEditMode && initialData) {
       console.log("Edit Mode: Pre-filling form with:", initialData);
       setItemName(initialData.title || "");
       setItemDescription(initialData.description || "");
 
-      // Set image URIs for display ( full URLs from server)
       const initialMainUrl = initialData.mainPicture?.picPath
         ? `${Globals.API_BASE_URL}${initialData.mainPicture.picPath}`
         : null;
@@ -121,7 +119,6 @@ export default function AddNewItem() {
     }
   }, [isEditMode, initialData]);
 
-  // Helper to delete local files when they're not needed anymore ( cancelled / uploaded to server already)
   const safeDeleteFile = async (uri) => {
     if (!uri || !uri.startsWith("file://")) return;
     try {
@@ -133,9 +130,7 @@ export default function AddNewItem() {
     }
   };
 
-  // Image Picker - Image library or a new photo
   const pickImage = async (setImage) => {
-    // Step 3 : this setImage is a Hook Setter - the uri value we pass into it is the new photo candidate
     const libraryPermission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (libraryPermission.status !== "granted") {
@@ -225,7 +220,6 @@ export default function AddNewItem() {
     );
   };
 
-  // Field verification - we're escaping special characters ( in the serverside ) to avoid SQL attacks. This calculates length with escapes.
   const validateField = (name, value) => {
     const trimmedValue = value;
     switch (name) {
@@ -241,7 +235,6 @@ export default function AddNewItem() {
         return null;
 
       case "itemDescription":
-        // check raw length against DB limit
         if (value.length >= DESCRIPTION_LIMIT) {
           return t("MarketplaceNewItemScreen_errorDescriptionTooLong", {
             count: DESCRIPTION_LIMIT,
@@ -270,16 +263,16 @@ export default function AddNewItem() {
 
     if (name === "itemName") {
       if (value.length > ITEM_NAME_LIMIT) {
-        limitedValue = value.substring(0, ITEM_NAME_LIMIT); // Cut visually
+        limitedValue = value.substring(0, ITEM_NAME_LIMIT);
       }
       setItemName(limitedValue);
-      error = validateField(name, limitedValue); // Validate the potentially cut value
+      error = validateField(name, limitedValue);
     } else if (name === "itemDescription") {
       if (value.length > DESCRIPTION_LIMIT) {
-        limitedValue = value.substring(0, DESCRIPTION_LIMIT); // cut visually
+        limitedValue = value.substring(0, DESCRIPTION_LIMIT);
       }
       setItemDescription(limitedValue);
-      error = validateField(name, limitedValue); // Validate the potentially cut value
+      error = validateField(name, limitedValue);
     }
 
     setFormErrors((prev) => ({ ...prev, [name]: error }));
@@ -297,7 +290,6 @@ export default function AddNewItem() {
     setOriginalExtraPicId(null);
   };
 
-  // Cancel Logic
   const handleCancel = async () => {
     if (isEditMode) {
       router.back();
@@ -316,6 +308,7 @@ export default function AddNewItem() {
     await resetState();
     router.back();
   };
+
   const hasUnsavedChanges = () =>
     itemName.trim() !== (initialData?.title || "") ||
     itemDescription.trim() !== (initialData?.description || "") ||
@@ -324,20 +317,17 @@ export default function AddNewItem() {
     (isEditMode && mainImage === null && originalMainPicId !== null) ||
     (isEditMode && extraImage === null && originalExtraPicId !== null);
 
-  // --- Image Viewing/Removal Logic ---
   const [showImageViewModal, setShowImageViewModal] = useState(false);
-  const [imageToViewUri, setImageToViewUri] = useState(null); // Image currently being viewed
-  const [imageTypeToClear, setImageTypeToClear] = useState(null); // Are we clearing the main or extra?
+  const [imageToViewUri, setImageToViewUri] = useState(null);
+  const [imageTypeToClear, setImageTypeToClear] = useState(null);
 
   const viewOrPickImage = (type) => {
-    // Step 2 : after user clicks the card, we check if type is main or not. if it is and there's a URI, it's of the main's image.
     const currentImageUri = type === "main" ? mainImage : extraImage;
     if (currentImageUri) {
       setImageToViewUri(currentImageUri);
       setImageTypeToClear(type);
       setShowImageViewModal(true);
     } else {
-      // If there's no image assgined to the card, we trigger the image picker W/ a hook setter!
       pickImage(type === "main" ? setMainImage : setExtraImage);
     }
   };
@@ -418,7 +408,6 @@ export default function AddNewItem() {
     if (!pictureId) return;
     console.log(`Attempting to delete picture ID: ${pictureId} via API...`);
     try {
-      // You need the user's ID to send in the request body
       const userId = await AsyncStorage.getItem("userID");
       if (!userId) {
         throw new Error("User ID not found. Cannot proceed with deletion.");
@@ -489,7 +478,6 @@ export default function AddNewItem() {
     try {
       currentUserId = await AsyncStorage.getItem("userID");
       if (!currentUserId) {
-        // Changed to throw error for consistency
         throw new Error(t("MarketplaceNewItemScreen_authErrorMessage"));
       }
       console.log("Retrieved UserID:", currentUserId);
@@ -508,25 +496,21 @@ export default function AddNewItem() {
     let picsToDeleteOnSuccess = [];
 
     try {
-      // Step 1a: Main Picture
       if (mainImage && mainImage.startsWith("file://")) {
-        // New photo selected, temp from device
         if (isEditMode && originalMainPicId)
-          picsToDeleteOnSuccess.push(originalMainPicId); // Mark old one for deletion if we're in edit mode
-        const altText = `Main photo for ${trimmedItemName}`; // Alt text for photo
+          picsToDeleteOnSuccess.push(originalMainPicId);
+        const altText = `Main photo for ${trimmedItemName}`;
         finalMainPicId = await uploadImage(
           mainImage,
           "marketplace",
           altText,
           currentUserId
-        ); // uploading the new Photo to ther server and getting its ID
+        );
       } else if (mainImage === null && isEditMode && originalMainPicId) {
-        // main photo was removed in edit mode
         picsToDeleteOnSuccess.push(originalMainPicId);
         finalMainPicId = null;
       }
 
-      // Step 2a: Handle Extra Image - same as Main
       if (extraImage && extraImage.startsWith("file://")) {
         if (isEditMode && originalExtraPicId)
           picsToDeleteOnSuccess.push(originalExtraPicId);
@@ -542,11 +526,9 @@ export default function AddNewItem() {
         finalExtraPicId = null;
       }
 
-      // Step 3a: Create or Update Listing
       if (isEditMode) {
         const currentListingId = initialData?.listingId;
         if (!currentListingId) {
-          // Safety check
           throw new Error("Missing Listing ID for update.");
         }
         const updateDto = {
@@ -564,7 +546,7 @@ export default function AddNewItem() {
           `${API}/api/Listings/${currentListingId}`,
           {
             method: "PUT",
-            headers: { "Content-Type": "application/json" /* Add Auth */ },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(updateDto),
           }
         );
@@ -584,8 +566,7 @@ export default function AddNewItem() {
           type: "success",
           text1: t("MarketplaceEditItemScreen_UpdateSuccess"),
         });
-        // Here we delete old pictures *after* a successful update
-        // Use Promise.allSettled to attempt all deletions even if one fails
+
         const deleteResults = await Promise.allSettled(
           picsToDeleteOnSuccess.map((picId) => deletePicture(picId))
         );
@@ -597,9 +578,8 @@ export default function AddNewItem() {
             );
           }
         });
-        router.back(); // Go back after successful update and attempted deletions
+        router.back();
       } else {
-        // Creating a list - not in edit mode
         const listingData = {
           Title: trimmedItemName,
           Description: trimmedItemDescription,
@@ -610,7 +590,7 @@ export default function AddNewItem() {
         console.log("Attempting to create listing with data:", listingData);
         const listingResponse = await fetch(`${API}/api/Listings/Create`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" /* Add Auth */ },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(listingData),
         });
         if (!listingResponse.ok) {
@@ -632,14 +612,11 @@ export default function AddNewItem() {
           }),
           position: "top",
         });
-        await resetState(); // Reset state only after successful creation
+        await resetState();
         router.back();
       }
-
-      // The duplicated logic block has been removed here.
     } catch (error) {
       console.error("Listing submission step failed:", error);
-      // Display the actual error message
       Toast.show({
         type: "error",
         text1: t("Common_Error"),
@@ -657,20 +634,21 @@ export default function AddNewItem() {
     <>
       <Header />
       <ScrollView
+        style={styles.screenContainer}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.contentContainer}>
-          <View style={styles.headerRow}>
-            <Text style={styles.title}>
-              {t(
-                isEditMode
-                  ? "MarketplaceEditItemScreen_Header"
-                  : "MarketplaceNewItemScreen_NewItem"
-              )}
-            </Text>
-          </View>
+        <View style={styles.headerPlaque}>
+          <StyledText style={styles.title}>
+            {t(
+              isEditMode
+                ? "MarketplaceEditItemScreen_Header"
+                : "MarketplaceNewItemScreen_NewItem"
+            )}
+          </StyledText>
+        </View>
 
+        <View style={styles.formPlaque}>
           <FloatingLabelInput
             ref={itemNameRef}
             label={t(`MarketplaceNewItemScreen_ItemName`)}
@@ -681,11 +659,13 @@ export default function AddNewItem() {
           />
 
           {formErrors.itemName ? (
-            <Text style={styles.errorText}>{formErrors.itemName}</Text>
+            <StyledText style={styles.errorText}>
+              {formErrors.itemName}
+            </StyledText>
           ) : (
-            <Text style={styles.charCount}>
+            <StyledText style={styles.charCount}>
               {itemName.length}/{ITEM_NAME_LIMIT}
-            </Text>
+            </StyledText>
           )}
 
           <FloatingLabelInput
@@ -699,27 +679,28 @@ export default function AddNewItem() {
             maxLength={DESCRIPTION_LIMIT}
           />
           {formErrors.itemDescription ? (
-            <Text style={styles.errorText}>{formErrors.itemDescription}</Text>
+            <StyledText style={styles.errorText}>
+              {formErrors.itemDescription}
+            </StyledText>
           ) : (
-            <Text style={styles.charCount}>
+            <StyledText style={styles.charCount}>
               {itemDescription.length}/{DESCRIPTION_LIMIT}
-            </Text>
+            </StyledText>
           )}
 
-          <XStack
-            gap="$3"
-            justifyContent="center"
-            alignItems="center"
-            marginVertical="$4"
+          <View
+            style={[
+              styles.imageContainer,
+              useColumnLayout && styles.imageContainerColumn,
+            ]}
           >
             <Card
               elevate
-              width={150}
-              height={150}
+              width={useColumnLayout ? SCREEN_WIDTH * 0.8 : 150}
+              height={useColumnLayout ? SCREEN_WIDTH * 0.8 : 150}
               borderRadius="$4"
               overflow="hidden"
-              margin={10}
-              onPress={() => viewOrPickImage("main")} // Step 1 of picking or viewing the card's image
+              onPress={() => viewOrPickImage("main")}
             >
               {mainImage ? (
                 <>
@@ -736,9 +717,9 @@ export default function AddNewItem() {
                     ai="center"
                     backgroundColor="rgba(0,0,0,0.4)"
                   >
-                    <Paragraph theme="alt2">
+                    <StyledText style={styles.imageOverlayText}>
                       {t("MarketplaceNewItemScreen_MainImage")}
-                    </Paragraph>
+                    </StyledText>
                   </YStack>
                 </>
               ) : (
@@ -749,23 +730,25 @@ export default function AddNewItem() {
                   p="$2"
                   style={{ direction: Globals.userSelectedDirection }}
                 >
-                  <H2 size="$5">{t("MarketplaceNewItemScreen_MainImage")}</H2>
-                  <Paragraph theme="alt2">
+                  <StyledText style={styles.imageCardHeader}>
+                    {t("MarketplaceNewItemScreen_MainImage")}
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("MarketplaceNewItemScreen_ImageOptional")}
-                  </Paragraph>
-                  <Paragraph theme="alt2">
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("MarketplaceNewItemScreen_ImageTapToChoose")}
-                  </Paragraph>
+                  </StyledText>
                 </YStack>
               )}
             </Card>
             <Card
               elevate
-              width={150}
-              height={150}
+              width={useColumnLayout ? SCREEN_WIDTH * 0.8 : 150}
+              height={useColumnLayout ? SCREEN_WIDTH * 0.8 : 150}
               borderRadius="$4"
               overflow="hidden"
-              onPress={() => viewOrPickImage("extra")} // Step 1 of picking or viewing the card's image
+              onPress={() => viewOrPickImage("extra")}
             >
               {extraImage ? (
                 <>
@@ -782,9 +765,9 @@ export default function AddNewItem() {
                     ai="center"
                     backgroundColor="rgba(0,0,0,0.4)"
                   >
-                    <Paragraph theme="alt2" color="$color">
+                    <StyledText style={styles.imageOverlayText}>
                       {t("MarketplaceNewItemScreen_ExtraImage")}
-                    </Paragraph>
+                    </StyledText>
                   </YStack>
                 </>
               ) : (
@@ -795,44 +778,54 @@ export default function AddNewItem() {
                   p="$2"
                   style={{ direction: Globals.userSelectedDirection }}
                 >
-                  <H2 size="$5">{t("MarketplaceNewItemScreen_ExtraImage")}</H2>
-                  <Paragraph theme="alt2">
+                  <StyledText style={styles.imageCardHeader}>
+                    {t("MarketplaceNewItemScreen_ExtraImage")}
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("MarketplaceNewItemScreen_ImageOptional")}
-                  </Paragraph>
-                  <Paragraph theme="alt2">
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("MarketplaceNewItemScreen_ImageTapToChoose")}
-                  </Paragraph>
+                  </StyledText>
                 </YStack>
               )}
             </Card>
-          </XStack>
+          </View>
 
-          <View style={styles.buttonRow}>
+          <View
+            style={[styles.buttonRow, useColumnLayout && styles.buttonColumn]}
+          >
             <FlipButton
               onPress={handleSubmit}
               bgColor="white"
               textColor="black"
-              style={styles.submitButton}
+              style={[
+                styles.submitButton,
+                useColumnLayout && styles.fullWidthButton,
+              ]}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <Spinner size="small" color="black" />
               ) : (
-                <Text style={styles.buttonLabel}>
+                <StyledText style={styles.buttonLabel}>
                   {t("MarketplaceSearchItem_SubmitButton")}
-                </Text>
+                </StyledText>
               )}
             </FlipButton>
             <FlipButton
               onPress={handleCancel}
               bgColor="white"
               textColor="black"
-              style={styles.cancelButton}
+              style={[
+                styles.cancelButton,
+                useColumnLayout && styles.fullWidthButton,
+              ]}
               disabled={isSubmitting}
             >
-              <Text style={styles.buttonLabel}>
+              <StyledText style={styles.buttonLabel}>
                 {t("MarketplaceSearchItem_CancelButton")}
-              </Text>
+              </StyledText>
             </FlipButton>
           </View>
         </View>
@@ -851,9 +844,9 @@ export default function AddNewItem() {
         <Modal visible={true} transparent={true} animationType="fade">
           <View style={styles.confirmOverlay}>
             <View style={styles.confirmContainer}>
-              <Text style={styles.confirmText}>
+              <StyledText style={styles.confirmText}>
                 {t("MarketplaceNewItemScreen_CancelDiscardHeader")}
-              </Text>
+              </StyledText>
               <View style={styles.confirmButtonRow}>
                 <FlipButton
                   onPress={confirmCancel}
@@ -861,9 +854,9 @@ export default function AddNewItem() {
                   textColor="black"
                   style={styles.confirmButton}
                 >
-                  <Text style={styles.buttonLabel}>
+                  <StyledText style={styles.buttonLabel}>
                     {t("MarketplaceNewItemScreen_CancelConfirmation")}
-                  </Text>
+                  </StyledText>
                 </FlipButton>
                 <FlipButton
                   onPress={() => setShowConfirm(false)}
@@ -871,9 +864,9 @@ export default function AddNewItem() {
                   textColor="white"
                   style={styles.confirmButton}
                 >
-                  <Text style={[styles.buttonLabel, { color: "white" }]}>
+                  <StyledText style={[styles.buttonLabel, { color: "white" }]}>
                     {t("MarketplaceNewItemScreen_CancelDiscard")}
-                  </Text>
+                  </StyledText>
                 </FlipButton>
               </View>
             </View>
@@ -895,22 +888,42 @@ export default function AddNewItem() {
 }
 
 const styles = StyleSheet.create({
-  screenContainer: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)" },
+  screenContainer: { flex: 1, backgroundColor: "#f7e7ce" }, // Champagne background
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
     alignItems: "center",
-    padding: 5,
+    paddingVertical: 20,
+    paddingTop: 80, // Add padding to account for Header
   },
-  contentContainer: {
+  headerPlaque: {
     width: SCREEN_WIDTH * 0.95,
-    maxHeight: SCREEN_HEIGHT * 0.95,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    padding: 20,
+    marginBottom: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  formPlaque: {
+    width: SCREEN_WIDTH * 0.95,
     padding: 20,
     borderRadius: 12,
     backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  title: { flex: 1, fontSize: 24, fontWeight: "bold", textAlign: "center" },
+  title: { fontSize: 24, fontWeight: "bold", textAlign: "center" },
   charCount: {
     alignSelf: "flex-end",
     marginTop: -8,
@@ -918,10 +931,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
   },
+  imageContainer: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    alignItems: "center",
+    marginVertical: 20,
+  },
+  imageContainerColumn: {
+    flexDirection: "column",
+    gap: 20,
+  },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-evenly",
     marginTop: 25,
+  },
+  buttonColumn: {
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 15,
   },
   submitButton: {
     paddingVertical: 14,
@@ -942,6 +970,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     borderWidth: 1,
     borderColor: "#aaa",
+  },
+  fullWidthButton: {
+    width: "90%",
   },
   buttonLabel: { fontSize: 16, fontWeight: "bold" },
   confirmOverlay: {
@@ -988,5 +1019,26 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: 5,
     fontSize: 12,
+  },
+  imageCardHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  imageCardParagraph: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
+  },
+  imageOverlayText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 10,
   },
 });

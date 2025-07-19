@@ -1,9 +1,10 @@
 import React from "react";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View } from "react-native"; // 'Text' import removed
 import { useTranslation } from "react-i18next";
 import { Globals } from "../app/constants/Globals";
 import BouncyButton from "./BouncyButton";
 import { Ionicons } from "@expo/vector-icons";
+import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
 const SCREEN_WIDTH = Globals.SCREEN_WIDTH;
 
@@ -48,35 +49,35 @@ export default function NoticeCard({ data, onPress }) {
       springConfig={{ speed: 20, bounciness: 10 }}
     >
       <View style={[styles.infoContainer, infoContainerStyle]}>
-        <Text style={[styles.noticeTitle, titleStyle]}>{data.noticeTitle}</Text>
+        <StyledText style={[styles.noticeTitle, titleStyle]}>{data.noticeTitle}</StyledText>
 
         {/* Display Sender Name */}
         {senderName && (
           <View style={styles.metaRow}>
             <Ionicons name="person-outline" size={16} color="#444" />
-            <Text style={[styles.noticeSender, textStyle]}>{senderName}</Text>
+            <StyledText style={[styles.noticeSender, textStyle]}>{senderName}</StyledText>
           </View>
         )}
 
         {data.noticeCategory && (
           <View style={styles.metaRow}>
             <Ionicons name="pricetag-outline" size={16} color="#444" />
-            <Text style={[styles.noticeCategory, textStyle]}>
+            <StyledText style={[styles.noticeCategory, textStyle]}>
               {data.noticeCategory}
               {data.noticeSubCategory ? ` (${data.noticeSubCategory})` : ""}
-            </Text>
+            </StyledText>
           </View>
         )}
 
         <View style={styles.metaRow}>
           <Ionicons name="calendar-outline" size={16} color="#444" />
-          <Text style={[styles.noticeDate, textStyle]}>{displayDate}</Text>
+          <StyledText style={[styles.noticeDate, textStyle]}>{displayDate}</StyledText>
         </View>
 
         {displaySnippet && (
-          <Text style={[styles.noticeSnippet, textStyle]}>
+          <StyledText style={[styles.noticeSnippet, textStyle]}>
             {displaySnippet}
-          </Text>
+          </StyledText>
         )}
       </View>
     </BouncyButton>

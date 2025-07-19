@@ -1,15 +1,15 @@
 import React from "react";
-import { StyleSheet, View, Text, Image } from "react-native";
+import { StyleSheet, View, Image } from "react-native";
 import { useTranslation } from "react-i18next";
-import { SCREEN_WIDTH, Globals } from "../app/constants/Globals";
+import { Globals } from "../app/constants/Globals";
 import BouncyButton from "@/components/BouncyButton";
+import StyledText from "@/components/StyledText.jsx";
 
 const placeholderImage = require("../assets/images/tempItem.jpg");
 
 export default function MarketplaceItemCard({ data, onPress }) {
   const { t } = useTranslation();
 
-  // Construct the full image URL if mainImagePath exists, otherwise use placeholder
   const imageUrl = data?.mainImagePath
     ? { uri: `${Globals.API_BASE_URL}${data.mainImagePath}` }
     : placeholderImage;
@@ -20,26 +20,19 @@ export default function MarketplaceItemCard({ data, onPress }) {
         style={styles.image}
         source={imageUrl}
         onError={(e) =>
-          console.log(
-            `Error loading image ${imageUrl.uri || "placeholder"}:`,
-            e.nativeEvent.error
-          )
+          console.log("Error loading image:", e.nativeEvent.error)
         }
       />
-
       <View style={styles.infoContainer}>
-        <Text style={styles.itemName} numberOfLines={2}>
+        <StyledText style={styles.itemName} numberOfLines={3}>
           {data?.title || t("MarketplaceItemCard_Untitled")}
-        </Text>
-        <Text style={styles.sellerName}>
+        </StyledText>
+        <StyledText style={styles.sellerName} numberOfLines={2}>
           {data?.sellerName || t("MarketplaceItemCard_UnknownSeller")}
-        </Text>
-      </View>
-
-      <View style={styles.moreInfoContainer}>
-        <Text style={styles.moreInfoText}>
+        </StyledText>
+        <StyledText style={styles.moreInfoText}>
           {t("MarketplaceScreen_MoreDetailsButton")}
-        </Text>
+        </StyledText>
       </View>
     </BouncyButton>
   );
@@ -47,14 +40,12 @@ export default function MarketplaceItemCard({ data, onPress }) {
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH * 0.9,
-    height: 150,
+    width: "100%", // Card takes full width of its wrapper
+    minHeight: 150,
     borderRadius: 10,
     backgroundColor: "#fff",
     flexDirection: "row",
-    alignItems: "center",
     padding: 10,
-    marginVertical: 8,
     borderColor: "#ddd",
     borderWidth: 1,
     shadowColor: "#000",
@@ -71,31 +62,23 @@ const styles = StyleSheet.create({
     backgroundColor: "#e0e0e0",
   },
   infoContainer: {
-    flex: 1,
-    justifyContent: "center",
-    height: "100%",
-    paddingRight: 5,
+    flex: 1, // This is crucial: allows the info to take up remaining space
+    justifyContent: "space-around", // Distributes space evenly
   },
   itemName: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 6,
+    lineHeight: 24,
   },
   sellerName: {
     fontSize: 14,
     color: "#555",
-    marginBottom: 20,
-  },
-  moreInfoContainer: {
-    position: "absolute",
-    bottom: 8,
-    left: 135,
-    right: 10,
-    alignItems: "flex-start",
+    lineHeight: 20,
   },
   moreInfoText: {
     fontSize: 12,
     color: "#999",
+    lineHeight: 16,
   },
 });

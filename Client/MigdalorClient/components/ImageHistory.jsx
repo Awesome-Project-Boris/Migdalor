@@ -2,27 +2,40 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   Modal,
   View,
-  Text,
   StyleSheet,
-  Image,
   TouchableOpacity,
   ScrollView,
   Alert,
   ActivityIndicator,
   SafeAreaView,
+  Dimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
-import FlipButton from "@/components/FlipButton"; // Using default import
+import { Image as ExpoImage } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
+
+import FlipButton from "@/components/FlipButton";
+import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext";
 import { Globals } from "../app/constants/Globals";
 import * as ImagePicker from "expo-image-picker";
+import { t } from "i18next";
 
-// 1. Add 'clearedPictureIds' to the list of props.
-export default function ImageHistory({ visible, picRole, onClose, onSelect, picturesInUse = [], clearedPictureIds = [] }) {
+const { width } = Dimensions.get("window");
+
+export default function ImageHistory({
+  visible,
+  picRole,
+  onClose,
+  onSelect,
+  picturesInUse = [],
+  clearedPictureIds = [],
+}) {
   const [pictures, setPictures] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [title, setTitle] = useState("");
-  const [maxSlots, setMaxSlots] = useState(0);
+  const [maxSlots, setMaxSlots] = useState(0); 
 
   const fetchImageHistory = useCallback(async () => {
     setIsLoading(true);
@@ -36,7 +49,6 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
         });
         return onClose();
       }
-
       const response = await fetch(
         `${Globals.API_BASE_URL}/api/Picture/history`,
         {
@@ -51,12 +63,9 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
           }),
         }
       );
-
       if (!response.ok)
         throw new Error(`Server responded with status: ${response.status}`);
-
       const data = await response.json();
-      // console.log("Data received from /api/Picture/history:", data);
       const picturesWithFullPaths = data.map((pic) => ({
         ...pic,
         url: `${Globals.API_BASE_URL}${pic.picPath}`,
@@ -77,10 +86,10 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
   useEffect(() => {
     if (visible && picRole) {
       if (picRole === "Profile picture") {
-        setTitle("Your Profile Pictures");
+        setTitle(t("Your_Profile_Pictures"));
         setMaxSlots(5);
       } else {
-        setTitle("Your Extra Pictures");
+        setTitle(t("Your_Extra_Pictures"));
         setMaxSlots(3);
       }
       fetchImageHistory();
@@ -102,9 +111,8 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
         throw new Error(
           `Failed to update picture timestamp. Status: ${response.status}`
         );
-
       const updatedPicture = await response.json();
-      const objectToSend = { // Create the object first
+      const objectToSend = {
         PicID: updatedPicture.picId,
         PicPath: updatedPicture.picPath,
         PicName: updatedPicture.picName,
@@ -113,9 +121,7 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
         PicRole: updatedPicture.picRole,
         DateTime: updatedPicture.dateTime,
       };
-      console.log("1. Sending from History Modal:", JSON.stringify(objectToSend, null, 2));
       onSelect(objectToSend);
-      
     } catch (error) {
       Toast.show({
         type: "error",
@@ -125,32 +131,26 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
     }
   };
 
-  // 2. Replace your entire handleDelete function with this new, smart version.
   const handleDelete = (pictureId) => {
-    // --- START: NEW SMART LOGIC ---
-    // A picture is "in use" ONLY if it's in the picturesInUse list
-    // AND it has NOT been staged for removal (is not in clearedPictureIds).
-    const isCurrentlyInUse = picturesInUse.includes(pictureId) && !clearedPictureIds.includes(pictureId);
-
+    const isCurrentlyInUse =
+      picturesInUse.includes(pictureId) &&
+      !clearedPictureIds.includes(pictureId);
     if (isCurrentlyInUse) {
       Toast.show({
-        type: 'warning',
-        text1: 'Cannot Delete',
-        text2: 'This picture is currently in use on your profile edit screen.',
-        duration: 4000
+        type: "warning",
+        text1: "Cannot Delete",
+        text2: "This picture is currently in use on your profile edit screen.",
+        duration: 4000,
       });
-      return; // Stop the deletion process.
+      return;
     }
-    // --- END: NEW SMART LOGIC ---
-
-    // If the check passes, the picture is safe to delete. Proceed with confirmation.
     Alert.alert(
-      "Confirm Deletion",
-      "Are you sure you want to permanently delete this picture?",
+      t("Confirm_Deletion"),
+      t("Confirm_Deletion_Message"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("Cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("Delete"),
           onPress: async () => {
             try {
               const userId = await AsyncStorage.getItem("userID");
@@ -170,24 +170,19 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
                   }),
                 }
               );
-
               if (!response.ok) {
-                 const errorData = await response.json();
-                 throw new Error(errorData.message || `Server error: ${response.status}`);
+                const errorData = await response.json();
+                throw new Error(
+                  errorData.message || `Server error: ${response.status}`
+                );
               }
-
-              // After successful deletion, also update the client-side `clearedPics` state
-              // This part requires passing a new callback from EditProfile, or handling it differently.
-              // For now, we'll just remove it from the history UI.
               setPictures((prev) => prev.filter((p) => p.picId !== pictureId));
-
-              Toast.show({ type: "success", text1: "Picture Deleted" });
+              Toast.show({ type: "success", text1: t("Picture_Deleted") });
             } catch (error) {
               Toast.show({
                 type: "error",
-                text1: "Deletion Failed",
-                text2: "The picture is currently in use",
-                //text2: error.message,
+                text1: t("Deletion_Failed"),
+                text2: t("PictureIsInUse"),
               });
             }
           },
@@ -197,21 +192,13 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
     );
   };
 
-  const handleAddPhoto = async () => {
-    Alert.alert("Add a New Photo", "Choose a source for your new picture.", [
-      { text: "Camera", onPress: () => pickAndUploadImage("camera") },
-      { text: "Gallery", onPress: () => pickAndUploadImage("gallery") },
-      { text: "Cancel", style: "cancel" },
-    ]);
-  };
-
   const pickAndUploadImage = async (source) => {
     let result;
     if (source === "camera") {
       const cameraPermission =
         await ImagePicker.requestCameraPermissionsAsync();
       if (cameraPermission.status !== "granted") {
-        Alert.alert("Permission denied", "Camera access is required.");
+        Alert.alert(t("Permission_denied"), t("Camera_access_is_required"));
         return;
       }
       result = await ImagePicker.launchCameraAsync({
@@ -222,7 +209,7 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
       const libraryPermission =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (libraryPermission.status !== "granted") {
-        Alert.alert("Permission denied", "Gallery access is required.");
+        Alert.alert(t("Permission_denied"), t("Gallery_access_is_required"));
         return;
       }
       result = await ImagePicker.launchImageLibraryAsync({
@@ -233,51 +220,42 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
     }
 
     if (result.canceled || !result.assets?.[0]?.uri) {
-      return; // User cancelled the process
+      return;
     }
 
-    setIsLoading(true); // Show loading indicator during upload
+    setIsLoading(true);
 
     try {
       const uploaderId = await AsyncStorage.getItem("userID");
-      const token = await AsyncStorage.getItem("userToken");
       const imageUri = result.assets[0].uri;
-
       const formData = new FormData();
       const fileType = imageUri.split(".").pop();
-
       formData.append("files", {
         uri: imageUri,
         name: `upload.${fileType}`,
         type: `image/${fileType}`,
       });
-
       const apiRole =
         picRole === "Profile picture" ? "profile_picture" : "secondary_profile";
       formData.append("picRoles", apiRole);
-      formData.append("picAlts", picRole); // Use role as alt text for simplicity
+      formData.append("picAlts", picRole);
       formData.append("uploaderId", uploaderId);
-
       const response = await fetch(`${Globals.API_BASE_URL}/api/Picture`, {
         method: "POST",
         body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
-
       if (!response.ok) {
         const errorBody = await response.text();
         throw new Error(`Upload failed: ${errorBody}`);
       }
-
-      Toast.show({ type: "success", text1: "Upload Successful!" });
-      fetchImageHistory(); // Refresh the history to show the new photo
+      Toast.show({ type: "success", text1: t("Upload_Successful") });
+      fetchImageHistory();
     } catch (error) {
       console.error("Upload failed:", error);
       Toast.show({
         type: "error",
-        text1: "Upload Failed",
+        text1: t("Upload_Failed"),
         text2: error.message,
       });
     } finally {
@@ -285,23 +263,40 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
     }
   };
 
+  const handleAddPhoto = async () => {
+    Alert.alert(t("Add_a_New_Photo"), t("Choose_a_source_for_your_new_picture"), [
+      { text: t("Camera"), onPress: () => pickAndUploadImage("camera") },
+      { text: t("Gallery"), onPress: () => pickAndUploadImage("gallery") },
+      { text: t("Cancel"), style: "cancel" },
+    ]);
+  };
+
   const renderSlot = (slotIndex) => {
     const picture = pictures[slotIndex];
     if (picture) {
+      const isCurrentlyInUse =
+        picturesInUse.includes(picture.picId) &&
+        !clearedPictureIds.includes(picture.picId);
       return (
         <View key={picture.picId} style={styles.slotContainer}>
-          <Image source={{ uri: picture.url }} style={styles.image} />
-          <View style={styles.buttonContainer}>
-            <FlipButton
-              frontText="Select"
-              backText="Confirm"
-              onPress={() => handleSelectPicture(picture)}
-            />
+          <ExpoImage
+            source={{ uri: picture.url }}
+            style={styles.image}
+            contentFit="cover"
+          />
+          {isCurrentlyInUse && <View style={styles.inUseOverlay} />}
+          <View style={styles.imageOverlay}>
             <TouchableOpacity
-              onPress={() => handleDelete(picture.picId)}
-              style={styles.deleteButton}
+              style={[styles.iconButtonBase, styles.selectButton]}
+              onPress={() => handleSelectPicture(picture)}
             >
-              <Text style={styles.deleteButtonText}>Delete</Text>
+              <Ionicons name="checkmark-circle" size={32} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.iconButtonBase, styles.deleteButton]}
+              onPress={() => handleDelete(picture.picId)}
+            >
+              <Ionicons name="trash" size={32} color="white" />
             </TouchableOpacity>
           </View>
         </View>
@@ -309,12 +304,12 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
     } else {
       return (
         <TouchableOpacity
-          key={slotIndex}
+          key={`empty-${slotIndex}`}
           style={styles.emptySlot}
           onPress={handleAddPhoto}
         >
-          <Text style={styles.plusSign}>+</Text>
-          <Text style={styles.addPhotoText}>Add Photo</Text>
+          <Ionicons name="image-outline" size={50} color="#a0a0a0" />
+          <StyledText style={styles.addPhotoText}>{t("Add_Image")}</StyledText>
         </TouchableOpacity>
       );
     }
@@ -329,12 +324,16 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
     >
       <SafeAreaView style={styles.modalContainer}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>
-            You can manage up to {maxSlots} pictures.
-          </Text>
+          {/* --- CHANGE: Header is now inside the ScrollView --- */}
+          <View style={styles.header}>
+            <StyledText style={styles.title}>{title}</StyledText>
+            <StyledText style={styles.subtitle}>
+              {t('Manage_Pictures_Subtitle', { maxSlots: maxSlots })}
+            </StyledText>
+          </View>
+
           {isLoading ? (
-            <ActivityIndicator size="large" color="#0000ff" />
+            <ActivityIndicator size="large" color="#007bff" />
           ) : (
             <View style={styles.grid}>
               {Array.from({ length: maxSlots }).map((_, index) =>
@@ -343,9 +342,12 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
             </View>
           )}
         </ScrollView>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Text style={styles.closeButtonText}>Close</Text>
-        </TouchableOpacity>
+
+        <View style={styles.footer}>
+          <FlipButton onPress={onClose} style={styles.returnButton}>
+            <StyledText style={styles.returnButtonText}>{t("Return_Image")}</StyledText>
+          </FlipButton>
+        </View>
       </SafeAreaView>
     </Modal>
   );
@@ -354,94 +356,113 @@ export default function ImageHistory({ visible, picRole, onClose, onSelect, pict
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: "#fef1e6",
+    backgroundColor: "#f4f4f8",
   },
   scrollContent: {
+    // This allows content to align center in the scroll view
     alignItems: "center",
     paddingBottom: 20,
   },
+  header: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    backgroundColor: "transparent", // Header background is now part of the main view
+    width: "100%", // Ensure it takes full width within scrollview
+    alignItems: "center",
+    marginBottom: 10, // Add space between header and grid
+  },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
-    marginVertical: 20,
-    color: "#333",
+    color: "#1c1c1e",
   },
   subtitle: {
     fontSize: 16,
     textAlign: "center",
-    marginBottom: 20,
-    color: "#666",
+    marginTop: 4,
+    color: "#6c6c6e",
   },
   grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    paddingHorizontal: 10,
+    width: "100%",
+    alignItems: "center", // Center the single column of photos
   },
   slotContainer: {
-    margin: 10,
-    alignItems: "center",
-    backgroundColor: "#fff",
+    marginVertical: 15, // Increased vertical margin for spacing
     borderRadius: 15,
-    padding: 10,
+    overflow: "hidden",
+    elevation: 6,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
     shadowRadius: 5,
-    elevation: 5,
+    backgroundColor: "white",
   },
   image: {
-    width: 150,
-    height: 150,
-    borderRadius: 10,
-    marginBottom: 10,
+    // --- CHANGE: Image size increased ---
+    width: width * 0.8,
+    height: width * 0.8,
   },
-  buttonContainer: {
+  inUseOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    borderWidth: 3,
+    borderColor: "#007bff",
+    borderRadius: 15,
+  },
+  imageOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: "40%",
     flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+  },
+  iconButtonBase: {
+    padding: 8,
+    borderRadius: 30,
+  },
+  selectButton: {
+    backgroundColor: "rgba(40, 167, 69, 0.8)",
   },
   deleteButton: {
-    backgroundColor: "#ff3b30",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  deleteButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 14,
+    backgroundColor: "rgba(220, 53, 69, 0.8)",
   },
   emptySlot: {
-    width: 150,
-    height: 150,
-    borderRadius: 10,
-    margin: 10,
+    // --- CHANGE: Empty slot size increased ---
+    width: width * 0.8,
+    height: width * 0.8,
+    borderRadius: 15,
+    marginVertical: 15,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#e9ecef",
     borderWidth: 2,
-    borderColor: "#c0c0c0",
+    borderColor: "#ced4da",
     borderStyle: "dashed",
-  },
-  plusSign: {
-    fontSize: 40,
-    color: "#888",
   },
   addPhotoText: {
     fontSize: 16,
-    color: "#888",
-    marginTop: 5,
+    color: "#6c757d",
+    marginTop: 8,
+    fontWeight: "600",
   },
-  closeButton: {
-    padding: 20,
-    backgroundColor: "#007aff",
-    alignItems: "center",
+  footer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    backgroundColor: "#ffffff",
   },
-  closeButtonText: {
+  returnButton: {
+    backgroundColor: "#6c757d",
+    paddingVertical: 14,
+    borderColor: "#5a6268",
+  },
+  returnButtonText: {
     color: "white",
     fontWeight: "bold",
     fontSize: 18,

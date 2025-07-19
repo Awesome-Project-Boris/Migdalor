@@ -1,8 +1,6 @@
-// components/UserProfileCard.jsx
-import React, { useMemo} from "react";
+import React, { useMemo } from "react";
 import {
   View,
-  Text,
   Image,
   StyleSheet,
   Dimensions,
@@ -11,46 +9,44 @@ import {
 import BouncyButton from "./BouncyButton";
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals";
-
+import StyledText from "@/components/StyledText";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const API_BASE_URL = Globals.API_BASE_URL;
 
-// Assuming data structure: { userId: '...', name: '...', photoUrl: '...' }
+// A default image to show if a user doesn't have a profile picture
+const defaultUserImage = require("@/assets/images/defaultUser.png");
+
 function UserProfileCard({ data, onPress }) {
   const { t } = useTranslation();
-  
-  // Basic placeholder image if photoUrl is missing
-  const placeholderImage = require("../assets/images/tempItem.jpg");
 
-  // Construct the full image URL for the Image component
+  // This is the key logic:
+  // It now strictly checks the language setting and constructs the name.
+  const displayName = useMemo(() => {
+    if (Globals.userSelectedLanguage === 'he') {
+      const hebFirstName = data?.hebFirstName?.trim() || "";
+      const hebLastName = data?.hebLastName?.trim() || "";
+      return `${hebFirstName} ${hebLastName}`.trim();
+    } else {
+      const engFirstName = data?.engFirstName?.trim() || "";
+      const engLastName = data?.engLastName?.trim() || "";
+      return `${engFirstName} ${engLastName}`.trim();
+    }
+  }, [data, Globals.userSelectedLanguage]);
+
+  // This handles showing the user's photo or the default image
   const imageUrl = useMemo(() => {
     if (data?.photoUrl) {
-      // data.photoUrl now contains the relative path like "path/to/image.jpg"
-      // Prepend the base URL
-      const relativePath = data.photoUrl.startsWith('/')
-                           ? data.photoUrl.substring(1) // Avoid double slash if path starts with /
-                           : data.photoUrl;
-      return { uri: `${API_BASE_URL}/${relativePath}` }; // Combine base URL and relative path
+      const relativePath = data.photoUrl.startsWith("/")
+        ? data.photoUrl.substring(1)
+        : data.photoUrl;
+      return { uri: `${API_BASE_URL}/${relativePath}` };
     } else {
-      return placeholderImage; // Use placeholder if no relative path provided
+      return defaultUserImage;
     }
-  }, [data?.photoUrl]); 
+  }, [data?.photoUrl]);
 
-  const displayName = useMemo(() => {
-    const engFirst = data?.engFirstName?.trim();
-    const engLast = data?.engLastName?.trim();
-    const hebFirst = data?.hebFirstName?.trim();
-    const hebLast = data?.hebLastName?.trim();
-
-    if (engFirst || engLast) {
-      return `${engFirst || ""} ${engLast || ""}`.trim();
-    } else if (hebFirst || hebLast) {
-      return `${hebFirst || ""} ${hebLast || ""}`.trim();
-    } else {
-      return t("UserProfileCard_unnamedUser");
-    }
-  }, [data, t]);
+  const isSingleWord = !displayName?.trim().includes(" ");
 
   return (
     <BouncyButton
@@ -59,12 +55,23 @@ function UserProfileCard({ data, onPress }) {
       shrinkScale={0.85}
       onPress={onPress}
     >
-      {/* Image source now uses the dynamically constructed full URL or placeholder */}
-      <Image source={imageUrl} style={styles.photo} onError={(e) => console.log(`Failed to load image: ${imageUrl?.uri}`, e.nativeEvent.error)} />
+      <Image
+        source={imageUrl}
+        style={styles.photo}
+        onError={(e) =>
+          console.log(`Failed to load image: ${imageUrl?.uri}`, e.nativeEvent.error)
+        }
+      />
       <View style={styles.infoContainer}>
-        <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
-             {displayName}
-        </Text>
+        <StyledText
+          style={styles.name}
+          numberOfLines={isSingleWord ? 1 : 0}
+          adjustsFontSizeToFit={isSingleWord}
+          ellipsizeMode="tail"
+        >
+          {/* Use the displayName variable to show the correct name */}
+          {displayName || t("UserProfileCard_unnamedUser")}
+        </StyledText>
       </View>
     </BouncyButton>
   );

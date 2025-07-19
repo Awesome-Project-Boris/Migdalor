@@ -20,12 +20,8 @@ const resources = {
         'The Wizard of Oz: Dorothy and her little dog Toto lived in a small village in America.\nDorothy loved Toto very much, and they played with each other all the time. One day there was a terrible tornado. "We have to get to the basement, Toto!" Dorothy shouted. But it was too late. The strong and fierce wind lifted the farmhouse into the air and took Dorothy and Toto to the distant Land of Oz.',
 
       NotificationSettingsPage_header: "Notification Settings:",
-      NotificationSettingsPage_both: "Sound and Vibration",
-      NotificationSettingsPage_sound: "Sound",
-      NotificationSettingsPage_vibrate: "Vibration",
+      NotificationSettingsPage_normal: "Normal",
       NotificationSettingsPage_silent: "Silent",
-      NotificationSettingsPage_on: "On",
-      NotificationSettingsPage_off: "Off",
 
       LanguageSettingsPage_header: "Language Settings:",
       LanguageSettingsPage_LogoutHeader: "Account Settings:",
@@ -42,7 +38,7 @@ const resources = {
       ProfileScreen_arrivalYear: "Date of Arrival to Nordia",
       ProfileScreen_origin: "Originally From",
       ProfileScreen_profession: "Profession",
-      ProfileScreen_interests: "Interests",
+      ProfileScreen_interests: "Hobbies",
       ProfileScreen_aboutMe: "About Me",
       ProfileScreen_extraImages: "Extra Images",
       ProfileScreen_editButton: "Edit Profile",
@@ -50,9 +46,33 @@ const resources = {
       ProfileScreen_privateProfile: "This profile is private",
       ProfileScreen_profileImage: "Profile Image",
 
+      No_Image_Available: "No Image Available",
+      Add_Image: "Add Image",
+      Remove_Image: "Remove",
+      Return_Image: "Return",
+      Your_Profile_Pictures: "Your Profile Pictures",
+      Your_Extra_Pictures: "Your Extra Pictures",
+      Manage_Pictures_Subtitle: "You can manage up to {{maxSlots}} pictures.",
+      Add_a_New_Photo: "Add a New Photo",
+      Choose_a_source_for_your_new_picture: "Choose a source for your new picture.",
+      Camera: "Camera",
+      Gallery: "Gallery",
+      Cancel: "Cancel",
+      Delete: "Delete",
+      Confirm_Deletion: "Confirm Deletion",
+      Confirm_Deletion_Message: "Are you sure you want to permanently delete this picture?",
+      Picture_Deleted: "Picture Deleted",
+      Deletion_Failed: "Deletion Failed",
+      PictureIsInUse: "The picture is currently in use",
+      Permission_denied: "Permission denied",
+      Camera_access_is_required: "Camera access is required.",
+      Gallery_access_is_required: "Gallery access is required.",
+      Upload_Successful: "Upload Successful!",
+      Upload_Failed: "Upload Failed",
+
       Common_Loading: "Loading...",
 
-      interestModal_newlyAdded: "Newly Added Interests",
+      interestModal_newlyAdded: "Newly Added Hobbies",
 
       PrivacySettings_savedLocally: "Privacy settings saved locally",
       PrivacySettings_title: "Privacy Settings",
@@ -60,6 +80,7 @@ const resources = {
 
       EditProfileScreen_saveButton: "Save Changes",
       EditProfileScreen_cancelButton: "Cancel",
+      Validation_FieldIsRequired: "This field is required",
       EditProfileScreen_errorMessagePartner:
         "Partner name must contain only Hebrew and English letters",
       EditProfileScreen_errorMessageApartmentNumber:
@@ -74,7 +95,7 @@ const resources = {
       EditProfileScreen_errorMessageProfession:
         "Profession field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_errorMessageInterests:
-        "Interests field must contain only Hebrew and English letters or numbers",
+        "Hobbies field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_errorMessageAboutMe:
         "About Me field must contain only Hebrew and English letters or numbers",
       EditProfileScreen_ProfileUpdated: "Profile Updated Successfully!",
@@ -82,18 +103,39 @@ const resources = {
       //EditProfileScreen_errorMessageExtraImages: "Please fill in the 'Extra Images' field",
       //EditProfileScreen_errorMessageImage: "Please fill in the 'Image' field",
 
-      EditProfileScreen_noInterests: "No interests to display",
-      EditProfileScreen_editInterestsButton: "Select Interests",
+      EditProfileScreen_noInterests: "No Hobbies to display",
+      EditProfileScreen_editInterestsButton: "Select Hobbies",
 
-      interestModal_title: "Edit Interests",
-      interestModal_searchPlaceholder: "Search for an interest...",
+      ApartmentSelector_Exists: "This apartment is already in our system.",
+      ApartmentSelector_Potential:
+        "This is a valid apartment. It will be added to our system upon saving.",
+      ApartmentSelector_Invalid:
+        "This apartment number is not within the valid range.",
+
+      interestModal_title: "Edit Hobbies",
+      interestModal_searchPlaceholder: "Search for an Hobbies...",
       interestModal_selectExisting: "Select from existing",
-      interestModal_noResults: "No interests found.",
+      interestModal_noResults: "No Hobbies found.",
       interestModal_addNew: "Or add a new one",
-      interestModal_addPlaceholder: "Type a new interest ( Hebrew )",
+      interestModal_addPlaceholder: "Type a new Hobbie ( Hebrew )",
       interestModal_addButton: "Add",
       interestModal_acceptButton: "Accept",
-      interestModa_newlyAdded: "Newly added interests",
+      interestModa_newlyAdded: "Newly added Hobbies",
+
+      interestModal_yourSelections: "Your Selections",
+      interestModal_existsTitle: "Hobby Exists",
+      interestModal_existsMsg:
+        "This hobby is already in the list and has been selected.",
+      interestModal_similarTitle: "Similar Hobby Found",
+      interestModal_similarMsg:
+        "This is very similar to '{{existingName}}'. Add '{{newName}}' anyway?",
+      interestModal_addAnyway: "Add Anyway",
+      interestModal_didYouMean: "Did you mean:",
+      interestModal_deselectDisclaimer:
+        "Clicking a selected hobby will de-select it.",
+      interestModal_suggestionAcceptedTitle: "Suggestion Accepted",
+      interestModal_suggestionAcceptedMsg:
+        "The hobby has been added to your selections",
 
       MainMenuScreen_ProfileButton: "Profile",
       MainMenuScreen_ActivitiesAndClassesButton: "Activities and Classes",
@@ -116,9 +158,11 @@ const resources = {
       Events_SelectMeeting: "Select a Meeting",
       Events_NoMeetings: "No upcoming meetings",
       Events_MissingInformation: "Missing Information",
-      Events_MissingInformationMessage: "Please select a meeting and provide a reason.",
+      Events_MissingInformationMessage:
+        "Please select a meeting and provide a reason.",
       Events_InvalidDate: "Invalid Date",
-      Events_InvalidDateMessage: "Cannot reschedule a meeting to a time that has already passed.",
+      Events_InvalidDateMessage:
+        "Cannot reschedule a meeting to a time that has already passed.",
       Events_MoveMeeting: "Move meeting to another time",
       Events_NewMeeting: "New Meeting Date & Time",
       Events_Reason_for_Move: "Reason for Move",
@@ -126,7 +170,6 @@ const resources = {
       Events_Confirm_Cancellation: "Confirm Cancellation",
       Events_Confirm_Move: "Confirm Move",
       Events_DescriptionPlaceholder: "e.g., Personal emergency, etc.",
-
 
       SettingsPopup_SettingsButton: "Settings",
       SettingsPopup_HomeButton: "Home",
@@ -274,6 +317,7 @@ const resources = {
       NoticeDetailsScreen_loadingDetails: "Loading notice details...",
       NoticeDetailsScreen_categoryLabel: "Category:",
       NoticeDetailsScreen_dateLabel: "Date: ",
+      NoticeDetailsScreen_messageTitle: "Message title: ",
       Common_backButton: "Go back",
       Common_BackButtonShort: "Back",
       NoticeBoardScreen_boardTitle: "Notice Board",
@@ -327,9 +371,11 @@ const resources = {
       ResidentSearchScreen_accordionClose: "Press to open search options",
       ResidentSearchScreen_accordionOpen: "Press to close search field",
 
-      ResidentSearchScreen_selectInterestsButton: "Choose interests to search",
+      ResidentSearchScreen_selectInterestsButton: "Choose Hobbies to search",
       ResidentSearchScreen_filteringByLabel: "Filtering by...",
-      ResidentSearchScreen_noInterestsSelected: "No interests selected",
+      ResidentSearchScreen_noInterestsSelected: "No Hobbies selected",
+      ResidentList_searchingByHobbies: "Searching by Hobbies: ",
+      ResidentList_searchingByName: "Searching by Name: ",
 
       ResidentsCommitte_nameUnavailable: "Name Unavailable",
       ResidentsCommitte_titleUnavailable: "Title Unavailable",
@@ -420,6 +466,13 @@ const resources = {
       EventFocus_SpacesAvailable:
         "There are {{count}} empty spaces - registration below!",
 
+      EventFocus_ThanksForMarking: "Thank you for marking attendance.",
+      EventFocus_WantToChange: "Would you like to make a change?",
+      EventFocus_ReEditButton: "Re-edit Participation",
+      Common_Edit: "Edit",
+      EventFocus_FinalizeDisclaimer: "Click once you've marked all attendants",
+      EventFocus_FinalizeButton: "Finalize Marking",
+
       // New Activity
 
       NewActivity_Title: "Create a New Activity",
@@ -451,6 +504,8 @@ const resources = {
       NewActivity_KeepEditing: "Keep Editing",
       NewActivity_Capacity_Optional:
         "Capacity (optional, leave blank for unlimited)",
+      NewActivity_GenAI_Button: "Create AI Image for activity",
+
       EventFocus_Unlimited: "Unlimited",
 
       // Timetable
@@ -482,9 +537,7 @@ const resources = {
         'הקוסם מארץ עוץ: דורותי והכלב הקטן שלה טוטו גרו בכפר קטן באמריקה,\nדורותי אהבה מאוד את טוטו, והם היו משחקים אחד עם השניה כל הזמן. יום אחד היה סופת טורנדו נוראית. "אנחנו חייבים להגיע למרתף, טוטו!" קראה דורותי. אבל זה היה מאוחר מדי. הרוח החזקה והסוערת הרימה את בית החווה לאוויר ולקחה את דורותי וטוטו לארץ עוץ הנידחת.',
 
       NotificationSettingsPage_header: "הגדרות התראות:",
-      NotificationSettingsPage_both: "קול ורטט",
-      NotificationSettingsPage_sound: "קול",
-      NotificationSettingsPage_vibrate: "רטט",
+      NotificationSettingsPage_normal: "רגיל",
       NotificationSettingsPage_silent: "מושתק",
 
       LanguageSettingsPage_header: "הגדרות שפה:",
@@ -510,6 +563,30 @@ const resources = {
       ProfileScreen_privateProfile: "פרופיל זה פרטי",
       ProfileScreen_profileImage: "תמונת פרופיל",
 
+      No_Image_Available: "אין תמונה זמינה",
+      Add_Image: "הוסף תמונה",
+      Remove_Image: "הסר",
+      Return_Image: "חזור",
+      Your_Profile_Pictures: "תמונות הפרופיל שלך",
+      Your_Extra_Pictures: "תמונות נוספות שלך",
+      Manage_Pictures_Subtitle: "ניתן לנהל עד {{maxSlots}} תמונות.",
+      Add_a_New_Photo: "הוסף תמונה חדשה",
+      Choose_a_source_for_your_new_picture: "בחר מקור לתמונה החדשה שלך.",
+      Camera: "מצלמה",
+      Gallery: "גלריה",
+      Cancel: "ביטול",
+      Delete: "מחק",
+      Confirm_Deletion: "אשר מחיקה",
+      Confirm_Deletion_Message: "האם אתה בטוח שברצונך למחוק תמונה זו לצמיתות?",
+      Picture_Deleted: "התמונה נמחקה",
+      Deletion_Failed: "המחיקה נכשלה",
+      PictureIsInUse: "התמונה כעת נמצאת בשימוש",
+      Permission_denied: "הרשאה נדחתה",
+      Camera_access_is_required: "דרושה גישה למצלמה.",
+      Gallery_access_is_required: "דרושה גישה לגלריה.",
+      Upload_Successful: "העלאה הצליחה!",
+      Upload_Failed: "העלאה נכשלה",
+
       Common_Loading: "טוען...",
 
       interestModal_newlyAdded: "תחביבים חדשים",
@@ -520,6 +597,7 @@ const resources = {
 
       EditProfileScreen_saveButton: "שמור שינויים",
       EditProfileScreen_cancelButton: "ביטול",
+      Validation_FieldIsRequired: "שדה זה הוא חובה",
       EditProfileScreen_errorMessagePartner:
         "שדה 'בן/בת זוג' חייב להכיל רק אותיות בעברית ובאנגלית",
       EditProfileScreen_errorMessageApartmentNumber:
@@ -545,6 +623,11 @@ const resources = {
       EditProfileScreen_noInterests: "אין תחביבים להציג",
       EditProfileScreen_editInterestsButton: "לבחירת תחביבים",
 
+      ApartmentSelector_Exists: "דירה זו כבר קיימת במערכת",
+      ApartmentSelector_Potential:
+        "זוהי דירה חוקית, היא תתווסף למערכת במהלך השמירה",
+      ApartmentSelector_Invalid: "מספר דירה זה אינו בטווח החוקי",
+
       interestModal_title: "עריכת תחביבים",
       interestModal_searchPlaceholder: "חיפוש תחביב...",
       interestModal_selectExisting: "בחירה מתחביבים קיימים",
@@ -554,6 +637,18 @@ const resources = {
       interestModal_addButton: "הוספה",
       interestModal_acceptButton: "אישור",
       interestModa_newlyAdded: "תחביבים חדשים",
+
+      interestModal_yourSelections: "הבחירות שלך",
+      interestModal_existsTitle: "תחביב קיים",
+      interestModal_existsMsg: "תחביב זה כבר קיים ברשימה והוא נבחר עבורך.",
+      interestModal_similarTitle: "נמצא תחביב דומה",
+      interestModal_similarMsg:
+        "ערך זה דומה מאוד ל-'{{existingName}}'. האם להוסיף את '{{newName}}' בכל זאת?",
+      interestModal_addAnyway: "הוסף בכל זאת",
+      interestModal_didYouMean: ":האם התכוונת ל",
+      interestModal_deselectDisclaimer: "לחיצה על תחביב מסומן תבטל את בחירתו",
+      interestModal_suggestionAcceptedTitle: "ההצעה התקבלה",
+      interestModal_suggestionAcceptedMsg: "התחביב נוסף לבחירות שלך",
 
       MainMenuScreen_ProfileButton: "פרופיל",
       MainMenuScreen_ActivitiesAndClassesButton: "חוגים ופעילויות",
@@ -586,8 +681,6 @@ const resources = {
       Events_Confirm_Cancellation: "אשר ביטול",
       Events_Confirm_Move: "אשר העברה",
       Events_DescriptionPlaceholder: "לדוגמה, מקרה חירום אישי וכו'.",
-
-      
 
       SettingsPopup_SettingsButton: "הגדרות",
       SettingsPopup_HomeButton: "בית",
@@ -728,6 +821,7 @@ const resources = {
       NoticeDetailsScreen_loadingDetails: "טוען פרטי הודעה...",
       NoticeDetailsScreen_categoryLabel: "קטגוריה:",
       NoticeDetailsScreen_dateLabel: "תאריך:",
+      NoticeDetailsScreen_messageTitle: "כותרת ההודעה: ",
       Common_backButton: "חזרה לאחור",
       NoticeBoardScreen_boardTitle: "לוח המודעות",
       NoticeBoardScreen_filterButton: "סינון",
@@ -781,6 +875,9 @@ const resources = {
       ResidentSearchScreen_selectInterestsButton: "הזינו תחביבים לחיפוש",
       ResidentSearchScreen_filteringByLabel: "מסנן לפי...",
       ResidentSearchScreen_noInterestsSelected: "לא נבחרו תחביבים",
+
+      ResidentList_searchingByHobbies: "חיפוש לפי תחביבים: ",
+      ResidentList_searchingByName: "חיפוש לפי שם: ",
 
       ResidentsCommitte_nameUnavailable: "שם לא זמין",
       ResidentsCommitte_titleUnavailable: "תואר לא זמין",
@@ -869,6 +966,13 @@ const resources = {
       EventFocus_SpacesAvailable:
         "נותרו {{count}} מקומות פנויים - להרשמה למטה!",
 
+      EventFocus_ThanksForMarking: "תודה שסימנת נוכחות.",
+      EventFocus_WantToChange: "האם ברצונך לבצע שינוי?",
+      EventFocus_ReEditButton: "עריכה מחדש",
+      Common_Edit: "עריכה",
+      EventFocus_FinalizeDisclaimer: "יש ללחוץ לאחר סימון כל הנוכחים.",
+      EventFocus_FinalizeButton: "סיום סימון",
+
       // New Activity
 
       NewActivity_Title: "יצירת פעילות חדשה",
@@ -898,6 +1002,8 @@ const resources = {
       NewActivity_KeepEditing: "המשך לערוך",
       NewActivity_Capacity_Optional:
         "כמות משתתפים (אופציונלי, השאר ריק ללא הגבלה)",
+      NewActivity_GenAI_Button: "יצירת תמונת AI לפעילות",
+
       EventFocus_Unlimited: "ללא הגבלה",
 
       // Timetable

@@ -1,7 +1,6 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Alert,
@@ -17,22 +16,25 @@ import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
 import { Image as ExpoImage } from "expo-image";
+import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
-// Import custom components
+// --- Custom Component and Utility Imports ---
 import Header from "@/components/Header";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import FlipButton from "@/components/FlipButton";
 import ImageViewModal from "@/components/ImageViewModal";
+import StyledText from "@/components/StyledText";
 import { Globals } from "@/app/constants/Globals";
-import { Card, Spinner, YStack, Paragraph, H2 } from "tamagui";
+import { useSettings } from "@/context/SettingsContext"; // Import useSettings
+import { Card, Spinner, YStack } from "tamagui";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const API = Globals.API_BASE_URL;
 
-// Reusable helper functions from MarketplaceNewItem
+// Reusable helper functions (unchanged)
 const copyImageToAppDir = async (sourceUri, prefix) => {
   try {
     const filename = `${prefix}-${Date.now()}-${sourceUri.split("/").pop()}`;
@@ -64,17 +66,17 @@ const formatTime = (date) => {
 };
 
 export default function NewActivity() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const router = useRouter();
+  const { settings } = useSettings();
+  const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
-  // Form State
+  // State variables (all unchanged)
   const [eventName, setEventName] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [capacity, setCapacity] = useState("");
   const [imageUri, setImageUri] = useState(null);
-
-  // Date & Time State
   const [date, setDate] = useState(new Date());
   const [startTime, setStartTime] = useState(new Date());
   const [endTime, setEndTime] = useState(() => {
@@ -82,8 +84,6 @@ export default function NewActivity() {
     defaultEndTime.setHours(defaultEndTime.getHours() + 1);
     return defaultEndTime;
   });
-
-  // UI State
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -91,6 +91,7 @@ export default function NewActivity() {
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [showImageViewModal, setShowImageViewModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false); // For AI pic generation
 
   const hasUnsavedChanges = () => {
     return (
@@ -122,6 +123,9 @@ export default function NewActivity() {
 
     if (!result.canceled && result.assets) {
       try {
+        if (imageUri) {
+          await safeDeleteFile(imageUri);
+        }
         const newUri = await copyImageToAppDir(
           result.assets[0].uri,
           "activity"
@@ -133,6 +137,91 @@ export default function NewActivity() {
           t("ImagePicker_saveLibraryImageFailure")
         );
       }
+    }
+  };
+
+  const generateAiImage = async () => {
+    Keyboard.dismiss();
+    if (!eventName.trim() && !description.trim()) {
+      Alert.alert(t("Common_Error"), t("NewActivity_GenAI_PromptError"));
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const authToken = await AsyncStorage.getItem("jwt");
+      const prompt = `An exciting activity: ${eventName.trim()}. ${description.trim()}`;
+
+      const response = await fetch(`${API}/api/Gemini/generate-image`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to generate image.");
+      }
+
+      const responseData = await response.json();
+      let base64Code = null;
+
+      const dataKey = Object.keys(responseData).find(
+        (key) =>
+          Array.isArray(responseData[key]) &&
+          responseData[key].length > 0 &&
+          typeof responseData[key][0] === "string"
+      );
+
+      if (dataKey) {
+        base64Code = responseData[dataKey][0];
+      }
+
+      if (!base64Code) {
+        throw new Error(
+          "Could not automatically find image data in the API response. The response format may have changed."
+        );
+      }
+
+      const filename = `aigen-${Date.now()}.jpeg`;
+      const destinationUri = FileSystem.documentDirectory + filename;
+
+      await FileSystem.writeAsStringAsync(destinationUri, base64Code, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      if (imageUri) {
+        await safeDeleteFile(imageUri);
+      }
+      setImageUri(destinationUri);
+    } catch (err) {
+      Alert.alert(t("Common_Error"), err.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const onChangeDate = (event, selectedDate) => {
+    setShowDatePicker(false);
+    if (event.type === "set" && selectedDate) {
+      setDate(selectedDate);
+    }
+  };
+
+  const onChangeStartTime = (event, selectedTime) => {
+    setShowStartTimePicker(false);
+    if (event.type === "set" && selectedTime) {
+      setStartTime(selectedTime);
+    }
+  };
+
+  const onChangeEndTime = (event, selectedTime) => {
+    setShowEndTimePicker(false);
+    if (event.type === "set" && selectedTime) {
+      setEndTime(selectedTime);
     }
   };
 
@@ -185,7 +274,6 @@ export default function NewActivity() {
     }
   };
 
-  // --- NEW: Function to delete an uploaded picture from the server ---
   const deletePictureOnServer = async (pictureId) => {
     if (!pictureId) return;
     console.log(`Attempting to delete orphaned picture ID: ${pictureId}`);
@@ -197,11 +285,9 @@ export default function NewActivity() {
       });
     } catch (err) {
       console.error(`Failed to delete orphaned picture ID ${pictureId}:`, err);
-      // We don't show an error to the user for this background cleanup task.
     }
   };
 
-  // --- Validation ---
   const validateFields = () => {
     const errors = {};
     if (!eventName.trim())
@@ -219,7 +305,6 @@ export default function NewActivity() {
     return Object.keys(errors).length === 0;
   };
 
-  // --- Actions ---
   const handleCancel = () => {
     if (hasUnsavedChanges()) {
       setShowCancelConfirm(true);
@@ -246,7 +331,7 @@ export default function NewActivity() {
     }
 
     setIsSubmitting(true);
-    let uploadedPicId = null; // --- NEW: Variable to track uploaded picture ID ---
+    let uploadedPicId = null;
 
     try {
       const currentUserId = (await AsyncStorage.getItem("userID"))?.replace(
@@ -257,12 +342,10 @@ export default function NewActivity() {
       if (!currentUserId || !authToken)
         throw new Error("Authentication details are missing.");
 
-      // --- Step 1: Upload image first ---
       if (imageUri) {
         uploadedPicId = await uploadImage(imageUri, currentUserId);
       }
 
-      // --- Step 2: Combine Date and Time ---
       const finalStartDate = new Date(date);
       finalStartDate.setHours(
         startTime.getHours(),
@@ -274,19 +357,17 @@ export default function NewActivity() {
       const finalEndDate = new Date(date);
       finalEndDate.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
 
-      // --- Step 3: Create payload ---
       const payload = {
         EventName: eventName.trim(),
         Description: description.trim(),
         HostId: currentUserId,
         Location: location.trim(),
-        PictureId: uploadedPicId, // Use the ID from the upload
+        PictureId: uploadedPicId,
         Capacity: parseInt(capacity, 10),
         StartDate: finalStartDate.toISOString(),
         EndDate: finalEndDate.toISOString(),
       };
 
-      // --- Step 4: POST to the new endpoint ---
       const response = await fetch(`${API}/api/events/CreateActivity`, {
         method: "POST",
         headers: {
@@ -298,7 +379,6 @@ export default function NewActivity() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        // If this fails, the 'catch' block will handle deleting the image.
         throw new Error(errorText || "Failed to create activity.");
       }
 
@@ -309,8 +389,6 @@ export default function NewActivity() {
       });
       router.back();
     } catch (err) {
-      // --- NEW: Fallback logic ---
-      // If an image was uploaded but the event creation failed, delete the image.
       if (uploadedPicId) {
         await deletePictureOnServer(uploadedPicId);
       }
@@ -325,15 +403,19 @@ export default function NewActivity() {
       <Header />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1, backgroundColor: "#fef1e6" }}
+        style={styles.screenContainer}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.formContainer}>
-            <Text style={styles.title}>{t("NewActivity_Title")}</Text>
+          <View style={styles.headerPlaque}>
+            <StyledText style={styles.title}>
+              {t("NewActivity_Title")}
+            </StyledText>
+          </View>
 
+          <View style={styles.formPlaque}>
             <FloatingLabelInput
               label={t("NewActivity_Name")}
               value={eventName}
@@ -341,7 +423,9 @@ export default function NewActivity() {
               maxLength={100}
             />
             {formErrors.eventName && (
-              <Text style={styles.errorText}>{formErrors.eventName}</Text>
+              <StyledText style={styles.errorText}>
+                {formErrors.eventName}
+              </StyledText>
             )}
 
             <FloatingLabelInput
@@ -353,7 +437,9 @@ export default function NewActivity() {
               maxLength={500}
             />
             {formErrors.description && (
-              <Text style={styles.errorText}>{formErrors.description}</Text>
+              <StyledText style={styles.errorText}>
+                {formErrors.description}
+              </StyledText>
             )}
 
             <FloatingLabelInput
@@ -369,17 +455,23 @@ export default function NewActivity() {
               keyboardType="numeric"
             />
             {formErrors.capacity && (
-              <Text style={styles.errorText}>{formErrors.capacity}</Text>
+              <StyledText style={styles.errorText}>
+                {formErrors.capacity}
+              </StyledText>
             )}
 
-            <Text style={styles.sectionTitle}>{t("NewActivity_Image")}</Text>
+            <StyledText style={styles.imageSectionTitle}>
+              {t("NewActivity_Image")}
+            </StyledText>
             <Card
               elevate
               width="100%"
-              height={180}
+              height={useColumnLayout ? 250 : 180}
               borderRadius="$4"
               overflow="hidden"
               onPress={viewOrPickImage}
+              borderWidth={1}
+              borderColor="#ddd"
             >
               {imageUri ? (
                 <Card.Background>
@@ -390,114 +482,149 @@ export default function NewActivity() {
                   />
                 </Card.Background>
               ) : (
-                <YStack f={1} jc="center" ai="center" p="$2" bg="$background">
-                  <H2 size="$5">{t("NewActivity_Image")}</H2>
-                  <Paragraph theme="alt2">
+                <YStack f={1} jc="center" ai="center" p="$2" bg="#f8f9fa">
+                  <StyledText style={styles.imageCardHeader}>
+                    {t("NewActivity_Image")}
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("NewActivity_Image_Optional")}
-                  </Paragraph>
-                  <Paragraph theme="alt2">
+                  </StyledText>
+                  <StyledText style={styles.imageCardParagraph}>
                     {t("NewActivity_Image_TapToChoose")}
-                  </Paragraph>
+                  </StyledText>
                 </YStack>
               )}
             </Card>
 
-            <Text style={styles.sectionTitle}>{t("EventFocus_Date")}</Text>
+            <FlipButton
+              onPress={generateAiImage}
+              style={[
+                styles.genAiButton,
+                useColumnLayout && styles.fullWidthButton,
+              ]}
+              disabled={
+                isGenerating || !eventName.trim() || !description.trim()
+              }
+            >
+              {isGenerating ? (
+                <Spinner color="black" />
+              ) : (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <Ionicons
+                    name="sparkles"
+                    size={22}
+                    style={{ marginRight: 8 }}
+                  />
+                  <StyledText style={styles.buttonLabel}>
+                    {t("NewActivity_GenAI_Button")}
+                  </StyledText>
+                </View>
+              )}
+            </FlipButton>
+
+            <StyledText style={styles.sectionTitle}>
+              {t("EventFocus_Date")}
+            </StyledText>
             <TouchableOpacity
               style={styles.pickerButton}
               onPress={() => setShowDatePicker(true)}
             >
-              <Text style={styles.pickerButtonText}>
-                {date.toLocaleDateString()}
-              </Text>
+              <StyledText style={styles.pickerButtonText}>
+                {date.toLocaleDateString("en-GB")}
+              </StyledText>
             </TouchableOpacity>
-
-            <View style={styles.timeRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.timeLabel}>
-                  {t("NewActivity_SelectStartTime")}
-                </Text>
-                <TouchableOpacity
-                  style={styles.pickerButton}
-                  onPress={() => setShowStartTimePicker(true)}
-                >
-                  <Text style={styles.pickerButtonText}>
-                    {formatTime(startTime)}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={styles.timeLabel}>
-                  {t("NewActivity_SelectEndTime")}
-                </Text>
-                <TouchableOpacity
-                  style={styles.pickerButton}
-                  onPress={() => setShowEndTimePicker(true)}
-                >
-                  <Text style={styles.pickerButtonText}>
-                    {formatTime(endTime)}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
 
             {showDatePicker && (
               <DateTimePicker
                 value={date}
                 mode="date"
                 display="default"
-                onChange={(e, d) => {
-                  setShowDatePicker(false);
-                  setDate(d || date);
-                }}
+                onChange={onChangeDate}
               />
             )}
+
+            <View
+              style={[styles.timeRow, useColumnLayout && styles.timeColumn]}
+            >
+              <View style={styles.timePickerContainer}>
+                <StyledText style={styles.timeLabel}>
+                  {t("NewActivity_SelectStartTime")}
+                </StyledText>
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => setShowStartTimePicker(true)}
+                >
+                  <StyledText style={styles.pickerButtonText}>
+                    {formatTime(startTime)}
+                  </StyledText>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.timePickerContainer}>
+                <StyledText style={styles.timeLabel}>
+                  {t("NewActivity_SelectEndTime")}
+                </StyledText>
+                <TouchableOpacity
+                  style={styles.pickerButton}
+                  onPress={() => setShowEndTimePicker(true)}
+                >
+                  <StyledText style={styles.pickerButtonText}>
+                    {formatTime(endTime)}
+                  </StyledText>
+                </TouchableOpacity>
+              </View>
+            </View>
+
             {showStartTimePicker && (
               <DateTimePicker
                 value={startTime}
                 mode="time"
-                is24Hour={true}
                 display="default"
-                onChange={(e, d) => {
-                  setShowStartTimePicker(false);
-                  setStartTime(d || startTime);
-                }}
+                is24Hour={true}
+                onChange={onChangeStartTime}
               />
             )}
+
             {showEndTimePicker && (
               <DateTimePicker
                 value={endTime}
                 mode="time"
-                is24Hour={true}
                 display="default"
-                onChange={(e, d) => {
-                  setShowEndTimePicker(false);
-                  setEndTime(d || endTime);
-                }}
+                is24Hour={true}
+                onChange={onChangeEndTime}
               />
             )}
 
-            <View style={styles.buttonRow}>
+            <View
+              style={[styles.buttonRow, useColumnLayout && styles.buttonColumn]}
+            >
               <FlipButton
                 onPress={handleCancel}
-                style={styles.cancelButton}
-                disabled={isSubmitting}
+                style={[
+                  styles.cancelButton,
+                  useColumnLayout && styles.fullWidthButton,
+                ]}
+                disabled={isSubmitting || isGenerating}
               >
-                <Text>{t("NewActivity_CancelButton")}</Text>
+                <StyledText style={styles.buttonLabel}>
+                  {t("NewActivity_CancelButton")}
+                </StyledText>
               </FlipButton>
               <FlipButton
                 onPress={handleSubmit}
-                style={styles.submitButton}
-                disabled={isSubmitting}
+                style={[
+                  styles.submitButton,
+                  useColumnLayout && styles.fullWidthButton,
+                ]}
+                disabled={isSubmitting || isGenerating}
                 bgColor="#007bff"
                 textColor="#fff"
               >
                 {isSubmitting ? (
                   <Spinner color="white" />
                 ) : (
-                  <Text style={styles.submitButtonText}>
+                  <StyledText style={[styles.buttonLabel, { color: "#fff" }]}>
                     {t("NewActivity_CreateButton")}
-                  </Text>
+                  </StyledText>
                 )}
               </FlipButton>
             </View>
@@ -519,15 +646,17 @@ export default function NewActivity() {
       >
         <View style={styles.confirmOverlay}>
           <View style={styles.confirmContainer}>
-            <Text style={styles.confirmText}>
+            <StyledText style={styles.confirmText}>
               {t("NewActivity_CancelPromptMessage")}
-            </Text>
+            </StyledText>
             <View style={styles.confirmButtonRow}>
               <FlipButton
                 onPress={() => setShowCancelConfirm(false)}
                 style={styles.confirmButton}
               >
-                <Text>{t("NewActivity_KeepEditing")}</Text>
+                <StyledText style={styles.buttonLabel}>
+                  {t("NewActivity_KeepEditing")}
+                </StyledText>
               </FlipButton>
               <FlipButton
                 onPress={confirmCancel}
@@ -535,9 +664,9 @@ export default function NewActivity() {
                 bgColor="red"
                 textColor="#fff"
               >
-                <Text style={{ color: "#fff" }}>
+                <StyledText style={[styles.buttonLabel, { color: "#fff" }]}>
                   {t("NewActivity_ConfirmDiscard")}
-                </Text>
+                </StyledText>
               </FlipButton>
             </View>
           </View>
@@ -548,37 +677,80 @@ export default function NewActivity() {
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: "#f7e7ce", // Champagne background
+  },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 30,
+    padding: 20,
     paddingTop: 80,
   },
-  formContainer: {
-    width: SCREEN_WIDTH * 0.9,
+  headerPlaque: {
+    width: "100%",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
     padding: 20,
-    borderRadius: 12,
-    backgroundColor: "#fff",
+    marginBottom: 20,
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 5,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  formPlaque: {
+    width: "100%",
+    padding: 20,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 25,
     color: "#333",
   },
   sectionTitle: {
     fontSize: 18,
+    textAlign: "center",
     fontWeight: "600",
     color: "#444",
     marginTop: 20,
     marginBottom: 10,
+  },
+  imageSectionTitle: {
+    fontSize: 18,
+    textAlign: "center",
+    fontWeight: "600",
+    color: "#444",
+    marginTop: 20,
+    paddingBottom: 8,
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  imageCardHeader: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 5,
+    textAlign: "center",
+  },
+  imageCardParagraph: {
+    fontSize: 12,
+    color: "#666",
+    textAlign: "center",
   },
   pickerButton: {
     borderWidth: 1,
@@ -595,6 +767,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
+    gap: 10,
+  },
+  timeColumn: {
+    flexDirection: "column",
+    gap: 15,
+  },
+  timePickerContainer: {
+    flex: 1,
   },
   timeLabel: {
     textAlign: "center",
@@ -607,9 +787,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginTop: 30,
   },
+  buttonColumn: {
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 15,
+  },
   submitButton: { width: "48%" },
   cancelButton: { width: "48%", backgroundColor: "#f0f0f0" },
-  submitButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  fullWidthButton: {
+    width: "100%",
+  },
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
   errorText: {
     color: "red",
     alignSelf: "flex-start",
@@ -642,5 +833,11 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
-  confirmButton: { width: "48%" },
+  confirmButton: {
+    width: "48%",
+  },
+  genAiButton: {
+    marginTop: 15,
+    backgroundColor: "#e6f7ff",
+  },
 });

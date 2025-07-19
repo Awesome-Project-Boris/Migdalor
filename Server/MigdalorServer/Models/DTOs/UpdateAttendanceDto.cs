@@ -1,8 +1,8 @@
 ﻿namespace MigdalorServer.Models.DTOs
 {
-    public class UpdateAttendanceDto
+    public class UpdateParticipationDto
     {
-        public int InstanceId { get; set; }
+        public int EventId { get; set; }
         public Guid ParticipantId { get; set; }
         public string Status { get; set; }
     }

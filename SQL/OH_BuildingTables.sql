@@ -1,82 +1,87 @@
 -- =================================================================
 -- Table for storing building information
 -- =================================================================
-CREATE TABLE OH_Buildings (
-    -- A unique identifier for the building, e.g., 'B1', 'B2', etc.
-    -- This is the Primary Key for this table.
-    BuildingID UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
-
-    -- The common name of the building, e.g., 'West Wing'.
-    BuildingName NVARCHAR(100) NOT NULL,
-
-    -- Any additional information or description for the building.
-    Info NVARCHAR(MAX) NULL,
-
-    -- A JSON string containing the array of latitude/longitude pairs
-    -- that define the building's footprint on the map.
-    Coordinates NVARCHAR(MAX) NULL
-);
+CREATE TABLE [dbo].[OH_Buildings](
+	[BuildingID] [uniqueidentifier] NOT NULL,
+	[BuildingName] [nvarchar](100) NOT NULL,
+	[Info] [nvarchar](max) NULL,
+	[Coordinates] [nvarchar](max) NULL,
+PRIMARY KEY CLUSTERED
+(
+	[BuildingID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
 
 -- =================================================================
 -- Table for storing individual apartment details
 -- =================================================================
-CREATE TABLE OH_Apartments (
-    -- The unique number for the apartment, e.g., '101', '432A'.
-    -- This is the Primary Key for this table.
-    ApartmentNumber UNIQUEIDENTIFIER NOT NULL PRIMARY KEY,
+CREATE TABLE [dbo].[OH_Apartments](
+	[ApartmentNumber] [uniqueidentifier] NOT NULL,
+	[PhysicalBuildingID] [uniqueidentifier] NOT NULL,
+	[AccessBuildingID] [uniqueidentifier] NOT NULL,
+	[FloorNumber] [int] NULL,
+	[ApartmentName] [nvarchar](100) NULL,
+PRIMARY KEY CLUSTERED
+(
+	[ApartmentNumber] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 
-    -- The ID of the building where the apartment is physically located.
-    -- This is a Foreign Key that links to the Buildings table.
-    PhysicalBuildingID UNIQUEIDENTIFIER NOT NULL,
+ALTER TABLE [dbo].[OH_Apartments]  WITH CHECK ADD  CONSTRAINT [FK_Apartments_AccessBuilding] FOREIGN KEY([AccessBuildingID])
+REFERENCES [dbo].[OH_Buildings] ([BuildingID])
+GO
 
-    -- The ID of the building that must be entered to access the apartment.
-    -- This handles cases where the entrance is in a different building.
-    -- This is a Foreign Key that links to the Buildings table.
-    AccessBuildingID UNIQUEIDENTIFIER NOT NULL,
+ALTER TABLE [dbo].[OH_Apartments] CHECK CONSTRAINT [FK_Apartments_AccessBuilding]
+GO
 
-    -- The ID of the resident living in the apartment.
-    -- This is a Foreign Key that links to your existing OH_Residents table.
-    -- It is NULLABLE, so a NULL value indicates the apartment is vacant.
-    ResidentID INT NULL,
+ALTER TABLE [dbo].[OH_Apartments]  WITH CHECK ADD  CONSTRAINT [FK_Apartments_PhysicalBuilding] FOREIGN KEY([PhysicalBuildingID])
+REFERENCES [dbo].[OH_Buildings] ([BuildingID])
+GO
 
-    -- --- CONSTRAINTS ---
-    -- Defines the foreign key relationship to the Buildings table for PhysicalBuildingID
-    CONSTRAINT FK_Apartments_PhysicalBuilding
-        FOREIGN KEY (PhysicalBuildingID) REFERENCES OH_Buildings(BuildingID),
+ALTER TABLE [dbo].[OH_Apartments] CHECK CONSTRAINT [FK_Apartments_PhysicalBuilding]
+GO
 
-    -- Defines the foreign key relationship to the Buildings table for AccessBuildingID
-    CONSTRAINT FK_Apartments_AccessBuilding
-        FOREIGN KEY (AccessBuildingID) REFERENCES OH_Buildings(BuildingID),
-
-    -- Defines the foreign key relationship to the OH_Residents table
-    -- IMPORTANT: Make sure your residents table is named OH_Residents and its primary key is ResidentID.
-    -- If not, you will need to adjust this line.
-    CONSTRAINT FK_Apartments_Residents
-        FOREIGN KEY (ResidentID) REFERENCES OH_Residents(ResidentID)
-);
+-- =================================================================
+-- Table for storing map navigation nodes
+-- =================================================================
+CREATE TABLE [dbo].[OH_MapNodes](
+	[NodeID] [int] NOT NULL,
+	[Longitude] [float] NOT NULL,
+	[Latitude] [float] NOT NULL,
+	[Description] [nvarchar](255) NULL,
+PRIMARY KEY CLUSTERED
+(
+	[NodeID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
 GO
 
 -- =================================================================
 -- Linking table for Buildings and their multiple entrance nodes
--- This allows one building to have many entrance nodes.
 -- =================================================================
-CREATE TABLE OH_BuildingEntrances (
-    -- Foreign key linking to the Buildings table.
-    BuildingID UNIQUEIDENTIFIER NOT NULL,
+CREATE TABLE [dbo].[OH_BuildingEntrances](
+	[BuildingID] [uniqueidentifier] NOT NULL,
+	[NodeID] [int] NOT NULL,
+ CONSTRAINT [PK_BuildingEntrances] PRIMARY KEY CLUSTERED
+(
+	[BuildingID] ASC,
+	[NodeID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
 
-    -- The ID of the navigation node that serves as an entrance.
-    -- This does not have a foreign key constraint, as the nodes
-    -- are currently managed on the client side.
-    NodeID INT NOT NULL,
+ALTER TABLE [dbo].[OH_BuildingEntrances]  WITH CHECK ADD  CONSTRAINT [FK_BuildingEntrances_Buildings] FOREIGN KEY([BuildingID])
+REFERENCES [dbo].[OH_Buildings] ([BuildingID])
+GO
 
-    -- --- CONSTRAINTS ---
-    -- The Primary Key is a combination of BuildingID and NodeID to ensure
-    -- that the same node cannot be assigned to the same building twice.
-    CONSTRAINT PK_BuildingEntrances PRIMARY KEY (BuildingID, NodeID),
+ALTER TABLE [dbo].[OH_BuildingEntrances] CHECK CONSTRAINT [FK_BuildingEntrances_Buildings]
+GO
 
-    -- Defines the foreign key relationship to the Buildings table.
-    CONSTRAINT FK_BuildingEntrances_Buildings
-        FOREIGN KEY (BuildingID) REFERENCES OH_Buildings(BuildingID)
-);
+ALTER TABLE [dbo].[OH_BuildingEntrances]  WITH CHECK ADD  CONSTRAINT [FK_BuildingEntrances_MapNodes] FOREIGN KEY([NodeID])
+REFERENCES [dbo].[OH_MapNodes] ([NodeID])
+GO
+
+ALTER TABLE [dbo].[OH_BuildingEntrances] CHECK CONSTRAINT [FK_BuildingEntrances_MapNodes]
 GO

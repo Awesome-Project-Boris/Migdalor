@@ -1,95 +1,95 @@
-// frontend/components/ImageViewModal.jsx
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Image as RNImage,
   StyleSheet,
   Dimensions,
-  Text,
-  View, // Use RN View for positioning if needed
+  View,
 } from "react-native";
-import FlipButton from "./FlipButton"; // Assuming FlipButton can accept style props
-import { Ionicons } from "@expo/vector-icons"; // For button icons
+import { Ionicons } from "@expo/vector-icons";
 
-import { useState, useEffect } from "react";
+// Custom components and hooks
+import FlipButton from "./FlipButton";
+import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext";
+import { t } from "i18next";
 
-// Removed Tamagui imports as they weren't essential for this structure anymore
-// If you use Tamagui elsewhere, you might re-introduce YStack/XStack if preferred
+const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
 
-const windowWidth = Dimensions.get("window").width;
-const windowHeight = Dimensions.get("window").height;
-
-// Use standard function declaration
 function ImageViewModal({ visible, imageUri, onClose, onRemove, onAdd }) {
-  const [noImage, setNoImage] = useState(false); // State to handle no image case
+  const { settings } = useSettings(); // Get settings from context
+  const [noImage, setNoImage] = useState(false);
 
   useEffect(() => {
-    if (imageUri === "") {
-      setNoImage(true);
-    } else {
-      setNoImage(false);
-    }
+    // Determine if an image is present when the component becomes visible
+    setNoImage(!imageUri);
   }, [imageUri]);
 
-  //console.log("visible ", visible); // Debugging log
-  //console.log("imageUri ", imageUri); // Debugging log
   if (!visible) return null;
 
-  //console.log("Image URI:", imageUri); // Debugging log
-  //console.log("typeof imageuri:", typeof imageUri); // Debugging log
+  // Determine layout based on font size multiplier
+  const useColumnLayout = settings.fontSizeMultiplier >= 2.0;
 
   return (
     <Modal
       visible={visible}
-      transparent={true} // Keep transparent to see backdrop
+      transparent={true}
       animationType="fade"
-      onRequestClose={onClose} // Handle hardware back button on Android
+      onRequestClose={onClose}
     >
-      {/* 1. Backdrop View - Centered, Darker */}
       <View style={styles.backdrop}>
-        {/* 2. Inner Content Box View - Centered */}
         <View style={styles.contentBox}>
-          {/* 3. Image Container View - Allow image to be large */}
           <View style={styles.imageContainer}>
-            {/* Use RN Image */}
-            {!noImage && (
+            {noImage ? (
+              <View style={styles.noImageContainer}>
+                <Ionicons name="image-outline" size={80} color="#a0a0a0" />
+                <StyledText style={styles.noImageText}>
+                  {t("No_Image_Available")}
+                </StyledText>
+              </View>
+            ) : (
               <RNImage
                 source={{ uri: imageUri }}
-                style={styles.image} // Style ensures it fits container
-                resizeMode="contain" // Keeps aspect ratio
+                style={styles.image}
+                resizeMode="contain"
               />
             )}
-
-            {noImage && <Text>No Image Available</Text>}
           </View>
 
-          {/* 4. Button Container View */}
-          <View style={styles.buttonContainer}>
-            {/* Clearer Buttons */}
+          <View
+            style={[
+              styles.buttonContainer,
+              useColumnLayout && styles.buttonContainerColumn,
+            ]}
+          >
             <FlipButton
-              //onPress={onRemove}
-              onPress={ noImage ? onAdd : onRemove }
-              style={[styles.button, styles.removeButton]} // Apply base and specific style
-              // Pass text/colors via props if FlipButton supports it,
-              // otherwise, style the Text child directly if FlipButton accepts children
+              onPress={noImage ? onAdd : onRemove}
+              style={[
+                styles.button,
+                useColumnLayout && styles.buttonColumn,
+                noImage ? styles.addButton : styles.removeButton,
+              ]}
             >
-              {!noImage && (
-                <Ionicons name="trash-outline" size={22} color="#dc3545" />
-              )}
-              <Text style={[styles.buttonText, styles.removeButtonText]}>
-                {!noImage ? "Remove" : "Add Image"}
-              </Text>
+              <Ionicons
+                name={noImage ? "add-circle-outline" : "trash-outline"}
+                size={24}
+                color="#fff"
+              />
+              <StyledText style={styles.buttonText}>
+                {noImage ? t("Add_Image") : t("Remove_Image")}
+              </StyledText>
             </FlipButton>
 
             <FlipButton
               onPress={onClose}
-              style={[styles.button, styles.returnButton]} // Apply base and specific style
+              style={[
+                styles.button,
+                useColumnLayout && styles.buttonColumn,
+                styles.returnButton,
+              ]}
             >
-              <Ionicons name="arrow-back-outline" size={22} color="#007bff" />
-              <Text style={[styles.buttonText, styles.returnButtonText]}>
-                Return
-              </Text>
+              <Ionicons name="arrow-back-outline" size={24} color="#fff" />
+              <StyledText style={styles.buttonText}>{t("Return_Image")}</StyledText>
             </FlipButton>
           </View>
         </View>
@@ -101,77 +101,86 @@ function ImageViewModal({ visible, imageUri, onClose, onRemove, onAdd }) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.85)", // Darker backdrop
-    justifyContent: "center", // Center content vertically
-    alignItems: "center", // Center content horizontally
-    padding: 15, // Add some padding around the content box
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 15,
   },
   contentBox: {
-    backgroundColor: "#ffffff", // White background for the content
-    borderRadius: 15, // More rounded corners
-    padding: 20, // Padding inside the box
-    width: "95%", // Width relative to screen width
-    maxWidth: 500, // Max width on larger devices
-    maxHeight: "90%", // Max height relative to screen height
-    alignItems: "center", // Center items like image container and button container
-    shadowColor: "#000", // Optional: add shadow for depth
+    backgroundColor: "#ffffff",
+    borderRadius: 15,
+    padding: 20,
+    width: "95%",
+    maxWidth: 500,
+    maxHeight: "90%",
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 10,
   },
   imageContainer: {
-    width: "100%", // Take full width of content box
-    // Height will be determined by available space and aspect ratio
-    // Or set a specific max height: maxHeight: windowHeight * 0.6,
-    marginBottom: 25, // Space between image and buttons
-    overflow: "hidden", // Ensure image respects border radius if container has one
+    width: "100%",
+    flexShrink: 1, // Allow container to shrink to fit available space
+    marginBottom: 25,
     justifyContent: "center",
     alignItems: "center",
   },
   image: {
     width: "100%",
-    aspectRatio: 1, // Make it square, or remove if you want original aspect ratio to fill height
-    // If removing aspectRatio, you might need to set a height or flex: 1 on the image container
-    // height: windowHeight * 0.5, // Example fixed height
-    borderRadius: 8, // Optional: slight rounding on image itself
+    height: "100%", // Let resizeMode="contain" handle the aspect ratio
+    borderRadius: 8,
+  },
+  noImageContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 50,
+  },
+  noImageText: {
+    marginTop: 10,
+    fontSize: 18,
+    color: "#a0a0a0",
   },
   buttonContainer: {
-    flexDirection: "row", // Arrange buttons side-by-side
-    justifyContent: "space-around", // Space them out evenly
-    width: "100%", // Take full width for button spacing
-    marginTop: 10, // Ensure some space from image if marginbottom wasn't enough
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    marginTop: 10,
+  },
+  buttonContainerColumn: {
+    flexDirection: "column",
+    alignItems: "stretch",
   },
   button: {
-    flexDirection: "row", // Align icon and text
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12, // Increased padding
-    paddingHorizontal: 20, // Increased padding
-    borderRadius: 8,
-    borderWidth: 1, // Add border for definition
-    flexGrow: 1, // Allow buttons to share space
-    marginHorizontal: 10, // Space between buttons
-    minWidth: 120, // Ensure buttons have minimum width
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    flexGrow: 1,
+    marginHorizontal: 10,
+    borderWidth: 0, // Removed border for a flatter look
+  },
+  buttonColumn: {
+    marginHorizontal: 0,
+    marginBottom: 15,
   },
   removeButton: {
-    backgroundColor: "#f8d7da", // Light red background
-    borderColor: "#f5c6cb", // Reddish border
+    backgroundColor: "#dc3545", // Solid red
+  },
+  addButton: {
+    backgroundColor: "#28a745", // Solid green
   },
   returnButton: {
-    backgroundColor: "#e0f0ff", // Light blue background
-    borderColor: "#a0c8ff", // Bluish border
+    backgroundColor: "#6c757d", // Solid gray
   },
   buttonText: {
-    fontSize: 18, // Bigger text
-    fontWeight: "600", // Semi-bold
-    marginLeft: 8, // Space between icon and text
-  },
-  removeButtonText: {
-    color: "#721c24", // Darker red text for contrast
-  },
-  returnButtonText: {
-    color: "#004085", // Darker blue text for contrast
+    fontSize: 18,
+    fontWeight: "600",
+    marginLeft: 10,
+    color: "#fff", // All buttons now have white text
   },
 });
 

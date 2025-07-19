@@ -1,27 +1,27 @@
-import React, { useState, useEffect } from "react";
-import { StyleSheet, Dimensions, ScrollView, View } from "react-native";
-import { Globals } from "@/app/constants/Globals";
-import FlipButton from "../../components/FlipButton";
+import React from "react";
+import {
+  StyleSheet as RNStyleSheet,
+  Dimensions as RNDimensions,
+  ScrollView as RNScrollView,
+  View as RNView,
+} from "react-native";
 import Header from "@/components/Header";
 import { Divider } from "react-native-paper";
 import { useAuth } from "@/context/AuthProvider";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Text, YStack } from "tamagui";
+import { YStack as TamaguiYStack } from "tamagui";
+import { useSettings } from "@/context/SettingsContext.jsx";
+import FlipButton from "@/components/FlipButton";
+import StyledText from "@/components/StyledText.jsx";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
+const SCREEN_WIDTH = RNDimensions.get("window").width;
 
 export default function LanguageSettingsPage() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { logout } = useAuth();
   const router = useRouter();
-  const [languageSetting, setLanguageSetting] = useState(Globals.userSelectedLanguage);
-
-  useEffect(() => {
-    Globals.userSelectedLanguage = languageSetting;
-    Globals.userSelectedDirection = languageSetting === "he" ? "rtl" : "ltr";
-    i18n.changeLanguage(languageSetting);
-  }, [languageSetting]);
+  const { settings, updateSetting } = useSettings();
 
   const options: { label: string; value: string }[] = [
     { label: t("LanguageSettingsPage_he"), value: "he" },
@@ -29,50 +29,43 @@ export default function LanguageSettingsPage() {
   ];
 
   return (
-    <View style={{ flex: 1 }}>
+    <RNView style={{ flex: 1 }}>
       <Header />
-      <ScrollView
+      <RNScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingTop: 60,
-          paddingBottom: 160,
-          alignItems: "center",
-        }}
+        contentContainerStyle={languageStyles.scrollContent}
       >
-        <YStack width="100%" alignItems="center" gap="$5">
-          <Text
-            fontSize={40}
-            fontWeight={800}
-            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+        <TamaguiYStack width="100%" alignItems="center" gap="$5">
+          <StyledText
+            style={languageStyles.headerText}
+            writingDirection={settings.language === "he" ? "rtl" : "ltr"}
           >
             {t("LanguageSettingsPage_header")}
-          </Text>
+          </StyledText>
 
           {options.map(({ label, value }) => (
             <FlipButton
               key={value}
-              style={styles.button}
-              bgColor={languageSetting === value ? "#00007a" : "#ffffff"}
-              textColor={languageSetting === value ? "#ffffff" : "#0b0908"}
-              onPress={() => setLanguageSetting(value)}
+              style={languageStyles.button}
+              bgColor={settings.language === value ? "#00007a" : "#ffffff"}
+              textColor={settings.language === value ? "#ffffff" : "#0b0908"}
+              onPress={() => updateSetting("language", value)}
             >
-              <Text style={styles.buttonText}>{label}</Text>
+              <StyledText style={languageStyles.buttonText}>{label}</StyledText>
             </FlipButton>
           ))}
 
           <Divider style={{ width: SCREEN_WIDTH * 0.8, marginVertical: 20 }} />
 
-          <Text
-            fontSize={40}
-            fontWeight={800}
-            writingDirection={Globals.userSelectedDirection as "rtl" | "ltr"}
+          <StyledText
+            style={languageStyles.headerText}
+            writingDirection={settings.language === "he" ? "rtl" : "ltr"}
           >
             {t("LanguageSettingsPage_LogoutHeader")}
-          </Text>
+          </StyledText>
 
           <FlipButton
-            style={styles.button}
+            style={languageStyles.button}
             bgColor="#ffffff"
             textColor="#0b0908"
             onPress={async () => {
@@ -80,22 +73,35 @@ export default function LanguageSettingsPage() {
               router.replace("/LoginScreen");
             }}
           >
-            <Text style={styles.buttonText}>{t("LanguageSettingsPage_Logout")}</Text>
+            <StyledText style={languageStyles.buttonText}>
+              {t("LanguageSettingsPage_Logout")}
+            </StyledText>
           </FlipButton>
-        </YStack>
-      </ScrollView>
-    </View>
+        </TamaguiYStack>
+      </RNScrollView>
+    </RNView>
   );
 }
 
-const styles = StyleSheet.create({
+const languageStyles = RNStyleSheet.create({
+  scrollContent: {
+    flexGrow: 1,
+    paddingTop: 60,
+    paddingBottom: 160,
+    alignItems: "center",
+  },
+  headerText: {
+    fontSize: 30,
+    fontWeight: "800",
+    textAlign: "center",
+    lineHeight: 50,
+  },
   button: {
     width: SCREEN_WIDTH * 0.7,
     minHeight: 100,
     borderRadius: 8,
     justifyContent: "center",
     alignSelf: "center",
-    backgroundColor: "#4CAF50",
   },
   buttonText: {
     fontSize: 18,

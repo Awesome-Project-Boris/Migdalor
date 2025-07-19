@@ -1,268 +1,299 @@
-// /src/features/noticeManagement/NoticeManagement.jsx
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "../../api/apiService";
 import { useAuth } from "../../auth/AuthContext";
-import { API_BASE_URL } from "../../config";
+import Toast from "../../components/common/Toast";
+import SharedTable from "../../components/common/SharedTable";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
+import NoticeModal from "./NoticeModal";
+import { Edit, Trash2, MessageSquarePlus } from "lucide-react";
 
-// In a real application, this should be in a central config file (e.g., /src/config.js)
-// You should replace this with the actual base URL of your API.
+// --- Mock shadcn/ui Component ---
+const Button = React.forwardRef(
+  ({ className, variant, size, ...props }, ref) => {
+    const baseClasses =
+      "inline-flex mx-1 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    const sizeClasses = size === "sm" ? "h-9 px-3" : "h-10 px-4 py-2";
 
+    let variantClasses;
+    switch (variant) {
+      case "outline":
+        variantClasses =
+          "border border-gray-300 bg-transparent hover:bg-gray-100";
+        break;
+      case "ghost":
+        variantClasses = "hover:bg-gray-100";
+        break;
+      default:
+        variantClasses = "bg-blue-600 text-white hover:bg-blue-700";
+    }
 
-/**
- * A component for creating and sending new notices, inspired by the mobile interface.
- * It fetches categories dynamically and handles form submission with push notifications.
- */
+    return (
+      <button
+        className={`${baseClasses} ${sizeClasses} ${variantClasses} ${className}`}
+        ref={ref}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = "Button";
+
+// --- Mock Tooltip Components ---
+const TooltipProvider = ({ children }) => <>{children}</>;
+const Tooltip = ({ children }) => (
+  <div className="relative inline-flex group">{children}</div>
+);
+const TooltipTrigger = ({ children }) => <>{children}</>;
+const TooltipContent = ({ children, ...props }) => (
+  <div
+    className="absolute bottom-full mb-2 w-max px-2 py-1 text-xs font-semibold text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 transform -translate-x-1/2 left-1/2"
+    {...props}
+  >
+    {children}
+  </div>
+);
+
 const NoticeManagement = () => {
-  // Authentication context to get user details and token
   const { user, token } = useAuth();
+  const [notices, setNotices] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeNotice, setActiveNotice] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deletingNotice, setDeletingNotice] = useState(null);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [sorting, setSorting] = useState([{ id: "creationDate", desc: true }]);
 
-  // State for form fields
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [subCategory, setSubCategory] = useState("");
+  const [toastState, setToastState] = useState({
+    show: false,
+    message: "",
+    variant: "info",
+  });
 
-  // State for category fetching
-  const [categoryOptions, setCategoryOptions] = useState([]);
-  const [isCategoryLoading, setIsCategoryLoading] = useState(true);
-  const [categoryError, setCategoryError] = useState(null);
+  const showToast = (variant, message) => {
+    setToastState({ show: true, variant, message });
+  };
 
-  // State for form submission and UI feedback
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [isError, setIsError] = useState(false);
+  const handleCloseToast = () => {
+    setToastState({ ...toastState, show: false });
+  };
 
-  // --- Fetch Categories on Component Mount ---
+  const fetchNotices = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await api.get("/Notices", token);
+      setNotices(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError("Failed to load notices.");
+      showToast("error", "Failed to load notices.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
-    const fetchCategories = async () => {
-      setIsCategoryLoading(true);
-      setCategoryError(null);
-      try {
-        // Fetch categories using a standard fetch call, as this endpoint is public.
-        const response = await fetch(`${API_BASE_URL}/Categories`);
-        if (!response.ok) {
-          throw new Error(`Failed to load categories: HTTP ${response.status}`);
-        }
-        const rawCategories = await response.json();
+    fetchNotices();
+  }, [fetchNotices]);
 
-        if (!Array.isArray(rawCategories)) {
-          throw new Error("Invalid data format received for categories.");
-        }
+  const handleOpenModal = (notice = null) => {
+    setActiveNotice(notice);
+    setIsModalOpen(true);
+  };
 
-        const options = rawCategories
-          .map((c) => {
-            const hebrewName = c.categoryHebName || c.categoryName;
-            return {
-              label: hebrewName || c.categoryEngName || "Unnamed Category",
-              value: hebrewName, // Use Hebrew name as the value to be sent
-            };
-          })
-          .filter((opt) => opt.value);
+  const handleCloseModal = () => {
+    setActiveNotice(null);
+    setIsModalOpen(false);
+  };
 
-        setCategoryOptions(options);
-        if (options.length > 0) {
-          setSelectedCategory(options[0].value); // Set default category
-        }
-      } catch (err) {
-        console.error("Failed to load categories:", err);
-        setCategoryError(err.message || "Failed to load categories.");
-      } finally {
-        setIsCategoryLoading(false);
-      }
-    };
+  const handleSaveNotice = async (noticeData, noticeId) => {
+    const isEditMode = !!noticeId;
 
-    fetchCategories();
-  }, []); // Empty dependency array ensures this runs only once on mount
-
-  // --- Form Reset Logic ---
-  const resetForm = useCallback(() => {
-    setTitle("");
-    setContent("");
-    setSubCategory("");
-    if (categoryOptions.length > 0) {
-      setSelectedCategory(categoryOptions[0].value);
-    }
-  }, [categoryOptions]);
-
-  // --- Handle Form Submission ---
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setMessage(null);
-    setIsError(false);
-
-    if (!title || !content || !selectedCategory) {
-      setMessage("כותרת, תוכן וקטגוריה הם שדות חובה.");
-      setIsError(true);
-      setIsSubmitting(false);
-      return;
+    if (!user || !user.id) {
+      showToast("error", "שגיאה בזיהוי המשתמש. אנא התחבר מחדש.");
+      throw new Error("Could not identify user from context.");
     }
 
-    const newNotice = {
-      title,
-      content,
-      category: selectedCategory,
-      subCategory: subCategory || null,
-      senderId: user?.personId,
+    const noticePayload = {
+      ...noticeData,
+      SenderId: user.id, // Always use the ID of the logged-in admin
     };
+
+    if (isEditMode) {
+      noticePayload.Title = `עדכון: ${noticePayload.Title}`;
+    }
 
     try {
-      const noticeResponse = await api.post("/Notices", newNotice, token);
-      if (!noticeResponse) {
-        throw new Error("יצירת ההודעה נכשלה. השרת לא החזיר תשובה.");
+      let savedNotice;
+      // Step 1: Save the notice (create or update)
+      if (isEditMode) {
+        savedNotice = await api.put(
+          `/Notices/${noticeId}`,
+          noticePayload,
+          token
+        );
+      } else {
+        savedNotice = await api.post("/Notices", noticePayload, token);
       }
-      setMessage("ההודעה נוצרה בהצלחה! שולח התראה לכלל המשתמשים...");
 
+      if (!savedNotice || !savedNotice.noticeId) {
+        throw new Error("יצירת ההודעה נכשלה, השרת לא החזיר מזהה הודעה.");
+      }
+
+      showToast("info", "ההודעה נשמרה! שולח התראה...");
+
+      // Step 2: Send the push notification
       const pushMessage = {
         to: "/topics/all",
-        title: newNotice.title,
-        body: newNotice.content,
+        title: noticePayload.Title,
+        body: noticePayload.Content,
+        sound: "default",
+        badge: "0",
         data: {
-          noticeId: noticeResponse.noticeId,
-          category: newNotice.category,
+          noticeId: savedNotice.noticeId,
+          category: noticePayload.Category,
+          hebSenderName: `${user?.hebFirstName} ${user?.hebLastName}`,
         },
       };
 
       await api.post("/Notifications/broadcast", pushMessage, token);
-      setMessage("ההודעה וההתראה נשלחו בהצלחה!");
-      resetForm();
-    } catch (error) {
-      console.error("Failed to create or send notice:", error);
-      setMessage(`שגיאה: ${error.message}`);
-      setIsError(true);
-    } finally {
-      setIsSubmitting(false);
-      setTimeout(() => {
-        setMessage(null);
-        setIsError(false);
-      }, 7000);
+
+      showToast("success", "ההודעה וההתראה נשלחו בהצלחה!");
+      fetchNotices(); // Refresh the table
+    } catch (err) {
+      const action = isEditMode ? "עדכון" : "יצירת";
+      showToast("error", `שגיאה ב${action} ההודעה: ${err.message}`);
+      throw err; // Re-throw to keep the modal open on error
     }
   };
 
+  const handleDeleteConfirm = async () => {
+    if (!deletingNotice) return;
+    try {
+      await api.delete(`/Notices/${deletingNotice.noticeId}`, token);
+      showToast(
+        "success",
+        `ההודעה "${deletingNotice.noticeTitle}" נמחקה בהצלחה.`
+      );
+      setDeletingNotice(null);
+      fetchNotices();
+    } catch (err) {
+      showToast("error", `שגיאה במחיקת ההודעה: ${err.message}`);
+      setDeletingNotice(null);
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      {
+        accessorKey: "noticeTitle",
+        header: "כותרת",
+      },
+      {
+        accessorKey: "noticeCategory",
+        header: "קטגוריה",
+      },
+      {
+        accessorKey: "hebSenderName",
+        header: "שולח",
+      },
+      {
+        accessorKey: "creationDate",
+        header: "תאריך",
+        cell: ({ row }) =>
+          new Date(row.original.creationDate).toLocaleDateString("he-IL"),
+      },
+      {
+        id: "actions",
+        header: "פעולות",
+        cell: ({ row }) => {
+          const notice = row.original;
+          return (
+            <div className="flex items-center justify-center space-x-2 space-x-reverse">
+              <Tooltip>
+                <TooltipTrigger>
+                  <button
+                    onClick={() => handleOpenModal(notice)}
+                    className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
+                  >
+                    <Edit size={20} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>ערוך הודעה</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger>
+                  <button
+                    onClick={() => setDeletingNotice(notice)}
+                    className="p-2 rounded-full text-red-600 hover:bg-red-100"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>מחק הודעה</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
+
+  if (isLoading) return <div className="text-center p-4">טוען הודעות...</div>;
+  if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow-md max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-        יצירת הודעה חדשה
-      </h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title Field */}
-        <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700 mb-1"
+    <TooltipProvider>
+      <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
+        <Toast
+          show={toastState.show}
+          message={toastState.message}
+          variant={toastState.variant}
+          onClose={handleCloseToast}
+        />
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold text-gray-800">ניהול הודעות</h2>
+          <Button
+            onClick={() => handleOpenModal()}
+            size="sm"
+            className="bg-green-600 hover:bg-green-700"
           >
-            כותרת
-          </label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            required
+            <MessageSquarePlus size={16} className="ml-2" />
+            הוסף הודעה חדשה
+          </Button>
+        </div>
+        <SharedTable
+          data={notices}
+          columns={columns}
+          globalFilter={globalFilter}
+          setGlobalFilter={setGlobalFilter}
+          sorting={sorting}
+          setSorting={setSorting}
+        />
+
+        <NoticeModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSaveNotice}
+          showToast={showToast}
+          notice={activeNotice}
+        />
+
+        {deletingNotice && (
+          <ConfirmationModal
+            title="אישור מחיקה"
+            message={`האם אתה בטוח שברצונך למחוק את ההודעה "${deletingNotice.noticeTitle}"?`}
+            onConfirm={handleDeleteConfirm}
+            onCancel={() => setDeletingNotice(null)}
           />
-        </div>
-
-        {/* Content Field */}
-        <div>
-          <label
-            htmlFor="content"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            תוכן ההודעה
-          </label>
-          <textarea
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows="5"
-            className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            required
-          ></textarea>
-        </div>
-
-        {/* Category and Sub-Category Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label
-              htmlFor="category"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              קטגוריה
-            </label>
-            {isCategoryLoading ? (
-              <div className="text-center p-2">טוען קטגוריות...</div>
-            ) : categoryError ? (
-              <div className="text-red-500 text-sm p-2">
-                שגיאה בטעינת הקטגוריות
-              </div>
-            ) : (
-              <select
-                id="category"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
-                disabled={categoryOptions.length === 0}
-              >
-                {categoryOptions.length > 0 ? (
-                  categoryOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))
-                ) : (
-                  <option value="" disabled>
-                    אין קטגוריות זמינות
-                  </option>
-                )}
-              </select>
-            )}
-          </div>
-          <div>
-            <label
-              htmlFor="subCategory"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              תת-קטגוריה (אופציונלי)
-            </label>
-            <input
-              type="text"
-              id="subCategory"
-              value={subCategory}
-              onChange={(e) => setSubCategory(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-        </div>
-
-        {/* Submit Button */}
-        <div>
-          <button
-            type="submit"
-            disabled={isSubmitting || isCategoryLoading}
-            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-              isSubmitting || isCategoryLoading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            } transition-colors duration-200`}
-          >
-            {isSubmitting ? "שולח..." : "צור ושלח הודעה"}
-          </button>
-        </div>
-      </form>
-
-      {/* Feedback Message */}
-      {message && (
-        <div
-          className={`mt-6 p-4 rounded-md text-center ${
-            isError ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-          }`}
-        >
-          {message}
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 

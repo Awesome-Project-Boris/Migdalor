@@ -1,5 +1,6 @@
 import React from "react";
-import { Pressable, Text, StyleSheet } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
+import StyledText from "@/components/StyledText"; // Import StyledText
 
 const FlipButton = ({
   text = "Button",
@@ -40,6 +41,8 @@ const FlipButton = ({
 
         const renderChildWithStyle = (child) => {
           if (React.isValidElement(child)) {
+            // This logic correctly clones children (like other StyledText or Icon components)
+            // and passes down the dynamic color style.
             return React.cloneElement(child, {
               style: [child.props.style, dynamicTextStyle],
               children: child.props.children
@@ -48,15 +51,21 @@ const FlipButton = ({
             });
           }
 
+          // If a child is just a string, wrap it in StyledText.
           return (
-            <Text style={[styles.textBase, dynamicTextStyle]}>{child}</Text>
+            <StyledText style={[styles.textBase, dynamicTextStyle]}>
+              {child}
+            </StyledText>
           );
         };
 
         return children ? (
           React.Children.map(children, renderChildWithStyle)
         ) : (
-          <Text style={[styles.textBase, dynamicTextStyle]}>{text}</Text>
+          // The default case also uses StyledText now.
+          <StyledText style={[styles.textBase, dynamicTextStyle]}>
+            {text}
+          </StyledText>
         );
       }}
     </Pressable>
@@ -72,7 +81,7 @@ const styles = StyleSheet.create({
     boxShadow: "0 3px 4px rgba(0, 0, 0, 0.25)",
   },
   textBase: {
-    fontSize: 18, // I want smaller text for now
+    fontSize: 18,
     fontWeight: "bold",
     pointerEvents: "none",
   },

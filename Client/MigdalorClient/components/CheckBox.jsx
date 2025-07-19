@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet } from "react-native";
 import BouncyCheckbox from "react-native-bouncy-checkbox";
 import { useTranslation } from "react-i18next";
+import { useSettings } from "@/context/SettingsContext";
 
 const Checkbox = ({
   alignRight = true,
@@ -13,7 +14,17 @@ const Checkbox = ({
   ...rest
 }) => {
   const {t} = useTranslation()
+  const { settings } = useSettings();
   const label = text ?? t("LoginScreen_rememberMe"); // default if no text prop
+
+  const dynamicTextStyle = {
+    ...styles.text,
+    color: fillColor,
+    textAlign: alignRight ? "right" : "left",
+    fontSize: styles.text.fontSize * settings.fontSizeMultiplier,
+    flexShrink: 1,
+  };
+
   return (
     <BouncyCheckbox
       size={size}
@@ -22,16 +33,10 @@ const Checkbox = ({
       text={label} 
       iconStyle={styles.icon}
       innerIconStyle={styles.innerIcon}
-      textStyle={{
-        ...styles.text,
-        color: fillColor,
-        textAlign: alignRight ? "right" : "left",
-      }}
+      textStyle={dynamicTextStyle}
       style={{
         flexDirection: alignRight ? "row-reverse" : "row",
-        justifyContent: alignRight ? "flex-end" : "flex-start",
         alignItems: "center",
-        paddingBottom: 5,
       }}
       onPress={onPress}
       {...rest}

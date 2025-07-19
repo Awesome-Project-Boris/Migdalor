@@ -1,7 +1,6 @@
 import React from "react";
 import {
   View,
-  Text,
   StyleSheet,
   SafeAreaView,
   ActivityIndicator,
@@ -12,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import FlipButton from "../components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
+import StyledText from "../components/StyledText"; // Import StyledText
 
 export default function ImageViewScreen() {
   const { t } = useTranslation();
@@ -30,11 +30,11 @@ export default function ImageViewScreen() {
     console.error("ImageViewScreen: Invalid or missing imageUri", imageUri);
     return (
       <SafeAreaView style={styles.errorContainer}>
-        <Text style={styles.errorText}>
+        <StyledText style={styles.errorText}>
           {t("ImageViewScreen_ErrorNoImage")}
-        </Text>
+        </StyledText>
         <FlipButton onPress={handleReturn} style={styles.backButtonError}>
-          <Text>{t("Common_backButton")}</Text>
+          <StyledText>{t("Common_backButton")}</StyledText>
         </FlipButton>
       </SafeAreaView>
     );
@@ -52,7 +52,7 @@ export default function ImageViewScreen() {
             bgColor="white"
             textColor="black"
           >
-            <Text style={styles.buttonText}>{t("Common_backButton")}</Text>
+            <StyledText style={styles.buttonText}>{t("Common_backButton")}</StyledText>
             <Ionicons name="arrow-back" size={28} color="black" />
           </FlipButton>
         </View>
@@ -78,8 +78,8 @@ export default function ImageViewScreen() {
       </View>
 
       <View style={styles.altTextContainer}>
-        <Text style={styles.altTextStyle}></Text>
-        {/* <Text style={styles.altTextStyle}>{altText}</Text> */}
+        <StyledText style={styles.altTextStyle}></StyledText>
+        {/* <StyledText style={styles.altTextStyle}>{altText}</StyledText> */}
       </View>
     </SafeAreaView>
   );
