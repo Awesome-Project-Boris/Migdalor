@@ -21,6 +21,8 @@ import MapView, {
   Polyline,
 } from "react-native-maps";
 
+import { Toast } from "toastify-react-native";
+
 import { useIsFocused } from "@react-navigation/native";
 
 import * as Location from "expo-location";
@@ -121,7 +123,15 @@ const MapBoundsCoordinations = [
   { latitude: 32.312541, longitude: 34.894063 },
 ];
 
-const boundaryPolygonForCheck = MapBoundsCoordinations.map((p) => [
+const MapBoundsForCheck = [
+  { latitude: 32.312641, longitude: 34.893963 }, // Pushed up and left
+  { latitude: 32.31202, longitude: 34.896711 }, // Pushed up and right
+  { latitude: 32.308311, longitude: 34.896362 }, // Pushed down and right
+  { latitude: 32.308332, longitude: 34.893908 }, // Pushed down and left
+  { latitude: 32.312641, longitude: 34.893963 }, // Close the loop
+];
+
+const boundaryPolygonForCheck = MapBoundsForCheck.map((p) => [
   p.longitude,
   p.latitude,
 ]);
@@ -201,6 +211,12 @@ const Map = () => {
     return true;
   };
 
+  const stopNavigation = () => {
+    setIsNavigating(false);
+    setNavigationPath([]);
+    setDestination(null);
+  };
+
   useEffect(() => {
     if (!isFocused) {
       setSelectedBuilding(null);
@@ -260,164 +276,190 @@ const Map = () => {
 
   // could still need this useEffect
 
+  // OLD
+  // useEffect(() => {
+  //   let locationWatcher = null;
+
+  //   const startWatching = async () => {
+  //     const hasPermission = await requestLocationPermission();
+  //     if (!hasPermission) return;
+
+  //     locationWatcher = await Location.watchPositionAsync(
+  //       {
+  //         accuracy: Location.Accuracy.High,
+  //         timeInterval: 3000, // Check every 3 seconds
+  //         distanceInterval: 5, // Or every 5 meters
+  //       },
+  //       (location) => {
+  //         if (!location) return;
+
+  //         const userLocation = location.coords;
+  //         setCurrentUserLocation(userLocation);
+
+  //         const isInside = pointInPolygon(
+  //           [userLocation.longitude, userLocation.latitude],
+  //           boundaryPolygonForCheck
+  //         );
+  //         setIsInsideBoundary(isInside);
+
+  //         if (isNavigating && navigationPath.length > 1) {
+  //           // Get the next waypoint on the path
+  //           const nextWaypoint = navigationPath[1];
+  //           const distanceToNextWaypoint = getDistance(
+  //             userLocation,
+  //             nextWaypoint
+  //           );
+
+  //           setNavigationPath((currentPath) => {
+  //             // Get the list of nodes we still need to visit.
+  //             let remainingWaypoints = currentPath.slice(1);
+
+  //             // If we're close to the NEXT waypoint, consume it by removing it from the list.
+  //             if (
+  //               remainingWaypoints.length > 0 &&
+  //               distanceToNextWaypoint < 12
+  //             ) {
+  //               remainingWaypoints = remainingWaypoints.slice(1);
+  //             }
+
+  //             // Return the new path, which consists of our current location followed by the updated list of waypoints.
+  //             return [userLocation, ...remainingWaypoints];
+  //           });
+
+  //           // Check for arrival at the final destination
+  //           if (navigationPath.length <= 2) {
+  //             // When only the user and the final node are left
+  //             const distanceToFinal = getDistance(
+  //               userLocation,
+  //               navigationPath[1]
+  //             );
+  //             if (distanceToFinal < 15) {
+  //               setArrivalModalVisible(true);
+  //             }
+  //           }
+  //         }
+  //       }
+  //     );
+  //   };
+
+  //   startWatching();
+
+  //   return () => {
+  //     if (locationWatcher) {
+  //       locationWatcher.remove();
+  //     }
+  //   };
+  // }, [isNavigating, navigationPath]);
+
+  // NEW TO TEST
+
   useEffect(() => {
-    console.log("[Effect] Map component mounted. Requesting permission...");
+    let locationWatcher = null;
 
-    let locationSubscription = null;
+    const startWatching = async () => {
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) return;
 
-    const activateLocation = async () => {
-      const granted = await requestLocationPermission();
-      console.log("[Effect] Permission request finished. Granted:", granted);
+      locationWatcher = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.High,
+          timeInterval: 3000, // Check every 3 seconds
+          distanceInterval: 5, // Or every 5 meters
+        },
+        (location) => {
+          if (!location) return;
 
-      if (granted) {
-        console.log(
-          "[Effect] Permission granted. Getting initial position (expo-location)..."
-        );
+          const userLocation = location.coords;
+          setCurrentUserLocation(userLocation);
 
-        watchId.current = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 5000,
-            distanceInterval: 10,
-          }, // Check every 10 meters now
-          (location) => {
-            setCurrentUserLocation(location.coords);
-            const checkCoords = [
-              location.coords.longitude,
-              location.coords.latitude,
-            ];
-            setIsInsideBoundary(
-              pointInPolygon(checkCoords, boundaryPolygonForCheck)
-            );
-
-            if (isNavigating && destination && navigationPath.length > 1) {
-              // Re-calculate route from new position
-              startNavigation(destination, location.coords);
-
-              // Check for arrival
-              const destinationCoords =
-                navigationPath[navigationPath.length - 1];
-              const distanceToTarget = getDistance(
-                location.coords,
-                destinationCoords
-              );
-              if (distanceToTarget < 15) {
-                // Arrived if within 15 meters
-                setArrivalModalVisible(true);
-                stopNavigation();
-              }
-            }
-          }
-        );
-
-        try {
-          let location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.High,
-          });
-          console.log(
-            "[Effect] getCurrentPositionAsync SUCCESS:",
-            JSON.stringify(location.coords, null, 2)
-          );
-          setCurrentUserLocation(location.coords);
-
-          const userCoordsForCheck = [
-            location.coords.longitude,
-            location.coords.latitude,
-          ];
           const isInside = pointInPolygon(
-            userCoordsForCheck,
+            [userLocation.longitude, userLocation.latitude],
             boundaryPolygonForCheck
           );
           setIsInsideBoundary(isInside);
-        } catch (error) {
-          console.error("[Effect] getCurrentPositionAsync ERROR:", error);
-          Alert.alert(
-            "Error Getting Location",
-            `Could not fetch initial location: ${error.message}`
-          );
-        }
 
-        console.log("[Effect] Starting location watcher (expo-location)...");
-        try {
-          if (watchId.current) {
-            console.log("[Effect] Removing previous location subscription.");
-            watchId.current.remove();
-            watchId.current = null;
-          }
+          if (isNavigating && navigationPath.length > 1) {
+            setNavigationPath((currentPath) => {
+              // Get the list of nodes we still need to visit.
+              const remainingWaypoints = currentPath.slice(1);
+              if (remainingWaypoints.length === 0) return [userLocation];
 
-          locationSubscription = await Location.watchPositionAsync(
-            {
-              accuracy: Location.Accuracy.High,
-              timeInterval: 5000,
-              distanceInterval: 10,
-            },
-            (location) => {
-              setCurrentUserLocation(location.coords);
+              // Find which of the remaining waypoints is closest to the user.
+              let closestWaypointIndex = 0;
+              let minDistance = Infinity;
 
-              const userCoordsForCheck = [
-                location.coords.longitude,
-                location.coords.latitude,
-              ];
-              const isInside = pointInPolygon(
-                userCoordsForCheck,
-                boundaryPolygonForCheck
+              remainingWaypoints.forEach((waypoint, index) => {
+                const distance = getDistance(userLocation, waypoint);
+                if (distance < minDistance) {
+                  minDistance = distance;
+                  closestWaypointIndex = index;
+                }
+              });
+
+              // The new path starts from that closest waypoint, consuming any skipped nodes.
+              const newRemainingWaypoints =
+                remainingWaypoints.slice(closestWaypointIndex);
+
+              // Return the new path, which is the user's current location plus the updated waypoints.
+              return [userLocation, ...newRemainingWaypoints];
+            });
+
+            // Check for arrival at the final destination.
+            // This runs against the state from the *previous* render, so it's checking before the path updates.
+            if (navigationPath.length <= 2) {
+              const distanceToFinal = getDistance(
+                userLocation,
+                navigationPath[1]
               );
-              setIsInsideBoundary(isInside);
+              if (distanceToFinal < 15) {
+                setArrivalModalVisible(true);
+              }
             }
-          );
-          watchId.current = locationSubscription;
-          console.log("[Effect] watchPositionAsync started.");
-        } catch (error) {
-          console.error("[Effect] watchPositionAsync ERROR:", error);
-          Alert.alert(
-            "Error Watching Location",
-            `Could not start location updates: ${error.message}`
-          );
+          }
         }
-      } else {
-        console.log(
-          "[Effect] Permission denied by user. Location tracking not started."
-        );
-      }
+      );
     };
 
-    activateLocation();
+    startWatching();
 
+    // Cleanup function to remove the watcher when the component unmounts or dependencies change.
     return () => {
-      if (watchId.current) {
-        console.log(
-          "[Effect] Map component unmounting. Removing location subscription."
-        );
-        watchId.current.remove();
-        watchId.current = null;
+      if (locationWatcher) {
+        locationWatcher.remove();
       }
     };
-  }, [isNavigating, destination, navigationGraph]);
+  }, [isNavigating, navigationPath]); // The effect re-subscribes if navigation starts/stops.
 
   const startNavigation = (target, userLocationOverride = null) => {
     const userLoc = userLocationOverride || currentUserLocation;
     if (!userLoc || !isInsideBoundary) {
       Toast.show({
         type: "error",
-        text1: t("Navigation_Error", "Navigation Error"),
-        text2: t(
-          "Navigation_MustBeInside",
-          "You must be inside the area to navigate."
-        ),
+        text1: t("Navigation_Error"),
+        text2: t("Navigation_MustBeInside"),
       });
       return;
     }
 
     const startNode = findClosestWalkableNode(userLoc, walkableNodes);
-    let targetNodeId = null;
 
-    // Determine the target node ID based on what was selected
+    // --- Start of Final Fix ---
+    // Define variables to hold the consistent data we need.
+    let targetNodeId = null;
+    let buildingIDForHighlight = null;
+    let displayNameForModal = "";
+
+    // Populate the variables based on the type of target.
     if (target.type === "building") {
-      targetNodeId = target.entranceNodeIds[0]; // Navigate to the first entrance
-    } else if (target.type === "apartment") {
-      // The building info is already attached to the apartment object from the search modal
       targetNodeId = target.entranceNodeIds[0];
+      buildingIDForHighlight = target.buildingID; // For buildings, the property is 'buildingID'
+      displayNameForModal = target.buildingName;
+    } else if (target.type === "apartment") {
+      targetNodeId = target.entranceNodeIds[0];
+      buildingIDForHighlight = target.physicalBuildingID; // For apartments, it's 'physicalBuildingID'
+      displayNameForModal = `${t("Common_Apartment")} ${target.apartmentName}`;
     }
+    // --- End of Final Fix ---
 
     if (startNode && targetNodeId) {
       const { prev } = dijkstra(navigationGraph, startNode.nodeID);
@@ -429,41 +471,37 @@ const Map = () => {
           return { latitude: node.latitude, longitude: node.longitude };
         });
 
-        // Add the user's actual current location as the very first point of the line
         pathCoords.unshift({
           latitude: userLoc.latitude,
           longitude: userLoc.longitude,
         });
 
+        // Create the final destination object with consistent properties.
+        const finalDestinationObject = {
+          ...target,
+          buildingID: buildingIDForHighlight, // This will now work for highlighting.
+          displayName: displayNameForModal, // This will now work for the arrival modal.
+        };
+
+        setDestination(finalDestinationObject);
         setNavigationPath(pathCoords);
-        setDestination(target);
         setIsNavigating(true);
         setNavigationModalVisible(false);
       } else {
         Toast.show({
           type: "error",
-          text1: t("Navigation_Error", "Navigation Error"),
-          text2: t(
-            "Navigation_NoRoute",
-            "Could not calculate a route to the destination."
-          ),
+          text1: t("Navigation_Error"),
+          text2: t("Navigation_NoRoute"),
         });
       }
     } else {
       Toast.show({
         type: "error",
-        text1: t("Navigation_Error", "Navigation Error"),
-        text2: t(
-          "Navigation_NoRoute",
-          "Could not find a starting or ending point for navigation."
-        ),
+        text1: t("Navigation_Error"),
+        text2: t("Navigation_NoRoute"),
       });
     }
   };
-
-  // const onRegionChangeComplete = (newRegion) => {
-  //   setMapRegion(newRegion);
-  // };
 
   const clickableNodes = useMemo(
     () => mapData.mapNodes.filter((node) => node.description),
@@ -514,17 +552,34 @@ const Map = () => {
         ))}
 
         {/* 2. Render Building Polygons from API data */}
-        {mapData.buildings.map((building) => (
-          <Polygon
-            key={building.buildingID}
-            coordinates={building.coordinates}
-            fillColor="rgba(0, 122, 255, 0.2)"
-            strokeColor="rgba(0, 122, 255, 0.8)"
-            strokeWidth={2}
-            tappable={true}
-            onPress={() => setSelectedBuilding(building)}
-          />
-        ))}
+        {mapData.buildings.map((building) => {
+          // Check if the current building is the navigation target
+          const isTargetBuilding =
+            isNavigating &&
+            destination &&
+            destination.buildingID === building.buildingID;
+
+          return (
+            <Polygon
+              key={building.buildingID}
+              coordinates={building.coordinates}
+              // Apply colors conditionally
+              fillColor={
+                isTargetBuilding
+                  ? "rgba(255, 0, 0, 0.3)"
+                  : "rgba(0, 122, 255, 0.2)"
+              }
+              strokeColor={
+                isTargetBuilding
+                  ? "rgba(255, 0, 0, 0.9)"
+                  : "rgba(0, 122, 255, 0.8)"
+              }
+              strokeWidth={isTargetBuilding ? 3 : 2}
+              tappable={true}
+              onPress={() => setSelectedBuilding(building)}
+            />
+          );
+        })}
 
         {/* 3. Render Clickable Map Nodes from API data */}
         {showPins &&
@@ -563,9 +618,9 @@ const Map = () => {
               style={styles.cancelNavButton}
               onPress={stopNavigation}
             >
-              <StyledText style={styles.buttonText}>
+              <Text style={styles.buttonText}>
                 {t("Navigation_Cancel", "Cancel Navigation")}
-              </StyledText>
+              </Text>
             </FlipButtonSizeless>
           </View>
         </>
@@ -575,13 +630,13 @@ const Map = () => {
       {!isNavigating && (
         <View style={styles.bottomBar}>
           <FlipButtonSizeless style={styles.legendButton}>
-            <StyledText style={styles.buttonText}>{t("Legend")}</StyledText>
+            <Text style={styles.buttonText}>{t("MapScreen_Legend")}</Text>
           </FlipButtonSizeless>
           <FlipButtonSizeless
             style={styles.navButton}
             onPress={() => setNavigationModalVisible(true)}
           >
-            <StyledText style={styles.buttonText}>{t("Navigation")}</StyledText>
+            <Text style={styles.buttonText}>{t("MapScreen_Navigation")}</Text>
           </FlipButtonSizeless>
         </View>
       )}
@@ -611,18 +666,6 @@ const Map = () => {
           stopNavigation(); // Also clear destination after closing arrival modal
         }}
       />
-
-      <View style={styles.bottomBar}>
-        <FlipButtonSizeless style={styles.legendButton}>
-          <StyledText style={styles.buttonText}>{t("Legend")}</StyledText>
-        </FlipButtonSizeless>
-        <FlipButtonSizeless
-          style={styles.navButton}
-          onPress={() => setNavigationModalVisible(true)}
-        >
-          <StyledText style={styles.buttonText}>{t("Navigation")}</StyledText>
-        </FlipButtonSizeless>
-      </View>
     </View>
   );
 };

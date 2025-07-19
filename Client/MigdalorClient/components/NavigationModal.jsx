@@ -18,38 +18,31 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // useMemo will re-calculate the search results only when the search term or map data changes.
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
     const lowerCaseSearch = searchTerm.toLowerCase();
 
-    // Filter buildings by name
     const buildings = mapData.buildings
       .filter((b) => b.buildingName?.toLowerCase().includes(lowerCaseSearch))
       .map((b) => ({ type: "building", ...b }));
 
-    // Filter apartments by number
     const apartments = mapData.buildings.flatMap((b) =>
       b.apartments
         .filter((a) => String(a.displayNumber).includes(lowerCaseSearch))
         .map((a) => ({
           type: "apartment",
           ...a,
-          // Add building info to the apartment object for context
           buildingName: b.buildingName,
           physicalBuildingID: b.buildingID,
           entranceNodeIds: b.entranceNodeIds,
         }))
     );
 
-    // We can add services search here in the future
-    // const services = ...
-
     return [...buildings, ...apartments];
   }, [searchTerm, mapData]);
 
   const handleSelectItem = (item) => {
-    setSearchTerm(""); // Clear search term after selection
+    setSearchTerm("");
     onStartNavigation(item);
   };
 
@@ -67,7 +60,7 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
         <Text style={styles.resultTitle}>
           {item.type === "building"
             ? t(item.buildingName, { defaultValue: item.buildingName })
-            : `${t("Apartment", "Apartment")} ${item.displayNumber}`}
+            : `${t("Common_Apartment")} ${item.displayNumber}`}
         </Text>
         {item.type === "apartment" && (
           <Text style={styles.resultSubtitle}>
@@ -87,16 +80,11 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
     >
       <SafeAreaView style={styles.modalContainer}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>
-            {t("Navigation_Title", "Navigate To")}
-          </Text>
+          <Text style={styles.modalTitle}>{t("Navigation_Title")}</Text>
         </View>
         <TextInput
           style={styles.searchInput}
-          placeholder={t(
-            "Navigation_SearchPlaceholder",
-            "Search apartment or building..."
-          )}
+          placeholder={t("Navigation_SearchPlaceholder")}
           value={searchTerm}
           onChangeText={setSearchTerm}
           placeholderTextColor="#888"

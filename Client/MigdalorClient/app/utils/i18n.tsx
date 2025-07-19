@@ -54,13 +54,15 @@ const resources = {
       Your_Extra_Pictures: "Your Extra Pictures",
       Manage_Pictures_Subtitle: "You can manage up to {{maxSlots}} pictures.",
       Add_a_New_Photo: "Add a New Photo",
-      Choose_a_source_for_your_new_picture: "Choose a source for your new picture.",
+      Choose_a_source_for_your_new_picture:
+        "Choose a source for your new picture.",
       Camera: "Camera",
       Gallery: "Gallery",
       Cancel: "Cancel",
       Delete: "Delete",
       Confirm_Deletion: "Confirm Deletion",
-      Confirm_Deletion_Message: "Are you sure you want to permanently delete this picture?",
+      Confirm_Deletion_Message:
+        "Are you sure you want to permanently delete this picture?",
       Picture_Deleted: "Picture Deleted",
       Deletion_Failed: "Deletion Failed",
       PictureIsInUse: "The picture is currently in use",
@@ -521,6 +523,34 @@ const resources = {
       Time: "Time",
       Location: "Location",
       Type: "Type",
+
+      // Navigation
+
+      Navigation_Error: "Navigation Error",
+      Navigation_MustBeInside: "You must be inside the area to navigate.",
+      Navigation_NoRoute: "Could not calculate a route to the destination.",
+      Navigation_Cancel: "Cancel Navigation",
+      Map_LegendButton: "Legend",
+      Map_NavButton: "Navigation",
+      Navigation_ArrivedTitle: "You Have Arrived",
+      Navigation_ArrivedMessage: "You have arrived at {{destination}}.",
+      Common_OK: "OK",
+      Common_Apartment: "Apartment",
+      Common_Meters: "meters",
+      Navigation_Title: "Navigate To",
+      Navigation_SearchPlaceholder: "Search for an apartment or building...",
+      Navigation_DistanceTo: "Distance to {{destination}}:",
+      MapScreen_Legend: "Legend",
+      MapScreen_Navigation: "Navigation",
+      Common_Apartpment: "Apartment ",
+
+      // Buildings
+
+      MapScreen_B1: "Building A",
+      MapScreen_B2: "Building B",
+      MapScreen_Pool: "Swimming Pool",
+      MapScreen_GrasslandsAndFountain: "Main Lawn and Fountain",
+      MapScreen_OakComplexAndPetanque: "Petanque court and oak tree complex",
     },
   },
   he: {
@@ -1019,6 +1049,33 @@ const resources = {
       Time: "שעה",
       Location: "מיקום",
       Type: "סוג",
+
+      // Navigation
+      Navigation_Error: "שגיאת ניווט",
+      Navigation_MustBeInside: "עליך להיות בתוך המתחם כדי לנווט.",
+      Navigation_NoRoute: "לא ניתן לחשב מסלול ליעד.",
+      Navigation_Cancel: "בטל ניווט",
+      Map_LegendButton: "מקרא",
+      Map_NavButton: "ניווט",
+      Navigation_ArrivedTitle: "הגעת ליעד",
+      Navigation_ArrivedMessage: "הגעת אל {{destination}}.",
+      Common_OK: "אישור",
+      Common_Apartment: "דירה",
+      Common_Meters: "מטרים",
+      Navigation_Title: "נווט אל",
+      Navigation_SearchPlaceholder: "חפש דירה או בניין...",
+      Navigation_DistanceTo: "מרחק אל {{destination}}:",
+      MapScreen_Legend: "מקרא",
+      MapScreen_Navigation: "ניווט",
+
+      // Buildings
+
+      MapScreen_B1: "בניין שלב א",
+      MapScreen_B2: "בניין שלב ב",
+      MapScreen_Pool: "הבריכה",
+      MapScreen_GrasslandsAndFountain: "מדשאה ומזרקה",
+      MapScreen_OakComplexAndPetanque: "מגרש פטאנק ומתחם עץ האלון",
+      Common_Apartpment: "דירה ",
     },
   },
 };

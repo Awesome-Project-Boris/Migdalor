@@ -34,15 +34,17 @@ public class MapController : ControllerBase
                 })
                 .ToListAsync();
 
-            // 2. Fetch all residents and group them by apartment for fast lookup.
+            // 2. Fetch residents and group them by apartment.
             var residentsByApartment = (await _context.OhResidents
                 .Where(r => r.ResidentApartmentNumber != null)
+                .Include(r => r.Resident)
                 .Select(r => new {
                     ApartmentGuid = r.ResidentApartmentNumber.Value,
                     ResidentId = r.ResidentId,
-                    // Make sure the r.Resident navigation property is correctly configured.
-                    FullNameHe = r.Resident.HebFirstName + " " + r.Resident.HebLastName,
-                    FullNameEn = r.Resident.EngFirstName + " " + r.Resident.EngLastName
+                    HebFirstName = r.Resident.HebFirstName,
+                    HebLastName = r.Resident.HebLastName,
+                    EngFirstName = r.Resident.EngFirstName,
+                    EngLastName = r.Resident.EngLastName
                 })
                 .ToListAsync())
                 .GroupBy(x => x.ApartmentGuid)
@@ -51,39 +53,27 @@ public class MapController : ControllerBase
                     g => g.Select(x => new MapResidentDto
                     {
                         ResidentId = x.ResidentId,
-                        FullNameHe = x.FullNameHe,
-                        FullNameEn = x.FullNameEn
+                        FullNameHe = $"{x.HebFirstName} {x.HebLastName}",
+                        FullNameEn = $"{x.EngFirstName} {x.EngLastName}"
                     }).ToList()
                 );
 
-            // 3. Fetch all building entrances separately and group them by BuildingID.
-            // This is the key step that avoids the error.
-            var entrancesByBuilding = (await _context.Set<OhBuildingEntrance>()
-    .Select(e => new { e.BuildingId, e.NodeId })
-                .ToListAsync())
-                .GroupBy(e => e.BuildingId)
-                .ToDictionary(g => g.Key, g => g.Select(e => e.NodeId).ToList());
-
-            // 4. Fetch all buildings. We will attach related data manually.
+            // 3. Fetch buildings and include their related data directly.
             var buildings = await _context.OhBuildings
-                .Include(b => b.OhApartmentPhysicalBuildings) // This include works because the property exists
+                .Include(b => b.Nodes) // Directly includes the related entrance nodes.
+                .Include(b => b.OhApartmentPhysicalBuildings) // Includes the apartments.
                 .Select(b => new BuildingDto
                 {
                     BuildingID = b.BuildingId,
                     BuildingName = b.BuildingName,
                     Coordinates = b.Coordinates,
-
-                    // Manually look up the entrances from the dictionary created in step 3.
-                    EntranceNodeIds = entrancesByBuilding.ContainsKey(b.BuildingId)
-                                      ? entrancesByBuilding[b.BuildingId]
-                                      : new List<int>(),
-
-                    // Map the apartments from the included navigation property.
+                    // Get the node IDs from the included navigation property.
+                    EntranceNodeIds = b.Nodes.Select(n => n.NodeId).ToList(),
                     Apartments = b.OhApartmentPhysicalBuildings.Select(apt => new MapApartmentDto
                     {
                         ApartmentNumber = apt.ApartmentNumber,
                         ApartmentName = apt.ApartmentName,
-                        DisplayNumber = GetApartmentNumberFromGuid(apt.ApartmentNumber), // Assuming this helper method exists
+                        DisplayNumber = GetApartmentNumberFromGuid(apt.ApartmentNumber),
                         Residents = residentsByApartment.ContainsKey(apt.ApartmentNumber)
                                     ? residentsByApartment[apt.ApartmentNumber]
                                     : new List<MapResidentDto>()

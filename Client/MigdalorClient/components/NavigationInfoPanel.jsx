@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
-import { View, StyleSheet } from "react-native";
-import StyledText from "@/components/StyledText";
+import { View, StyleSheet, Text } from "react-native";
 import { useTranslation } from "react-i18next";
 import { getDistance } from "geolib";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,7 +7,18 @@ import { Ionicons } from "@expo/vector-icons";
 const NavigationInfoPanel = ({ navigationPath, destination }) => {
   const { t } = useTranslation();
 
-  // useMemo will prevent re-calculating the distance on every render unless the path changes.
+  let destinationName = "";
+  if (destination) {
+    if (destination.type === "building") {
+      destinationName = t(destination.buildingName, {
+        defaultValue: destination.buildingName,
+      });
+    } else if (destination.type === "apartment") {
+      // Use displayNumber for apartments as requested
+      destinationName = `${t("Common_Apartment")} ${destination.displayNumber}`;
+    }
+  }
+
   const totalDistance = useMemo(() => {
     if (navigationPath.length < 2) return 0;
     let distance = 0;
@@ -18,34 +28,19 @@ const NavigationInfoPanel = ({ navigationPath, destination }) => {
     return Math.round(distance);
   }, [navigationPath]);
 
-  const destinationName = useMemo(() => {
-    if (!destination) return "";
-    if (destination.type === "building") {
-      return t(destination.buildingName, {
-        defaultValue: destination.buildingName,
-      });
-    }
-    if (destination.type === "apartment") {
-      return `${t("Apartment", "Apartment")} ${destination.displayNumber}`;
-    }
-    return "";
-  }, [destination, t]);
-
   if (!destination) return null;
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
         <Ionicons name="walk-outline" size={24} color="#333" />
-        <StyledText style={styles.text}>
-          {t("Navigation_DistanceTo", "Distance to {{destination}}:", {
-            destination: destinationName,
-          })}
-        </StyledText>
+        <Text style={styles.text}>
+          {t("Navigation_DistanceTo", { destination: destinationName })}
+        </Text>
       </View>
-      <StyledText style={styles.distanceText}>
-        {totalDistance} {t("Meters", "meters")}
-      </StyledText>
+      <Text style={styles.distanceText}>
+        {totalDistance} {t("Common_Meters")}
+      </Text>
     </View>
   );
 };
@@ -53,7 +48,7 @@ const NavigationInfoPanel = ({ navigationPath, destination }) => {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    top: 100, // Adjust to be below your header
+    top: 100,
     left: 20,
     right: 20,
     backgroundColor: "rgba(255, 255, 255, 0.9)",

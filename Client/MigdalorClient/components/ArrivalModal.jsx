@@ -1,25 +1,23 @@
 import React from "react";
-import { Modal, View, StyleSheet } from "react-native";
+import { Modal, View, StyleSheet, Text } from "react-native";
 import { useTranslation } from "react-i18next";
-import StyledText from "@/components/StyledText";
 import FlipButtonSizeless from "@/components/FlipButtonSizeless";
 import { Ionicons } from "@expo/vector-icons";
 
 const ArrivalModal = ({ visible, destination, onClose }) => {
   const { t } = useTranslation();
 
-  const destinationName = React.useMemo(() => {
-    if (!destination) return "";
+  let destinationName = "";
+  if (destination) {
     if (destination.type === "building") {
-      return t(destination.buildingName, {
+      destinationName = t(destination.buildingName, {
         defaultValue: destination.buildingName,
       });
+    } else if (destination.type === "apartment") {
+      // Use displayNumber for apartments as requested
+      destinationName = `${t("Common_Apartment")} ${destination.displayNumber}`;
     }
-    if (destination.type === "apartment") {
-      return `${t("Apartment", "Apartment")} ${destination.displayNumber}`;
-    }
-    return "";
-  }, [destination, t]);
+  }
 
   if (!visible) return null;
 
@@ -38,18 +36,12 @@ const ArrivalModal = ({ visible, destination, onClose }) => {
             color="green"
             style={{ marginBottom: 15 }}
           />
-          <StyledText style={styles.modalTitle}>
-            {t("Navigation_ArrivedTitle", "You Have Arrived")}
-          </StyledText>
-          <StyledText style={styles.modalText}>
-            {t(
-              "Navigation_ArrivedMessage",
-              "You have arrived at {{destination}}.",
-              { destination: destinationName }
-            )}
-          </StyledText>
+          <Text style={styles.modalTitle}>{t("Navigation_ArrivedTitle")}</Text>
+          <Text style={styles.modalText}>
+            {t("Navigation_ArrivedMessage", { destination: destinationName })}
+          </Text>
           <FlipButtonSizeless onPress={onClose} style={styles.closeButton}>
-            <StyledText style={styles.closeButtonText}>{t("OK")}</StyledText>
+            <Text style={styles.closeButtonText}>{t("Common_OK")}</Text>
           </FlipButtonSizeless>
         </View>
       </View>
