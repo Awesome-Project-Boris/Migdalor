@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { Globals } from "@/app/constants/Globals";
+import { Globals } from "../../app/constants/Globals";
 import EventCard from "@/components/EventCard";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
@@ -136,18 +136,18 @@ export default function ActivitiesScreen() {
             textColor="#000000"
           >
             <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("Activities_AddNew", "Add a new activity")}
+              {t("Activities_AddNew")}
             </Text>
           </FlipButton>
 
           <FlipButton
-            onPress={() => console.log("Push!")} // Will navigate to the new page later
+            onPress={() => router.push("/MyActivities")}
             style={styles.newActivityButton}
             bgColor="#ffffff"
             textColor="#000000"
           >
             <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("Activities_MyCreatedActivities", "My Created Activities")}
+              {t("Activities_MyCreatedActivities")}
             </Text>
           </FlipButton>
         </>
