@@ -865,8 +865,8 @@ export default function EditProfile() {
         finalAdd2PicData || {
           PicID: null,
           PicName: "",
-          PicPath: "",
 
+          PicPath: "",
           PicAlt: "",
         }
       );
@@ -1081,7 +1081,17 @@ export default function EditProfile() {
             <StyledText style={styles.label}>
               {t("ProfileScreen_interests")}
             </StyledText>
-            <View style={styles.interestChipDisplay}>
+            <View
+              style={[
+                styles.interestChipDisplay,
+                {
+                  flexDirection:
+                    Globals.userSelectedDirection === "rtl"
+                      ? "row-reverse"
+                      : "row",
+                },
+              ]}
+            >
               {userInterests.length > 0 ? (
                 userInterests.map((interest) => (
                   <View
@@ -1094,7 +1104,18 @@ export default function EditProfile() {
                   </View>
                 ))
               ) : (
-                <StyledText style={styles.noInterestsText}>
+                <StyledText
+                  style={[
+                    styles.noInterestsText,
+                    {
+                      width: "100%",
+                      textAlign:
+                        Globals.userSelectedDirection === "rtl"
+                          ? "right"
+                          : "left",
+                    },
+                  ]}
+                >
                   {t("EditProfileScreen_noInterests")}
                 </StyledText>
               )}

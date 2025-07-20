@@ -509,7 +509,17 @@ export default function Profile() {
             >
               {t("ProfileScreen_interests")}
             </StyledText>
-            <View style={styles.chipContainer}>
+            <View
+              style={[
+                styles.chipContainer,
+                {
+                  flexDirection:
+                    Globals.userSelectedDirection === "rtl"
+                      ? "row-reverse"
+                      : "row",
+                },
+              ]}
+            >
               {form.interests && form.interests.length > 0 ? (
                 form.interests.map((interestName) => (
                   <InterestChip

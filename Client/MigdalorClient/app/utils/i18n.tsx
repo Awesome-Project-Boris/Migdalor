@@ -60,6 +60,7 @@ const resources = {
       Gallery: "Gallery",
       Cancel: "Cancel",
       Delete: "Delete",
+      Confirm: "Confirm",
       Confirm_Deletion: "Confirm Deletion",
       Confirm_Deletion_Message:
         "Are you sure you want to permanently delete this picture?",
@@ -610,6 +611,7 @@ const resources = {
       Gallery: "גלריה",
       Cancel: "ביטול",
       Delete: "מחק",
+      Confirm: "אישור",
       Confirm_Deletion: "אשר מחיקה",
       Confirm_Deletion_Message: "האם אתה בטוח שברצונך למחוק תמונה זו לצמיתות?",
       Picture_Deleted: "התמונה נמחקה",
