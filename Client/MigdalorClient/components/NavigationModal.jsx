@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Text,
 } from "react-native";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next"; // FOR TESTING PURPOSES
 import FlipButtonSizeless from "@/components/FlipButtonSizeless";
 import { Ionicons } from "@expo/vector-icons";
 import { Globals } from "@/app/constants/Globals";
@@ -18,34 +18,87 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Step 1: Prepare a clean, searchable list with translated names one time.
+
+  const searchableItems = useMemo(() => {
+    // Return early if there's no data to process
+    if (!mapData || !mapData.buildings) return [];
+
+    const allItems = [];
+
+    // Loop through each structure from the API
+    mapData.buildings.forEach((structure) => {
+      // Case 1: The structure is a major, named building
+      if (structure.buildingName) {
+        // Add the building itself as a searchable item
+        allItems.push({
+          type: "building",
+          rawName: structure.buildingName,
+          translatedName: t(structure.buildingName, {
+            defaultValue: structure.buildingName,
+          }),
+          ...structure,
+        });
+
+        // Add all apartments nested under this building, with a reference to the parent
+        if (structure.apartments) {
+          structure.apartments.forEach((apt) => {
+            allItems.push({
+              type: "apartment",
+              rawName: String(apt.displayNumber),
+              translatedName: `${t("Common_Apartment")} ${apt.displayNumber}`,
+              buildingTranslatedName: t(structure.buildingName, {
+                defaultValue: structure.buildingName,
+              }),
+              ...apt,
+              physicalBuildingID: structure.buildingID,
+              entranceNodeIds: structure.entranceNodeIds,
+            });
+          });
+        }
+      }
+      // Case 2: The structure is a small, unnamed residence (duplex, etc.)
+      else {
+        // For these, add only the apartments as top-level searchable items
+        if (structure.apartments) {
+          structure.apartments.forEach((apt) => {
+            allItems.push({
+              type: "apartment",
+              rawName: String(apt.displayNumber),
+              translatedName: `${t("Common_Apartment")} ${apt.displayNumber}`,
+              buildingTranslatedName: "", // Intentionally blank as there's no parent building name
+              ...apt,
+              physicalBuildingID: structure.buildingID,
+              entranceNodeIds: structure.entranceNodeIds,
+            });
+          });
+        }
+      }
+    });
+
+    return allItems;
+  }, [mapData, t]);
+
+  // Step 2: Filter the pre-prepared list without calling t() again.
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
     const lowerCaseSearch = searchTerm.toLowerCase();
 
-    const buildings = mapData.buildings
-      .filter((b) => b.buildingName?.toLowerCase().includes(lowerCaseSearch))
-      .map((b) => ({ type: "building", ...b }));
-
-    const apartments = mapData.buildings.flatMap((b) =>
-      b.apartments
-        .filter((a) => String(a.displayNumber).includes(lowerCaseSearch))
-        .map((a) => ({
-          type: "apartment",
-          ...a,
-          buildingName: b.buildingName,
-          physicalBuildingID: b.buildingID,
-          entranceNodeIds: b.entranceNodeIds,
-        }))
-    );
-
-    return [...buildings, ...apartments];
-  }, [searchTerm, mapData]);
+    return searchableItems.filter((item) => {
+      const rawMatch = item.rawName.toLowerCase().includes(lowerCaseSearch);
+      const translatedMatch = item.translatedName
+        .toLowerCase()
+        .includes(lowerCaseSearch);
+      return rawMatch || translatedMatch;
+    });
+  }, [searchTerm, searchableItems]);
 
   const handleSelectItem = (item) => {
     setSearchTerm("");
     onStartNavigation(item);
   };
 
+  // Step 3: Render the item using the pre-translated name.
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.resultItem}
@@ -57,14 +110,10 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
         color="#555"
       />
       <View style={styles.resultTextContainer}>
-        <Text style={styles.resultTitle}>
-          {item.type === "building"
-            ? t(item.buildingName, { defaultValue: item.buildingName })
-            : `${t("Common_Apartment")} ${item.displayNumber}`}
-        </Text>
+        <Text style={styles.resultTitle}>{item.translatedName}</Text>
         {item.type === "apartment" && (
           <Text style={styles.resultSubtitle}>
-            {t(item.buildingName, { defaultValue: item.buildingName })}
+            {item.buildingTranslatedName}
           </Text>
         )}
       </View>
