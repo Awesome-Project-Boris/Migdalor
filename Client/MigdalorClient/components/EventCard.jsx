@@ -1,10 +1,12 @@
+// In Client/MigdalorClient/components/EventCard.jsx
+
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { Image as ExpoImage } from "expo-image";
 import { Globals } from "@/app/constants/Globals";
-import StyledText from "@/components/StyledText"; // Import StyledText
+import StyledText from "@/components/StyledText";
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
@@ -12,13 +14,15 @@ const EventCard = ({ event, onPress }) => {
   const { i18n, t } = useTranslation();
   const isRtl = i18n.dir() === "rtl";
 
+  // Safely access nested and optional properties
   const registeredCount = event.participantsCount || 0;
-  const remainingSpots = event.capacity - registeredCount;
+  const hasCapacity = typeof event.capacity === "number";
+  const remainingSpots = hasCapacity ? event.capacity - registeredCount : 0;
 
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
 
   const imageUrl = event.picturePath
-    ? { uri: `${Globals.API_BASE_URL}${event.picturePath}` }
+    ? { uri: `${Globals.API_BASE_URL}${event.picturePath.replace("~/", "")}` } // Added replace for safety
     : placeholderImage;
 
   const cardDetailsStyle = [
@@ -36,6 +40,7 @@ const EventCard = ({ event, onPress }) => {
       <View style={cardDetailsStyle}>
         <StyledText style={styles.cardTitle}>{event.eventName}</StyledText>
 
+        {/* Only render if hostName exists */}
         {hostName && (
           <View
             style={[
@@ -48,7 +53,8 @@ const EventCard = ({ event, onPress }) => {
           </View>
         )}
 
-        {!event.isRecurring && (
+        {/* Only render capacity info if it exists and the event is not recurring */}
+        {hasCapacity && !event.isRecurring && (
           <>
             <View
               style={[
@@ -58,12 +64,12 @@ const EventCard = ({ event, onPress }) => {
             >
               <Ionicons name="people-outline" size={16} color="#555" />
               <StyledText style={styles.registrationText}>
-                {`${registeredCount} / ${event.capacity ?? "∞"} ${t(
+                {`${registeredCount} / ${event.capacity} ${t(
                   "EventCard_Registered"
                 )}`}
               </StyledText>
             </View>
-            {remainingSpots > 0 && event.capacity !== null && (
+            {remainingSpots > 0 && (
               <StyledText style={styles.spotsAvailableText}>
                 {t("EventCard_SpacesAvailable", { count: remainingSpots })}
               </StyledText>
@@ -80,6 +86,7 @@ const EventCard = ({ event, onPress }) => {
   );
 };
 
+// Your existing styles remain the same
 const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",

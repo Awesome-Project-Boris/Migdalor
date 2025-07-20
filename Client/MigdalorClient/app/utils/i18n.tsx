@@ -431,6 +431,12 @@ const resources = {
 
       Activities_MyCreatedActivities: "My created activities",
       Activities_AddNew: "Suggest a new acitivity",
+
+      MyActivities_ParticipationChecked: "Events with checked participation",
+      MyActivities_ParticipationNotChecked:
+        "Events with unchecked participation",
+      MyActivities_ClearFilter: "Clear button choice",
+
       Events_ClassesTitle: "Classes",
       Events_ActivitiesTitle: "Activities",
       Common_SearchPlaceholder: "Search by name...",
@@ -448,6 +454,7 @@ const resources = {
       EventCard_MoreDetails: "Click for more details",
       Classes_NoClasses: "No classes available at the moment.",
       Activities_NoActivities: "No activities available at the moment.",
+
       EventFocus_Date: "Date",
       EventFocus_Time: "Time",
       EventFocus_Location: "Location",
@@ -978,6 +985,11 @@ const resources = {
       EventCard_MoreDetails: "לחץ לפרטים נוספים",
       Classes_NoClasses: "אין חוגים זמינים כרגע.",
       Activities_NoActivities: "אין פעילויות זמינות כרגע.",
+
+      MyActivities_ParticipationChecked: "פעילויות שנוכחותן נבדקו",
+      MyActivities_ParticipationNotChecked: "פעילויות שנוכחותן לא נבדקו",
+      MyActivities_ClearFilter: "ניקוי בחירת כפתורים",
+
       EventFocus_Date: "תאריך",
       EventFocus_Time: "שעה",
       EventFocus_Location: "מיקום",

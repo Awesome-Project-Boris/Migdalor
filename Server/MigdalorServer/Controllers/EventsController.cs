@@ -152,6 +152,10 @@ namespace MigdalorServer.Controllers
         
         // 5. GET: api/events/host/{hostId}
         // Pulls all events hosted by a specific person
+
+        // OBSOLETE - Not all the details we want 
+
+
         [HttpGet("host/{hostId}")]
         public async Task<ActionResult<IEnumerable<EventDto>>> GetEventsByHost(Guid hostId)
         {
@@ -390,6 +394,46 @@ namespace MigdalorServer.Controllers
             {
                 // In a real app, you would log the exception ex
                 return StatusCode(StatusCodes.Status500InternalServerError, "An internal server error occurred.");
+            }
+        }
+
+       
+        // Instead of Host/id - here we get more data relevant for events specificially - no time limits
+        // Especially for administrative purposes
+
+        [HttpGet("creator/{creatorId}")]
+        public async Task<IActionResult> GetEventsByCreator(Guid creatorId)
+        {
+            try
+            {
+                var query = from e in _context.OhEvents
+                                // Perform a LEFT JOIN with the pictures table
+                            join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
+                            from pg in picGroup.DefaultIfEmpty()
+                                // Filter by the creator's ID and for non-recurring events
+                            where e.HostId == creatorId && !e.IsRecurring
+                            orderby e.StartDate descending
+                            select new MyActivitiesDto
+                            {
+                                EventId = e.EventId,
+                                EventName = e.EventName,
+                                Description = e.Description,
+                                Location = e.Location,
+                                IsRecurring = e.IsRecurring,
+                                PictureId = e.PictureId,
+                                PicturePath = pg.PicPath,
+                                StartDate = e.StartDate,
+                                EndDate = e.EndDate,
+                                ParticipationChecked = e.ParticipationChecked
+                            };
+
+                var userEvents = await query.AsNoTracking().ToListAsync();
+
+                return Ok(userEvents ?? new List<MyActivitiesDto>());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
 
