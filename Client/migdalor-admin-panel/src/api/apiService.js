@@ -1,140 +1,133 @@
-// /src/api/apiService.js
-
-import { API_BASE_URL } from '../config';
+import { API_BASE_URL } from "../config";
 
 /**
- * A wrapper around the Fetch API to handle common API request logic,
- * including authorization, content type, and error handling.
+ * A centralized handler for processing API responses.
+ * It checks the content type to decide whether to return a file blob or JSON.
+ * @param {Response} response - The raw response from the fetch call.
+ * @returns {Promise<Blob|any>} A promise that resolves to a file blob or parsed JSON.
+ */
+const handleResponse = async (response) => {
+    if (!response.ok) {
+        // Attempt to parse error response as JSON for a more detailed message
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.message || `Request failed with status: ${response.status}`;
+        throw new Error(errorMessage);
+    }
+
+    if (response.status === 204) {
+        return null; // Handle No Content responses
+    }
+
+    const contentType = response.headers.get("content-type");
+
+    // If the response is an Excel file, return it as a blob for download
+    if (contentType && contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+        return response.blob();
+    }
+
+    // Otherwise, handle as JSON for all other API calls
+    return response.json();
+};
+
+/**
+ * A centralized API service for making requests to the backend.
  */
 export const api = {
-    /**
-     * The core request method that all other methods use.
-     * @param {string} endpoint - The API endpoint to call (e.g., '/Users/login').
-     * @param {object} options - The options object for the fetch call.
-     * @returns {Promise<any>} - A promise that resolves with the response data.
-     */
-    async request(endpoint, options) {
-        const url = `${API_BASE_URL}${endpoint}`;
-        const response = await fetch(url, options);
-
-        // Handle unauthorized responses, which might indicate an expired token.
-        if (response.status === 401) {
-            // In a real app, you might trigger a global logout or token refresh.
-            throw new Error("Unauthorized");
-        }
-
-        // Handle responses with no content.
-        if (response.headers.get("content-length") === "0" || response.status === 204) {
-            return null;
-        }
-
-        // Determine how to parse the response based on content type.
-        const contentType = response.headers.get("content-type");
-        let data;
-        if (contentType && contentType.includes("application/json")) {
-            data = await response.json();
-        } else {
-            data = await response.text();
-        }
-
-        // Handle non-successful responses.
-        if (!response.ok) {
-            // Try to parse a specific error message from the response body,
-            // otherwise fall back to the HTTP status text.
-            const errorMessage =
-                typeof data === "object" && data.message
-                    ? data.message
-                    : data || `HTTP error! status: ${response.status}`;
-            throw new Error(errorMessage);
-        }
-
-        return data;
-    },
+    API_BASE_URL,
 
     /**
      * Performs a GET request.
-     * @param {string} endpoint - The API endpoint.
-     * @param {string} token - The JWT for authorization.
-     * @returns {Promise<any>}
+     * @param {string} endpoint - The API endpoint to call.
+     * @param {string} token - The user's authentication token.
+     * @returns {Promise<any>} The response data (JSON or blob).
      */
     async get(endpoint, token) {
-        return this.request(endpoint, {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
             },
         });
+        return handleResponse(response);
     },
 
     /**
      * Performs a POST request with a JSON body.
-     * @param {string} endpoint - The API endpoint.
-     * @param {object} body - The JSON payload.
-     * @param {string|null} [token=null] - The JWT for authorization (optional).
-     * @returns {Promise<any>}
+     * @param {string} endpoint - The API endpoint to call.
+     * @param {object} body - The request payload.
+     * @param {string} [token] - The user's authentication token (optional).
+     * @returns {Promise<any>} The response data.
      */
-    async post(endpoint, body, token = null) {
-        const headers = { "Content-Type": "application/json" };
+    async post(endpoint, body, token) {
+        const headers = {
+            'Content-Type': 'application/json',
+        };
         if (token) {
-            headers["Authorization"] = `Bearer ${token}`;
+            headers['Authorization'] = `Bearer ${token}`;
         }
-        return this.request(endpoint, {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: "POST",
             headers,
             body: JSON.stringify(body),
         });
+        return handleResponse(response);
     },
 
     /**
-     * Performs a PUT request with a JSON body.
-     * @param {string} endpoint - The API endpoint.
-     * @param {object} body - The JSON payload.
-     * @param {string} token - The JWT for authorization.
-     * @returns {Promise<any>}
+     * FIX: Added a new method specifically for file uploads using FormData.
+     * This method correctly sends multipart/form-data requests.
+     * @param {string} endpoint - The API endpoint to call.
+     * @param {FormData} formData - The FormData object containing the file(s).
+     * @param {string} [token] - The user's authentication token (optional).
+     * @returns {Promise<any>} The response data.
      */
-    async put(endpoint, body, token) {
-        return this.request(endpoint, {
-            method: "PUT",
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-        });
-    },
-
-    /**
-     * Performs a DELETE request.
-     * @param {string} endpoint - The API endpoint.
-     * @param {string} token - The JWT for authorization.
-     * @returns {Promise<any>}
-     */
-    async delete(endpoint, token) {
-        return this.request(endpoint, {
-            method: "DELETE",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-    },
-
-    /**
-     * Performs a POST request with FormData, typically for file uploads.
-     * @param {string} endpoint - The API endpoint.
-     * @param {FormData} formData - The form data payload.
-     * @param {string} token - The JWT for authorization.
-     * @returns {Promise<any>}
-     */
-    async postForm(endpoint, formData, token) {
-        // Note: We don't set the 'Content-Type' header for FormData.
-        // The browser sets it automatically with the correct boundary.
-        return this.request(endpoint, {
+    async postFormData(endpoint, formData, token) {
+        const headers = {};
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        // Note: We do NOT set 'Content-Type'. The browser automatically sets it
+        // to 'multipart/form-data' with the correct boundary when the body is a FormData object.
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: "POST",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+            headers,
             body: formData,
         });
+        return handleResponse(response);
+    },
+
+    /**
+   * Performs a PUT request.
+   * @param {string} endpoint - The API endpoint to call.
+   * @param {object} body - The request payload.
+   * @param {string} token - The user's authentication token.
+   * @returns {Promise<any>} The response data.
+   */
+    async put(endpoint, body, token) {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body)
+        });
+        return handleResponse(response);
+    },
+
+    /**
+   * Performs a DELETE request.
+   * @param {string} endpoint - The API endpoint to call.
+   * @param {string} token - The user's authentication token.
+   * @returns {Promise<any>} The response data.
+   */
+    async delete(endpoint, token) {
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+        return handleResponse(response);
     },
 };

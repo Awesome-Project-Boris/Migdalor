@@ -24,6 +24,50 @@ namespace MigdalorServer.Controllers
             _context = context;
         }
 
+        // GET: api/events/all
+        // EventsController.cs
+
+        // GET: api/events/all
+        // EventsController.cs
+
+        // GET: api/events/all
+        [HttpGet("all")]
+        public async Task<ActionResult<object>> GetEvents()
+        {
+            var allEvents = await _context.OhEvents
+                .AsNoTracking()
+                .GroupJoin(
+                    _context.OhPeople,
+                    e => e.HostId,
+                    p => p.PersonId,
+                    (e, p_group) => new { e, p_group }
+                )
+                .SelectMany(
+                    x => x.p_group.DefaultIfEmpty(),
+                    (x, p) => new
+                    {
+                        x.e.EventId,
+                        x.e.EventName,
+                        HostId = x.e.HostId,
+                        HostName = p != null ? p.HebFirstName + " " + p.HebLastName : "לא הוקצה", // Handle null host
+                        x.e.Location,
+                        x.e.StartDate,
+                        x.e.IsRecurring,
+                        x.e.RecurrenceRule,
+                        x.e.Capacity,
+                    }
+                )
+                .ToListAsync();
+
+            var result = new
+            {
+                events = allEvents.Where(e => !e.IsRecurring),
+                classes = allEvents.Where(e => e.IsRecurring),
+            };
+
+            return Ok(result);
+        }
+
         // GET: api/events
         // Pulls all future Activities and ongoing Classes
         [HttpGet]
@@ -35,11 +79,12 @@ namespace MigdalorServer.Controllers
 
                 var eventsQuery =
                     from e in _context.OhEvents
-                        // Perform a LEFT JOIN to get picture details
                     join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
                     from pg in picGroup.DefaultIfEmpty()
+                    join h in _context.OhPeople on e.HostId equals h.PersonId into hostGroup
+                    from host in hostGroup.DefaultIfEmpty()
                     where (e.IsRecurring == false && e.StartDate > now) ||
-                          (e.IsRecurring == true && e.EndDate > now)
+                          (e.IsRecurring == true && (e.EndDate == null || e.EndDate > now))
                     select new EventDto
                     {
                         EventId = e.EventId,
@@ -47,12 +92,13 @@ namespace MigdalorServer.Controllers
                         Description = e.Description,
                         Location = e.Location,
                         PictureId = e.PictureId,
-                        PicturePath = pg.PicPath, 
+                        PicturePath = pg.PicPath,
                         IsRecurring = e.IsRecurring,
                         StartDate = e.StartDate,
                         EndDate = e.EndDate,
                         Capacity = e.Capacity,
-                        ParticipantsCount = e.OhEventRegistrations.Count()
+                        ParticipantsCount = e.OhEventRegistrations.Count(),
+                        HostName = host != null ? host.HebFirstName + " " + host.HebLastName : "N/A"
                     };
 
                 var events = await eventsQuery.AsNoTracking().ToListAsync();
@@ -71,18 +117,15 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        // 2. GET: api/events/{id}
-        // CORRECTED: This query now manually joins with OhPeople to get Host details.
+        // GET: api/events/{id}
         [HttpGet("{id}")]
         public async Task<ActionResult<EventDetailDto>> GetEventById(int id)
         {
             try
             {
                 var eventDetail = await (from e in _context.OhEvents
-                                             // Join to get host
                                          join p in _context.OhPeople on e.HostId equals p.PersonId into hostGroup
                                          from h in hostGroup.DefaultIfEmpty()
-                                             // Join to get picture path
                                          join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
                                          from pg in picGroup.DefaultIfEmpty()
                                          where e.EventId == id
@@ -93,9 +136,9 @@ namespace MigdalorServer.Controllers
                                              Description = e.Description,
                                              Location = e.Location,
                                              PictureId = e.PictureId,
-                                             PicturePath = pg.PicPath, 
+                                             PicturePath = pg.PicPath,
                                              IsRecurring = e.IsRecurring,
-                                             ParticipationChecked = e.ParticipationChecked,
+                                             RecurrenceRule = e.RecurrenceRule,
                                              StartDate = e.StartDate,
                                              EndDate = e.EndDate,
                                              Capacity = e.Capacity,
@@ -122,8 +165,7 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        // 3. GET: api/events/{eventId}/participants
-        // CORRECTED: This query now manually joins OhEventRegistrations with OhPeople.
+        // GET: api/events/{eventId}/participants
         [HttpGet("{eventId}/participants")]
         public async Task<ActionResult<IEnumerable<ParticipantDto>>> GetEventParticipants(int eventId)
         {
@@ -148,9 +190,41 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        
-        // 5. GET: api/events/host/{hostId}
-        // Pulls all events hosted by a specific person
+        // POST: api/events/attendance
+        [HttpPost("attendance")]
+        public async Task<IActionResult> UpdateAttendance([FromBody] UpdateParticipationDto attendanceDto)
+        {
+            try
+            {
+                var attendanceRecord = await _context.OhParticipations
+                    .FirstOrDefaultAsync(a => a.EventId == attendanceDto.EventId && a.ParticipantId == attendanceDto.ParticipantId);
+
+                if (attendanceRecord != null)
+                {
+                    attendanceRecord.Status = attendanceDto.Status;
+                }
+                else
+                {
+                    var newRecord = new OhParticipation
+                    {
+                        EventId = attendanceDto.EventId,
+                        ParticipantId = attendanceDto.ParticipantId,
+                        Status = attendanceDto.Status,
+                        RegistrationTime = DateTime.UtcNow
+                    };
+                    _context.OhParticipations.Add(newRecord);
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok("Attendance updated successfully.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, $"Error updating attendance: {ex.Message}");
+            }
+        }
+
+        // GET: api/events/host/{hostId}
         [HttpGet("host/{hostId}")]
         public async Task<ActionResult<IEnumerable<EventDto>>> GetEventsByHost(Guid hostId)
         {
@@ -180,6 +254,7 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        // POST: api/events/register
         [HttpPost("register")]
         public async Task<IActionResult> RegisterForEvent([FromBody] RegisterForEventDto registrationDto)
         {
@@ -195,7 +270,7 @@ namespace MigdalorServer.Controllers
                     .Where(r => r.EventId == registrationDto.EventId)
                     .ToListAsync();
 
-                if (registrations.Count >= eventToRegister.Capacity)
+                if (eventToRegister.Capacity.HasValue && registrations.Count >= eventToRegister.Capacity)
                 {
                     return BadRequest("This activity is already full.");
                 }
@@ -210,7 +285,7 @@ namespace MigdalorServer.Controllers
                 {
                     EventId = registrationDto.EventId,
                     ParticipantId = registrationDto.ParticipantId,
-                    Status = "Active", // Default status
+                    Status = "Active",
                     RegistrationDate = DateTime.UtcNow
                 };
 
@@ -225,21 +300,17 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        // Inside the EventsController class
-
+        // POST: api/events/CreateActivity
         [HttpPost("CreateActivity")]
-        [Authorize] // Ensure only authenticated users can create events
+        [Authorize]
         public async Task<IActionResult> CreateActivity([FromBody] NewActivityDto eventDto)
         {
-            // --- Security Check: User can only create an event for themselves ---
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userIdClaim == null || eventDto.HostId.ToString() != userIdClaim)
             {
                 return Forbid("You can only create events for yourself.");
             }
-            // --- End Security Check ---
 
-            // --- Permission Check (as implemented before) ---
             var canInitiate = await _context.OhResidents
                                             .Where(r => r.ResidentId == eventDto.HostId)
                                             .Select(r => r.CanInitActivity)
@@ -249,18 +320,14 @@ namespace MigdalorServer.Controllers
             {
                 return Forbid("You do not have permission to initiate new activities.");
             }
-            // --- End Permission Check ---
 
             try
             {
-                // --- NEW: Check for duplicate event name before trying to insert ---
                 var eventNameExists = await _context.OhEvents.AnyAsync(e => e.EventName == eventDto.EventName);
                 if (eventNameExists)
                 {
-                    // Return a 409 Conflict error with a clear message
                     return Conflict("An event with this name already exists. Please choose a different name.");
                 }
-                // --- End of new check ---
 
                 var newEvent = new OhEvent
                 {
@@ -270,7 +337,7 @@ namespace MigdalorServer.Controllers
                     Location = eventDto.Location,
                     PictureId = eventDto.PictureId,
                     Capacity = eventDto.Capacity,
-                    IsRecurring = false, // Always false for this form
+                    IsRecurring = false,
                     RecurrenceRule = null,
                     StartDate = eventDto.StartDate,
                     EndDate = eventDto.EndDate,
@@ -279,16 +346,15 @@ namespace MigdalorServer.Controllers
                 _context.OhEvents.Add(newEvent);
                 await _context.SaveChangesAsync();
 
-                // Return the created event, including its new ID
                 return CreatedAtAction(nameof(GetEventById), new { id = newEvent.EventId }, newEvent);
             }
             catch (Exception ex)
             {
-                // Log the exception ex
                 return StatusCode(500, "An internal server error occurred while creating the event.");
             }
         }
 
+        // GET: api/events/timetable
         [HttpGet("timetable")]
         public async Task<ActionResult<IEnumerable<TimetableEntryDto>>> GetTimetableEntries([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
         {
@@ -299,7 +365,6 @@ namespace MigdalorServer.Controllers
 
             var allEntries = new List<TimetableEntryDto>();
 
-            // 1. Get one-time events from OH_Events
             var oneTimeEvents = await _context.OhEvents
                 .Where(e => !e.IsRecurring && e.StartDate >= startDate && e.StartDate <= endDate)
                 .Select(e => new TimetableEntryDto
@@ -309,17 +374,16 @@ namespace MigdalorServer.Controllers
                     Description = e.Description,
                     Location = e.Location,
                     StartTime = e.StartDate,
-                    EndTime = e.EndDate ?? e.StartDate, // Use StartDate if EndDate is null
+                    EndTime = e.EndDate ?? e.StartDate,
                     SourceTable = "OH_Events",
-                    NavigationEventId = e.EventId // The event's own ID is used for navigation
+                    NavigationEventId = e.EventId
                 })
                 .ToListAsync();
             allEntries.AddRange(oneTimeEvents);
 
-            // 2. Get recurring event instances from OH_EventInstances
             var eventInstances = await _context.OhEventInstances
                 .Where(i => i.StartTime >= startDate && i.StartTime <= endDate)
-                .Join(_context.OhEvents, // Join with OhEvents to get details like name and location
+                .Join(_context.OhEvents,
                       instance => instance.EventId,
                       parentEvent => parentEvent.EventId,
                       (instance, parentEvent) => new TimetableEntryDto
@@ -331,12 +395,11 @@ namespace MigdalorServer.Controllers
                           StartTime = instance.StartTime,
                           EndTime = instance.EndTime,
                           SourceTable = "OH_EventInstances",
-                          NavigationEventId = parentEvent.EventId // The PARENT event's ID is used for navigation
+                          NavigationEventId = parentEvent.EventId
                       })
                 .ToListAsync();
             allEntries.AddRange(eventInstances);
 
-            // 3. Get manual additions from OH_TimeTableAdditions
             var manualAdditions = await _context.OhTimeTableAdditions
                 .Where(a => a.StartTime >= startDate && a.StartTime <= endDate)
                 .Select(a => new TimetableEntryDto
@@ -348,45 +411,111 @@ namespace MigdalorServer.Controllers
                     StartTime = a.StartTime,
                     EndTime = a.EndTime,
                     SourceTable = "OH_TimeTableAdditions",
-                    NavigationEventId = null // No navigation for manual additions
+                    NavigationEventId = null
                 })
                 .ToListAsync();
             allEntries.AddRange(manualAdditions);
 
-            // Return the combined list, ordered by start time
             return Ok(allEntries.OrderBy(e => e.StartTime));
         }
 
-        [HttpPost("{eventId}/mark-checked")]
-        [Authorize]
-        public async Task<IActionResult> MarkParticipationAsChecked(int eventId)
+        // === ADMIN PANEL CRUD OPERATIONS ===
+
+        // POST: api/events/admin
+        [HttpPost("admin")]
+        [Authorize(Roles = "admin")] // Example authorization
+        public async Task<ActionResult<OhEvent>> CreateEventForAdmin([FromBody] AdminCreateEventDto createDto)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var eventToUpdate = await _context.OhEvents.FindAsync(eventId);
-
-                if (eventToUpdate == null)
-                {
-                    return NotFound("Event not found.");
-                }
-
-                // --- FIX: Toggle the boolean value ---
-                eventToUpdate.ParticipationChecked = !eventToUpdate.ParticipationChecked;
-                await _context.SaveChangesAsync();
-
-                // Return a clear message and the new status
-                var message = eventToUpdate.ParticipationChecked
-                    ? "Event participation has been successfully marked as checked."
-                    : "Event participation marking has been reopened.";
-
-                return Ok(new { message, isChecked = eventToUpdate.ParticipationChecked });
+                return BadRequest(ModelState);
             }
-            catch (Exception ex)
+
+            var newEvent = new OhEvent
             {
-                // In a real app, you would log the exception ex
-                return StatusCode(StatusCodes.Status500InternalServerError, "An internal server error occurred.");
-            }
+                EventName = createDto.EventName,
+                Description = createDto.Description,
+                HostId = createDto.HostId,
+                Location = createDto.Location,
+                Capacity = createDto.Capacity,
+                IsRecurring = createDto.IsRecurring,
+                RecurrenceRule = createDto.IsRecurring ? createDto.RecurrenceRule : null,
+                StartDate = createDto.StartDate,
+                EndDate = createDto.EndDate,
+                PictureId = createDto.PictureId, // Add this line
+                ParticipationChecked = false
+            };
+
+            _context.OhEvents.Add(newEvent);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetEventById), new { id = newEvent.EventId }, newEvent);
         }
 
+        // PUT: api/events/admin/{id}
+        [HttpPut("admin/{id}")]
+        [Authorize(Roles = "admin")] // Example authorization
+        public async Task<IActionResult> UpdateEventForAdmin(int id, [FromBody] AdminUpdateEventDto updateDto)
+        {
+            var eventToUpdate = await _context.OhEvents.FindAsync(id);
+
+            if (eventToUpdate == null)
+            {
+                return NotFound();
+            }
+
+            eventToUpdate.EventName = updateDto.EventName;
+            eventToUpdate.Description = updateDto.Description;
+            eventToUpdate.HostId = updateDto.HostId;
+            eventToUpdate.Location = updateDto.Location;
+            eventToUpdate.Capacity = updateDto.Capacity;
+            eventToUpdate.IsRecurring = updateDto.IsRecurring;
+            eventToUpdate.RecurrenceRule = updateDto.IsRecurring ? updateDto.RecurrenceRule : null;
+            eventToUpdate.StartDate = updateDto.StartDate;
+            eventToUpdate.EndDate = updateDto.EndDate;
+            eventToUpdate.PictureId = updateDto.PictureId; // Add this line
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.OhEvents.Any(e => e.EventId == id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // DELETE: api/events/admin/{id}
+        [HttpDelete("admin/{id}")]
+        [Authorize(Roles = "admin")] // Example authorization
+        public async Task<IActionResult> DeleteEventForAdmin(int id)
+        {
+            var ohEvent = await _context.OhEvents.FindAsync(id);
+            if (ohEvent == null)
+            {
+                return NotFound();
+            }
+
+            // Before deleting the event, remove related registrations to avoid foreign key conflicts.
+            var registrations = _context.OhEventRegistrations.Where(r => r.EventId == id);
+            _context.OhEventRegistrations.RemoveRange(registrations);
+
+            var participations = _context.OhParticipations.Where(p => p.EventId == id);
+            _context.OhParticipations.RemoveRange(participations);
+
+            _context.OhEvents.Remove(ohEvent);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
