@@ -10,18 +10,18 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
 import { Toast } from "toastify-react-native";
+import * as FileSystem from "expo-file-system";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Header from "@/components/Header";
 import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import BouncyButton from "@/components/BouncyButton";
-import { Globals } from "@/app/constants/Globals";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
 import ImageViewModal from "../components/ImageViewModal";
 import ImageHistory from "@/components/ImageHistory";
-import StyledText from "@/components/StyledText"; // Import StyledText
-import { useSettings } from "@/context/SettingsContext"; // Import useSettings
+import StyledText from "@/components/StyledText"; 
+import { useSettings } from "@/context/SettingsContext";
+import { Globals } from "@/app/constants/Globals";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -29,38 +29,54 @@ export default function InstructorEditProfile() {
   const { t } = useTranslation();
   const router = useRouter();
   const { initialData, initialPic } = useLocalSearchParams();
-  const { settings } = useSettings(); // Get settings from context
+  const { settings } = useSettings();
 
   const [form, setForm] = useState({
     name: "",
     mobilePhone: "",
     email: "",
   });
-  const [profilePic, setProfilePic] = useState(null);
+
+  // --- CHANGE: State is now an object, not null, to prevent errors ---
+  const [profilePic, setProfilePic] = useState({
+    PicID: null,
+    PicName: "",
+    PicPath: "",
+    PicAlt: "",
+  });
+
   const [profileImage, setProfileImage] = useState(defaultUserImage);
   const [errors, setErrors] = useState({});
-
-  // State for image modals
   const [showImageViewModal, setShowImageViewModal] = useState(false);
   const [imageToViewUri, setImageToViewUri] = useState(null);
   const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
   const [clearedPic, setClearedPic] = useState(false);
 
   useEffect(() => {
-    if (initialData) {
-      setForm(JSON.parse(initialData));
+  if (initialData) {
+    setForm(JSON.parse(initialData));
+  }
+  if (initialPic) {
+    const pic = JSON.parse(initialPic);
+    if (pic) {
+      // Normalize the data structure to use PicID
+      setProfilePic({
+        PicID: pic.picId || pic.PicID || null, // Accept either format
+        PicName: pic.picName || pic.PicName || "",
+        PicPath: pic.picPath || pic.PicPath || "",
+        PicAlt: pic.picAlt || pic.PicAlt || "",
+      });
+    } else {
+      setProfilePic({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
     }
-    if (initialPic) {
-      const pic = JSON.parse(initialPic);
-      setProfilePic(pic);
-    }
-  }, [initialData, initialPic]);
+  }
+}, [initialData, initialPic]);
 
   useEffect(() => {
-    if (profilePic?.picPath?.startsWith("file://")) {
-      setProfileImage({ uri: profilePic.picPath });
-    } else if (profilePic?.picPath) {
-      setProfileImage({ uri: `${Globals.API_BASE_URL}${profilePic.picPath}` });
+    if (profilePic?.PicPath?.startsWith("file://")) {
+      setProfileImage({ uri: profilePic.PicPath });
+    } else if (profilePic?.PicPath) {
+      setProfileImage({ uri: `${Globals.API_BASE_URL}${profilePic.PicPath}` });
     } else {
       setProfileImage(defaultUserImage);
     }
@@ -77,13 +93,9 @@ export default function InstructorEditProfile() {
     if (name === "mobilePhone") {
       const requiredError = isRequired(value);
       if (requiredError) return requiredError;
-
       const phoneRegex = /^05\d{8}$/;
       if (!phoneRegex.test(value)) {
-        return t(
-          "EditProfileScreen_errorMessageMobilePhone",
-          "Please enter a valid 10-digit mobile number."
-        );
+        return t("EditProfileScreen_errorMessageMobilePhone");
       }
     }
 
@@ -93,13 +105,9 @@ export default function InstructorEditProfile() {
       if (requiredError) return requiredError;
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmedValue)) {
-          return t(
-              "EditProfileScreen_errorMessageEmail",
-              "Please enter a valid email address."
-          );
+          return t("EditProfileScreen_errorMessageEmail");
       }
     }
-
     return null;
   };
 
@@ -110,7 +118,6 @@ export default function InstructorEditProfile() {
   };
 
   const handleImagePress = () => {
-    setImageToViewUri(profileImage.uri || null);
     if (!profilePic?.picPath) {
       handleAddImage();
     } else {
@@ -119,21 +126,18 @@ export default function InstructorEditProfile() {
     }
   };
 
+  // --- CHANGE: Logic now matches EditProfile ---
   const handleRemoveImage = () => {
-    if (profilePic?.picId) {
-        setClearedPic(true);
-    }
-    setProfilePic(null);
+    setClearedPic(true);
+    setProfilePic({ PicID: null, PicName: "", PicPath: "", PicAlt: "" });
     setShowImageViewModal(false);
   };
-
+  
+  // --- CHANGE: Logic now matches EditProfile ---
   const handleSelectFromHistory = (selectedImage) => {
-    setProfilePic({
-        picId: selectedImage.PicID,
-        picPath: selectedImage.PicPath,
-        picAlt: selectedImage.PicAlt,
-    });
+    setProfilePic(selectedImage);
     setHistoryModalVisible(false);
+    setClearedPic(false);
   };
 
   const copyImageToAppDir = async (sourceUri) => {
@@ -145,6 +149,15 @@ export default function InstructorEditProfile() {
     } catch (e) {
       console.error("FileSystem.copyAsync Error:", e);
       throw e;
+    }
+  };
+  
+  const safeDeleteFile = async (uri) => {
+    if (!uri || !uri.startsWith("file://")) return;
+    try {
+      await FileSystem.deleteAsync(uri, { idempotent: true });
+    } catch (error) {
+      console.error(`Error deleting local file ${uri}:`, error);
     }
   };
 
@@ -169,8 +182,9 @@ export default function InstructorEditProfile() {
         }
 
         if (!result.canceled && result.assets?.[0]?.uri) {
-            const newUri = await copyImageToAppDir(result.assets[0].uri);
-            setProfilePic({ picPath: newUri, picAlt: "Instructor Profile Picture" });
+          const newUri = await copyImageToAppDir(result.assets[0].uri);
+          setProfilePic({ PicPath: newUri, PicAlt: "Instructor Profile Picture" });
+          setClearedPic(false);
         }
     } catch (error) {
         Alert.alert(t("ImagePicker_errorTitle"), error.message);
@@ -193,121 +207,136 @@ export default function InstructorEditProfile() {
     );
   };
 
-  const deletePictureOnServer = async (pictureId) => {
+  const deletePicture = async (pictureId) => {
     if (!pictureId) return;
     try {
         const response = await fetch(`${Globals.API_BASE_URL}/api/Picture/${pictureId}`, {
             method: "DELETE",
         });
-        if (!response.ok) throw new Error('Failed to delete old picture from server.');
+        if (!response.ok) throw new Error('Failed to delete old picture.');
         console.log(`Successfully deleted picture ID: ${pictureId}`);
     } catch (error) {
+        // Silently fail or show a non-blocking warning, as this is part of a larger save operation.
         console.error(error.message);
-        Toast.show({ type: 'warning', text1: 'Could not delete old picture.' });
     }
   };
 
+  // --- NEW FUNCTION (from EditProfile) ---
+  const uploadImage = async (imageUri, role, altText, uploaderId) => {
+    if (!imageUri || !imageUri.startsWith("file://")) {
+      return null;
+    }
+    const formData = new FormData();
+    const fileType = imageUri.substring(imageUri.lastIndexOf(".") + 1);
+    const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
+    formData.append("files", { uri: imageUri, name: `${role}.${fileType}`, type: mimeType });
+    formData.append("picRoles", role);
+    formData.append("picAlts", altText);
+    formData.append("uploaderId", uploaderId);
+    try {
+      const uploadResponse = await fetch(`${Globals.API_BASE_URL}/api/Picture`, { method: "POST", body: formData });
+      const uploadResults = await uploadResponse.json();
+      if (!uploadResponse.ok || !Array.isArray(uploadResults) || uploadResults.length === 0 || !uploadResults[0].success) {
+        const errorMsg = uploadResults?.[0]?.errorMessage || `Image upload failed (HTTP ${uploadResponse.status})`;
+        throw new Error(errorMsg);
+      }
+      await safeDeleteFile(imageUri);
+      return {
+        PicID: uploadResults[0].picId,
+        PicPath: uploadResults[0].serverPath,
+        PicName: uploadResults[0].originalFileName,
+        PicAlt: altText,
+        UploaderId: uploaderId,
+        PicRole: role,
+        DateTime: new Date().toISOString(),
+      };
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
+        text2: error.message,
+        position: "top",
+      });
+      throw error;
+    }
+  };
 
+  // --- NEW HELPER FUNCTION (from EditProfile) ---
+  const processImage = async (currentPic, initialPic, clearedFlag, role, altText) => {
+    const storedUserID = await AsyncStorage.getItem("userID");
+    if (currentPic.PicPath?.startsWith("file://")) {
+      if (initialPic?.PicID) await deletePicture(initialPic.PicID);
+      return await uploadImage(currentPic.PicPath, role, currentPic.PicAlt || altText, storedUserID);
+    }
+    if (clearedFlag) {
+      if (initialPic?.PicID) await deletePicture(initialPic.PicID);
+      return null;
+    }
+    // If an image from history was selected, it will already have a server path
+    if (currentPic.PicPath?.startsWith("/Images/")) {
+      // If the selected history image is different from the initial one, delete the initial one
+      if (initialPic?.PicID && initialPic.PicID !== currentPic.PicID) {
+        await deletePicture(initialPic.PicID);
+      }
+      return currentPic;
+    }
+    return initialPic; // Return the initial picture if no changes were made
+  };
+
+
+  // --- CHANGE: handleSave is now much simpler and more robust ---
   const handleSave = async () => {
     const phoneError = validateField("mobilePhone", form.mobilePhone);
     const emailError = validateField("email", form.email);
-
     const newErrors = { mobilePhone: phoneError, email: emailError };
     setErrors(newErrors);
 
     if (phoneError || emailError) {
-      Toast.show({
-        type: "error",
-        text1: t("Common_ValidationErrorTitle", "Validation Error"),
-        text2: phoneError || emailError,
-      });
+      Toast.show({ type: "error", text1: t("Common_ValidationErrorTitle"), text2: phoneError || emailError });
       return;
     }
-
-
-    let finalProfilePicData = profilePic;
-    const initialPicParsed = initialPic ? JSON.parse(initialPic) : null;
-
-    if (profilePic?.picPath && profilePic.picPath.startsWith("file://")) {
-        try {
-            if (initialPicParsed?.picId) {
-                await deletePictureOnServer(initialPicParsed.picId);
-            }
-
-            const storedUserID = await AsyncStorage.getItem("userID");
-            const formData = new FormData();
-            const uri = profilePic.picPath;
-            const fileType = uri.substring(uri.lastIndexOf(".") + 1);
-            const mimeType = `image/${fileType === "jpg" ? "jpeg" : fileType}`;
-
-            formData.append("files", { uri, name: `profile-instructor.${fileType}`, type: mimeType });
-            formData.append("picRoles", "profile_picture");
-            formData.append("picAlts", "Instructor Profile Picture");
-            formData.append("uploaderId", storedUserID);
-
-            const uploadResponse = await fetch(`${Globals.API_BASE_URL}/api/Picture`, {
-                method: "POST",
-                body: formData,
-            });
-
-            const uploadResults = await uploadResponse.json();
-            if (!uploadResponse.ok || !uploadResults[0]?.success) {
-                throw new Error(uploadResults[0]?.errorMessage || "Image upload failed");
-            }
-            finalProfilePicData = {
-                picId: uploadResults[0].picId,
-            };
-        } catch (error) {
-            Toast.show({ type: "error", text1: "Image Upload Failed", text2: error.message });
-            return;
-        }
-    } else if (clearedPic && initialPicParsed?.picId) {
-        await deletePictureOnServer(initialPicParsed.picId);
-        finalProfilePicData = null;
-    } else if (profilePic?.picId && initialPicParsed?.picId !== profilePic.picId) {
-        await deletePictureOnServer(initialPicParsed.picId);
-    }
-
-
+    
     try {
-        const storedUserID = await AsyncStorage.getItem("userID");
-        const response = await fetch(`${Globals.API_BASE_URL}/api/People/UpdateInstructorProfile`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${await AsyncStorage.getItem('jwt')}`
-            },
-            body: JSON.stringify({
-                personId: storedUserID,
-                phoneNumber: form.mobilePhone,
-                email: form.email,
-                profilePicId: finalProfilePicData?.picId || null
-            })
-        });
+      const storedUserID = await AsyncStorage.getItem("userID");
+      const initialPicParsed = initialPic ? JSON.parse(initialPic) : null;
+      
+      const finalProfilePicData = await processImage(
+        profilePic,
+        initialPicParsed,
+        clearedPic,
+        "profile_picture",
+        "Instructor Profile Picture"
+      );
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || "Failed to update profile");
-        }
+      const response = await fetch(`${Globals.API_BASE_URL}/api/People/UpdateInstructorProfile`, {
+          method: 'PUT',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${await AsyncStorage.getItem('jwt')}`
+          },
+          body: JSON.stringify({
+              personId: storedUserID,
+              phoneNumber: form.mobilePhone,
+              email: form.email,
+              profilePicId: finalProfilePicData?.PicID || null
+          })
+      });
 
-        Toast.show({ type: "success", text1: t("EditProfileScreen_ProfileUpdated") });
-        router.back();
+      if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Failed to update profile");
+      }
+
+      Toast.show({ type: "success", text1: t("EditProfileScreen_ProfileUpdated") });
+      router.back();
     } catch (error) {
-        Toast.show({ type: "error", text1: "Update Failed", text2: error.message });
+      Toast.show({ type: "error", text1: "Update Failed", text2: error.message });
     }
   };
 
   const isMaxFontSize = settings.fontSizeMultiplier === 3;
-  
-  const buttonContainerStyle = [
-    styles.buttonRow,
-    isMaxFontSize && styles.buttonColumn,
-  ];
-
-  const buttonStyle = [
-    styles.actionButton,
-    isMaxFontSize && { width: '85%' },
-  ];
+  const buttonContainerStyle = [ styles.buttonRow, isMaxFontSize && styles.buttonColumn ];
+  const buttonStyle = [ styles.actionButton, isMaxFontSize && { width: '85%' } ];
 
   return (
     <View style={styles.wrapper}>
@@ -333,9 +362,7 @@ export default function InstructorEditProfile() {
             keyboardType="phone-pad"
             maxLength={10}
           />
-          {errors.mobilePhone && (
-            <StyledText style={styles.errorText}>{errors.mobilePhone}</StyledText>
-          )}
+          {errors.mobilePhone && (<StyledText style={styles.errorText}>{errors.mobilePhone}</StyledText>)}
           <FloatingLabelInput
             style={styles.inputContainer}
             alignRight={Globals.userSelectedDirection === "rtl"}
@@ -371,8 +398,8 @@ export default function InstructorEditProfile() {
         picRole="Profile picture"
         onClose={() => setHistoryModalVisible(false)}
         onSelect={handleSelectFromHistory}
-        picturesInUse={[profilePic?.picId].filter(Boolean)}
-        clearedPictureIds={clearedPic && initialPic ? [JSON.parse(initialPic).picId] : []}
+        picturesInUse={[profilePic?.PicID].filter(Boolean)}
+        clearedPictureIds={clearedPic && initialPic ? [JSON.parse(initialPic)?.PicID] : []}
       />
     </View>
   );

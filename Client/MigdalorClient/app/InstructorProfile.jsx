@@ -12,20 +12,19 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import Header from "@/components/Header";
 import { Globals } from "@/app/constants/Globals";
-import { useAuth } from "@/context/AuthProvider";
 import FlipButton from "@/components/FlipButton";
 import BouncyButton from "@/components/BouncyButton";
-import StyledText from "@/components/StyledText"; // Import StyledText
+import StyledText from "@/components/StyledText";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
 export default function InstructorProfile() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { user: authUser } = useAuth();
   const { userId: paramUserId } = useLocalSearchParams();
-  
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
 
+  // --- REVERTED: State is simplified back to its original form ---
   const [form, setForm] = useState({
     name: "",
     mobilePhone: "",
@@ -41,19 +40,18 @@ export default function InstructorProfile() {
 
       const loadProfileData = async () => {
         setLoading(true);
-
         try {
-          // Determine which user ID to fetch: the one from params or the logged-in user
-          const loggedInUserId = authUser?.id;
-          const userIdToFetch = paramUserId || loggedInUserId;
+          const storedUserID = await AsyncStorage.getItem("userID");
+          if (isActive) setLoggedInUserId(storedUserID);
+
+          const userIdToFetch = paramUserId || storedUserID;
 
           if (!userIdToFetch) {
-            console.warn("No user ID to fetch profile for.");
             if (isActive) setLoading(false);
             return;
           }
           
-          // Use the correct API endpoint that accepts a user ID
+          // --- REVERTED: Using the correct, original endpoint for instructors ---
           const response = await fetch(
             `${Globals.API_BASE_URL}/api/People/InstructorDetails/${userIdToFetch}`
           );
@@ -65,10 +63,11 @@ export default function InstructorProfile() {
           const data = await response.json();
 
           if (isActive) {
-            // The API returns slightly different field names here
             const nameToDisplay = Globals.userSelectedLanguage === 'he' 
               ? data.hebName 
               : data.engName;
+            
+            // --- REVERTED: Setting only the simple form state ---
             setForm({
               name: nameToDisplay || "",
               mobilePhone: data.phoneNumber || "",
@@ -79,32 +78,24 @@ export default function InstructorProfile() {
         } catch (error) {
           console.error("Error fetching instructor profile:", error);
         } finally {
-          if (isActive) {
-            setLoading(false);
-          }
+          if (isActive) setLoading(false);
         }
       };
 
       loadProfileData();
 
-      return () => {
-        isActive = false;
-      };
-    }, [paramUserId, authUser]) // Re-run if the user ID in the param changes
+      return () => { isActive = false; };
+    }, [paramUserId])
   );
-
-  
 
   const profileImageSource =
     profilePic && profilePic.picPath
       ? { uri: `${Globals.API_BASE_URL}${profilePic.picPath}` }
       : defaultUserImage;
 
-    const loggedInUserId = authUser?.id;
     const viewingUserId = paramUserId || loggedInUserId;
     const isOwnProfile = loggedInUserId && viewingUserId && loggedInUserId === viewingUserId;
   
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -115,16 +106,12 @@ export default function InstructorProfile() {
   }
 
   const renderField = (label, value) => {
-    // Check the global direction variable
     const isRtl = Globals.userSelectedDirection === 'rtl';
-    
     return (
       <>
         <StyledText style={[styles.label, { textAlign: isRtl ? 'right' : 'left' }]}>
             {label}
         </StyledText>
-        
-        {/* Apply conditional text alignment to the value box */}
         <StyledText style={[styles.box, { textAlign: isRtl ? 'right' : 'left' }]}>
           {value || t("ProfileScreen_emptyDataField")}
         </StyledText>
@@ -132,24 +119,14 @@ export default function InstructorProfile() {
     );
   };
 
-  // Add this function inside your InstructorProfile component
   const handleImagePress = (imageUriToView, altText = "") => {
     if (!imageUriToView || imageUriToView === defaultUserImage) return; 
-
-    const paramsToPass = {
-      imageUri: imageUriToView.uri,
-      altText: altText,
-    };
-
-    console.log("Navigating to ImageViewScreen with params:", paramsToPass);
-
     router.push({
       pathname: "/ImageViewScreen",
-      params: paramsToPass,
+      params: { imageUri: imageUriToView.uri, altText },
     });
   };
   
-
   return (
     <View style={styles.wrapper}>
       <ScrollView contentContainerStyle={styles.scroll}>

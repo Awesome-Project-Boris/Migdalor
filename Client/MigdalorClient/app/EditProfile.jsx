@@ -801,8 +801,8 @@ export default function EditProfile() {
       ) => {
         if (currentPic.PicPath?.startsWith("file://")) {
           if (initialPic?.picId) await deletePicture(initialPic.picId, role);
-          return await uploadAndWrap(
-            currentPic,
+          return await uploadImage(
+            currentPic.PicPath, // Pass the image URI from PicPath
             role,
             currentPic.PicAlt || altText,
             storedUserID
