@@ -1,21 +1,18 @@
 // migdalor/src/context/SettingsContext.jsx
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useTranslation } from 'react-i18next';
-import { Globals } from '@/app/constants/Globals'; // For initial defaults
+import React, { createContext, useState, useEffect, useContext } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Globals } from "@/app/constants/Globals";
 
 // Keys for AsyncStorage
-const FONT_SIZE_KEY = '@userSelectedFontSize';
-const LANGUAGE_KEY = '@userSelectedLanguage';
-const NOTIFICATION_KEY = '@userNotificationsSetting';
+const FONT_SIZE_KEY = "@userSelectedFontSize";
+const LANGUAGE_KEY = "@userSelectedLanguage";
+const NOTIFICATION_KEY = "@userNotificationsSetting";
 
 // Create the context
 const SettingsContext = createContext();
 
 // Create the provider component
 export const SettingsProvider = ({ children }) => {
-  const { i18n } = useTranslation();
-
   const [settings, setSettings] = useState({
     fontSizeMultiplier: Globals.userSelectedFontSize,
     language: Globals.userSelectedLanguage,
@@ -31,20 +28,15 @@ export const SettingsProvider = ({ children }) => {
         const storedNotification = await AsyncStorage.getItem(NOTIFICATION_KEY);
 
         const loadedSettings = {
-          fontSizeMultiplier: storedSize ? JSON.parse(storedSize) : Globals.userSelectedFontSize,
+          fontSizeMultiplier: storedSize
+            ? JSON.parse(storedSize)
+            : Globals.userSelectedFontSize,
           language: storedLang || Globals.userSelectedLanguage,
-          notificationSetting: storedNotification || Globals.userNotificationsSetting,
+          notificationSetting:
+            storedNotification || Globals.userNotificationsSetting,
         };
 
         setSettings(loadedSettings);
-
-        // Apply the loaded language immediately
-        if (loadedSettings.language) {
-            await i18n.changeLanguage(loadedSettings.language);
-            Globals.userSelectedLanguage = loadedSettings.language;
-            Globals.userSelectedDirection = loadedSettings.language === "he" ? 'rtl' : 'ltr';
-        }
-
       } catch (e) {
         console.error("Failed to load settings from storage", e);
       } finally {
@@ -53,25 +45,21 @@ export const SettingsProvider = ({ children }) => {
     };
 
     loadSettings();
-  }, [i18n]);
+  }, []); // Note the empty dependency array
 
   // Generic function to update a setting
   const updateSetting = async (key, value) => {
     try {
-      setSettings(prev => ({ ...prev, [key]: value }));
+      setSettings((prev) => ({ ...prev, [key]: value }));
 
-      // Persist to AsyncStorage and update globals
       switch (key) {
-        case 'fontSizeMultiplier':
+        case "fontSizeMultiplier":
           await AsyncStorage.setItem(FONT_SIZE_KEY, JSON.stringify(value));
           break;
-        case 'language':
+        case "language":
           await AsyncStorage.setItem(LANGUAGE_KEY, value);
-          await i18n.changeLanguage(value);
-          Globals.userSelectedLanguage = value;
-          Globals.userSelectedDirection = value === "he" ? 'rtl' : 'ltr';
           break;
-        case 'notificationSetting':
+        case "notificationSetting":
           await AsyncStorage.setItem(NOTIFICATION_KEY, value);
           break;
         default:
@@ -81,10 +69,6 @@ export const SettingsProvider = ({ children }) => {
       console.error(`Failed to save setting ${key} to storage`, e);
     }
   };
-
-  if (isLoading) {
-    return null; // Or a loading spinner
-  }
 
   return (
     <SettingsContext.Provider value={{ settings, updateSetting, isLoading }}>
@@ -97,7 +81,7 @@ export const SettingsProvider = ({ children }) => {
 export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (context === undefined) {
-    throw new Error('useSettings must be used within a SettingsProvider');
+    throw new Error("useSettings must be used within a SettingsProvider");
   }
   return context;
 };

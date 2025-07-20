@@ -1086,17 +1086,31 @@ const resources = {
   },
 };
 
-i18next.use(initReactI18next).init({
-  resources,
-  lng: "en", // Set a default language synchronously
-  fallbackLng: "en", // Fallback to English if translation is missing
-  debug: true,
-  interpolation: {
-    escapeValue: false, // React already does escaping
-  },
+// i18next.use(initReactI18next).init({
+//   resources,
+//   lng: "en", // Set a default language synchronously
+//   fallbackLng: "en", // Fallback to English if translation is missing
+//   debug: true,
+//   interpolation: {
+//     escapeValue: false, // React already does escaping
+//   },
+//   react: {
+//     useSuspense: false, // Important for controlling splash screen
+//   },
+// });
+
+export const initializeI18n = async () => {
+  await i18next.init({
+    resources,
+    lng: "he", // Set a default language
+    fallbackLng: "en", // Fallback to English if translation is missing",
+    interpolation: {
+      escapeValue: false,
+    },
   react: {
     useSuspense: false, // Important for controlling splash screen
   },
-});
+  });
+};
 
 export default i18next;
