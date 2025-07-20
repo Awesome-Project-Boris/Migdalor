@@ -90,14 +90,15 @@ export default function InterestModal({
       color: "#444",
       marginTop: 25,
       marginBottom: 15,
+      textAlign: isRTL ? "right" : "left",
     },
-    // --- NEW STYLE for disclaimer ---
     disclaimerText: {
       fontSize: 14,
       color: "#6c757d",
       marginBottom: 15,
       marginTop: -10, // Pull it closer to the sub-header above it
       fontStyle: "italic",
+      textAlign: isRTL ? "right" : "left",
     },
     inputContainer: {
       marginBottom: 5,
@@ -121,30 +122,16 @@ export default function InterestModal({
       fontSize: 16,
     },
     addContainer: {
-      flexDirection: isRTL ? "row-reverse" : "row",
-      alignItems: "center",
-    },
-    addContainerColumn: {
       flexDirection: "column",
       alignItems: "stretch",
-    },
-    inputRow: {
-      flex: 1,
-      marginRight: isRTL ? 0 : 10,
-      marginLeft: isRTL ? 10 : 0,
-    },
-    inputColumn: {
-      marginBottom: 15,
+      gap: 15,
     },
     addButton: {
-      paddingVertical: 12,
+      paddingVertical: 16,
       paddingHorizontal: 25,
       borderRadius: 8,
       justifyContent: "center",
       alignItems: "center",
-    },
-    buttonColumn: {
-      width: "100%",
     },
     addButtonText: {
       fontSize: 16,
@@ -345,7 +332,7 @@ export default function InterestModal({
       </StyledText>
       <FlipButton
         onPress={handleConfirm}
-        style={[styles.acceptButton, useColumnLayout && styles.buttonColumn]}
+        style={[styles.acceptButton, useColumnLayout && { width: '100%' }]}
       >
         <StyledText style={styles.acceptButtonText}>
           {t("interestModal_acceptButton")}
@@ -402,6 +389,7 @@ export default function InterestModal({
             onChangeText={handleSearchChange}
             style={styles.inputContainer}
             alignRight={isRTL}
+            size={25}
           />
           <View
             style={[styles.interestContainer, { backgroundColor: "#f0f2f5" }]}
@@ -429,35 +417,22 @@ export default function InterestModal({
               <StyledText style={styles.subHeader}>
                 {t("interestModal_addNew")}
               </StyledText>
-              <View>
-                <View
-                  style={[
-                    styles.addContainer,
-                    useColumnLayout && styles.addContainerColumn,
-                  ]}
-                >
+              <View style={styles.addContainer}>
                   <FloatingLabelInput
                     label={t("interestModal_addPlaceholder")}
                     value={newInterestInput}
                     onChangeText={handleNewInterestChange}
-                    style={[
-                      styles.inputContainer,
-                      useColumnLayout ? styles.inputColumn : styles.inputRow,
-                    ]}
                     alignRight={isRTL}
+                    size={25}
                   />
                   <FlipButton
-                    style={[
-                      styles.addButton,
-                      useColumnLayout && styles.buttonColumn,
-                    ]}
+                    style={styles.addButton}
                     onPress={handleAddNewInterest}
                   >
                     <StyledText style={styles.addButtonText}>
                       {t("interestModal_addButton")}
                     </StyledText>
                   </FlipButton>
-                </View>
               </View>
             </>
           )}

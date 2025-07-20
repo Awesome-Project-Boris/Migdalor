@@ -1187,16 +1187,14 @@ export default function EditProfile() {
           </View>
         </View>
 
-        <View style={styles.privacyButtonContainer}>
-          <FlipButton
-            onPress={() => setPrivacyModalVisible(true)}
-            style={styles.privacyButton}
-          >
-            <StyledText style={styles.privacyButtonText}>
-              {t("PrivacySettings_title")}
-            </StyledText>
-          </FlipButton>
-        </View>
+        <FlipButton
+          onPress={() => setPrivacyModalVisible(true)}
+          style={styles.privacyButton}
+        >
+          <StyledText style={styles.privacyButtonText}>
+            {t("PrivacySettings_title")}
+          </StyledText>
+        </FlipButton>
 
         <View style={buttonContainerStyle}>
           <FlipButton
@@ -1449,15 +1447,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-  privacyButtonContainer: {
-    width: "85%",
-    alignSelf: "center",
-    marginTop: 40,
-  },
   privacyButton: {
-    paddingVertical: 15,
+    marginTop: 40,
+    marginBottom: 20,
+    alignSelf: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
     borderRadius: 8,
-    alignItems: "center",
     backgroundColor: "#6c757d",
   },
   privacyButtonText: {
