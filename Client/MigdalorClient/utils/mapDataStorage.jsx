@@ -7,6 +7,8 @@
 // Now all of this data was moved to SQL, and the only data left there is practically the vertices.
 // Maybe nodes too, to help with Djikstra navigation and references.
 
+
+// marks buildings
 const buildingsData = [
   {
     buildingId: "00000000-0000-0000-0000-0000000000B1",
@@ -2145,4 +2147,266 @@ const buildingsData = [
     ],
     apartments: [],
   },
+];
+
+
+// marks nodes - regular navigation, info and roads
+const mapNodes = [
+  { id: 1, coords: "32.309722, 34.895251", Description: "Map_Pin10" }, // grasslands and water fountain ( B71 )
+  { id: 2, coords: "32.309750, 34.895035" },
+  { id: 3, coords: "32.309747, 34.894634" },
+  { id: 4, coords: "32.309750, 34.894447" },
+  { id: 5, coords: "32.309818, 34.895326" },
+  { id: 6, coords: "32.309999, 34.895159" },
+  { id: 7, coords: "32.310278, 34.894875" },
+  { id: 8, coords: "32.310445, 34.894731" },
+  { id: 9, coords: "32.310346, 34.894651" },
+  { id: 10, coords: "32.310496, 34.894825" },
+  { id: 11, coords: "32.309563, 34.895390", Description: "Map_Pin7" }, // gym ( B1 )
+  { id: 12, coords: "32.309354, 34.895396", Description: "Map_Pin12" }, // Tavor building 1151-1354
+  { id: 13, coords: "32.308981, 34.895382" },
+  { id: 14, coords: "32.308796, 34.895373" },
+  { id: 15, coords: "32.309837, 34.895403" },
+  { id: 16, coords: "32.310092, 34.895416" },
+  { id: 17, coords: "32.310435, 34.895417" },
+  { id: 18, coords: "32.310623, 34.895429" },
+  { id: 19, coords: "32.310824, 34.895429" },
+  { id: 20, coords: "32.310990, 34.895439" },
+  { id: 21, coords: "32.311185, 34.895436" },
+  { id: 22, coords: "32.311536, 34.895443" },
+  { id: 23, coords: "32.311592, 34.895359" },
+  { id: 24, coords: "32.311725, 34.895195" },
+  { id: 25, coords: "32.311771, 34.894944" },
+  { id: 26, coords: "32.311731, 34.894781" },
+  { id: 27, coords: "32.311547, 34.894774" },
+  { id: 28, coords: "32.311429, 34.894771" },
+  { id: 29, coords: "32.311183, 34.894761" },
+  { id: 30, coords: "32.311039, 34.894761" },
+  { id: 31, coords: "32.310832, 34.894744" },
+  { id: 32, coords: "32.311556, 34.895576" },
+  { id: 33, coords: "32.311556, 34.895827" },
+  { id: 34, coords: "32.311542, 34.895974" },
+  { id: 35, coords: "32.311409, 34.895968" },
+  { id: 36, coords: "32.311252, 34.895979" },
+  { id: 37, coords: "32.311154, 34.895966" },
+  { id: 38, coords: "32.310977, 34.895949" },
+  { id: 39, coords: "32.310982, 34.895819" },
+  { id: 40, coords: "32.310990, 34.895593" },
+  { id: 41, coords: "32.310848, 34.895284" },
+  { id: 42, coords: "32.310909, 34.895069" },
+  { id: 43, coords: "32.310983, 34.894895" },
+  { id: 44, coords: "32.311229, 34.895287" },
+  { id: 45, coords: "32.311301, 34.895115" },
+  { id: 46, coords: "32.311376, 34.894984" },
+  { id: 47, coords: "32.311486, 34.894847" },
+  { id: 48, coords: "32.311167, 34.895594" },
+  { id: 49, coords: "32.311161, 34.895807" },
+  { id: 50, coords: "32.310435, 34.895285" },
+  { id: 51, coords: "32.310416, 34.895108" },
+  { id: 52, coords: "32.310348, 34.894969" },
+  { id: 53, coords: "32.310184, 34.894785" },
+  { id: 54, coords: "32.310021, 34.894691" },
+  { id: 55, coords: "32.309843, 34.894643" },
+  { id: 56, coords: "32.309626, 34.894643" },
+  { id: 57, coords: "32.309440, 34.894678" },
+  { id: 58, coords: "32.309305, 34.894767" },
+  { id: 59, coords: "32.309215, 34.894852" },
+  { id: 60, coords: "32.309092, 34.894710" },
+  { id: 61, coords: "32.309184, 34.894623" },
+  { id: 62, coords: "32.309002, 34.894827" },
+  { id: 63, coords: "32.309119, 34.894955" },
+  { id: 64, coords: "32.309037, 34.895099" },
+  { id: 65, coords: "32.308993, 34.895257" },
+  { id: 66, coords: "32.308981, 34.895519" },
+  { id: 67, coords: "32.308985, 34.895734" },
+  { id: 68, coords: "32.308979, 34.895869" },
+  { id: 69, coords: "32.310097, 34.895319" },
+  { id: 70, coords: "32.310056, 34.895225" },
+  { id: 71, coords: "32.309932, 34.895079" },
+  { id: 72, coords: "32.309824, 34.895035" },
+  { id: 73, coords: "32.309643, 34.895010" },
+  { id: 74, coords: "32.309498, 34.895069" },
+  { id: 75, coords: "32.309440, 34.895127" },
+  { id: 76, coords: "32.309390, 34.895193" },
+  { id: 77, coords: "32.309341, 34.895317" },
+  { id: 78, coords: "32.309339, 34.895528" },
+  { id: 79, coords: "32.309336, 34.895734" },
+  { id: 80, coords: "32.309330, 34.895887" },
+  { id: 81, coords: "32.308779, 34.895842" },
+  { id: 82, coords: "32.308764, 34.895713" },
+  { id: 83, coords: "32.308786, 34.895519" },
+  { id: 84, coords: "32.308815, 34.895212" },
+  { id: 85, coords: "32.308849, 34.894776" },
+  { id: 86, coords: "32.308896, 34.894469" },
+  { id: 87, coords: "32.308983, 34.894410" },
+  { id: 88, coords: "32.309140, 34.894407" },
+  { id: 89, coords: "32.309661, 34.894435" },
+  { id: 90, coords: "32.309856, 34.894433" },
+  { id: 91, coords: "32.310364, 34.894458" },
+  { id: 92, coords: "32.310667, 34.894481" },
+  { id: 93, coords: "32.310647, 34.894735" },
+  { id: 94, coords: "32.310647, 34.894735" },
+  { id: 95, coords: "32.310623, 34.895429" }, // FROM HERE ON OUT - INFO!
+  { id: 96, coords: "32.310140, 34.895695", Description: "Map_Pin1" }, // 1st floor ent, reception, resident service, lobby, cafeteria - on to apts and grass
+  { id: 97, coords: "32.309943, 34.895583", Description: "Map_Pin2" }, // 0stfloor resturaunt, אולם אירועים, barber shop, laundromat, creativity classes, exit to pool and gym
+  { id: 98, coords: "32.310223, 34.895552", Description: "Map_Pin3" }, // building B1 apts 101-120, 201-220, 301-332, 401-432
+  { id: 99, coords: "32.310838, 34.895509", Description: "Map_Pin4" }, // Building B2 apts 131-149, 231-249, 331-349, 431-449
+  { id: 100, coords: "32.310087, 34.895470", Description: "Map_Pin5" }, // 0st floor - infirmary and the hall of many occasions
+  { id: 101, coords: "32.310235, 34.895695", Description: "Map_Pin6" }, // 2nd floor - studio, synagouge, library, small lecture hall/room
+
+  { id: 102, coords: "32.309535, 34.895853", Description: "Map_Pin8" }, // pool ( B70 )
+
+  { id: 103, coords: "32.310934, 34.895481", Description: "Map_Pin11" }, // entrance to B2 - down to gallery and tunnel to B67, B68, B69
+  { id: 104, coords: "32.310895, 34.894612", Description: "Map_Pin12" }, // Tavor building 1151-1354
+  { id: 105, coords: "32.311279, 34.894629", Description: "Map_Pin13" }, // Carmel building 2151-2354
+  { id: 106, coords: "32.311588, 34.894638", Description: "Map_Pin14" }, // Gilboa building 3151 -3354
+  { id: 107, coords: "32.311710, 34.895507", Description: "Map_Pin15" }, // Oak place and Pétanque count ( B72 )
+  { id: 108, coords: "32.310581, 34.895520", Description: "Map_Pin16" }, // passage between B1 - B2 ( floors 0,1,2 )
+  { id: 109, coords: "32.310604, 34.895641", Description: "Map_Pin17" }, // Minimarket
+  { id: 110, coords: "32.310669, 34.895594", Description: "Map_Pin18" }, // B2 entrance
+  { id: 111, coords: "32.311243, 34.896109", Description: "Map_Pin19" }, // Entrance and armed guardian
+
+  // Roads
+  { id: 112, coords: "32.311246, 34.896106" }, // point 1
+  { id: 113, coords: "32.311297, 34.895976" }, // point 2
+  { id: 114, coords: "32.311642, 34.895955" }, // point 3
+  { id: 115, coords: "32.311902, 34.895444" }, // point 4
+  { id: 116, coords: "32.311760, 34.894841" }, // point 5
+  { id: 117, coords: "32.310238, 34.896034" }, // point 6
+  { id: 118, coords: "32.310168, 34.895851" }, // point 7
+  { id: 119, coords: "32.310040, 34.895963" }, // point 8
+  { id: 120, coords: "32.309426, 34.895888" }, // point 9
+  { id: 121, coords: "32.309259, 34.895894" }, // point 10
+  { id: 122, coords: "32.308741, 34.895856" }, // point 11
+  { id: 123, coords: "32.308869, 34.894392" }, // point 12
+  { id: 124, coords: "32.310668, 34.894426" }, // point 13
+  { id: 125, coords: "32.311778, 34.894467" }, // point 14
+  { id: 126, coords: "32.311800, 34.894701" }, // point 15
+  { id: 127, coords: "32.310657, 34.895346" }, // point 16
+];
+
+
+// vertices between nodes - for roads and walkable paths
+const vertices = [
+  { id: 1, pair: [1, 2] },
+  { id: 2, pair: [2, 3] },
+  { id: 3, pair: [3, 4] },
+  { id: 4, pair: [1, 5] },
+  { id: 5, pair: [5, 6] },
+  { id: 6, pair: [6, 7] },
+  { id: 7, pair: [7, 8] },
+  { id: 8, pair: [8, 9] },
+  { id: 9, pair: [8, 10] },
+  { id: 10, pair: [1, 11] },
+  { id: 11, pair: [11, 12] },
+  { id: 12, pair: [12, 13] },
+  { id: 13, pair: [13, 14] },
+  { id: 14, pair: [5, 15] },
+  { id: 15, pair: [15, 16] },
+  { id: 16, pair: [16, 17] },
+  { id: 17, pair: [17, 18] },
+  { id: 18, pair: [18, 19] },
+  { id: 19, pair: [19, 20] },
+  { id: 20, pair: [20, 21] },
+  { id: 21, pair: [21, 22] },
+  { id: 22, pair: [22, 23] },
+  { id: 23, pair: [23, 24] },
+  { id: 24, pair: [24, 25] },
+  { id: 25, pair: [25, 26] },
+  { id: 26, pair: [26, 27] },
+  { id: 27, pair: [27, 28] },
+  { id: 28, pair: [28, 29] },
+  { id: 29, pair: [29, 30] },
+  { id: 30, pair: [30, 31] }, /////
+  { id: 31, pair: [22, 32] },
+  { id: 32, pair: [32, 33] },
+  { id: 33, pair: [33, 34] },
+  { id: 34, pair: [34, 35] },
+  { id: 35, pair: [35, 36] },
+  { id: 36, pair: [36, 37] },
+  { id: 37, pair: [37, 38] },
+  { id: 38, pair: [38, 39] },
+  { id: 39, pair: [39, 40] },
+  { id: 40, pair: [40, 20] }, ///
+  { id: 41, pair: [19, 41] },
+  { id: 42, pair: [41, 42] },
+  { id: 43, pair: [42, 43] },
+  { id: 44, pair: [43, 30] },
+  { id: 45, pair: [21, 44] },
+  { id: 46, pair: [44, 45] },
+  { id: 47, pair: [45, 46] },
+  { id: 48, pair: [46, 47] },
+  { id: 49, pair: [47, 27] },
+  { id: 50, pair: [21, 48] },
+  { id: 51, pair: [48, 49] },
+  { id: 52, pair: [49, 37] },
+  { id: 53, pair: [17, 50] },
+  { id: 54, pair: [50, 51] },
+  { id: 55, pair: [51, 52] },
+  { id: 56, pair: [52, 7] },
+  { id: 57, pair: [7, 53] },
+  { id: 58, pair: [53, 54] },
+  { id: 59, pair: [54, 55] },
+  { id: 60, pair: [55, 3] },
+  { id: 61, pair: [3, 56] },
+  { id: 62, pair: [56, 57] },
+  { id: 63, pair: [57, 58] },
+  { id: 64, pair: [58, 59] },
+  { id: 65, pair: [59, 60] },
+  { id: 66, pair: [60, 61] },
+  { id: 67, pair: [60, 62] },
+  { id: 68, pair: [59, 63] },
+  { id: 69, pair: [63, 64] },
+  { id: 70, pair: [64, 65] },
+  { id: 71, pair: [65, 13] },
+  { id: 72, pair: [13, 66] },
+  { id: 73, pair: [66, 67] },
+  { id: 74, pair: [67, 68] },
+  { id: 75, pair: [16, 69] },
+  { id: 76, pair: [69, 70] },
+  { id: 77, pair: [70, 6] },
+  { id: 78, pair: [6, 71] },
+  { id: 79, pair: [71, 72] },
+  { id: 80, pair: [72, 2] },
+  { id: 81, pair: [2, 73] },
+  { id: 82, pair: [73, 74] },
+  { id: 83, pair: [74, 75] },
+  { id: 84, pair: [75, 76] },
+  { id: 85, pair: [76, 77] },
+  { id: 86, pair: [77, 12] },
+  { id: 87, pair: [12, 78] },
+  { id: 88, pair: [78, 79] },
+  { id: 89, pair: [79, 80] },
+  { id: 90, pair: [80, 68] },
+  { id: 91, pair: [68, 81] },
+  { id: 92, pair: [81, 82] },
+  { id: 93, pair: [82, 83] },
+  { id: 94, pair: [83, 14] },
+  { id: 95, pair: [14, 84] },
+  { id: 96, pair: [85, 85] },
+  { id: 97, pair: [85, 86] },
+  { id: 98, pair: [86, 87] },
+  { id: 99, pair: [87, 88] },
+  { id: 100, pair: [88, 89] },
+  { id: 101, pair: [89, 4] },
+  { id: 102, pair: [4, 90] },
+  { id: 103, pair: [90, 91] },
+  { id: 104, pair: [91, 92] },
+  { id: 105, pair: [92, 94] },
+  { id: 106, pair: [94, 18] },
+
+  { id: 107, pair: [112, 113] }, // Road nodes
+  { id: 108, pair: [113, 114] },
+  { id: 109, pair: [114, 115] },
+  { id: 110, pair: [115, 116] },
+  { id: 111, pair: [112, 117] },
+  { id: 112, pair: [117, 118] },
+  { id: 113, pair: [118, 119] },
+  { id: 114, pair: [119, 120] },
+  { id: 115, pair: [121, 122] },
+  { id: 116, pair: [122, 123] },
+  { id: 117, pair: [123, 124] },
+  { id: 118, pair: [124, 125] },
+  { id: 119, pair: [125, 126] },
+  { id: 120, pair: [124, 127] },
 ];
