@@ -1,15 +1,13 @@
+// src/pages/Dashboard.jsx
 import React from "react";
-import { Users, FileText, MessageSquare, CalendarDays } from "lucide-react"; // Import the new icon
+import {
+  Users,
+  FileText,
+  MessageSquare,
+  CalendarDays,
+  Clock,
+} from "lucide-react"; // <-- Import the new icon
 
-/**
- * A card component for the dashboard, acting as a navigation button.
- * @param {object} props
- * @param {string} props.title - The title of the card.
- * @param {string} props.description - A short description of the page.
- * @param {React.ReactNode} props.icon - The icon to display on the card.
- * @param {Function} props.onClick - The function to call when the card is clicked.
- * @param {string} props.colorClass - The background color class for the icon container.
- */
 const DashboardCard = ({ title, description, icon, onClick, colorClass }) => (
   <button
     onClick={onClick}
@@ -21,11 +19,6 @@ const DashboardCard = ({ title, description, icon, onClick, colorClass }) => (
   </button>
 );
 
-/**
- * The main dashboard component for the admin panel.
- * @param {object} props
- * @param {Function} props.setActivePage - Function to change the currently displayed page in the AdminLayout.
- */
 const Dashboard = ({ setActivePage }) => {
   return (
     <div className="p-8 bg-gray-50 min-h-full">
@@ -51,6 +44,14 @@ const Dashboard = ({ setActivePage }) => {
           icon={<CalendarDays className="h-10 w-10 text-white" />}
           colorClass="bg-red-500"
           onClick={() => setActivePage("events")}
+        />
+        {/* Add the new card for Opening Hours */}
+        <DashboardCard
+          title="ניהול שעות פתיחה" // <-- Add this card
+          description="הגדרת שעות הפעילות הרגילות וחריגות במערכת."
+          icon={<Clock className="h-10 w-10 text-white" />}
+          colorClass="bg-yellow-500"
+          onClick={() => setActivePage("openingHours")}
         />
         <DashboardCard
           title="דוחות"
