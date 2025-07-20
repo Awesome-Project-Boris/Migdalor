@@ -17,6 +17,7 @@ import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Header from "@/components/Header";
 import FlipButton from "@/components/FlipButton";
+import StyledText from "@/components/StyledText";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -120,9 +121,11 @@ export default function ActivitiesScreen() {
 
   const ListHeader = () => (
     <>
-      <Text style={styles.mainTitle}>
-        {t("Events_ActivitiesTitle", "Activities")}
-      </Text>
+      <View style={styles.plaqueContainer}>
+        <StyledText style={styles.mainTitle}>
+          {t("Events_ActivitiesTitle")}
+        </StyledText>
+      </View>
 
       {!isPermissionLoading && canInitiate && (
         <>
@@ -241,7 +244,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   mainTitle: {
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
@@ -264,5 +267,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 20,
+  },
+  plaqueContainer: {
+    width: "100%",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    padding: 20,
+    marginBottom: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginTop: 60, // Added requested margin
   },
 });

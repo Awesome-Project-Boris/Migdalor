@@ -102,8 +102,9 @@ namespace MigdalorServer.Controllers
                                              Host = h == null ? null : new HostDto
                                              {
                                                  HostId = h.PersonId,
-                                                 EnglishName = h.EngFirstName + " " + h.EngLastName,
-                                                 HebrewName = h.HebFirstName + " " + h.HebLastName
+                                                 EnglishName = h.PersonRole == "admin" ? "Administration" : h.EngFirstName + " " + h.EngLastName,
+                                                 HebrewName = h.PersonRole == "admin" ? "הנהלה" : h.HebFirstName + " " + h.HebLastName,
+                                                 Role = h.PersonRole
                                              }
                                          }).FirstOrDefaultAsync();
 
@@ -309,9 +310,10 @@ namespace MigdalorServer.Controllers
                     Description = e.Description,
                     Location = e.Location,
                     StartTime = e.StartDate,
-                    EndTime = e.EndDate ?? e.StartDate, // Use StartDate if EndDate is null
+                    EndTime = e.EndDate ?? e.StartDate,
                     SourceTable = "OH_Events",
-                    NavigationEventId = e.EventId // The event's own ID is used for navigation
+                    NavigationEventId = e.EventId,
+                    Status = "Scheduled" // One-time events are always considered scheduled
                 })
                 .ToListAsync();
             allEntries.AddRange(oneTimeEvents);
@@ -319,7 +321,7 @@ namespace MigdalorServer.Controllers
             // 2. Get recurring event instances from OH_EventInstances
             var eventInstances = await _context.OhEventInstances
                 .Where(i => i.StartTime >= startDate && i.StartTime <= endDate)
-                .Join(_context.OhEvents, // Join with OhEvents to get details like name and location
+                .Join(_context.OhEvents,
                       instance => instance.EventId,
                       parentEvent => parentEvent.EventId,
                       (instance, parentEvent) => new TimetableEntryDto
@@ -331,7 +333,9 @@ namespace MigdalorServer.Controllers
                           StartTime = instance.StartTime,
                           EndTime = instance.EndTime,
                           SourceTable = "OH_EventInstances",
-                          NavigationEventId = parentEvent.EventId // The PARENT event's ID is used for navigation
+                          NavigationEventId = parentEvent.EventId,
+                          Status = instance.Status, // Pass the status from the instance
+                          Notes = instance.Notes    // Pass the notes from the instance
                       })
                 .ToListAsync();
             allEntries.AddRange(eventInstances);
@@ -348,7 +352,8 @@ namespace MigdalorServer.Controllers
                     StartTime = a.StartTime,
                     EndTime = a.EndTime,
                     SourceTable = "OH_TimeTableAdditions",
-                    NavigationEventId = null // No navigation for manual additions
+                    NavigationEventId = null,
+                    Status = "Scheduled" // Manual additions are always considered scheduled
                 })
                 .ToListAsync();
             allEntries.AddRange(manualAdditions);

@@ -523,6 +523,7 @@ const resources = {
       Time: "Time",
       Location: "Location",
       Type: "Type",
+      TimeTable_Time: "Time",
 
       // Navigation
 
@@ -1045,10 +1046,10 @@ const resources = {
       Timetable_daily: "יומי",
       Timetable_weekly: "שבועי",
       Timetable_monthly: "חודשי",
-      minutes: "דקות",
-      Time: "שעה",
-      Location: "מיקום",
-      Type: "סוג",
+      TimeTable_Minutes: "דקות",
+      TimeTable_Location: "מיקום",
+      TimeTable_Type: "סוג",
+      TimeTable_Time: "שעה",
 
       // Navigation
       Navigation_Error: "שגיאת ניווט",
