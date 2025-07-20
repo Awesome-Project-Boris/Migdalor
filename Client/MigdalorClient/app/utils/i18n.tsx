@@ -119,14 +119,13 @@ const resources = {
         "This apartment number is not within the valid range.",
 
       interestModal_title: "Edit Hobbies",
-      interestModal_searchPlaceholder: "Search for an Hobbies...",
+      interestModal_searchPlaceholder: "Search for Hobbies...",
       interestModal_selectExisting: "Select from existing",
       interestModal_noResults: "No Hobbies found.",
       interestModal_addNew: "Or add a new one",
-      interestModal_addPlaceholder: "Type a new Hobbie ( Hebrew )",
+      interestModal_addPlaceholder: "Type a new Hobby ( Hebrew )",
       interestModal_addButton: "Add",
       interestModal_acceptButton: "Accept",
-      interestModa_newlyAdded: "Newly added Hobbies",
 
       interestModal_yourSelections: "Your Selections",
       interestModal_existsTitle: "Hobby Exists",
@@ -682,7 +681,6 @@ const resources = {
       interestModal_addPlaceholder: " הכניסו תחביב חדש ( עברית )",
       interestModal_addButton: "הוספה",
       interestModal_acceptButton: "אישור",
-      interestModa_newlyAdded: "תחביבים חדשים",
 
       interestModal_yourSelections: "הבחירות שלך",
       interestModal_existsTitle: "תחביב קיים",

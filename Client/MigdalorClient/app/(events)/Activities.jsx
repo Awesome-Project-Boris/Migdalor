@@ -136,7 +136,7 @@ export default function ActivitiesScreen() {
             textColor="#000000"
           >
             <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("Activities_AddNew")}
+              {t("NewActivity_Title", "Add a new activity")}
             </Text>
           </FlipButton>
 

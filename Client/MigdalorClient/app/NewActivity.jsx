@@ -28,7 +28,7 @@ import FlipButton from "@/components/FlipButton";
 import ImageViewModal from "@/components/ImageViewModal";
 import StyledText from "@/components/StyledText";
 import { Globals } from "@/app/constants/Globals";
-import { useSettings } from "@/context/SettingsContext"; // Import useSettings
+import { useSettings } from "@/context/SettingsContext";
 import { Card, Spinner, YStack } from "tamagui";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -71,6 +71,11 @@ export default function NewActivity() {
   const { settings } = useSettings();
   const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
+  // --- START: Language and Layout Direction Logic ---
+  // The isRTL flag will be used to control component props and styles
+  const isRTL = settings.language === "he";
+  // --- END: Language and Layout Direction Logic ---
+
   // State variables (all unchanged)
   const [eventName, setEventName] = useState("");
   const [description, setDescription] = useState("");
@@ -91,7 +96,7 @@ export default function NewActivity() {
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
   const [showImageViewModal, setShowImageViewModal] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false); // For AI pic generation
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const hasUnsavedChanges = () => {
     return (
@@ -103,7 +108,7 @@ export default function NewActivity() {
     );
   };
 
-  // --- Image Handling Logic ---
+  // --- Image Handling Logic (unchanged) ---
   const pickImage = async () => {
     const libraryPermission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -239,6 +244,7 @@ export default function NewActivity() {
     setShowImageViewModal(false);
   };
 
+  // --- Data Submission Logic (unchanged) ---
   const uploadImage = async (localUri, uploaderId) => {
     if (!localUri) return null;
 
@@ -421,6 +427,7 @@ export default function NewActivity() {
               value={eventName}
               onChangeText={setEventName}
               maxLength={100}
+              alignRight={isRTL}
             />
             {formErrors.eventName && (
               <StyledText style={styles.errorText}>
@@ -433,8 +440,9 @@ export default function NewActivity() {
               value={description}
               onChangeText={setDescription}
               multiline
-              inputStyle={{ height: 120, textAlignVertical: "top" }}
+              inputStyle={styles.descriptionInput}
               maxLength={500}
+              alignRight={isRTL}
             />
             {formErrors.description && (
               <StyledText style={styles.errorText}>
@@ -446,6 +454,7 @@ export default function NewActivity() {
               label={t("NewActivity_Location")}
               value={location}
               onChangeText={setLocation}
+              alignRight={isRTL}
             />
 
             <FloatingLabelInput
@@ -453,6 +462,8 @@ export default function NewActivity() {
               value={capacity}
               onChangeText={setCapacity}
               keyboardType="numeric"
+              alignRight={isRTL}
+              size={30}
             />
             {formErrors.capacity && (
               <StyledText style={styles.errorText}>
@@ -544,7 +555,11 @@ export default function NewActivity() {
             )}
 
             <View
-              style={[styles.timeRow, useColumnLayout && styles.timeColumn]}
+              style={[
+                styles.timeRow,
+                useColumnLayout && styles.timeColumn,
+                !useColumnLayout && isRTL && { flexDirection: "row-reverse" },
+              ]}
             >
               <View style={styles.timePickerContainer}>
                 <StyledText style={styles.timeLabel}>
@@ -595,7 +610,11 @@ export default function NewActivity() {
             )}
 
             <View
-              style={[styles.buttonRow, useColumnLayout && styles.buttonColumn]}
+              style={[
+                styles.buttonRow,
+                useColumnLayout && styles.buttonColumn,
+                !useColumnLayout && isRTL && { flexDirection: "row-reverse" },
+              ]}
             >
               <FlipButton
                 onPress={handleCancel}
@@ -649,7 +668,12 @@ export default function NewActivity() {
             <StyledText style={styles.confirmText}>
               {t("NewActivity_CancelPromptMessage")}
             </StyledText>
-            <View style={styles.confirmButtonRow}>
+            <View
+              style={[
+                styles.confirmButtonRow,
+                isRTL && { flexDirection: "row-reverse" },
+              ]}
+            >
               <FlipButton
                 onPress={() => setShowCancelConfirm(false)}
                 style={styles.confirmButton}
@@ -801,10 +825,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  descriptionInput: {
+    height: 120,
+    textAlignVertical: "top",
+  },
   errorText: {
     color: "red",
-    alignSelf: "flex-start",
-    marginLeft: 5,
+    width: "100%", // Ensure the container takes full width to allow text alignment
     marginTop: -10,
     marginBottom: 10,
     fontSize: 12,
