@@ -145,8 +145,9 @@ namespace MigdalorServer.Controllers
                                              Host = h == null ? null : new HostDto
                                              {
                                                  HostId = h.PersonId,
-                                                 EnglishName = h.EngFirstName + " " + h.EngLastName,
-                                                 HebrewName = h.HebFirstName + " " + h.HebLastName
+                                                 EnglishName = h.PersonRole == "admin" ? "Administration" : h.EngFirstName + " " + h.EngLastName,
+                                                 HebrewName = h.PersonRole == "admin" ? "הנהלה" : h.HebFirstName + " " + h.HebLastName,
+                                                 Role = h.PersonRole
                                              }
                                          }).FirstOrDefaultAsync();
 
@@ -376,7 +377,8 @@ namespace MigdalorServer.Controllers
                     StartTime = e.StartDate,
                     EndTime = e.EndDate ?? e.StartDate,
                     SourceTable = "OH_Events",
-                    NavigationEventId = e.EventId
+                    NavigationEventId = e.EventId,
+                    Status = "Scheduled" // One-time events are always considered scheduled
                 })
                 .ToListAsync();
             allEntries.AddRange(oneTimeEvents);
@@ -395,7 +397,9 @@ namespace MigdalorServer.Controllers
                           StartTime = instance.StartTime,
                           EndTime = instance.EndTime,
                           SourceTable = "OH_EventInstances",
-                          NavigationEventId = parentEvent.EventId
+                          NavigationEventId = parentEvent.EventId,
+                          Status = instance.Status, // Pass the status from the instance
+                          Notes = instance.Notes    // Pass the notes from the instance
                       })
                 .ToListAsync();
             allEntries.AddRange(eventInstances);
@@ -411,7 +415,8 @@ namespace MigdalorServer.Controllers
                     StartTime = a.StartTime,
                     EndTime = a.EndTime,
                     SourceTable = "OH_TimeTableAdditions",
-                    NavigationEventId = null
+                    NavigationEventId = null,
+                    Status = "Scheduled" // Manual additions are always considered scheduled
                 })
                 .ToListAsync();
             allEntries.AddRange(manualAdditions);

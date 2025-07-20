@@ -82,14 +82,24 @@ const getWeekDays = (date) => {
   return week;
 };
 
-// --- New Layout Algorithm for Daily View ---
+// --- Layout Algorithm for Daily View ---
 const layoutEvents = (events) => {
   if (!events || events.length === 0) {
     return [];
   }
 
-  const sortedEvents = [...events].sort(
-    (a, b) => new Date(a.startTime) - new Date(b.startTime)
+  const processedEvents = events.map((e) => {
+    const start = new Date(e.startTime);
+    let end = new Date(e.endTime);
+    // FIX: Explicitly check for invalid or zero-duration dates
+    if (isNaN(end.getTime()) || end <= start) {
+      end = new Date(start.getTime() + 60 * 60 * 1000); // Default to 1 hour long
+    }
+    return { ...e, startTime: start, endTime: end };
+  });
+
+  const sortedEvents = processedEvents.sort(
+    (a, b) => a.startTime - b.startTime
   );
 
   const layouted = [];
@@ -98,15 +108,12 @@ const layoutEvents = (events) => {
 
   const processCluster = (cluster) => {
     const columns = [];
-    cluster.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+    cluster.sort((a, b) => a.startTime - b.startTime);
 
     cluster.forEach((event) => {
       let placed = false;
       for (let i = 0; i < columns.length; i++) {
-        if (
-          new Date(columns[i][columns[i].length - 1].endTime) <=
-          new Date(event.startTime)
-        ) {
+        if (columns[i][columns[i].length - 1].endTime <= event.startTime) {
           columns[i].push(event);
           event.colIndex = i;
           placed = true;
@@ -128,17 +135,15 @@ const layoutEvents = (events) => {
   };
 
   sortedEvents.forEach((event) => {
-    const eventStartTime = new Date(event.startTime);
-    if (lastEndTime !== null && eventStartTime >= lastEndTime) {
+    if (lastEndTime !== null && event.startTime >= lastEndTime) {
       processCluster(currentCluster);
       currentCluster = [];
       lastEndTime = null;
     }
 
     currentCluster.push(event);
-    const eventEndTime = new Date(event.endTime);
-    if (lastEndTime === null || eventEndTime > lastEndTime) {
-      lastEndTime = eventEndTime;
+    if (lastEndTime === null || event.endTime > lastEndTime) {
+      lastEndTime = event.endTime;
     }
   });
 
@@ -183,9 +188,10 @@ const ViewSwitcher = ({ viewMode, setViewMode, onGoToToday, t }) => (
   </View>
 );
 
-const DailyView = ({ events, handleItemPress }) => {
+const DailyView = ({ events, handleItemPress, t }) => {
   const hourHeight = 80;
-  const hours = Array.from({ length: 16 }, (_, i) => i + 7); // 7 AM to 10 PM
+  // UPDATED: Start at 5:00 for 19 hours to end at 24:00 (11 PM slot)
+  const hours = Array.from({ length: 19 }, (_, i) => i + 5);
 
   const laidOutEvents = useMemo(() => layoutEvents(events), [events]);
 
@@ -193,37 +199,50 @@ const DailyView = ({ events, handleItemPress }) => {
     <ScrollView contentContainerStyle={styles.timelineContainer}>
       <View style={styles.hoursColumn}>
         {hours.map((hour) => (
+          // UPDATED: Offset by 5
           <Text
             key={hour}
-            style={[styles.hourText, { top: (hour - 7) * hourHeight - 10 }]}
+            style={[styles.hourText, { top: (hour - 5) * hourHeight - 10 }]}
           >{`${String(hour).padStart(2, "0")}:00`}</Text>
         ))}
       </View>
       <View style={styles.eventsColumn}>
         {hours.map((hour) => (
+          // UPDATED: Offset by 5
           <View
             key={`line-${hour}`}
-            style={[styles.hourLine, { top: (hour - 7) * hourHeight }]}
+            style={[styles.hourLine, { top: (hour - 5) * hourHeight }]}
           />
         ))}
         {laidOutEvents.map((event, index) => {
-          const start = new Date(event.startTime);
-          const end = new Date(event.endTime);
+          const start = event.startTime;
+          const end = event.endTime;
+          const timelineEnd = new Date(start);
+          timelineEnd.setHours(23, 59, 59, 999);
+
+          const cappedEnd = new Date(
+            Math.min(end.getTime(), timelineEnd.getTime())
+          );
+          const cappedDurationMillis = cappedEnd.getTime() - start.getTime();
+
+          // UPDATED: Offset by 5
           const top =
-            (start.getHours() - 7) * hourHeight +
+            (start.getHours() - 5) * hourHeight +
             (start.getMinutes() / 60) * hourHeight;
           const height = Math.max(
             30,
-            ((end.getTime() - start.getTime()) / (1000 * 60) / 60) *
-              hourHeight -
-              2
+            (cappedDurationMillis / (1000 * 60 * 60)) * hourHeight - 2
           );
+
+          const isCancelled =
+            event.status === "Cancelled" || event.status === "Postponed";
 
           return (
             <TouchableOpacity
-              key={event.id + index}
+              key={`${event.id}-${event.sourceTable}-${index}`}
               style={[
                 styles.eventBlock,
+                isCancelled && styles.cancelledEventBlock,
                 {
                   top,
                   height,
@@ -233,14 +252,41 @@ const DailyView = ({ events, handleItemPress }) => {
               ]}
               onPress={() => handleItemPress(event)}
             >
-              <Text style={styles.eventBlockTitle} numberOfLines={1}>
+              <Text
+                style={[
+                  styles.eventBlockTitle,
+                  isCancelled && styles.cancelledText,
+                ]}
+                numberOfLines={1}
+              >
                 {event.title}
               </Text>
-              <Text style={styles.eventBlockTime}>{`${formatTime(
-                event.startTime
-              )} - ${formatTime(event.endTime)}`}</Text>
+              {isCancelled && (
+                <Text
+                  style={[
+                    styles.eventBlockStatus,
+                    isRtl && { textAlign: "right" },
+                  ]}
+                >
+                  {t(event.status, event.status)}
+                </Text>
+              )}
+              <Text
+                style={[
+                  styles.eventBlockTime,
+                  isCancelled && styles.cancelledText,
+                ]}
+              >{`${formatTime(event.startTime)} - ${formatTime(
+                event.endTime
+              )}`}</Text>
               {event.location && (
-                <Text style={styles.eventBlockLocation} numberOfLines={1}>
+                <Text
+                  style={[
+                    styles.eventBlockLocation,
+                    isCancelled && styles.cancelledText,
+                  ]}
+                  numberOfLines={1}
+                >
                   {event.location}
                 </Text>
               )}
@@ -252,67 +298,46 @@ const DailyView = ({ events, handleItemPress }) => {
   );
 };
 
-// Timetable.jsx
-
 const WeeklySelector = ({ selectedDate, setSelectedDate, items }) => {
   const weekDays = getWeekDays(new Date(selectedDate));
-
-  // Split the week into two rows for the new layout
-  const topRowDays = weekDays.slice(0, 4); // Sunday, Monday, Tuesday, Wednesday
-  const bottomRowDays = weekDays.slice(4, 7); // Thursday, Friday, Saturday
-
-  // Helper function to render a single day button, keeps the code clean
-  const renderDayButton = (day, isLastInRow) => {
-    const dayString = day.toISOString().split("T")[0];
-    const isSelected = dayString === selectedDate;
-
-    // Apply a different style if it's the last button in a row to remove the right border
-    const buttonStyle = [
-      styles.weekDayButton,
-      isSelected && styles.weekDayButtonSelected,
-      isLastInRow && { borderRightWidth: 0 }, // No border on the far right
-    ];
-
-    return (
-      <TouchableOpacity
-        key={dayString}
-        style={buttonStyle}
-        onPress={() => setSelectedDate(dayString)}
-      >
-        <Text
-          style={[styles.weekDayText, isSelected && styles.weekDayTextSelected]}
-        >
-          {LocaleConfig.locales["he"].dayNamesShort[day.getDay()]}
-        </Text>
-        <Text
-          style={[
-            styles.weekDateText,
-            isSelected && styles.weekDayTextSelected,
-          ]}
-        >
-          {day.getDate()}
-        </Text>
-        {items[dayString] && items[dayString].length > 0 && (
-          <View
-            style={[styles.dot, isSelected && { backgroundColor: "white" }]}
-          />
-        )}
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <View style={styles.weekSelectorContainer}>
-      <View style={styles.weekRow}>
-        {topRowDays.map((day, index) =>
-          renderDayButton(day, index === topRowDays.length - 1)
-        )}
-      </View>
-      <View style={styles.weekRow}>
-        {bottomRowDays.map((day, index) =>
-          renderDayButton(day, index === bottomRowDays.length - 1)
-        )}
-      </View>
+      {weekDays.map((day) => {
+        const dayString = day.toISOString().split("T")[0];
+        const isSelected = dayString === selectedDate;
+        return (
+          <TouchableOpacity
+            key={dayString}
+            style={[
+              styles.weekDayButton,
+              isSelected && styles.weekDayButtonSelected,
+            ]}
+            onPress={() => setSelectedDate(dayString)}
+          >
+            <Text
+              style={[
+                styles.weekDayText,
+                isSelected && styles.weekDayTextSelected,
+              ]}
+            >
+              {LocaleConfig.locales["he"].dayNamesShort[day.getDay()]}
+            </Text>
+            <Text
+              style={[
+                styles.weekDateText,
+                isSelected && styles.weekDayTextSelected,
+              ]}
+            >
+              {day.getDate()}
+            </Text>
+            {items[dayString] && items[dayString].length > 0 && (
+              <View
+                style={[styles.dot, isSelected && { backgroundColor: "white" }]}
+              />
+            )}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 };
@@ -571,6 +596,9 @@ const TimetableScreen = () => {
         <Text style={styles.pageTitle}>
           {t("Timetable_Title", "לוח זמנים")}
         </Text>
+        <Text style={styles.pageSubTitle}>
+          {t("Timetable_SubTitle", "לוח זמנים")}
+        </Text>
         <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
       </View>
       <ViewSwitcher
@@ -622,6 +650,7 @@ const TimetableScreen = () => {
           <DailyView
             events={items[selectedDate] || []}
             handleItemPress={handleItemPress}
+            t={t}
           />
         </View>
       ) : (
@@ -671,6 +700,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#3D2B1F",
     marginTop: 15,
+  },
+  pageSubTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
+    color: "#3D2B1F",
+    marginTop: 15,
+    marginBottom: 10,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
   },
   mainTitle: {
     fontSize: 22,
@@ -778,7 +817,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     flexGrow: 1,
-    minHeight: 1280,
+    minHeight: 1440, // Adjusted for new time range
   },
   hoursColumn: { width: 60, paddingTop: 10 },
   hourText: { position: "absolute", right: 0, fontSize: 16, color: "#666" },
@@ -799,7 +838,11 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0,0,0,0.1)",
     backgroundColor: "#005D8F",
     paddingRight: 4,
-  }, // Added paddingRight for spacing
+  },
+  cancelledEventBlock: {
+    backgroundColor: "#6c757d", // A neutral grey for cancelled events
+    borderColor: "#5a6268",
+  },
   eventBlockTitle: { color: "white", fontWeight: "bold", fontSize: 18 },
   eventBlockTime: { color: "white", fontSize: 14, marginTop: 2, opacity: 0.9 },
   eventBlockLocation: {
@@ -808,6 +851,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontStyle: "italic",
     opacity: 0.9,
+  },
+  eventBlockStatus: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "bold",
+    marginTop: 4,
+  },
+  cancelledText: {
+    textDecorationLine: "line-through",
+    opacity: 0.7,
   },
   weekSelectorContainer: {
     flexDirection: "column", // Stack the rows vertically

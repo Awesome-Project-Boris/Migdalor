@@ -60,6 +60,7 @@ const resources = {
       Gallery: "Gallery",
       Cancel: "Cancel",
       Delete: "Delete",
+      Confirm: "Confirm",
       Confirm_Deletion: "Confirm Deletion",
       Confirm_Deletion_Message:
         "Are you sure you want to permanently delete this picture?",
@@ -526,6 +527,7 @@ const resources = {
       Time: "Time",
       Location: "Location",
       Type: "Type",
+      TimeTable_Time: "Time",
 
       // Navigation
 
@@ -609,6 +611,7 @@ const resources = {
       Gallery: "גלריה",
       Cancel: "ביטול",
       Delete: "מחק",
+      Confirm: "אישור",
       Confirm_Deletion: "אשר מחיקה",
       Confirm_Deletion_Message: "האם אתה בטוח שברצונך למחוק תמונה זו לצמיתות?",
       Picture_Deleted: "התמונה נמחקה",
@@ -1051,10 +1054,10 @@ const resources = {
       Timetable_daily: "יומי",
       Timetable_weekly: "שבועי",
       Timetable_monthly: "חודשי",
-      minutes: "דקות",
-      Time: "שעה",
-      Location: "מיקום",
-      Type: "סוג",
+      TimeTable_Minutes: "דקות",
+      TimeTable_Location: "מיקום",
+      TimeTable_Type: "סוג",
+      TimeTable_Time: "שעה",
 
       // Navigation
       Navigation_Error: "שגיאת ניווט",

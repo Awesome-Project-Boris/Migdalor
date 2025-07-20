@@ -17,8 +17,8 @@ namespace MigdalorServer.Services
 {
     /// <summary>
     /// A background service that runs daily tasks at a scheduled time.
-    /// 1. Generates an Excel report from all existing attendance data.
-    /// 2. Rolls over the existing data for the new day and adds any new residents.
+    /// 1. Generates an Excel report for the current day's attendance.
+    /// 2. Rolls over the existing data to prepare for the next day.
     /// </summary>
     public class DailyTasksService : IHostedService, IDisposable
     {
@@ -44,8 +44,9 @@ namespace MigdalorServer.Services
         {
             _logger.LogInformation("Daily Tasks Service is starting.");
 
-            const int TargetHour = 12;
-            const int TargetMinute = 58;
+            // CORRECTED: Set the target time to 10:32 AM
+            const int TargetHour = 10;
+            const int TargetMinute = 32;
 
             var now = DateTime.Now;
             var nextRunTime = DateTime.Today.AddHours(TargetHour).AddMinutes(TargetMinute);
@@ -75,7 +76,9 @@ namespace MigdalorServer.Services
                 var dbContext = scope.ServiceProvider.GetRequiredService<MigdalorDBContext>();
                 try
                 {
-                    var recordsToProcess = await dbContext.OhBokerTovs.ToListAsync();
+                    // Fetch all records from OH_BokerTov that are set for today.
+                    var today = DateTime.Now.Date;
+                    var recordsToProcess = await dbContext.OhBokerTovs.Where(r => r.AttendanceDate.Date == today).ToListAsync();
 
                     if (recordsToProcess.Any())
                     {
@@ -83,19 +86,23 @@ namespace MigdalorServer.Services
                     }
                     else
                     {
-                        _logger.LogInformation("No Boker Tov data found to report on. Skipping report generation.");
+                        _logger.LogInformation("No Boker Tov data found for today to report on. Skipping report generation.");
                     }
 
-                    var today = DateTime.Now.Date;
-                    foreach (var record in recordsToProcess)
+                    // CORRECTED: Prepare for TOMORROW
+                    var tomorrow = DateTime.Now.Date.AddDays(1);
+
+                    // Rollover all existing records (not just the ones from today) for the new day.
+                    var allRecords = await dbContext.OhBokerTovs.ToListAsync();
+                    foreach (var record in allRecords)
                     {
-                        record.AttendanceDate = today;
+                        record.AttendanceDate = tomorrow;
                         record.HasSignedIn = false;
                         record.SignInTime = null;
                     }
-                    _logger.LogInformation("Rolled over {count} existing records for the new day.", recordsToProcess.Count);
+                    _logger.LogInformation("Rolled over {count} existing records for tomorrow.", allRecords.Count);
 
-                    var processedResidentIds = recordsToProcess.Select(r => r.ResidentId).ToHashSet();
+                    var processedResidentIds = allRecords.Select(r => r.ResidentId).ToHashSet();
                     var newResidents = await dbContext.OhResidents
                         .Where(r => r.IsActive == true && !processedResidentIds.Contains(r.ResidentId))
                         .Select(r => r.ResidentId)
@@ -106,7 +113,7 @@ namespace MigdalorServer.Services
                         var newRecords = newResidents.Select(residentId => new OhBokerTov
                         {
                             ResidentId = residentId,
-                            AttendanceDate = today,
+                            AttendanceDate = tomorrow, // New residents also get set for tomorrow
                             HasSignedIn = false,
                             SignInTime = null
                         });
@@ -129,7 +136,8 @@ namespace MigdalorServer.Services
         /// </summary>
         private async Task GenerateReportFromData(List<OhBokerTov> records, MigdalorDBContext dbContext)
         {
-            var reportDate = DateTime.Now.AddDays(-1).Date;
+            // CORRECTED: The report is for today's date.
+            var reportDate = DateTime.Now.Date;
             _logger.LogInformation("Generating Boker Tov report for date: {reportDate}", reportDate);
 
             var residentIds = records.Select(r => r.ResidentId).ToList();
@@ -159,16 +167,11 @@ namespace MigdalorServer.Services
 
                 worksheet.RightToLeft = true;
 
-                // Insert the data as a formal Excel table
                 var table = worksheet.Cell("A1").InsertTable(reportData);
-
-                // Rename the headers of the newly created table
                 table.Field(0).Name = "שם מלא";
                 table.Field(1).Name = "מספר טלפון";
                 table.Field(2).Name = "האם נרשם/ה";
                 table.Field(3).Name = "זמן רישום";
-
-                // Apply a style to the table (optional, but looks nice)
                 table.Theme = XLTableTheme.TableStyleLight16;
 
                 worksheet.Columns().AdjustToContents();
@@ -183,7 +186,6 @@ namespace MigdalorServer.Services
                 summaryCell.Style.Font.Bold = true;
                 summaryCell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                 worksheet.Range(summaryCell, worksheet.Cell(lastRow + 2, 4)).Merge();
-
 
                 var contentRootPath = _hostingEnvironment.ContentRootPath;
                 var dailyAttendancePath = Path.Combine(contentRootPath, "Reports", "Daily Attendance");
@@ -219,5 +221,3 @@ namespace MigdalorServer.Services
         }
     }
 }
-
-

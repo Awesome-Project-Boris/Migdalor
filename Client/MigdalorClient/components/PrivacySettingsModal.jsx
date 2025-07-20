@@ -136,7 +136,7 @@ const PrivacySettingsModal = ({ visible, onClose, initialSettings, onSave }) => 
                 onPress={handleSaveChanges} 
                 style={[styles.button, useColumnLayout && styles.largeButton]}
               >
-                <StyledText style={styles.buttonText}>{t('EditProfileScreen_saveButton')}</StyledText>
+                <StyledText style={styles.buttonText}>{t('Confirm')}</StyledText>
               </FlipButton>
               <FlipButton 
                 onPress={onClose} 

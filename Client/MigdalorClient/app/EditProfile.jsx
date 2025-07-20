@@ -865,8 +865,8 @@ export default function EditProfile() {
         finalAdd2PicData || {
           PicID: null,
           PicName: "",
-          PicPath: "",
 
+          PicPath: "",
           PicAlt: "",
         }
       );
@@ -1081,7 +1081,17 @@ export default function EditProfile() {
             <StyledText style={styles.label}>
               {t("ProfileScreen_interests")}
             </StyledText>
-            <View style={styles.interestChipDisplay}>
+            <View
+              style={[
+                styles.interestChipDisplay,
+                {
+                  flexDirection:
+                    Globals.userSelectedDirection === "rtl"
+                      ? "row-reverse"
+                      : "row",
+                },
+              ]}
+            >
               {userInterests.length > 0 ? (
                 userInterests.map((interest) => (
                   <View
@@ -1094,7 +1104,18 @@ export default function EditProfile() {
                   </View>
                 ))
               ) : (
-                <StyledText style={styles.noInterestsText}>
+                <StyledText
+                  style={[
+                    styles.noInterestsText,
+                    {
+                      width: "100%",
+                      textAlign:
+                        Globals.userSelectedDirection === "rtl"
+                          ? "right"
+                          : "left",
+                    },
+                  ]}
+                >
                   {t("EditProfileScreen_noInterests")}
                 </StyledText>
               )}
@@ -1166,16 +1187,14 @@ export default function EditProfile() {
           </View>
         </View>
 
-        <View style={styles.privacyButtonContainer}>
-          <FlipButton
-            onPress={() => setPrivacyModalVisible(true)}
-            style={styles.privacyButton}
-          >
-            <StyledText style={styles.privacyButtonText}>
-              {t("PrivacySettings_title")}
-            </StyledText>
-          </FlipButton>
-        </View>
+        <FlipButton
+          onPress={() => setPrivacyModalVisible(true)}
+          style={styles.privacyButton}
+        >
+          <StyledText style={styles.privacyButtonText}>
+            {t("PrivacySettings_title")}
+          </StyledText>
+        </FlipButton>
 
         <View style={buttonContainerStyle}>
           <FlipButton
@@ -1428,15 +1447,13 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-  privacyButtonContainer: {
-    width: "85%",
-    alignSelf: "center",
-    marginTop: 40,
-  },
   privacyButton: {
-    paddingVertical: 15,
+    marginTop: 40,
+    marginBottom: 20,
+    alignSelf: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 30,
     borderRadius: 8,
-    alignItems: "center",
     backgroundColor: "#6c757d",
   },
   privacyButtonText: {

@@ -1330,12 +1330,12 @@ export const polylines = [
     ],
   },
   {
-    pair: "// Vertice between nodes 85 and 85",
+    pair: "// Vertice between nodes 84 and 85",
     streetName: "",
     path: [
       {
-        latitude: 32.308849,
-        longitude: 34.894776,
+        latitude: 32.308815,
+        longitude: 34.895212,
       },
       {
         latitude: 32.308849,
@@ -1480,6 +1480,20 @@ export const polylines = [
       {
         latitude: 32.310623,
         longitude: 34.895429,
+      },
+    ],
+  },
+{  
+    pair: "// Vertice between nodes 93 and 31",
+    streetName: "",
+    path: [
+      {
+        latitude: 32.310647,
+        longitude: 34.894735,
+      },
+      {
+        latitude: 32.310832,
+        longitude: 34.894744,
       },
     ],
   },
