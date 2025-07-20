@@ -10,7 +10,6 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "eas-build-pre-install": "node scripts/setup-google-services.js"
   },
   "jest": {
     "preset": "jest-expo"
