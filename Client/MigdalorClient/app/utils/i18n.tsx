@@ -561,6 +561,43 @@ const resources = {
       MapScreen_Pool: "Swimming Pool",
       MapScreen_GrasslandsAndFountain: "Main Lawn and Fountain",
       MapScreen_OakComplexAndPetanque: "Petanque court and oak tree complex",
+
+      MapScreen_Tavor: "Tavor Building",
+      MapScreen_Carmel: "Carmel Building",
+      MapScreen_Gilboa: "Gilboa Building",
+
+      Map_Pin1:
+        "1st Floor: Reception, Resident Services, Lobby, Cafeteria, and passage to apartments. Exit to main lawn.",
+      Map_Pin2:
+        "Ground Floor (0): Restaurant, Events Hall, Barber Shop, Laundry Room, Art Classrooms, and exit to the Gym and Swimming Pool.",
+      Map_Pin3:
+        "Building A - Apartments 101-120, 201-220, 301-332, and 401-432.",
+      Map_Pin4:
+        "Building B - Apartments 131-149, 231-249, 331-349, and 431-449.",
+      Map_Pin5: "Ground Floor (0): Health Clinic and Multipurpose Hall.",
+      Map_Pin6: "2nd Floor: Studio, Synagogue, and a small lecture room.",
+      Map_Pin7: "Gym",
+      Map_Pin8: "Swimming pool",
+      Map_Pin9:
+        "Stairs - Passage between the main lawn and the swimming pool, gym, and events hall.",
+      Map_Pin10: "Fountain and main lawn.",
+      Map_Pin11:
+        "Entrance to Building B - Descent to the Gallery and underground passages to the Tavor, Carmel, and Gilboa buildings.",
+      Map_Pin12: "Tavor Building - Apartments 1151-1354.",
+
+      Map_Pin13: "Carmel Building - Apartments 2151-2354.",
+
+      Map_Pin14: "Gilboa Building - Apartments 3151-3354.",
+
+      Map_Pin15: "Oak Compound and Petanque Court.",
+
+      Map_Pin16:
+        "Passage between buildings A and B - on Floors 0, 1, and 2 only.",
+      Map_Pin17: "The Grocery Store.",
+      Map_Pin18: "Entrance to Building B",
+      Map_Pin19: "Gated and guarded entrance",
+      MapScreen_LegendText:
+        "Red Arrows - Mark the direction of traffic on the road.\nGreen Route - Symbolizes the roads within the compound.\nYellow Paths - Symbolize the pedestrian walkways.\nYellow Pins - Mark points of interest that you can click on to get more information.",
     },
   },
   he: {
@@ -1087,12 +1124,46 @@ const resources = {
 
       // Buildings
 
-      MapScreen_B1: "בניין שלב א",
-      MapScreen_B2: "בניין שלב ב",
+      MapScreen_B1: "בניין שלב א'",
+      MapScreen_B2: "בניין שלב ב'",
       MapScreen_Pool: "הבריכה",
       MapScreen_GrasslandsAndFountain: "מדשאה ומזרקה",
       MapScreen_OakComplexAndPetanque: "מגרש פטאנק ומתחם עץ האלון",
       Common_Apartpment: "דירה ",
+
+      MapScreen_Tavor: "בניין תבור",
+      MapScreen_Carmel: "בניין כרמל",
+      MapScreen_Gilboa: "בניין גלבוע",
+
+      Map_Pin1:
+        "קומה 1: קבלה, שירותי דיירים, לובי, קפיטריה ומעבר לדירות. יציאה למדשאה המרכזית.",
+      Map_Pin2:
+        "קומת קרקע (0): מסעדה, אולם אירועים, מספרה, מכבסה, חדרי אומנות ויציאה לחדר הכושר ולבריכת השחייה.",
+      Map_Pin3: "בניין א' - דירות 101-120, 201-220, 301-332, ו-401-432.",
+      Map_Pin4: "בניין ב' - דירות 131-149, 231-249, 331-349, ו-431-449.",
+      Map_Pin5: "קומת קרקע (0): מרפאה ואולם רב-תכליתי.",
+      Map_Pin6: "קומה 2: סטודיו, בית כנסת וחדר הרצאות קטן.",
+      Map_Pin7: "חדר כושר",
+      Map_Pin8: "בריכת שחייה",
+      Map_Pin9:
+        "מדרגות - מעבר בין המדשאה המרכזית לבין בריכת השחייה, חדר הכושר ואולם האירועים.",
+      Map_Pin10: "המזרקה והמדשאה המרכזית.",
+      Map_Pin11:
+        "כניסה לבניין ב' - ירידה לגלריה ולמעברים התת-קרקעיים לבנייני תבור, כרמל וגלבוע.",
+      Map_Pin12: "בניין תבור - דירות 1151-1354.",
+
+      Map_Pin13: "בניין כרמל - דירות 2151-2354.",
+
+      Map_Pin14: "בניין גלבוע - דירות 3151-3354.",
+
+      Map_Pin15: "מתחם עץ האלון ומגרש הפטאנק.",
+
+      Map_Pin16: "מעבר בין בניין א' לבניין ב' - בקומות 0, 1 ו-2 בלבד.",
+      Map_Pin17: "מיני מרקט המכולת",
+      Map_Pin18: "כניסה לבניין שלב ב'",
+      Map_Pin19: "שער כניסה ושומר",
+      MapScreen_LegendText:
+        "החיצים האדומים - מסמנים את כיוון התנועה בכביש.\nהמסלול הירוק - מסמל את כבישי המתחם.\nהשבילים הצהובים - מסמלים את המדרכות הרגליות.\nהסיכות הצהובות - מסמנות נקודות עניין שאפשר ללחוץ עליהן על מנת לקבל עוד מידע.",
     },
   },
 };

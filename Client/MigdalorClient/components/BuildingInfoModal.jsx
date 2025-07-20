@@ -92,7 +92,9 @@ const BuildingInfoModal = ({ visible, building, onClose }) => {
   if (!visible || !building) return null;
 
   const hasApartments = building.apartments && building.apartments.length > 0;
-  let modalTitle = building.buildingName || t("Unknown Building");
+  let modalTitle = t(building.buildingName, {
+    defaultValue: "Unknown Building",
+  });
 
   if (hasApartments && building.apartments.length <= 2) {
     const apartmentNumbers = building.apartments
