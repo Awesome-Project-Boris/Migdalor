@@ -172,6 +172,8 @@ const resources = {
       Events_Confirm_Cancellation: "Confirm Cancellation",
       Events_Confirm_Move: "Confirm Move",
       Events_DescriptionPlaceholder: "e.g., Personal emergency, etc.",
+      Events_ClassesTab: "Classes",
+      Events_ActivitiesTab: "Activities",
 
       SettingsPopup_SettingsButton: "Settings",
       SettingsPopup_HomeButton: "Home",
@@ -719,6 +721,8 @@ const resources = {
       Events_Confirm_Cancellation: "אשר ביטול",
       Events_Confirm_Move: "אשר העברה",
       Events_DescriptionPlaceholder: "לדוגמה, מקרה חירום אישי וכו'.",
+      Events_ClassesTab: "חוגים",
+      Events_ActivitiesTab: "פעילויות",
 
       SettingsPopup_SettingsButton: "הגדרות",
       SettingsPopup_HomeButton: "בית",

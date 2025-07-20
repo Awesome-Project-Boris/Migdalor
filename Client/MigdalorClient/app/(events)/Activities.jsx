@@ -8,7 +8,6 @@ import React, {
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Globals } from "../../app/constants/Globals";
@@ -21,6 +20,54 @@ import StyledText from "@/components/StyledText";
 
 const ITEMS_PER_PAGE = 5;
 
+// Defined outside the main component to prevent re-rendering on every state change
+const ActivitiesListHeader = ({
+  t,
+  isRtl,
+  searchTerm,
+  setSearchTerm,
+  isPermissionLoading,
+  canInitiate,
+  router,
+}) => (
+  <>
+    <View style={styles.plaqueContainer}>
+      <StyledText style={styles.mainTitle}>
+        {t("Events_ActivitiesTitle")}
+      </StyledText>
+    </View>
+
+    {!isPermissionLoading && canInitiate && (
+      <>
+        <FlipButton
+          onPress={() => router.push("/NewActivity")}
+          style={styles.newActivityButton}
+        >
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+            {t("Activities_AddNew")}
+          </Text>
+        </FlipButton>
+        <FlipButton
+          onPress={() => router.push("/(events)/MyActivities")}
+          style={styles.myActivitiesButton}
+        >
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+            {t("Activities_MyCreatedActivities")}
+          </Text>
+        </FlipButton>
+      </>
+    )}
+
+    <FloatingLabelInput
+      label={t("Common_SearchPlaceholder", "Search by name...")}
+      value={searchTerm}
+      onChangeText={setSearchTerm}
+      style={styles.searchContainer}
+      alignRight={isRtl}
+    />
+  </>
+);
+
 export default function ActivitiesScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -32,7 +79,6 @@ export default function ActivitiesScreen() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
   const [canInitiate, setCanInitiate] = useState(false);
   const [isPermissionLoading, setIsPermissionLoading] = useState(true);
 
@@ -79,7 +125,6 @@ export default function ActivitiesScreen() {
           if (!response.ok)
             throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
           const data = await response.json();
-          console;
           setAllActivities(data.activities || []);
         } catch (err) {
           setError(err.message);
@@ -119,50 +164,6 @@ export default function ActivitiesScreen() {
     }
   };
 
-  const ListHeader = () => (
-    <>
-      <View style={styles.plaqueContainer}>
-        <StyledText style={styles.mainTitle}>
-          {t("Events_ActivitiesTitle")}
-        </StyledText>
-      </View>
-
-      {!isPermissionLoading && canInitiate && (
-        <>
-          <FlipButton
-            onPress={() => router.push("/NewActivity")}
-            style={styles.newActivityButton}
-            bgColor="#ffffff"
-            textColor="#000000"
-          >
-            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("Activities_AddNew")}
-            </Text>
-          </FlipButton>
-
-          <FlipButton
-            onPress={() => router.push("/MyActivities")}
-            style={styles.newActivityButton}
-            bgColor="#ffffff"
-            textColor="#000000"
-          >
-            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("Activities_MyCreatedActivities")}
-            </Text>
-          </FlipButton>
-        </>
-      )}
-
-      <FloatingLabelInput
-        label={t("Common_SearchPlaceholder", "Search by name...")}
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-        style={styles.searchContainer}
-        alignRight={i18n.dir() === "rtl"}
-      />
-    </>
-  );
-
   if (isLoading && !allActivities.length) {
     return (
       <View style={styles.container}>
@@ -191,7 +192,17 @@ export default function ActivitiesScreen() {
       <PaginatedListDisplay
         flatListRef={flatListRef}
         items={itemsForCurrentPage}
-        ListHeaderComponent={ListHeader}
+        ListHeaderComponent={
+          <ActivitiesListHeader
+            t={t}
+            isRtl={isRtl}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isPermissionLoading={isPermissionLoading}
+            canInitiate={canInitiate}
+            router={router}
+          />
+        }
         listContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <EventCard
@@ -223,7 +234,7 @@ export default function ActivitiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fef1e6", // Added background color
+    backgroundColor: "#fef1e6",
   },
   content: {
     flex: 1,
@@ -248,22 +259,25 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-    marginBottom: 20,
   },
   listContentContainer: {
     alignItems: "center",
   },
   listContainer: {
-    paddingTop: 75, // Top padding to account for the Header
+    paddingTop: 75,
     paddingHorizontal: 16,
     paddingBottom: 40,
     alignSelf: "center",
     width: "95%",
   },
   newActivityButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#28a745",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  myActivitiesButton: {
+    backgroundColor: "#17a2b8",
     paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 20,
@@ -282,6 +296,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginTop: 60, // Added requested margin
+    // marginTop: 60,
   },
 });

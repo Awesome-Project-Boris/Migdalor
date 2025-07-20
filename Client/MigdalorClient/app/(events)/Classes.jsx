@@ -17,6 +17,24 @@ import StyledText from "@/components/StyledText";
 
 const ITEMS_PER_PAGE = 5;
 
+// Defined outside the main component to prevent re-rendering
+const ClassesListHeader = ({ t, isRtl, searchTerm, setSearchTerm }) => (
+  <>
+    <View style={styles.plaqueContainer}>
+      <StyledText style={styles.mainTitle}>
+        {t("Events_ClassesTitle")}
+      </StyledText>
+    </View>
+    <FloatingLabelInput
+      label={t("Common_SearchPlaceholder", "Search by name...")}
+      value={searchTerm}
+      onChangeText={setSearchTerm}
+      style={styles.searchContainer}
+      alignRight={isRtl}
+    />
+  </>
+);
+
 export default function ClassesScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -39,8 +57,6 @@ export default function ClassesScreen() {
             throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
           const data = await response.json();
           setAllClasses(data.classes || []);
-          console.log("All data on classes: ", data);
-          console.log("Classes focus: ", data.classes);
         } catch (err) {
           setError(err.message);
         } finally {
@@ -78,23 +94,6 @@ export default function ClassesScreen() {
     }
   };
 
-  const ListHeader = () => (
-    <>
-      <View style={styles.plaqueContainer}>
-        <StyledText style={styles.mainTitle}>
-          {t("Events_ClassesTitle")}
-        </StyledText>
-      </View>
-      <FloatingLabelInput
-        label={t("Common_SearchPlaceholder", "Search by name...")}
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-        style={styles.searchContainer}
-        alignRight={isRtl}
-      />
-    </>
-  );
-
   if (isLoading && !allClasses.length) {
     return (
       <View style={styles.container}>
@@ -123,7 +122,14 @@ export default function ClassesScreen() {
       <PaginatedListDisplay
         flatListRef={flatListRef}
         items={itemsForCurrentPage}
-        ListHeaderComponent={ListHeader}
+        ListHeaderComponent={
+          <ClassesListHeader
+            t={t}
+            isRtl={isRtl}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
+        }
         listContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <EventCard
@@ -153,7 +159,7 @@ export default function ClassesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fef1e6", // Added background color
+    backgroundColor: "#fef1e6",
   },
   content: {
     flex: 1,
@@ -181,7 +187,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-    marginBottom: 20,
   },
   listContainer: {
     paddingTop: 75,
@@ -204,6 +209,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginTop: 60, // Added requested margin
+    // marginTop: 60,
   },
 });

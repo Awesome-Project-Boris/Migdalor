@@ -21,7 +21,7 @@ export default function SettingsLayout() {
         screenOptions={{
           tabBarStyle: { height: 70 },
           tabBarIconStyle: { height: 40, width: 40 },
-          tabBarLabelStyle: { fontSize: 12 },
+          tabBarLabelStyle: { fontSize: 14 },
           tabBarActiveTintColor: "#00b5d9",
           tabBarInactiveTintColor: "black",
         }}
