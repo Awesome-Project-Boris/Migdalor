@@ -151,8 +151,11 @@ export default function EventFocusScreen() {
     );
   };
 
+  console.log("This is the event host details: ", event);
+
   const handleHostPress = () => {
-    if (!event?.host?.hostId || event.host.role === "Admin") return;
+    if (!event?.host?.hostId || event.host.role?.toLowerCase() === "admin")
+      return;
     const pathname = event.isRecurring ? "/InstructorProfile" : "/Profile";
     router.push({
       pathname,
@@ -309,7 +312,10 @@ export default function EventFocusScreen() {
               label={t("EventFocus_Host", "Host")}
               value={hostName}
               onPress={handleHostPress}
-              isLink={!!event.host?.hostId && event.host.role !== "Admin"}
+              isLink={
+                !!event.host?.hostId &&
+                event.host.role?.toLowerCase() !== "admin"
+              }
               isLast={event.isRecurring}
             />
           )}
