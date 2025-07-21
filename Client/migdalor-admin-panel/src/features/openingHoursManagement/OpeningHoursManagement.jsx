@@ -246,7 +246,7 @@ const OpeningHoursManagement = () => {
       label: 'לו"ז שבועי',
       icon: Clock,
       content: (
-        <div dir="ltr">
+        <div>
           <SharedTable
             data={openingHours}
             columns={hoursColumns}
@@ -263,7 +263,7 @@ const OpeningHoursManagement = () => {
       label: 'חריגות בלו"ז',
       icon: Calendar,
       content: (
-        <div dir="ltr">
+        <div>
           <div className="flex justify-end mb-4">
             <Button
               onClick={() =>
@@ -291,7 +291,7 @@ const OpeningHoursManagement = () => {
       label: "שירותים",
       icon: List,
       content: (
-        <div dir="ltr">
+        <div>
           <SharedTable
             data={services}
             columns={servicesColumns}
