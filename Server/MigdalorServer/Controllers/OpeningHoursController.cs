@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Migdalor.Data;
+using MigdalorServer.Database;
 using Migdalor.DTOs;
 
 namespace Migdalor.Admin.Panel.Controllers
@@ -25,11 +25,11 @@ namespace Migdalor.Admin.Panel.Controllers
         public async Task<ActionResult<IEnumerable<ServiceDto>>> GetServices()
         {
             return await _context
-                .Services.Select(s => new ServiceDto
+                .OhServices.Select(s => new ServiceDto
                 {
-                    ServiceID = s.Id,
-                    HebrewName = s.Name,
-                    IsActive = s.IsActive,
+                    ServiceID = s.ServiceId,
+                    HebrewName = s.HebrewName,
+                    IsActive = (bool)s.IsActive,
                 })
                 .ToListAsync();
         }
