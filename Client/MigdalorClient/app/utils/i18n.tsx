@@ -525,7 +525,8 @@ const resources = {
       // Timetable
 
       Timetable_Title: "Timetable",
-      Timetable_SubTitle: "Timetable shows planned activities and classes",
+      Timetable_SubTitle:
+        "This timetable shows all planned classes and activities. To make things clear, cancelled events are marked in red, rescheduled events are in yellow, and events happening as planned are in blue. In the Daily View, you can scroll down to see the full schedule for today. In the Weekly and Monthly views, simply tap on any day to see its planned activities.",
       Timetable_NoActivities: "No activities planned for today.",
       Today: "Today",
       Timetable_daily: "Daily",
@@ -536,6 +537,13 @@ const resources = {
       Location: "Location",
       Type: "Type",
       TimeTable_Time: "Time",
+      Timetable_Cancelled: "Cancelled",
+      Timetable_Rescheduled: "Rescheduled",
+      hour: "hour",
+      hours: "hours",
+      TimeTable_Location: "Location",
+      TimeTable_Status: "Status",
+      TimeTable_Notes: "Notes",
 
       // Navigation
 
@@ -601,6 +609,14 @@ const resources = {
       Map_Pin19: "Gated and guarded entrance",
       MapScreen_LegendText:
         "Red Arrows - Mark the direction of traffic on the road.\nGreen Route - Symbolizes the roads within the compound.\nYellow Paths - Symbolize the pedestrian walkways.\nYellow Pins - Mark points of interest that you can click on to get more information.",
+
+      // Notification Drawer and symbols
+
+      Item_New: "New",
+      Notifications_NewListing: "New item in the Marketplace - click to view",
+      Notifications_NewNotice: "New notice published - click to read",
+      Notifications_NewEvent: "New activity or class added - click to see",
+      Notifications_NoNew: "No new notifications",
     },
   },
   he: {
@@ -1099,7 +1115,8 @@ const resources = {
       // Timetable
 
       Timetable_Title: "תוכניה",
-      Timetable_SubTitle: "תוכניה זו מציגה את הפעילויות והחוגים המתוכננים",
+      Timetable_SubTitle:
+        "תוכניה זו מציגה את החוגים והפעילויות המתוכננים - פעילויות וחוגים מבוטלים באדום, כאלה שנדחו בצהוב, ומתבצעים כמתוכנן בכחול. יש לגלול מטה במבט היומי על מנת לראות את לוח הזמנים של היום. בלוח השבועי הניתן לבחור יום ולראות את פעילותיו, וכך גם בלוח החודשי.",
       Timetable_NoActivities: "אין פעילות מתוכננת להיום",
       Today: "היום",
       Timetable_daily: "יומי",
@@ -1108,7 +1125,14 @@ const resources = {
       TimeTable_Minutes: "דקות",
       TimeTable_Location: "מיקום",
       TimeTable_Type: "סוג",
-      TimeTable_Time: "שעה",
+      Timetable_Cancelled: "בוטל",
+      Timetable_Rescheduled: "נדחה",
+      hour: "שעה",
+      hours: "שעות",
+      minutes: "דקות",
+      TimeTable_Time: "זמן",
+      TimeTable_Status: "סטטוס",
+      TimeTable_Notes: "הערות",
 
       // Navigation
       Navigation_Error: "שגיאת ניווט",
@@ -1170,6 +1194,14 @@ const resources = {
       Map_Pin19: "שער כניסה ושומר",
       MapScreen_LegendText:
         "החיצים האדומים - מסמנים את כיוון התנועה בכביש.\nהמסלול הירוק - מסמל את כבישי המתחם.\nהשבילים הצהובים - מסמלים את המדרכות הרגליות.\nהסיכות הצהובות - מסמנות נקודות עניין שאפשר ללחוץ עליהן על מנת לקבל עוד מידע.",
+
+      // Notification Drawer and symbols
+
+      Item_New: "חדש",
+      Notifications_NewListing: "פריט חדש בשוק - לחץ/י לצפייה",
+      Notifications_NewNotice: "מודעה חדשה פורסמה - לחץ/י לקריאה",
+      Notifications_NewEvent: "פעילות או חוג חדשים - לחץ/י לצפייה",
+      Notifications_NoNew: "אין התראות חדשות",
     },
   },
 };
@@ -1195,9 +1227,9 @@ export const initializeI18n = async () => {
     interpolation: {
       escapeValue: false,
     },
-  react: {
-    useSuspense: false, // Important for controlling splash screen
-  },
+    react: {
+      useSuspense: false, // Important for controlling splash screen
+    },
   });
 };
 

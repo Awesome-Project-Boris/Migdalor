@@ -17,6 +17,7 @@ import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Header from "@/components/Header";
 import FlipButton from "@/components/FlipButton";
 import StyledText from "@/components/StyledText";
+import { useNotifications } from "@/context/NotificationsContext";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -74,6 +75,7 @@ export default function ActivitiesScreen() {
   const flatListRef = useRef(null);
   const isRtl = i18n.dir() === "rtl";
 
+  const { updateLastVisited, isItemNew } = useNotifications();
   const [allActivities, setAllActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -81,6 +83,15 @@ export default function ActivitiesScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [canInitiate, setCanInitiate] = useState(false);
   const [isPermissionLoading, setIsPermissionLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        console.log("Events page unfocused, updating last visited time.");
+        updateLastVisited("events");
+      };
+    }, [updateLastVisited])
+  );
 
   const checkInitiatePermission = useCallback(async () => {
     setIsPermissionLoading(true);
@@ -138,14 +149,24 @@ export default function ActivitiesScreen() {
   );
 
   const filteredActivities = useMemo(() => {
-    if (!searchTerm) {
-      return allActivities;
+    const sourceArray = allActivities;
+
+    let filtered = sourceArray;
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      filtered = sourceArray.filter((c) =>
+        c.eventName.toLowerCase().includes(lowercasedTerm)
+      );
     }
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return allActivities.filter((c) =>
-      c.eventName.toLowerCase().includes(lowercasedTerm)
-    );
-  }, [allActivities, searchTerm]);
+
+    return filtered.sort((a, b) => {
+      const aIsNew = isItemNew("events", a.startDate);
+      const bIsNew = isItemNew("events", b.startDate);
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+      return new Date(b.startDate) - new Date(a.startDate);
+    });
+  }, [allActivities, searchTerm, isItemNew]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -251,6 +272,7 @@ export default function ActivitiesScreen() {
         renderItem={({ item }) => (
           <EventCard
             event={item}
+            isNew={isItemNew("events", item.startDate)} // Pass the isNew prop
             onPress={() =>
               router.push({
                 pathname: "/EventFocus",

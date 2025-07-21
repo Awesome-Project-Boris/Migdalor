@@ -49,6 +49,8 @@ namespace MigdalorServer.Controllers
         [HttpGet("{category}")]
         public IActionResult Get(string category)
         {
+            // This method uses a static call. If you need the timezone fix here as well,
+            // it would need to be rewritten similar to the main Get() method above.
             try
             {
                 return Ok(OhNotice.GetOhNoticesByCategory(category));
@@ -65,32 +67,26 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        [HttpGet("{id:int}")] // Route accepts an 'id' parameter
-        public async Task<ActionResult<OhNotice>> GetNoticeById(int id) // id matches the route parameter
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<OhNotice>> GetNoticeById(int id)
         {
-            if (id <= 0) // Basic validation
+            if (id <= 0)
             {
                 return BadRequest("Invalid Notice ID provided.");
             }
 
             try
             {
-                // Find the notice by its primary key (noticeID in the DB)
-                // Ensure your NoticeModel has the correct primary key property mapped (e.g., NoticeId)
                 var notice = await _context.OhNotices.FindAsync(id);
-
                 if (notice == null)
                 {
-                    return NotFound($"Notice with ID {id} not found."); // Return 404 if not found
+                    return NotFound($"Notice with ID {id} not found.");
                 }
-
-                return Ok(notice); // Return 200 OK with the notice data
+                return Ok(notice);
             }
             catch (Exception ex)
             {
-                // Log the exception (replace Console.WriteLine with your actual logger)
                 Console.WriteLine($"Error fetching notice with ID {id}: {ex.Message}");
-                // Return a generic 500 error to the client
                 return StatusCode(500, "An internal server error occurred.");
             }
         }
@@ -171,6 +167,34 @@ namespace MigdalorServer.Controllers
                         StatusCodes.Status500InternalServerError,
                         e.InnerException?.Message ?? e.Message
                     );
+            }
+        }
+
+        [HttpGet("latest-timestamp")]
+        public async Task<ActionResult<DateTime>> GetLatestNoticeTimestamp()
+        {
+            try
+            {
+                var latestNoticeDate = await _context.OhNotices
+                    .Where(n => n.CreationDate.HasValue)
+                    .OrderByDescending(n => n.CreationDate)
+                    .Select(n => n.CreationDate.Value) // Use .Value since we filtered for non-null
+                    .FirstOrDefaultAsync();
+
+                if (latestNoticeDate == default)
+                {
+                    return NotFound("No notices with a creation date found.");
+                }
+
+                // --- FIX: Specify that the DateTime from the DB should be treated as UTC ---
+                var utcDate = DateTime.SpecifyKind(latestNoticeDate, DateTimeKind.Utc);
+
+                return Ok(utcDate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching latest notice timestamp.");
+                return StatusCode(500, "An internal server error occurred.");
             }
         }
 

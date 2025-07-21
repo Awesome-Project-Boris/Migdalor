@@ -7,8 +7,10 @@ import StyledText from "@/components/StyledText.jsx";
 
 const placeholderImage = require("../assets/images/tempItem.jpg");
 
-export default function MarketplaceItemCard({ data, onPress }) {
-  const { t } = useTranslation();
+// --- MODIFIED: Accept the new 'isNew' prop ---
+export default function MarketplaceItemCard({ data, onPress, isNew }) {
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.dir() === "rtl";
 
   const imageUrl = data?.mainImagePath
     ? { uri: `${Globals.API_BASE_URL}${data.mainImagePath}` }
@@ -34,6 +36,20 @@ export default function MarketplaceItemCard({ data, onPress }) {
           {t("MarketplaceScreen_MoreDetailsButton")}
         </StyledText>
       </View>
+
+      {/* --- ADDED: The "New" badge, only appears if isNew is true --- */}
+      {isNew && (
+        <View
+          style={[
+            styles.newBadge,
+            isRtl ? styles.newBadgeRtl : styles.newBadgeLtr,
+          ]}
+        >
+          <StyledText style={styles.newBadgeText}>
+            {t("Item_New", "New")}
+          </StyledText>
+        </View>
+      )}
     </BouncyButton>
   );
 }
@@ -80,5 +96,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
     lineHeight: 16,
+  },
+  newBadge: {
+    position: "absolute",
+    top: 10,
+    backgroundColor: "#ff4757",
+    borderRadius: 5,
+    paddingHorizontal: 10, // Increased padding
+    paddingVertical: 5,
+    elevation: 5,
+  },
+  newBadgeLtr: {
+    right: 10, // Position on the right for LTR
+  },
+  newBadgeRtl: {
+    left: 10, // Position on the left for RTL
+  },
+  newBadgeText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14, // Increased font size
   },
 });

@@ -94,8 +94,10 @@ namespace MigdalorServer.Controllers
                         PictureId = e.PictureId,
                         PicturePath = pg.PicPath,
                         IsRecurring = e.IsRecurring,
-                        StartDate = e.StartDate,
-                        EndDate = e.EndDate,
+                        StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                        EndDate = e.EndDate.HasValue
+              ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc)
+              : (DateTime?)null,
                         Capacity = e.Capacity,
                         ParticipantsCount = e.OhEventRegistrations.Count(),
                         HostName = host != null ? host.HebFirstName + " " + host.HebLastName : "N/A"
@@ -566,6 +568,33 @@ namespace MigdalorServer.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("latest-timestamp")]
+        public async Task<ActionResult<DateTime>> GetLatestEventTimestamp()
+        {
+            try
+            {
+                var latestEventStartDate = await _context.OhEvents
+                    .OrderByDescending(e => e.EventId)
+                    .Select(e => e.StartDate)
+                    .FirstOrDefaultAsync();
+
+                if (latestEventStartDate == default)
+                {
+                    return NotFound("No events found.");
+                }
+
+                // --- FIX: Specify that the DateTime from the DB should be treated as UTC ---
+                var utcDate = DateTime.SpecifyKind(latestEventStartDate, DateTimeKind.Utc);
+
+                return Ok(utcDate);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching latest event timestamp: {ex.Message}");
+                return StatusCode(500, "An internal server error occurred.");
             }
         }
 

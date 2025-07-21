@@ -14,6 +14,7 @@ import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Header from "@/components/Header";
 import StyledText from "@/components/StyledText";
+import { useNotifications } from "@/context/NotificationsContext";
 
 const ITEMS_PER_PAGE = 5;
 
@@ -40,12 +41,22 @@ export default function ClassesScreen() {
   const router = useRouter();
   const flatListRef = useRef(null);
   const isRtl = i18n.dir() === "rtl";
+  const { updateLastVisited, isItemNew } = useNotifications();
 
   const [allClasses, setAllClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        console.log("Events page unfocused, updating last visited time.");
+        updateLastVisited("events");
+      };
+    }, [updateLastVisited])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -68,14 +79,25 @@ export default function ClassesScreen() {
   );
 
   const filteredClasses = useMemo(() => {
-    if (!searchTerm) {
-      return allClasses;
+    // The 'allActivities' or 'allClasses' variable should be used here
+    const sourceArray = allClasses; // Or allClasses for the other file
+
+    let filtered = sourceArray;
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      filtered = sourceArray.filter((c) =>
+        c.eventName.toLowerCase().includes(lowercasedTerm)
+      );
     }
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return allClasses.filter((c) =>
-      c.eventName.toLowerCase().includes(lowercasedTerm)
-    );
-  }, [allClasses, searchTerm]);
+
+    return filtered.sort((a, b) => {
+      const aIsNew = isItemNew("events", a.startDate);
+      const bIsNew = isItemNew("events", b.startDate);
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+      return new Date(b.startDate) - new Date(a.startDate);
+    });
+  }, [allClasses, searchTerm, isItemNew]); // Or [allClasses, searchTerm, isItemNew]
 
   useEffect(() => {
     setCurrentPage(1);
@@ -134,6 +156,7 @@ export default function ClassesScreen() {
         renderItem={({ item }) => (
           <EventCard
             event={item}
+            isNew={isItemNew("events", item.startDate)} // Pass the isNew prop
             onPress={() =>
               router.push({
                 pathname: "/EventFocus",

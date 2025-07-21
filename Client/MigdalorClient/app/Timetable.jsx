@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -10,7 +16,7 @@ import {
   FlatList,
 } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import { useSettings } from "@/context/SettingsContext";
@@ -18,7 +24,6 @@ import { useSettings } from "@/context/SettingsContext";
 import { Globals } from "./constants/Globals";
 import Header from "../components/Header";
 import FlipButton from "../components/FlipButton";
-import StyledText from "@/components/StyledText";
 
 // --- Locale Configuration ---
 LocaleConfig.locales["he"] = {
@@ -84,16 +89,13 @@ const getWeekDays = (date) => {
 
 // --- Layout Algorithm for Daily View ---
 const layoutEvents = (events) => {
-  if (!events || events.length === 0) {
-    return [];
-  }
+  if (!events || events.length === 0) return [];
 
   const processedEvents = events.map((e) => {
     const start = new Date(e.startTime);
     let end = new Date(e.endTime);
-    // FIX: Explicitly check for invalid or zero-duration dates
     if (isNaN(end.getTime()) || end <= start) {
-      end = new Date(start.getTime() + 60 * 60 * 1000); // Default to 1 hour long
+      end = new Date(start.getTime() + 60 * 60 * 1000);
     }
     return { ...e, startTime: start, endTime: end };
   });
@@ -101,7 +103,6 @@ const layoutEvents = (events) => {
   const sortedEvents = processedEvents.sort(
     (a, b) => a.startTime - b.startTime
   );
-
   const layouted = [];
   let lastEndTime = null;
   let currentCluster = [];
@@ -109,7 +110,6 @@ const layoutEvents = (events) => {
   const processCluster = (cluster) => {
     const columns = [];
     cluster.sort((a, b) => a.startTime - b.startTime);
-
     cluster.forEach((event) => {
       let placed = false;
       for (let i = 0; i < columns.length; i++) {
@@ -125,7 +125,6 @@ const layoutEvents = (events) => {
         event.colIndex = columns.length - 1;
       }
     });
-
     const numColumns = columns.length;
     cluster.forEach((event) => {
       event.width = 100 / numColumns;
@@ -140,17 +139,13 @@ const layoutEvents = (events) => {
       currentCluster = [];
       lastEndTime = null;
     }
-
     currentCluster.push(event);
     if (lastEndTime === null || event.endTime > lastEndTime) {
       lastEndTime = event.endTime;
     }
   });
 
-  if (currentCluster.length > 0) {
-    processCluster(currentCluster);
-  }
-
+  if (currentCluster.length > 0) processCluster(currentCluster);
   return layouted;
 };
 
@@ -188,18 +183,15 @@ const ViewSwitcher = ({ viewMode, setViewMode, onGoToToday, t }) => (
   </View>
 );
 
-const DailyView = ({ events, handleItemPress, t }) => {
+const DailyView = ({ events, handleItemPress, t, isRtl }) => {
   const hourHeight = 80;
-  // UPDATED: Start at 5:00 for 19 hours to end at 24:00 (11 PM slot)
   const hours = Array.from({ length: 19 }, (_, i) => i + 5);
-
   const laidOutEvents = useMemo(() => layoutEvents(events), [events]);
 
   return (
-    <ScrollView contentContainerStyle={styles.timelineContainer}>
+    <View style={styles.timelineContainer}>
       <View style={styles.hoursColumn}>
         {hours.map((hour) => (
-          // UPDATED: Offset by 5
           <Text
             key={hour}
             style={[styles.hourText, { top: (hour - 5) * hourHeight - 10 }]}
@@ -208,7 +200,6 @@ const DailyView = ({ events, handleItemPress, t }) => {
       </View>
       <View style={styles.eventsColumn}>
         {hours.map((hour) => (
-          // UPDATED: Offset by 5
           <View
             key={`line-${hour}`}
             style={[styles.hourLine, { top: (hour - 5) * hourHeight }]}
@@ -219,13 +210,10 @@ const DailyView = ({ events, handleItemPress, t }) => {
           const end = event.endTime;
           const timelineEnd = new Date(start);
           timelineEnd.setHours(23, 59, 59, 999);
-
           const cappedEnd = new Date(
             Math.min(end.getTime(), timelineEnd.getTime())
           );
           const cappedDurationMillis = cappedEnd.getTime() - start.getTime();
-
-          // UPDATED: Offset by 5
           const top =
             (start.getHours() - 5) * hourHeight +
             (start.getMinutes() / 60) * hourHeight;
@@ -234,56 +222,66 @@ const DailyView = ({ events, handleItemPress, t }) => {
             (cappedDurationMillis / (1000 * 60 * 60)) * hourHeight - 2
           );
 
-          const isCancelled =
-            event.status === "Cancelled" || event.status === "Postponed";
+          const isCancelled = event.status === "Cancelled";
+          const isRescheduled = event.status === "Rescheduled";
+          const isAltered = isCancelled || isRescheduled;
+
+          const eventBlockStyle = [
+            styles.eventBlock,
+            isCancelled && styles.cancelledEventBlock,
+            isRescheduled && styles.rescheduledEventBlock,
+            { top, height, left: `${event.left}%`, width: `${event.width}%` },
+          ];
+
+          const textStyle = [
+            isRescheduled ? styles.rescheduledEventText : styles.eventBlockText,
+            isCancelled && styles.cancelledText,
+          ];
 
           return (
             <TouchableOpacity
               key={`${event.id}-${event.sourceTable}-${index}`}
-              style={[
-                styles.eventBlock,
-                isCancelled && styles.cancelledEventBlock,
-                {
-                  top,
-                  height,
-                  left: `${event.left}%`,
-                  width: `${event.width}%`,
-                },
-              ]}
+              style={eventBlockStyle}
               onPress={() => handleItemPress(event)}
             >
               <Text
                 style={[
                   styles.eventBlockTitle,
-                  isCancelled && styles.cancelledText,
+                  ...textStyle,
+                  { textAlign: isRtl ? "right" : "left" },
                 ]}
                 numberOfLines={1}
               >
                 {event.title}
               </Text>
-              {isCancelled && (
+              {isAltered && (
                 <Text
                   style={[
                     styles.eventBlockStatus,
-                    isRtl && { textAlign: "right" },
+                    ...textStyle,
+                    { textAlign: isRtl ? "right" : "left" },
                   ]}
                 >
-                  {t(event.status, event.status)}
+                  {t(`Timetable_${event.status}`, event.status)}
                 </Text>
               )}
               <Text
                 style={[
                   styles.eventBlockTime,
-                  isCancelled && styles.cancelledText,
+                  ...textStyle,
+                  { textAlign: isRtl ? "right" : "left" },
                 ]}
-              >{`${formatTime(event.startTime)} - ${formatTime(
-                event.endTime
-              )}`}</Text>
+              >
+                {`${formatTime(event.startTime)} - ${formatTime(
+                  event.endTime
+                )}`}
+              </Text>
               {event.location && (
                 <Text
                   style={[
                     styles.eventBlockLocation,
-                    isCancelled && styles.cancelledText,
+                    ...textStyle,
+                    { textAlign: isRtl ? "right" : "left" },
                   ]}
                   numberOfLines={1}
                 >
@@ -294,7 +292,7 @@ const DailyView = ({ events, handleItemPress, t }) => {
           );
         })}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 
@@ -350,14 +348,16 @@ const ManualAdditionModal = ({ visible, onClose, item, isRtl, t }) => (
     onRequestClose={onClose}
   >
     <View style={styles.modalContainer}>
-      <Header />
       <ScrollView contentContainerStyle={styles.modalScrollContainer}>
         <View style={styles.modalHeader}>
-          <FlipButton onPress={onClose} isFlipped={true}>
-            <Ionicons name="close-outline" size={30} color="white" />
+          <FlipButton
+            onPress={onClose}
+            isFlipped={true}
+            style={styles.modalCloseButton}
+          >
+            <Ionicons name="close-outline" size={25} color="white" />
           </FlipButton>
         </View>
-
         {item && (
           <>
             <Text style={[styles.modalTitle, isRtl && styles.rtlText]}>
@@ -368,11 +368,10 @@ const ManualAdditionModal = ({ visible, onClose, item, isRtl, t }) => (
                 {item.description}
               </Text>
             )}
-
             <View style={styles.detailsContainer}>
               <DetailRow
                 icon="time-outline"
-                label={t("Time", "שעה")}
+                label={t("TimeTable_Time")}
                 value={`${formatTime(item.startTime)} - ${formatTime(
                   item.endTime
                 )}`}
@@ -381,16 +380,32 @@ const ManualAdditionModal = ({ visible, onClose, item, isRtl, t }) => (
               {item.location && (
                 <DetailRow
                   icon="location-outline"
-                  label={t("Location", "מיקום")}
+                  label={t("TimeTable_Location")}
                   value={item.location}
                   isRtl={isRtl}
                 />
               )}
-              {item.type && (
+              {item.type && !item.status && (
                 <DetailRow
                   icon="information-circle-outline"
                   label={t("Type", "סוג")}
-                  value={item.type}
+                  value={t(item.type, item.type)} // Translate the value
+                  isRtl={isRtl}
+                />
+              )}
+              {item.status && item.status !== "Scheduled" && (
+                <DetailRow
+                  icon="alert-circle-outline"
+                  label={t("TimeTable_Status")}
+                  value={t(`Timetable_${item.status}`, item.status)} // Use the correct prefixed key
+                  isRtl={isRtl}
+                />
+              )}
+              {item.notes && (
+                <DetailRow
+                  icon="document-text-outline"
+                  label={t("TimeTable_Notes")}
+                  value={item.notes}
                   isRtl={isRtl}
                   isLast={true}
                 />
@@ -439,20 +454,19 @@ const TimetableScreen = () => {
     new Date().toISOString().split("T")[0]
   );
   const [calendarKey, setCalendarKey] = useState(Date.now());
-
   const loadedMonths = useMemo(() => new Set(), []);
+  const [currentMonth, setCurrentMonth] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   const loadItemsForMonth = useCallback(
     async (dateObj) => {
       const month = dateObj.dateString.substring(0, 7);
       if (loadedMonths.has(month)) return;
-
       setLoading(true);
       loadedMonths.add(month);
-
       const startDate = new Date(dateObj.year, dateObj.month - 1, 1);
       const endDate = new Date(dateObj.year, dateObj.month, 0);
-
       try {
         const response = await fetch(
           `${
@@ -460,7 +474,6 @@ const TimetableScreen = () => {
           }/api/events/timetable?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
         );
         if (!response.ok) throw new Error("Failed to fetch timetable data.");
-
         const data = await response.json();
         setItems((prevItems) => {
           const newItems = { ...prevItems };
@@ -485,18 +498,39 @@ const TimetableScreen = () => {
     [loadedMonths]
   );
 
-  useEffect(() => {
-    const today = new Date();
-    loadItemsForMonth({
-      dateString: selectedDate,
-      year: today.getFullYear(),
-      month: today.getMonth() + 1,
-      day: today.getDate(),
-    });
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      // This function runs when the screen comes into focus
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+
+      // 1. Clear all previous data to prevent duplicates
+      setItems({});
+      loadedMonths.clear();
+
+      // 2. Reset view to today's date and fetch fresh data
+      setSelectedDate(todayStr);
+      setCurrentMonth(todayStr); // Reset the calendar view as well
+
+      loadItemsForMonth({
+        dateString: todayStr,
+        year: today.getFullYear(),
+        month: today.getMonth() + 1,
+        day: today.getDate(),
+      });
+
+      // 3. Return a cleanup function to run when the user navigates away
+      return () => {
+        setItems({});
+        loadedMonths.clear();
+      };
+    }, [loadItemsForMonth]) // Dependency ensures the effect has the latest fetch function
+  );
 
   const handleItemPress = (item) => {
-    if (item.sourceTable === "OH_TimeTableAdditions") {
+    const isAlteredStatus =
+      item.status === "Cancelled" || item.status === "Rescheduled";
+    if (item.sourceTable === "OH_TimeTableAdditions" || isAlteredStatus) {
       setSelectedItem(item);
       setModalVisible(true);
     } else if (item.navigationEventId) {
@@ -510,13 +544,13 @@ const TimetableScreen = () => {
   const goToToday = () => {
     const todayStr = new Date().toISOString().split("T")[0];
     setSelectedDate(todayStr);
-    setCalendarKey(Date.now()); // Force calendar to re-render and jump to the new date
+    setCurrentMonth(todayStr);
+    setCalendarKey(Date.now());
   };
 
   const getCurrentTitle = () => {
     const date = new Date(selectedDate);
     date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-
     if (viewMode === "daily") {
       return date.toLocaleDateString(i18n.language, {
         weekday: "long",
@@ -544,35 +578,74 @@ const TimetableScreen = () => {
     });
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.itemContainer}
-      onPress={() => handleItemPress(item)}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.itemTextName, isRtl && styles.rtlText]}>
-          {item.title}
-        </Text>
-        <Text
-          style={[styles.itemTextTime, isRtl && styles.rtlText]}
-        >{`${formatTime(item.startTime)} - ${formatTime(item.endTime)}`}</Text>
-        {item.location && (
-          <Text style={[styles.itemTextLocation, isRtl && styles.rtlText]}>
-            {item.location}
+  const formatDuration = (start, end) => {
+    const diffMinutes = Math.round((new Date(end) - new Date(start)) / 60000);
+    if (diffMinutes >= 60) {
+      const hours = Math.floor(diffMinutes / 60);
+      const minutes = diffMinutes % 60;
+      const hourText = t(hours > 1 ? "hours" : "hour");
+      if (minutes === 0) {
+        return `${hours} ${hourText}`;
+      }
+      return `${hours} ${hourText} ${minutes} ${t("minutes")}`;
+    }
+    return `${diffMinutes} ${t("minutes")}`;
+  };
+
+  const renderItem = ({ item }) => {
+    const isCancelled = item.status === "Cancelled";
+    const isRescheduled = item.status === "Rescheduled";
+    const isAltered = isCancelled || isRescheduled;
+
+    const containerStyle = [
+      styles.itemContainer,
+      isCancelled && styles.cancelledItemContainer,
+      isRescheduled && styles.rescheduledItemContainer,
+      { flexDirection: isRtl ? "row-reverse" : "row" }, // Add this line
+    ];
+
+    return (
+      <TouchableOpacity
+        style={containerStyle}
+        onPress={() => handleItemPress(item)}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.itemTextName, isRtl && styles.rtlText]}>
+            {item.title}
           </Text>
-        )}
-      </View>
-      <View style={styles.itemDurationContainer}>
-        <Ionicons name="time-outline" size={16} color="#5c4b33" />
-        <Text style={styles.itemDurationText}>
-          {Math.round(
-            (new Date(item.endTime) - new Date(item.startTime)) / 60000
-          )}{" "}
-          {t("minutes", "דקות")}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+          <Text
+            style={[styles.itemTextTime, isRtl && styles.rtlText]}
+          >{`${formatTime(item.startTime)} - ${formatTime(
+            item.endTime
+          )}`}</Text>
+          {item.location && (
+            <Text style={[styles.itemTextLocation, isRtl && styles.rtlText]}>
+              {item.location}
+            </Text>
+          )}
+          {isAltered && (
+            <View
+              style={[
+                styles.statusBadge,
+                isCancelled ? styles.cancelledBadge : styles.rescheduledBadge,
+                { alignSelf: isRtl ? "flex-end" : "flex-start" }, // This line fixes the alignment
+              ]}
+            >
+              <Text style={styles.statusBadgeText}>
+                {t(`Timetable_${item.status}`, item.status)}
+              </Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.itemDurationContainer}>
+          <Ionicons name="time-outline" size={16} color="#5c4b33" />
+          <Text style={styles.itemDurationText}>
+            {formatDuration(item.startTime, item.endTime)}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const markedDates = useMemo(() => {
     const marked = {};
@@ -593,13 +666,20 @@ const TimetableScreen = () => {
   const ListHeader = () => (
     <>
       <View style={styles.headerPlaque}>
-        <Text style={styles.pageTitle}>
-          {t("Timetable_Title", "לוח זמנים")}
-        </Text>
-        <Text style={styles.pageSubTitle}>
-          {t("Timetable_SubTitle", "לוח זמנים")}
-        </Text>
+        <Text style={styles.pageTitle}>{t("Timetable_Title")}</Text>
+        <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle")}</Text>
         <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {loading && (
+            <ActivityIndicator style={{ marginLeft: 10 }} color="#005D8F" />
+          )}
+        </View>
       </View>
       <ViewSwitcher
         viewMode={viewMode}
@@ -609,11 +689,18 @@ const TimetableScreen = () => {
       />
       {viewMode === "monthly" && (
         <Calendar
-          key={calendarKey}
-          onDayPress={(day) => setSelectedDate(day.dateString)}
-          onMonthChange={(month) => loadItemsForMonth(month)}
+          onDayPress={(day) => {
+            // Update the onDayPress logic
+            setSelectedDate(day.dateString);
+            setCurrentMonth(day.dateString); // Also set the visible month
+          }}
+          onMonthChange={(month) => {
+            // Update the onMonthChange logic
+            setCurrentMonth(month.dateString);
+            loadItemsForMonth(month);
+          }}
           markedDates={markedDates}
-          current={selectedDate}
+          current={currentMonth}
           style={styles.calendar}
           theme={{
             calendarBackground: "#ffffff",
@@ -643,21 +730,42 @@ const TimetableScreen = () => {
   return (
     <View style={styles.container}>
       <Header />
-
       {viewMode === "daily" ? (
-        <View style={{ flex: 1 }}>
-          <ListHeader />
+        <ScrollView
+          style={{ flex: 1 }}
+          stickyHeaderIndices={[1]} // This tells the ScrollView to "stick" the second child (index 1) to the top.
+          showsVerticalScrollIndicator={false} // Optional: for a cleaner look
+        >
+          {/* Child 0: The part that scrolls away */}
+          <View style={styles.headerPlaque}>
+            <Text style={styles.pageTitle}>{t("Timetable_Title")}</Text>
+            <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle")}</Text>
+            <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
+          </View>
+
+          {/* Child 1: The View Switcher that will become sticky */}
+          <ViewSwitcher
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            t={t}
+            onGoToToday={goToToday}
+          />
+
+          {/* Child 2: The main content */}
           <DailyView
             events={items[selectedDate] || []}
             handleItemPress={handleItemPress}
             t={t}
+            isRtl={isRtl}
           />
-        </View>
+        </ScrollView>
       ) : (
         <FlatList
           data={items[selectedDate] || []}
           renderItem={renderItem}
-          keyExtractor={(item, index) => `${item.id}-${index}`}
+          keyExtractor={(item, index) =>
+            `${item.id}-${item.sourceTable}-${index}`
+          }
           ListHeaderComponent={ListHeader}
           ListEmptyComponent={() => (
             <View style={styles.emptyDateContainer}>
@@ -669,13 +777,6 @@ const TimetableScreen = () => {
           contentContainerStyle={styles.listContainer}
         />
       )}
-
-      {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#005D8F" />
-        </View>
-      )}
-
       <ManualAdditionModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -689,11 +790,7 @@ const TimetableScreen = () => {
 
 // --- Styles ---
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fef1e6",
-    paddingTop: 60,
-  },
+  container: { flex: 1, backgroundColor: "#fef1e6", paddingTop: 60 },
   pageTitle: {
     fontSize: 32,
     fontWeight: "bold",
@@ -727,7 +824,8 @@ const styles = StyleSheet.create({
   },
   viewSwitcherContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    flexWrap: "wrap",
     alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 15,
@@ -735,6 +833,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e0c4a2",
     borderBottomWidth: 1,
     marginBottom: 10,
+    gap: 10, // Optional: adds space between wrapped items
   },
   modeButtonsContainer: { flexDirection: "row" },
   viewSwitcherButton: {
@@ -783,6 +882,14 @@ const styles = StyleSheet.create({
     borderLeftWidth: 6,
     borderLeftColor: "#005D8F",
   },
+  cancelledItemContainer: {
+    borderLeftColor: "#dc3545",
+    backgroundColor: "#fff5f5",
+  },
+  rescheduledItemContainer: {
+    borderLeftColor: "#ffc107",
+    backgroundColor: "#fffcf2",
+  },
   itemTextName: { fontSize: 22, fontWeight: "bold", color: "#3D2B1F" },
   itemTextTime: { fontSize: 18, color: "#444", marginTop: 4 },
   itemTextLocation: {
@@ -817,7 +924,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     flexGrow: 1,
-    minHeight: 1440, // Adjusted for new time range
+    minHeight: 1440,
   },
   hoursColumn: { width: 60, paddingTop: 10 },
   hourText: { position: "absolute", right: 0, fontSize: 16, color: "#666" },
@@ -833,37 +940,39 @@ const styles = StyleSheet.create({
     position: "absolute",
     borderRadius: 8,
     padding: 8,
-    justifyContent: "center",
+    justifyContent: "flex-start",
     borderWidth: 1,
     borderColor: "rgba(0,0,0,0.1)",
     backgroundColor: "#005D8F",
     paddingRight: 4,
+    overflow: "hidden",
   },
-  cancelledEventBlock: {
-    backgroundColor: "#6c757d", // A neutral grey for cancelled events
-    borderColor: "#5a6268",
-  },
-  eventBlockTitle: { color: "white", fontWeight: "bold", fontSize: 18 },
-  eventBlockTime: { color: "white", fontSize: 14, marginTop: 2, opacity: 0.9 },
+  cancelledEventBlock: { backgroundColor: "#dc3545", borderColor: "#b02a37" },
+  rescheduledEventBlock: { backgroundColor: "#ffc107", borderColor: "#d39e00" },
+  eventBlockText: { color: "white" },
+  rescheduledEventText: { color: "black" },
+  eventBlockTitle: { fontWeight: "bold", fontSize: 18 },
+  eventBlockTime: { fontSize: 14, marginTop: 2, opacity: 0.9 },
   eventBlockLocation: {
-    color: "white",
     fontSize: 14,
     marginTop: 2,
     fontStyle: "italic",
     opacity: 0.9,
   },
-  eventBlockStatus: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginTop: 4,
+  eventBlockStatus: { fontSize: 14, fontWeight: "bold", marginTop: 4 },
+  cancelledText: { textDecorationLine: "line-through", opacity: 0.7 },
+  statusBadge: {
+    marginTop: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    alignSelf: "flex-start",
   },
-  cancelledText: {
-    textDecorationLine: "line-through",
-    opacity: 0.7,
-  },
+  cancelledBadge: { backgroundColor: "#dc3545" },
+  rescheduledBadge: { backgroundColor: "#ffc107" },
+  statusBadgeText: { fontSize: 14, fontWeight: "bold", color: "white" },
   weekSelectorContainer: {
-    flexDirection: "column", // Stack the rows vertically
+    flexDirection: "column",
     backgroundColor: "#fff",
     marginHorizontal: 10,
     marginTop: 10,
@@ -871,20 +980,20 @@ const styles = StyleSheet.create({
     elevation: 2,
     width: "95%",
     alignSelf: "center",
-    overflow: "hidden", // Ensures the inner border radius is clipped correctly
-    borderWidth: 1, // Optional: A border around the whole container
-    borderColor: "#e0c4a2", // Optional: A border around the whole container
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#e0c4a2",
   },
   weekRow: {
     flexDirection: "row",
-    borderBottomWidth: 1, // A line between the two rows
+    borderBottomWidth: 1,
     borderBottomColor: "#e0c4a2",
   },
   weekDayButton: {
-    flex: 1, // Each button takes up equal space in its row
+    flex: 1,
     alignItems: "center",
     paddingVertical: 10,
-    borderRightWidth: 1, // A line between the days
+    borderRightWidth: 1,
     borderRightColor: "#e0c4a2",
   },
   weekDayButtonSelected: { backgroundColor: "#005D8F" },
@@ -959,6 +1068,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 20,
     alignSelf: "center",
+  },
+  modalCloseButton: {
+    paddingHorizontal: 10,
   },
 });
 

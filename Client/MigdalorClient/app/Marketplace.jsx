@@ -18,6 +18,8 @@ import { Ionicons } from "@expo/vector-icons";
 
 // Custom Components & Contexts
 import { MarketplaceContext } from "../context/MarketplaceProvider";
+import { useNotifications } from "@/context/NotificationsContext";
+
 import MarketplaceItemCard from "../components/MarketplaceItemCard";
 import FlipButton from "../components/FlipButton";
 import Header from "@/components/Header";
@@ -34,6 +36,7 @@ const ITEMS_PER_PAGE = 10;
 export default function MarketplaceScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const { updateLastVisited, isItemNew } = useNotifications();
 
   const { searchQuery, setSearchQuery } = useContext(MarketplaceContext) || {
     searchQuery: "",
@@ -47,6 +50,15 @@ export default function MarketplaceScreen() {
   const [marketplaceQuery, setMarketplaceQuery] = useState(searchQuery);
 
   const flatListRef = useRef(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        console.log("Marketplace unfocused, updating last visited time.");
+        updateLastVisited("listings");
+      };
+    }, [updateLastVisited])
+  );
 
   // Data fetching and logic hooks remain unchanged
   const fetchListings = useCallback(async () => {
@@ -89,12 +101,23 @@ export default function MarketplaceScreen() {
   };
 
   const filteredListings = useMemo(() => {
-    if (!searchQuery) return listings;
-    const lowerCaseQuery = searchQuery.toLowerCase();
-    return listings.filter((listing) =>
-      listing.title?.toLowerCase().includes(lowerCaseQuery)
-    );
-  }, [listings, searchQuery]);
+    let filtered = listings;
+    if (searchQuery) {
+      const lowerCaseQuery = searchQuery.toLowerCase();
+      filtered = listings.filter((listing) =>
+        listing.title?.toLowerCase().includes(lowerCaseQuery)
+      );
+    }
+
+    // --- NEW: Sort new items to the top ---
+    return filtered.sort((a, b) => {
+      const aIsNew = isItemNew("listings", a.date);
+      const bIsNew = isItemNew("listings", b.date);
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+      return new Date(b.date) - new Date(a.date);
+    });
+  }, [listings, searchQuery, isItemNew]);
 
   const totalItems = filteredListings.length;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
@@ -119,6 +142,7 @@ export default function MarketplaceScreen() {
       <View style={styles.cardWrapper}>
         <MarketplaceItemCard
           data={item}
+          isNew={isItemNew("listings", item.date)} // Pass the isNew prop
           onPress={() => {
             router.push({
               pathname: "./MarketplaceItem",
@@ -128,7 +152,7 @@ export default function MarketplaceScreen() {
         />
       </View>
     ),
-    [router]
+    [router, isItemNew]
   );
 
   const keyExtractor = useCallback((item) => item.listingId.toString(), []);

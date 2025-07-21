@@ -1,7 +1,8 @@
-import React from "react";
-import { Tabs } from "expo-router";
+import React, { useCallback } from "react";
+import { Tabs, useFocusEffect } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useTranslation } from "react-i18next";
+import { useNotifications } from "@/context/NotificationsContext";
 
 export default function EventsTabLayout() {
   const { t } = useTranslation();

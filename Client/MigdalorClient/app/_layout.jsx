@@ -16,6 +16,7 @@ import { SettingsProvider, useSettings } from "@/context/SettingsContext";
 import { BottomSheetProvider } from "@/components/BottomSheetMain";
 import { MainMenuEditProvider } from "@/context/MainMenuEditProvider";
 import { MarketplaceProvider } from "@/context/MarketplaceProvider";
+import { NotificationsProvider } from "@/context/NotificationsContext";
 import { toastConfig } from "@/components/CustomToasts";
 
 // --- i18n Initialization ---
@@ -274,8 +275,10 @@ export default function Layout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <AuthProvider>
             <SettingsProvider>
-              <LanguageManager />
-              <AppContent />
+              <NotificationsProvider>
+                <LanguageManager />
+                <AppContent />
+              </NotificationsProvider>
               <ToastManager config={toastConfig} />
             </SettingsProvider>
           </AuthProvider>

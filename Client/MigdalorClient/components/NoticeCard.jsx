@@ -15,9 +15,10 @@ const createSnippet = (message, maxLength = 100) => {
     : message.substring(0, maxLength) + "...";
 };
 
-export default function NoticeCard({ data, onPress }) {
+export default function NoticeCard({ data, onPress, isNew }) {
   if (!data) return null;
   const { t, i18n } = useTranslation();
+  const isRtl = i18n.dir() === "rtl";
   const displayDate = new Date(data.creationDate).toLocaleDateString("en-GB");
   const displaySnippet = createSnippet(data.noticeMessage);
   const borderColor = data.categoryColor || "#ccc";
@@ -49,13 +50,17 @@ export default function NoticeCard({ data, onPress }) {
       springConfig={{ speed: 20, bounciness: 10 }}
     >
       <View style={[styles.infoContainer, infoContainerStyle]}>
-        <StyledText style={[styles.noticeTitle, titleStyle]}>{data.noticeTitle}</StyledText>
+        <StyledText style={[styles.noticeTitle, titleStyle]}>
+          {data.noticeTitle}
+        </StyledText>
 
         {/* Display Sender Name */}
         {senderName && (
           <View style={styles.metaRow}>
             <Ionicons name="person-outline" size={16} color="#444" />
-            <StyledText style={[styles.noticeSender, textStyle]}>{senderName}</StyledText>
+            <StyledText style={[styles.noticeSender, textStyle]}>
+              {senderName}
+            </StyledText>
           </View>
         )}
 
@@ -71,7 +76,9 @@ export default function NoticeCard({ data, onPress }) {
 
         <View style={styles.metaRow}>
           <Ionicons name="calendar-outline" size={16} color="#444" />
-          <StyledText style={[styles.noticeDate, textStyle]}>{displayDate}</StyledText>
+          <StyledText style={[styles.noticeDate, textStyle]}>
+            {displayDate}
+          </StyledText>
         </View>
 
         {displaySnippet && (
@@ -80,6 +87,18 @@ export default function NoticeCard({ data, onPress }) {
           </StyledText>
         )}
       </View>
+      {isNew && (
+        <View
+          style={[
+            styles.newBadge,
+            isRtl ? styles.newBadgeRtl : styles.newBadgeLtr,
+          ]}
+        >
+          <StyledText style={styles.newBadgeText}>
+            {t("Item_New", "New")}
+          </StyledText>
+        </View>
+      )}
     </BouncyButton>
   );
 }
@@ -137,5 +156,25 @@ const styles = StyleSheet.create({
     color: "#333",
     lineHeight: 24, // Adjust line height
     marginTop: 10,
+  },
+  newBadge: {
+    position: "absolute",
+    top: 10,
+    backgroundColor: "#ff4757",
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    elevation: 5,
+  },
+  newBadgeLtr: {
+    right: 10,
+  },
+  newBadgeRtl: {
+    left: 10,
+  },
+  newBadgeText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });

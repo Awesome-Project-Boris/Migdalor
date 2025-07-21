@@ -10,7 +10,7 @@ import StyledText from "@/components/StyledText";
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
-const EventCard = ({ event, onPress }) => {
+const EventCard = ({ event, onPress, isNew }) => {
   const { i18n, t } = useTranslation();
   const isRtl = i18n.dir() === "rtl";
 
@@ -82,6 +82,18 @@ const EventCard = ({ event, onPress }) => {
           {t("EventCard_MoreDetails")}
         </StyledText>
       </View>
+      {isNew && (
+        <View
+          style={[
+            styles.newBadge,
+            isRtl ? styles.newBadgeRtl : styles.newBadgeLtr,
+          ]}
+        >
+          <StyledText style={styles.newBadgeText}>
+            {t("Item_New", "New")}
+          </StyledText>
+        </View>
+      )}
     </TouchableOpacity>
   );
 };
@@ -91,7 +103,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 12,
-    overflow: "hidden",
+    overflow: "hidden", // This is important for the badge's appearance
     marginBottom: 20,
     elevation: 4,
     shadowColor: "#000",
@@ -151,6 +163,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#007bff",
     fontWeight: "600",
+  },
+  newBadge: {
+    position: "absolute",
+    top: 0,
+    backgroundColor: "#ff4757",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    elevation: 5,
+  },
+  newBadgeLtr: {
+    right: 0,
+    borderBottomLeftRadius: 12, // Curve matches card corner
+  },
+  newBadgeRtl: {
+    left: 0,
+    borderBottomRightRadius: 12, // Curve matches card corner
+  },
+  newBadgeText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
   },
 });
 
