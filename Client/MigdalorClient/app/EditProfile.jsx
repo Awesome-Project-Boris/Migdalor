@@ -333,8 +333,9 @@ export default function EditProfile() {
           : t("EditProfileScreen_errorMessageMobilePhone");
       case "email":
         const trimmedValue = value.trim();
-        const emailRequiredError = isRequired(trimmedValue);
-        if (emailRequiredError) return emailRequiredError;
+        if (trimmedValue === "") {
+          return null;
+        }
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
           ? null
           : t("EditProfileScreen_errorMessageEmail");
