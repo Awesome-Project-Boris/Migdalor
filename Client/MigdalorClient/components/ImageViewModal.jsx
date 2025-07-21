@@ -144,9 +144,10 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "center", 
     width: "100%",
     marginTop: 10,
+    gap: 15, 
   },
   buttonContainerColumn: {
     flexDirection: "column",
@@ -159,9 +160,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 10,
-    flexGrow: 1,
-    marginHorizontal: 10,
-    borderWidth: 0, // Removed border for a flatter look
+    flexShrink: 1, 
+    borderWidth: 0, 
   },
   buttonColumn: {
     marginHorizontal: 0,

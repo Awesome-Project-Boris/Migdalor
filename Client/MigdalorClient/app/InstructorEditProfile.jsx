@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -17,7 +17,7 @@ import Header from "@/components/Header";
 import FlipButton from "@/components/FlipButton";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import BouncyButton from "@/components/BouncyButton";
-import ImageViewModal from "../components/ImageViewModal";
+import ImageViewModal from "@/components/ImageViewModal";
 import ImageHistory from "@/components/ImageHistory";
 import StyledText from "@/components/StyledText"; 
 import { useSettings } from "@/context/SettingsContext";
@@ -51,6 +51,16 @@ export default function InstructorEditProfile() {
   const [imageToViewUri, setImageToViewUri] = useState(null);
   const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
   const [clearedPic, setClearedPic] = useState(false);
+
+  const initialPicId = useMemo(() => {
+    if (!initialPic) return null;
+    try {
+      const parsed = JSON.parse(initialPic);
+      return parsed?.PicID || parsed?.picId || null;
+    } catch {
+      return null;
+    }
+  }, [initialPic]);
 
   useEffect(() => {
   if (initialData) {
@@ -101,8 +111,9 @@ export default function InstructorEditProfile() {
 
     if (name === "email") {
       const trimmedValue = value.trim();
-      const requiredError = isRequired(trimmedValue);
-      if (requiredError) return requiredError;
+      if (trimmedValue === "") {
+        return null;
+      }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(trimmedValue)) {
           return t("EditProfileScreen_errorMessageEmail");
@@ -118,12 +129,8 @@ export default function InstructorEditProfile() {
   };
 
   const handleImagePress = () => {
-    if (!profilePic?.picPath) {
-      handleAddImage();
-    } else {
-      setImageToViewUri(profileImage.uri || null);
-      setShowImageViewModal(true);
-    }
+    setImageToViewUri(profileImage.uri || null);
+    setShowImageViewModal(true);
   };
 
   // --- CHANGE: Logic now matches EditProfile ---
@@ -185,6 +192,7 @@ export default function InstructorEditProfile() {
           const newUri = await copyImageToAppDir(result.assets[0].uri);
           setProfilePic({ PicPath: newUri, PicAlt: "Instructor Profile Picture" });
           setClearedPic(false);
+          setShowImageViewModal(false); 
         }
     } catch (error) {
         Alert.alert(t("ImagePicker_errorTitle"), error.message);
@@ -399,7 +407,7 @@ export default function InstructorEditProfile() {
         onClose={() => setHistoryModalVisible(false)}
         onSelect={handleSelectFromHistory}
         picturesInUse={[profilePic?.PicID].filter(Boolean)}
-        clearedPictureIds={clearedPic && initialPic ? [JSON.parse(initialPic)?.PicID] : []}
+        initialPictureIdInSlot={initialPicId} // Pass the initial ID
       />
     </View>
   );
