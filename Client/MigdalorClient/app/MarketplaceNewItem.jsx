@@ -659,7 +659,7 @@ export default function AddNewItem() {
           />
 
           {formErrors.itemName ? (
-            <StyledText style={styles.errorText}>
+            <StyledText style={{...styles.errorText, alignSelf: Globals.userSelectedDirection === "rtl" ? "flex-end" : "flex-start"}}>
               {formErrors.itemName}
             </StyledText>
           ) : (
@@ -679,7 +679,7 @@ export default function AddNewItem() {
             maxLength={DESCRIPTION_LIMIT}
           />
           {formErrors.itemDescription ? (
-            <StyledText style={styles.errorText}>
+            <StyledText style={{...styles.errorText, alignSelf: Globals.userSelectedDirection === "rtl" ? "flex-end" : "flex-start"}}>
               {formErrors.itemDescription}
             </StyledText>
           ) : (
