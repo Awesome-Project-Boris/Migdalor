@@ -6,13 +6,17 @@ import FlipButtonSizeless from "@/components/FlipButtonSizeless"; // Ensure this
 const NodeInfoModal = ({ visible, node, onClose }) => {
   const { t } = useTranslation();
 
-  // If there's no node data, don't render anything
   if (!node) {
     return null;
   }
 
-  // Directly use node.description, as it is already translated from the API
-  const descriptionText = node.description;
+  // --- FIX: Special-case the 'Legend' translation key ---
+  // If the description is our specific key, translate it.
+  // Otherwise, use the description directly as it's from the database.
+  const descriptionText =
+    node.description === "MapScreen_LegendText"
+      ? t("MapScreen_LegendText")
+      : node.description;
 
   return (
     <Modal

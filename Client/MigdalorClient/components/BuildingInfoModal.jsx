@@ -37,7 +37,7 @@ const ResidentItem = ({ resident }) => {
         <FlipButton
           style={styles.actionButton}
           onPress={() => {
-            /* Navigation logic comes later */
+            /* Navigation logic for individual residents can be added later */
           }}
         >
           <StyledText style={styles.actionButtonText}>Navigate</StyledText>
@@ -86,7 +86,8 @@ const ApartmentAccordion = ({ apartment }) => {
   );
 };
 
-const BuildingInfoModal = ({ visible, building, onClose }) => {
+// --- MODIFIED: Added 'onNavigate' to props ---
+const BuildingInfoModal = ({ visible, building, onClose, onNavigate }) => {
   const { t } = useTranslation();
 
   if (!visible || !building) return null;
@@ -116,7 +117,6 @@ const BuildingInfoModal = ({ visible, building, onClose }) => {
         <View style={styles.modalView}>
           <StyledText style={styles.modalTitle}>{modalTitle}</StyledText>
           <ScrollView style={styles.scrollView}>
-            {/* The ScrollView correctly handles your 3rd point: yes, it will scroll with 30 apartments. */}
             {hasApartments ? (
               building.apartments.map((apt) => (
                 <ApartmentAccordion key={apt.apartmentNumber} apartment={apt} />
@@ -127,10 +127,22 @@ const BuildingInfoModal = ({ visible, building, onClose }) => {
               </StyledText>
             )}
           </ScrollView>
+
+          {/* --- MODIFIED: Button container now holds two buttons --- */}
           <View style={styles.buttonContainer}>
             <FlipButtonSizeless onPress={onClose} style={styles.closeButton}>
               <StyledText style={styles.closeButtonText}>
                 {t("MapScreen_backToMapButton")}
+              </StyledText>
+            </FlipButtonSizeless>
+
+            {/* --- ADDED: The new Navigate button --- */}
+            <FlipButtonSizeless
+              onPress={() => onNavigate(building)}
+              style={styles.navigateButton}
+            >
+              <StyledText style={styles.navigateButtonText}>
+                {t("Map_NavButton")}
               </StyledText>
             </FlipButtonSizeless>
           </View>
@@ -151,7 +163,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    paddingBottom: 10, // Adjust padding
+    paddingBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.25,
@@ -159,19 +171,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     height: "75%",
     width: "100%",
-    justifyContent: "space-between", // Key change for layout
-  },
-  closeButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    alignSelf: "center",
-  },
-  closeButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+    justifyContent: "space-between",
   },
   modalTitle: {
     fontSize: 24,
@@ -219,9 +219,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#888",
   },
+
+  // --- MODIFIED: Styles for the button area ---
   buttonContainer: {
-    paddingTop: 10, // Space between scroll view and button
+    paddingTop: 10,
     width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-around", // To place buttons side-by-side
+  },
+  closeButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 30, // Adjusted padding
+    backgroundColor: "#6c757d", // Grey color
+    borderRadius: 8,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  // --- ADDED: Styles for the new button ---
+  navigateButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 30, // Adjusted padding
+    backgroundColor: "#007bff", // Blue color
+    borderRadius: 8,
+  },
+  navigateButtonText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
   },
 });
 

@@ -59,6 +59,8 @@ const INITIAL_LONGITUDE_DELTA = INITIAL_LATITUDE_DELTA * ASPECT_RATIO;
 const MAP_CENTER_LATITUDE = 32.310441;
 const MAP_CENTER_LONGITUDE = 34.895219;
 
+const REROUTE_THRESHOLD = 50;
+
 const normalizedLines = polylines.map((seg) => ({
   ...seg,
   coordinates: seg.path || seg.coordinates, // Use seg.path if it exists, otherwise use seg.coordinates
@@ -219,6 +221,12 @@ const Map = () => {
     setDestination(null);
   };
 
+  const handleStartNavigationFromModal = (buildingToNavigate) => {
+    setSelectedBuilding(null); // Close the modal
+    const navigationTarget = { ...buildingToNavigate, type: "building" };
+    startNavigation(navigationTarget); // Start navigation with the corrected object
+  };
+
   useEffect(() => {
     if (!isFocused) {
       setSelectedBuilding(null);
@@ -294,83 +302,6 @@ const Map = () => {
     fetchMapData();
   }, []);
 
-  // could still need this useEffect
-
-  // OLD
-  // useEffect(() => {
-  //   let locationWatcher = null;
-
-  //   const startWatching = async () => {
-  //     const hasPermission = await requestLocationPermission();
-  //     if (!hasPermission) return;
-
-  //     locationWatcher = await Location.watchPositionAsync(
-  //       {
-  //         accuracy: Location.Accuracy.High,
-  //         timeInterval: 3000, // Check every 3 seconds
-  //         distanceInterval: 5, // Or every 5 meters
-  //       },
-  //       (location) => {
-  //         if (!location) return;
-
-  //         const userLocation = location.coords;
-  //         setCurrentUserLocation(userLocation);
-
-  //         const isInside = pointInPolygon(
-  //           [userLocation.longitude, userLocation.latitude],
-  //           boundaryPolygonForCheck
-  //         );
-  //         setIsInsideBoundary(isInside);
-
-  //         if (isNavigating && navigationPath.length > 1) {
-  //           // Get the next waypoint on the path
-  //           const nextWaypoint = navigationPath[1];
-  //           const distanceToNextWaypoint = getDistance(
-  //             userLocation,
-  //             nextWaypoint
-  //           );
-
-  //           setNavigationPath((currentPath) => {
-  //             // Get the list of nodes we still need to visit.
-  //             let remainingWaypoints = currentPath.slice(1);
-
-  //             // If we're close to the NEXT waypoint, consume it by removing it from the list.
-  //             if (
-  //               remainingWaypoints.length > 0 &&
-  //               distanceToNextWaypoint < 12
-  //             ) {
-  //               remainingWaypoints = remainingWaypoints.slice(1);
-  //             }
-
-  //             // Return the new path, which consists of our current location followed by the updated list of waypoints.
-  //             return [userLocation, ...remainingWaypoints];
-  //           });
-
-  //           // Check for arrival at the final destination
-  //           if (navigationPath.length <= 2) {
-  //             // When only the user and the final node are left
-  //             const distanceToFinal = getDistance(
-  //               userLocation,
-  //               navigationPath[1]
-  //             );
-  //             if (distanceToFinal < 15) {
-  //               setArrivalModalVisible(true);
-  //             }
-  //           }
-  //         }
-  //       }
-  //     );
-  //   };
-
-  //   startWatching();
-
-  //   return () => {
-  //     if (locationWatcher) {
-  //       locationWatcher.remove();
-  //     }
-  //   };
-  // }, [isNavigating, navigationPath]);
-
   // NEW TO TEST
 
   useEffect(() => {
@@ -384,7 +315,7 @@ const Map = () => {
         {
           accuracy: Location.Accuracy.High,
           timeInterval: 3000, // Check every 3 seconds
-          distanceInterval: 5, // Or every 5 meters
+          distanceInterval: 10, // Check every 10 meters
         },
         (location) => {
           if (!location) return;
@@ -398,68 +329,84 @@ const Map = () => {
           );
           setIsInsideBoundary(isInside);
 
-          if (isNavigating && navigationPath.length > 1) {
-            setNavigationPath((currentPath) => {
-              // Get the list of nodes we still need to visit.
-              const remainingWaypoints = currentPath.slice(1);
-              if (remainingWaypoints.length === 0) return [userLocation];
+          // --- START: MODIFIED NAVIGATION LOGIC ---
 
-              // Find which of the remaining waypoints is closest to the user.
-              let closestWaypointIndex = 0;
-              let minDistance = Infinity;
+          // Only perform navigation updates if the user is navigating and has a valid path.
+          if (isNavigating && navigationPath.length > 1 && destination) {
+            // First, if user "teleports" outside the area, stop navigation immediately.
 
-              remainingWaypoints.forEach((waypoint, index) => {
-                const distance = getDistance(userLocation, waypoint);
-                if (distance < minDistance) {
-                  minDistance = distance;
-                  closestWaypointIndex = index;
+            // COMMENT OUT FOR TESTING PURPOSES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Teleport protection
+            // if (!isInside) {
+            //   stopNavigation();
+            //   Toast.show({
+            //     type: "error",
+            //     text1: t("Navigation_Error"),
+            //     text2: t("Navigation_MustBeInside"),
+            //   });
+            //   return;
+            // }
+
+            const nextWaypoint = navigationPath[1];
+            const distanceToNextWaypoint = getDistance(
+              userLocation,
+              nextWaypoint
+            );
+
+            // --- OFF-ROUTE LOGIC ---
+            // If the user is too far from the next waypoint, they are off-route.
+            if (distanceToNextWaypoint > REROUTE_THRESHOLD) {
+              // Recalculate the entire route from their current location to the original destination.
+              console.log("User is off-route. Recalculating path...");
+              startNavigation(destination, userLocation);
+            }
+            // --- ON-ROUTE LOGIC ---
+            // Otherwise, the user is following the path, so we use the efficient method.
+            else {
+              setNavigationPath((currentPath) => {
+                let remainingWaypoints = currentPath.slice(1);
+                // If we are close to the next waypoint, remove it from the list.
+                if (
+                  remainingWaypoints.length > 0 &&
+                  distanceToNextWaypoint < 12
+                ) {
+                  remainingWaypoints = remainingWaypoints.slice(1);
                 }
+                // Update the path with the user's current location at the start.
+                return [userLocation, ...remainingWaypoints];
               });
+            }
 
-              // The new path starts from that closest waypoint, consuming any skipped nodes.
-              const newRemainingWaypoints =
-                remainingWaypoints.slice(closestWaypointIndex);
-
-              // Return the new path, which is the user's current location plus the updated waypoints.
-              return [userLocation, ...newRemainingWaypoints];
-            });
-
-            // Check for arrival at the final destination.
-            // This runs against the state from the *previous* render, so it's checking before the path updates.
-            if (navigationPath.length <= 2) {
-              const distanceToFinal = getDistance(
-                userLocation,
-                navigationPath[1]
-              );
-              if (distanceToFinal < 15) {
-                setArrivalModalVisible(true);
-              }
+            // Check for arrival at the final destination
+            if (navigationPath.length <= 2 && distanceToNextWaypoint < 15) {
+              setArrivalModalVisible(true);
             }
           }
+          // --- END: MODIFIED NAVIGATION LOGIC ---
         }
       );
     };
 
     startWatching();
 
-    // Cleanup function to remove the watcher when the component unmounts or dependencies change.
     return () => {
       if (locationWatcher) {
         locationWatcher.remove();
       }
     };
-  }, [isNavigating, navigationPath]); // The effect re-subscribes if navigation starts/stops.
+  }, [isNavigating, navigationPath, destination]);
 
   const startNavigation = (target, userLocationOverride = null) => {
     const userLoc = userLocationOverride || currentUserLocation;
-    if (!userLoc || !isInsideBoundary) {
-      Toast.show({
-        type: "error",
-        text1: t("Navigation_Error"),
-        text2: t("Navigation_MustBeInside"),
-      });
-      return;
-    }
+
+    // COMMENTED OUT FOR TESTING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Teleport protection
+    // if (!userLoc || !isInsideBoundary) {
+    //   Toast.show({
+    //     type: "error",
+    //     text1: t("Navigation_Error"),
+    //     text2: t("Navigation_MustBeInside"),
+    //   });
+    //   return;
+    // }
 
     const startNode = findClosestWalkableNode(userLoc, walkableNodes);
     let targetNodeId = null;
@@ -676,6 +623,7 @@ const Map = () => {
         visible={!!selectedBuilding}
         building={selectedBuilding}
         onClose={() => setSelectedBuilding(null)}
+        onNavigate={handleStartNavigationFromModal}
       />
       {mapData.buildings.length > 0 && isI18nReady && (
         <NavigationModal
