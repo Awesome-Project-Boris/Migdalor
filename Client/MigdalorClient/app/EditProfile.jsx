@@ -45,6 +45,19 @@ import { useSettings } from "@/context/SettingsContext.jsx";
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
+const getApartmentNumberFromGuid = (guid) => {
+  if (!guid || typeof guid !== "string") {
+    return "";
+  }
+  // This logic handles both a full GUID and a pre-parsed number string.
+  const parts = guid.toUpperCase().split("A");
+  const numberPart = parts.pop();
+  if (numberPart && !isNaN(parseInt(numberPart, 10))) {
+    return String(parseInt(numberPart, 10));
+  }
+  return guid; // Fallback to the original value if parsing fails
+};
+
 export default function EditProfile() {
   const { settings } = useSettings();
   const { t } = useTranslation();
@@ -63,6 +76,8 @@ export default function EditProfile() {
   const isInitialLoad = useRef(true);
 
   const { initialData, initialPics } = route.params || {};
+
+  console.log("THIS IS INITIAL DATA: ", initialData);
 
   const [form, setForm] = useState({
     name: "",
@@ -114,7 +129,7 @@ export default function EditProfile() {
 
   const maxLengths = {
     partner: 100,
-    residentApartmentNumber: 10,
+    residentApartmentNumber: 50,
     mobilePhone: 10,
     email: 100,
     origin: 100,
@@ -218,21 +233,30 @@ export default function EditProfile() {
     if (isInitialLoad.current) {
       if (initialData) {
         const parsedData = JSON.parse(initialData);
-        initialDataRef.current = parsedData; // Store initial form data
+        initialDataRef.current = parsedData;
 
-        if (parsedData.residentInterests) {
-          const interests = parsedData.residentInterests;
+        const dataToSet = { ...parsedData };
+
+        // if (dataToSet.residentApartmentNumber) {
+        //   dataToSet.residentApartmentNumber = getApartmentNumberFromGuid(
+        //     dataToSet.residentApartmentNumber
+        //   );
+        // }
+
+        if (dataToSet.residentInterests) {
+          const interests = dataToSet.residentInterests;
           setUserInterests(interests);
-          initialInterestsRef.current = interests; // Store initial interests
-        } else if (parsedData.interests) {
-          const interests = parsedData.interests.map((name) => ({ name }));
+          initialInterestsRef.current = interests;
+        } else if (dataToSet.interests) {
+          const interests = dataToSet.interests.map((name) => ({ name }));
           setUserInterests(interests);
-          initialInterestsRef.current = interests; // Store initial interests
+          initialInterestsRef.current = interests;
         } else {
           setUserInterests([]);
           initialInterestsRef.current = [];
         }
-        setForm(parsedData);
+
+        setForm((prevForm) => ({ ...prevForm, ...dataToSet }));
       }
       if (initialPics) {
         const pics = JSON.parse(initialPics);
@@ -490,32 +514,75 @@ export default function EditProfile() {
     if (!initialForm) return false;
 
     // Compare simple text fields
-    const fieldsToCompare = ['partner', 'mobilePhone', 'email', 'origin', 'profession', 'aboutMe', 'residentApartmentNumber'];
+    const fieldsToCompare = [
+      "partner",
+      "mobilePhone",
+      "email",
+      "origin",
+      "profession",
+      "aboutMe",
+      "residentApartmentNumber",
+    ];
     for (const key of fieldsToCompare) {
       const formValue = form[key] === null ? "" : String(form[key]).trim();
-      const initialValue = initialForm[key] === null ? "" : String(initialForm[key]).trim();
+      const initialValue =
+        initialForm[key] === null ? "" : String(initialForm[key]).trim();
       if (formValue !== initialValue) return true;
     }
 
     // Check if a new local image was selected
-    if (profilePic.PicPath?.startsWith("file://") || additionalPic1.PicPath?.startsWith("file://") || additionalPic2.PicPath?.startsWith("file://")) {
+    if (
+      profilePic.PicPath?.startsWith("file://") ||
+      additionalPic1.PicPath?.startsWith("file://") ||
+      additionalPic2.PicPath?.startsWith("file://")
+    ) {
       return true;
     }
 
     // Check if an existing image was removed or replaced from history
     const initialPicsData = initialPicsRef.current || {};
-    if (clearedPics.profile || ((profilePic.PicId || profilePic.PicID) && (profilePic.PicId || profilePic.PicID) !== (initialPicsData.profilePic?.picId || initialPicsData.profilePic?.PicId))) return true;
-    if (clearedPics.add1 || ((additionalPic1.PicId || additionalPic1.PicID) && (additionalPic1.PicId || additionalPic1.PicID) !== (initialPicsData.additionalPic1?.picId || initialPicsData.additionalPic1?.PicId))) return true;
-    if (clearedPics.add2 || ((additionalPic2.PicId || additionalPic2.PicID) && (additionalPic2.PicId || additionalPic2.PicID) !== (initialPicsData.additionalPic2?.picId || initialPicsData.additionalPic2?.PicId))) return true;
-
+    if (
+      clearedPics.profile ||
+      ((profilePic.PicId || profilePic.PicID) &&
+        (profilePic.PicId || profilePic.PicID) !==
+          (initialPicsData.profilePic?.picId ||
+            initialPicsData.profilePic?.PicId))
+    )
+      return true;
+    if (
+      clearedPics.add1 ||
+      ((additionalPic1.PicId || additionalPic1.PicID) &&
+        (additionalPic1.PicId || additionalPic1.PicID) !==
+          (initialPicsData.additionalPic1?.picId ||
+            initialPicsData.additionalPic1?.PicId))
+    )
+      return true;
+    if (
+      clearedPics.add2 ||
+      ((additionalPic2.PicId || additionalPic2.PicID) &&
+        (additionalPic2.PicId || additionalPic2.PicID) !==
+          (initialPicsData.additionalPic2?.picId ||
+            initialPicsData.additionalPic2?.PicId))
+    )
+      return true;
 
     // Compare interests
-    const initialInterestNames = (initialInterestsRef.current || []).map(i => i.name).sort();
-    const currentInterestNames = userInterests.map(i => i.name).sort();
-    if (JSON.stringify(initialInterestNames) !== JSON.stringify(currentInterestNames)) return true;
-    
+    const initialInterestNames = (initialInterestsRef.current || [])
+      .map((i) => i.name)
+      .sort();
+    const currentInterestNames = userInterests.map((i) => i.name).sort();
+    if (
+      JSON.stringify(initialInterestNames) !==
+      JSON.stringify(currentInterestNames)
+    )
+      return true;
+
     // Compare privacy settings
-    if (JSON.stringify(privacySettings) !== JSON.stringify(initialPrivacySettingsRef.current)) return true;
+    if (
+      JSON.stringify(privacySettings) !==
+      JSON.stringify(initialPrivacySettingsRef.current)
+    )
+      return true;
 
     return false;
   };
@@ -1325,7 +1392,10 @@ export default function EditProfile() {
           <View style={styles.confirmOverlay}>
             <View style={styles.confirmContainer}>
               <StyledText style={styles.confirmText}>
-                {t("MarketplaceNewItemScreen_CancelDiscardHeader", "You have unsaved changes. Are you sure you want to discard them?")}
+                {t(
+                  "MarketplaceNewItemScreen_CancelDiscardHeader",
+                  "You have unsaved changes. Are you sure you want to discard them?"
+                )}
               </StyledText>
               <View style={styles.confirmButtonRow}>
                 <FlipButton
@@ -1335,7 +1405,10 @@ export default function EditProfile() {
                   style={styles.confirmButton}
                 >
                   <StyledText style={styles.buttonLabel}>
-                    {t("MarketplaceNewItemScreen_CancelConfirmation", "Discard")}
+                    {t(
+                      "MarketplaceNewItemScreen_CancelConfirmation",
+                      "Discard"
+                    )}
                   </StyledText>
                 </FlipButton>
                 <FlipButton
@@ -1549,18 +1622,18 @@ const styles = StyleSheet.create({
     color: "#ffffff",
   },
   scrollIndicator: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
-    alignSelf: 'center',
+    alignSelf: "center",
     zIndex: 10,
     height: 60,
     width: 60,
     borderRadius: 30, // This makes it a circle
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 3, // Adds a subtle shadow on Android
-    shadowColor: '#000', // Adds a subtle shadow on iOS
+    shadowColor: "#000", // Adds a subtle shadow on iOS
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
@@ -1603,9 +1676,9 @@ const styles = StyleSheet.create({
     width: "48%",
     alignItems: "center",
   },
-  buttonLabel: { 
-    fontSize: 16, 
-    fontWeight: "bold" 
+  buttonLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   // --- END: Add Modal Styles ---
 });

@@ -112,7 +112,7 @@ const resources = {
       EditProfileScreen_noInterests: "No Hobbies to display",
       EditProfileScreen_editInterestsButton: "Select Hobbies",
 
-      ApartmentSelector_Exists: "This apartment is already in our system.",
+      ApartmentSelector_Exists: "This apartment number is legal.",
       ApartmentSelector_Potential:
         "This is a valid apartment. It will be added to our system upon saving.",
       ApartmentSelector_Invalid:
@@ -383,6 +383,9 @@ const resources = {
       ResidentSearchScreen_noInterestsSelected: "No Hobbies selected",
       ResidentList_searchingByHobbies: "Searching by Hobbies: ",
       ResidentList_searchingByName: "Searching by Name: ",
+      ResidentList_ExplainationHeader: "How to Find a Resident",
+      ResidentList_Explaination:
+        "You can search in two ways, together or on their own: \n\n<bold>By Name:</bold> Simply begin typing a person's name in the search box. The list will update automatically as you type.\n\n<bold>By Hobby:</bold> Choose one or more interests from the list and then press the 'Search' button.",
 
       ResidentsCommitte_nameUnavailable: "Name Unavailable",
       ResidentsCommitte_titleUnavailable: "Title Unavailable",
@@ -727,7 +730,7 @@ const resources = {
       EditProfileScreen_noInterests: "אין תחביבים להציג",
       EditProfileScreen_editInterestsButton: "לבחירת תחביבים",
 
-      ApartmentSelector_Exists: "דירה זו כבר קיימת במערכת",
+      ApartmentSelector_Exists: "מספר הדירה חוקי וניתן לשימוש",
       ApartmentSelector_Potential:
         "זוהי דירה חוקית, היא תתווסף למערכת במהלך השמירה",
       ApartmentSelector_Invalid: "מספר דירה זה אינו בטווח החוקי",
@@ -983,6 +986,9 @@ const resources = {
 
       ResidentList_searchingByHobbies: "חיפוש לפי תחביבים: ",
       ResidentList_searchingByName: "חיפוש לפי שם: ",
+      ResidentList_ExplainationHeader: "איך לחפש דיירים?",
+      ResidentList_Explaination:
+        "אפשר לחפש בשתי דרכים ביחד או לחוד: \n\nלפי שם: פשוט התחילו להקליד את שם הדייר/ת בתיבת החיפוש, והרשימה תתעדכן באופן אוטומטי.\n\nלפי תחומי עניין: בחרו תחום עניין אחד או יותר מהרשימה, ולאחר מכן לחצו על כפתור ה'חיפוש'.",
 
       ResidentsCommitte_nameUnavailable: "שם לא זמין",
       ResidentsCommitte_titleUnavailable: "תואר לא זמין",

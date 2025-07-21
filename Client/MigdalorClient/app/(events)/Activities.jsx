@@ -185,49 +185,7 @@ export default function ActivitiesScreen() {
     }
   };
 
-  const ListHeader = () => (
-    <>
-      <View style={styles.plaqueContainer}>
-        <StyledText style={styles.mainTitle}>
-          {t("Events_ActivitiesTitle")}
-        </StyledText>
-      </View>
-
-      {!isPermissionLoading && canInitiate && (
-        <>
-          <FlipButton
-            onPress={() => router.push("/NewActivity")}
-            style={styles.newActivityButton}
-            bgColor="#ffffff"
-            textColor="#000000"
-          >
-            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("NewActivity_Title", "Add a new activity")}
-            </Text>
-          </FlipButton>
-
-          <FlipButton
-            onPress={() => router.push("/MyActivities")}
-            style={styles.newActivityButton}
-            bgColor="#ffffff"
-            textColor="#000000"
-          >
-            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("Activities_MyCreatedActivities")}
-            </Text>
-          </FlipButton>
-        </>
-      )}
-
-      <FloatingLabelInput
-        label={t("Common_SearchPlaceholder", "Search by name...")}
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-        style={styles.searchContainer}
-        alignRight={i18n.dir() === "rtl"}
-      />
-    </>
-  );
+  // --- REMOVED: Unused inner ListHeader component ---
 
   if (isLoading && !allActivities.length) {
     return (
@@ -362,6 +320,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    // marginTop: 60,
   },
 });

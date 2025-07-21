@@ -27,13 +27,13 @@ import InterestModal from "@/components/InterestSelectionModal";
 import InterestChip from "@/components/InterestChip";
 import StyledText from "@/components/StyledText";
 
-// Icon and Translation Imports
 import { Ionicons } from "@expo/vector-icons";
-import { useTranslation } from "react-i18next";
+import { useTranslation, Trans } from "react-i18next";
 import { useRouter } from "expo-router";
 
 // Constants and Globals
 import { Globals } from "./constants/Globals";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // --- Setup for Layout Animation on Android ---
 if (
@@ -47,15 +47,16 @@ if (
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const ITEMS_PER_PAGE = 10;
 
-// --- Memoized Header Component ---
 const ListHeader = React.memo(
   ({
     isAccordionOpen,
     toggleAccordion,
+    isExplanationOpen,
+    toggleExplanation,
     searchType,
     setSearchType,
-    nameInput, // ✅ Now correctly receives the instant input value
-    setNameInput, // ✅ Now correctly receives the instant setter
+    nameInput,
+    setNameInput,
     hobbyFilter,
     clearHobbyFilter,
     clearNameFilter,
@@ -63,6 +64,22 @@ const ListHeader = React.memo(
     handleSearch,
   }) => {
     const { t } = useTranslation();
+
+    const rtlRowStyle = {
+      flexDirection:
+        Globals.userSelectedDirection === "rtl" ? "row-reverse" : "row",
+    };
+
+    const rtlTextAlign = {
+      textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left",
+    };
+
+    // Style for the space between the "Search By:" and "Name" text
+    const rtlMarginStyle = {
+      [Globals.userSelectedDirection === "rtl"
+        ? "marginRight"
+        : "marginLeft"]: 4,
+    };
 
     return (
       <>
@@ -73,12 +90,45 @@ const ListHeader = React.memo(
         </View>
 
         <View style={styles.accordionContainer}>
-          <TouchableOpacity style={styles.header} onPress={toggleAccordion}>
-            <StyledText style={styles.headerText}>
+          <TouchableOpacity
+            style={[styles.header, rtlRowStyle]}
+            onPress={toggleExplanation}
+          >
+            <StyledText style={[styles.headerText, rtlTextAlign]}>
+              {t("ResidentList_ExplainationHeader")}
+            </StyledText>
+            <View style={{ flex: 1 }} />
+            <Ionicons
+              name={isExplanationOpen ? "chevron-up" : "chevron-down"}
+              size={20}
+              color="#333"
+            />
+          </TouchableOpacity>
+          {isExplanationOpen && (
+            <View style={styles.content}>
+              <StyledText style={styles.explanationText}>
+                <Trans
+                  i18nKey="ResidentList_Explaination"
+                  components={{
+                    bold: <StyledText style={{ fontWeight: "bold" }} />,
+                  }}
+                />
+              </StyledText>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.accordionContainer}>
+          <TouchableOpacity
+            style={[styles.header, rtlRowStyle]}
+            onPress={toggleAccordion}
+          >
+            <StyledText style={[styles.headerText, rtlTextAlign]}>
               {isAccordionOpen
                 ? t("ResidentSearchScreen_accordionOpen")
                 : t("ResidentSearchScreen_accordionClose")}
             </StyledText>
+            <View style={{ flex: 1 }} />
             <Ionicons
               name={isAccordionOpen ? "chevron-up" : "chevron-down"}
               size={20}
@@ -94,22 +144,27 @@ const ListHeader = React.memo(
                 }
                 style={styles.searchTypeButton}
               >
-                <StyledText style={styles.searchTypeText}>
-                  {t("ResidentSearchScreen_searchByLabel")}
-                  <StyledText style={{ fontWeight: "bold" }}>
+                <View style={[styles.searchTypeContainer, rtlRowStyle]}>
+                  <StyledText style={styles.searchTypeText}>
+                    {t("ResidentSearchScreen_searchByLabel")}
+                  </StyledText>
+                  <StyledText
+                    style={[styles.searchTypeTextBold, rtlMarginStyle]}
+                  >
                     {searchType === "name"
                       ? t("ResidentSearchScreen_searchByName")
                       : t("ResidentSearchScreen_searchByHobby")}
                   </StyledText>
-                </StyledText>
+                </View>
               </TouchableOpacity>
 
               {searchType === "name" ? (
                 <FloatingLabelInput
                   label={t("ResidentSearchScreen_enterNamePlaceholder")}
-                  value={nameInput} // ✅ Use the instant value
-                  onChangeText={setNameInput} // ✅ Use the instant setter
+                  value={nameInput}
+                  onChangeText={setNameInput}
                   style={styles.searchInputContainer}
+                  alignRight={Globals.userSelectedDirection === "rtl"}
                 />
               ) : (
                 <>
@@ -121,13 +176,13 @@ const ListHeader = React.memo(
                       {t("ResidentSearchScreen_selectInterestsButton")}
                     </StyledText>
                   </FlipButton>
-                  <View style={styles.chipDisplayArea}>
+                  <View style={[styles.chipDisplayArea, rtlRowStyle]}>
                     {hobbyFilter.length > 0 ? (
                       hobbyFilter.map((name) => (
                         <InterestChip key={name} mode="display" label={name} />
                       ))
                     ) : (
-                      <StyledText style={styles.noFilterText}>
+                      <StyledText style={[styles.noFilterText, rtlTextAlign]}>
                         {t("ResidentSearchScreen_noInterestsSelected")}
                       </StyledText>
                     )}
@@ -138,7 +193,7 @@ const ListHeader = React.memo(
                 onPress={handleSearch}
                 style={styles.searchSubmitButton}
               >
-                <View style={styles.buttonContent}>
+                <View style={[styles.buttonContent, rtlRowStyle]}>
                   <Ionicons
                     name="search"
                     size={20}
@@ -156,11 +211,11 @@ const ListHeader = React.memo(
 
         <View style={styles.activeFiltersContainer}>
           {hobbyFilter.length > 0 && (
-            <View style={styles.filterChip}>
-              <StyledText style={styles.filterChipText}>
+            <View style={[styles.filterChip, rtlRowStyle]}>
+              <StyledText style={[styles.filterChipText, rtlTextAlign]}>
                 <StyledText style={{ fontWeight: "bold", fontSize: 20 }}>
                   {t("ResidentList_searchingByHobbies")}
-                </StyledText>
+                </StyledText>{" "}
                 {hobbyFilter.join(", ")}
               </StyledText>
               <TouchableOpacity
@@ -171,13 +226,12 @@ const ListHeader = React.memo(
               </TouchableOpacity>
             </View>
           )}
-          {/* ✅ Show the chip based on instant input to feel responsive */}
           {nameInput.trim().length > 0 && (
-            <View style={styles.filterChip}>
-              <StyledText style={styles.filterChipText}>
+            <View style={[styles.filterChip, rtlRowStyle]}>
+              <StyledText style={[styles.filterChipText, rtlTextAlign]}>
                 <StyledText style={{ fontWeight: "bold", fontSize: 20 }}>
                   {t("ResidentList_searchingByName")}
-                </StyledText>
+                </StyledText>{" "}
                 {nameInput}
               </StyledText>
               <TouchableOpacity
@@ -204,6 +258,7 @@ export default function ResidentList() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [isExplanationOpen, setIsExplanationOpen] = useState(false); // State for new accordion
   const [searchType, setSearchType] = useState("name");
   const [hobbyFilter, setHobbyFilter] = useState([]);
   const [nameInput, setNameInput] = useState("");
@@ -211,6 +266,16 @@ export default function ResidentList() {
   const [isInterestModalVisible, setInterestModalVisible] = useState(false);
   const [allInterests, setAllInterests] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loggedInUserId, setLoggedInUserId] = useState(null); // State for current user's ID
+
+  // Get the logged-in user's ID on component mount
+  useEffect(() => {
+    const getUserId = async () => {
+      const id = await AsyncStorage.getItem("userID");
+      setLoggedInUserId(id);
+    };
+    getUserId();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -264,27 +329,30 @@ export default function ResidentList() {
   }, [fetchUsers]);
 
   const displayedUsers = useMemo(() => {
-    // If there's no filter text, return the original list of users
-    if (!nameFilter.trim()) {
-      return sourceUsers;
+    let users = sourceUsers;
+
+    // 1. Apply name filter if it exists
+    if (nameFilter.trim()) {
+      const lowerCaseQuery = nameFilter.trim().toLowerCase();
+      users = users.filter((user) => {
+        const searchableString = `
+          ${user.hebFirstName || ""}
+          ${user.hebLastName || ""}
+          ${user.engFirstName || ""}
+          ${user.engLastName || ""}
+        `.toLowerCase();
+        return searchableString.includes(lowerCaseQuery);
+      });
     }
-  
-    // Convert the user's search query to lowercase for case-insensitive matching
-    const lowerCaseQuery = nameFilter.trim().toLowerCase();
 
-    return sourceUsers.filter((user) => {
-      // Combine all name fields (Hebrew and English) into a single searchable string
-      const searchableString = `
-        ${user.hebFirstName || ""}
-        ${user.hebLastName || ""}
-        ${user.engFirstName || ""}
-        ${user.engLastName || ""}
-      `.toLowerCase(); // Convert the combined names to lowercase
+    // 2. Conditionally exclude the logged-in user
+    // This runs if a hobby search is active AND no name is being searched.
+    if (hobbyFilter.length > 0 && !nameFilter.trim() && loggedInUserId) {
+      users = users.filter((user) => user.userId.toString() !== loggedInUserId);
+    }
 
-      // Check if the combined string includes the search query
-      return searchableString.includes(lowerCaseQuery);
-    });
-}, [sourceUsers, nameFilter]);
+    return users;
+  }, [sourceUsers, nameFilter, hobbyFilter, loggedInUserId]);
 
   const totalPages = Math.ceil(displayedUsers.length / ITEMS_PER_PAGE);
   const itemsForCurrentPage = useMemo(() => {
@@ -302,17 +370,25 @@ export default function ResidentList() {
     setIsAccordionOpen((prev) => !prev);
   };
 
+  const toggleExplanation = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsExplanationOpen((prev) => !prev);
+  };
+
   const handleSelectHobbies = ({ selectedNames }) => {
     setHobbyFilter(selectedNames);
     setInterestModalVisible(false);
   };
 
   const handleSearch = () => {
+    // When search is clicked, it always respects the hobby filter.
+    // The name filter is applied reactively in the `displayedUsers` useMemo.
     fetchUsers(hobbyFilter);
   };
 
   const clearHobbyFilter = () => {
     setHobbyFilter([]);
+    // Return to the full list of users when hobby filter is cleared
     fetchUsers([]);
   };
 
@@ -347,10 +423,12 @@ export default function ResidentList() {
             <ListHeader
               isAccordionOpen={isAccordionOpen}
               toggleAccordion={toggleAccordion}
+              isExplanationOpen={isExplanationOpen}
+              toggleExplanation={toggleExplanation}
               searchType={searchType}
               setSearchType={setSearchType}
-              nameInput={nameInput} // ✅ Pass the instant state
-              setNameInput={setNameInput} // ✅ Pass the instant setter
+              nameInput={nameInput}
+              setNameInput={setNameInput}
               hobbyFilter={hobbyFilter}
               clearHobbyFilter={clearHobbyFilter}
               clearNameFilter={clearNameFilter}
@@ -393,7 +471,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
     marginTop: 20,
-    // paddingBottom: 50,
   },
   headerPlaque: {
     width: "90%",
@@ -430,7 +507,6 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 15,
@@ -439,11 +515,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
     color: "#333",
+    flexShrink: 1, // --- ADDED: Allows the text to shrink to make room for the chevron.
+    marginRight: 10, // --- ADDED: Ensures space between text and the spacer/chevron.
   },
   content: {
     padding: 15,
     borderTopWidth: 1,
     borderColor: "#eee",
+  },
+  explanationText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
+    paddingHorizontal: 10,
+    lineHeight: 24,
   },
   searchTypeButton: {
     paddingVertical: 10,
@@ -452,9 +537,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#e7e7e7",
     borderRadius: 6,
   },
+  searchTypeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    flexWrap: "wrap", // --- ADDED: Allows "Search by:" and "Name/Hobby" to stack vertically.
+  },
   searchTypeText: {
     fontSize: 16,
     color: "#333",
+  },
+  searchTypeTextBold: {
+    fontSize: 16,
+    color: "#333",
+    fontWeight: "bold",
+    marginLeft: 4,
   },
   searchInputContainer: {
     marginBottom: 10,
@@ -493,6 +590,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    flexWrap: "wrap", // --- ADDED: Ensures the search button content can stack if needed.
   },
   buttonIcon: {
     marginRight: 8,
@@ -524,6 +622,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 15,
+    flexWrap: "wrap", // --- ADDED: Allows the filter chips to wrap content if text is large.
   },
   filterChipText: {
     fontSize: 22,

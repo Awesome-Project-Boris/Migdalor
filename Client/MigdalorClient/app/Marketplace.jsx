@@ -1,10 +1,4 @@
-import React, {
-  useContext,
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-} from "react";
+import React, { useState, useMemo, useCallback, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -17,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 
 // Custom Components & Contexts
-import { MarketplaceContext } from "../context/MarketplaceProvider";
+// REMOVED: MarketplaceContext is no longer needed.
 import { useNotifications } from "@/context/NotificationsContext";
 
 import MarketplaceItemCard from "../components/MarketplaceItemCard";
@@ -33,21 +27,99 @@ import StyledText from "@/components/StyledText";
 import { Globals } from "@/app/constants/Globals";
 const ITEMS_PER_PAGE = 10;
 
+const ListHeader = ({
+  t,
+  i18n,
+  handleListYourItem,
+  isLoading,
+  marketplaceQuery,
+  setMarketplaceQuery,
+  handleMarketplaceSearch,
+  searchQuery,
+  handleClearSearch,
+}) => (
+  <View style={styles.headerContainer}>
+    <View style={styles.plaqueContainer}>
+      <StyledText style={styles.mainTitle}>
+        {t("MarketplaceScreen_title")}
+      </StyledText>
+    </View>
+
+    <FlipButton
+      onPress={handleListYourItem}
+      style={styles.newItemButton}
+      bgColor="#FFFFFF"
+      textColor="#000000"
+      disabled={isLoading}
+    >
+      <StyledText>{t("MarketplaceScreen_NewItemButton")}</StyledText>
+    </FlipButton>
+
+    <View>
+      <SearchAccordion
+        headerOpenTextKey="MarketplaceScreen_accordionClose"
+        headerClosedTextKey="MarketplaceScreen_accordionOpen"
+      >
+        <FloatingLabelInput
+          label={t("MarketplaceSearchItem_Header")}
+          value={marketplaceQuery}
+          onChangeText={setMarketplaceQuery}
+          returnKeyType="search"
+          onSubmitEditing={handleMarketplaceSearch}
+          style={styles.searchInputContainer}
+          inputStyle={styles.searchInput}
+          alignRight={i18n.dir() === "rtl"}
+        />
+        <FlipButton
+          onPress={handleMarketplaceSearch}
+          style={styles.searchSubmitButton}
+          bgColor="#007bff"
+          textColor="#fff"
+          disabled={isLoading}
+        >
+          <View style={styles.buttonContent}>
+            <Ionicons name="search" size={20} color="white" />
+            <StyledText style={styles.searchButtonText}>
+              {t("MarketplaceScreen_SearchButton")}
+            </StyledText>
+          </View>
+        </FlipButton>
+      </SearchAccordion>
+    </View>
+
+    {searchQuery !== "" && !isLoading && (
+      <View style={styles.inSearch}>
+        <StyledText
+          style={styles.searchFocus}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {t("MarketplaceScreen_ShowingResultsFor")} "{searchQuery}"
+        </StyledText>
+        <TouchableOpacity
+          style={styles.clearSearchButton}
+          onPress={handleClearSearch}
+        >
+          <Ionicons name="close-circle" size={24} color="#6c757d" />
+        </TouchableOpacity>
+      </View>
+    )}
+  </View>
+);
+
 export default function MarketplaceScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { updateLastVisited, isItemNew } = useNotifications();
 
-  const { searchQuery, setSearchQuery } = useContext(MarketplaceContext) || {
-    searchQuery: "",
-    setSearchQuery: () => {},
-  };
+  // --- FIX: Manage search state locally instead of using context ---
+  const [searchQuery, setSearchQuery] = useState("");
+  const [marketplaceQuery, setMarketplaceQuery] = useState("");
 
   const [listings, setListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [marketplaceQuery, setMarketplaceQuery] = useState(searchQuery);
 
   const flatListRef = useRef(null);
 
@@ -60,7 +132,6 @@ export default function MarketplaceScreen() {
     }, [updateLastVisited])
   );
 
-  // Data fetching and logic hooks remain unchanged
   const fetchListings = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -109,7 +180,6 @@ export default function MarketplaceScreen() {
       );
     }
 
-    // --- NEW: Sort new items to the top ---
     return filtered.sort((a, b) => {
       const aIsNew = isItemNew("listings", a.date);
       const bIsNew = isItemNew("listings", b.date);
@@ -142,7 +212,7 @@ export default function MarketplaceScreen() {
       <View style={styles.cardWrapper}>
         <MarketplaceItemCard
           data={item}
-          isNew={isItemNew("listings", item.date)} // Pass the isNew prop
+          isNew={isItemNew("listings", item.date)}
           onPress={() => {
             router.push({
               pathname: "./MarketplaceItem",
@@ -176,77 +246,6 @@ export default function MarketplaceScreen() {
     return null;
   }, [isLoading, error, searchQuery, listings, filteredListings, t]);
 
-  // This component bundles everything that should appear above the list
-  const ListHeader = () => (
-    <View style={styles.headerContainer}>
-      <View style={styles.plaqueContainer}>
-        <StyledText style={styles.mainTitle}>
-          {t("MarketplaceScreen_title")}
-        </StyledText>
-      </View>
-
-      <FlipButton
-        onPress={handleListYourItem}
-        style={styles.newItemButton}
-        bgColor="#FFFFFF"
-        textColor="#000000"
-        disabled={isLoading}
-      >
-        <StyledText>{t("MarketplaceScreen_NewItemButton")}</StyledText>
-      </FlipButton>
-
-      <View>
-        <SearchAccordion
-          headerOpenTextKey="MarketplaceScreen_accordionClose"
-          headerClosedTextKey="MarketplaceScreen_accordionOpen"
-        >
-          <FloatingLabelInput
-            label={t("MarketplaceSearchItem_Header")}
-            value={marketplaceQuery}
-            onChangeText={setMarketplaceQuery}
-            returnKeyType="search"
-            onSubmitEditing={handleMarketplaceSearch}
-            style={styles.searchInputContainer}
-            inputStyle={styles.searchInput}
-            alignRight={i18n.dir() === "rtl"}
-          />
-          <FlipButton
-            onPress={handleMarketplaceSearch}
-            style={styles.searchSubmitButton}
-            bgColor="#007bff"
-            textColor="#fff"
-            disabled={isLoading}
-          >
-            <View style={styles.buttonContent}>
-              <Ionicons name="search" size={20} color="white" />
-              <StyledText style={styles.searchButtonText}>
-                {t("MarketplaceScreen_SearchButton")}
-              </StyledText>
-            </View>
-          </FlipButton>
-        </SearchAccordion>
-      </View>
-
-      {searchQuery !== "" && !isLoading && (
-        <View style={styles.inSearch}>
-          <StyledText
-            style={styles.searchFocus}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {t("MarketplaceScreen_ShowingResultsFor")} "{searchQuery}"
-          </StyledText>
-          <TouchableOpacity
-            style={styles.clearSearchButton}
-            onPress={handleClearSearch}
-          >
-            <Ionicons name="close-circle" size={24} color="#6c757d" />
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       <Header />
@@ -257,7 +256,19 @@ export default function MarketplaceScreen() {
         itemKeyExtractor={keyExtractor}
         isLoading={isLoading && itemsForCurrentPage.length === 0}
         ListEmptyComponent={CustomEmptyComponent}
-        ListHeaderComponent={ListHeader}
+        ListHeaderComponent={
+          <ListHeader
+            t={t}
+            i18n={i18n}
+            handleListYourItem={handleListYourItem}
+            isLoading={isLoading}
+            marketplaceQuery={marketplaceQuery}
+            setMarketplaceQuery={setMarketplaceQuery}
+            handleMarketplaceSearch={handleMarketplaceSearch}
+            searchQuery={searchQuery}
+            handleClearSearch={handleClearSearch}
+          />
+        }
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={handlePageChange}
@@ -292,7 +303,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginTop: 60, // Added requested margin
+    marginTop: 60,
   },
   mainTitle: {
     fontSize: 32,

@@ -21,7 +21,6 @@ import { Toast } from "toastify-react-native";
 
 // --- Custom Component and Context Imports ---
 import { useSettings } from "@/context/SettingsContext";
-import { useNotifications } from "@/context/NotificationsContext";
 import StyledText from "@/components/StyledText";
 
 const placeholderImage = require("../assets/images/tempItem.jpg");
@@ -49,7 +48,6 @@ export default function MarketplaceItemScreen() {
   const { listingId } = params;
   const router = useRouter();
   const { settings } = useSettings();
-  const { updateLastVisited } = useNotifications();
 
   const [listingDetails, setListingDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,14 +56,6 @@ export default function MarketplaceItemScreen() {
   const [currentUserId, setCurrentUserId] = useState(null);
 
   const useColumnLayout = settings.fontSizeMultiplier >= 2.0;
-
-  // This hook runs every time the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      console.log("Marketplace focused, updating last visited time.");
-      updateLastVisited("listings");
-    }, [])
-  );
 
   const fetchDetails = useCallback(async () => {
     setError(null);
