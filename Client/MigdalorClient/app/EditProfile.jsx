@@ -50,12 +50,19 @@ export default function EditProfile() {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const route = useRoute();
+  const router = useRouter();
+
+  // --- START: Added for Unsaved Changes Warning ---
+  const [showConfirm, setShowConfirm] = useState(false);
+  const initialDataRef = useRef(null);
+  const initialPicsRef = useRef(null);
+  const initialInterestsRef = useRef(null);
+  const initialPrivacySettingsRef = useRef(null);
+  // --- END: Added for Unsaved Changes Warning ---
 
   const isInitialLoad = useRef(true);
 
   const { initialData, initialPics } = route.params || {};
-
-  const router = useRouter();
 
   const [form, setForm] = useState({
     name: "",
@@ -211,17 +218,25 @@ export default function EditProfile() {
     if (isInitialLoad.current) {
       if (initialData) {
         const parsedData = JSON.parse(initialData);
+        initialDataRef.current = parsedData; // Store initial form data
+
         if (parsedData.residentInterests) {
-          setUserInterests(parsedData.residentInterests);
+          const interests = parsedData.residentInterests;
+          setUserInterests(interests);
+          initialInterestsRef.current = interests; // Store initial interests
         } else if (parsedData.interests) {
-          setUserInterests(parsedData.interests.map((name) => ({ name })));
+          const interests = parsedData.interests.map((name) => ({ name }));
+          setUserInterests(interests);
+          initialInterestsRef.current = interests; // Store initial interests
         } else {
           setUserInterests([]);
+          initialInterestsRef.current = [];
         }
         setForm(parsedData);
       }
       if (initialPics) {
         const pics = JSON.parse(initialPics);
+        initialPicsRef.current = pics; // Store initial pics
         setProfilePic({
           PicId: pics.profilePic?.picId || null,
           PicName: pics.profilePic?.picName || "",
@@ -452,26 +467,59 @@ export default function EditProfile() {
     }
   };
 
+  // --- START: Unsaved Changes Warning Logic ---
   const handleCancel = () => {
-    try {
-      const parsedInitialData = JSON.parse(initialData);
-      const parsedInitialPics = JSON.parse(initialPics);
-      setForm(parsedInitialData);
-      setProfilePic(parsedInitialPics.profilePic);
-      setAdditionalPic1(parsedInitialPics.additionalPic1);
-      setAdditionalPic2(parsedInitialPics.additionalPic2);
-      Toast.show({
-        type: "info",
-        text1: t("EditProfileScreen_ProfileUpdateCancelled"),
-        duration: 3500,
-        position: "top",
-      });
-      router.back();
-    } catch (err) {
-      console.warn("Failed to parse initialData during cancel:", err);
+    if (hasUnsavedChanges()) {
+      setShowConfirm(true);
+    } else {
       router.back();
     }
   };
+
+  const confirmCancel = () => {
+    setShowConfirm(false);
+    router.back();
+  };
+
+  const stayOnPage = () => {
+    setShowConfirm(false);
+  };
+
+  const hasUnsavedChanges = () => {
+    const initialForm = initialDataRef.current;
+    if (!initialForm) return false;
+
+    // Compare simple text fields
+    const fieldsToCompare = ['partner', 'mobilePhone', 'email', 'origin', 'profession', 'aboutMe', 'residentApartmentNumber'];
+    for (const key of fieldsToCompare) {
+      const formValue = form[key] === null ? "" : String(form[key]).trim();
+      const initialValue = initialForm[key] === null ? "" : String(initialForm[key]).trim();
+      if (formValue !== initialValue) return true;
+    }
+
+    // Check if a new local image was selected
+    if (profilePic.PicPath?.startsWith("file://") || additionalPic1.PicPath?.startsWith("file://") || additionalPic2.PicPath?.startsWith("file://")) {
+      return true;
+    }
+
+    // Check if an existing image was removed or replaced from history
+    const initialPicsData = initialPicsRef.current || {};
+    if (clearedPics.profile || ((profilePic.PicId || profilePic.PicID) && (profilePic.PicId || profilePic.PicID) !== (initialPicsData.profilePic?.picId || initialPicsData.profilePic?.PicId))) return true;
+    if (clearedPics.add1 || ((additionalPic1.PicId || additionalPic1.PicID) && (additionalPic1.PicId || additionalPic1.PicID) !== (initialPicsData.additionalPic1?.picId || initialPicsData.additionalPic1?.PicId))) return true;
+    if (clearedPics.add2 || ((additionalPic2.PicId || additionalPic2.PicID) && (additionalPic2.PicId || additionalPic2.PicID) !== (initialPicsData.additionalPic2?.picId || initialPicsData.additionalPic2?.PicId))) return true;
+
+
+    // Compare interests
+    const initialInterestNames = (initialInterestsRef.current || []).map(i => i.name).sort();
+    const currentInterestNames = userInterests.map(i => i.name).sort();
+    if (JSON.stringify(initialInterestNames) !== JSON.stringify(currentInterestNames)) return true;
+    
+    // Compare privacy settings
+    if (JSON.stringify(privacySettings) !== JSON.stringify(initialPrivacySettingsRef.current)) return true;
+
+    return false;
+  };
+  // --- END: Unsaved Changes Warning Logic ---
 
   const [profileImage, setProfileImage] = useState(defaultUserImage);
   const [additionalImage1, setAdditionalImage1] = useState(defaultUserImage);
@@ -522,6 +570,7 @@ export default function EditProfile() {
         if (response.ok) {
           const data = await response.json();
           setPrivacySettings(data);
+          initialPrivacySettingsRef.current = data; // Store initial privacy settings
         }
       } catch (error) {
         console.error("Failed to fetch privacy settings:", error);
@@ -928,7 +977,7 @@ export default function EditProfile() {
     additionalPic2.PicID || additionalPic2.PicId,
   ].filter(Boolean);
 
-  const initialPicsParsed = JSON.parse(initialPics);
+  const initialPicsParsed = initialPics ? JSON.parse(initialPics) : {};
   const clearedPictureIds = [];
   if (clearedPics.profile && initialPicsParsed.profilePic)
     clearedPictureIds.push(initialPicsParsed.profilePic.picId);
@@ -1269,6 +1318,42 @@ export default function EditProfile() {
         initialSettings={privacySettings}
         onSave={handleSavePrivacySettings}
       />
+
+      {/* --- START: Add Confirmation Modal --- */}
+      {showConfirm && (
+        <Modal visible={true} transparent={true} animationType="fade">
+          <View style={styles.confirmOverlay}>
+            <View style={styles.confirmContainer}>
+              <StyledText style={styles.confirmText}>
+                {t("MarketplaceNewItemScreen_CancelDiscardHeader", "You have unsaved changes. Are you sure you want to discard them?")}
+              </StyledText>
+              <View style={styles.confirmButtonRow}>
+                <FlipButton
+                  onPress={confirmCancel}
+                  bgColor="#e0e0e0"
+                  textColor="black"
+                  style={styles.confirmButton}
+                >
+                  <StyledText style={styles.buttonLabel}>
+                    {t("MarketplaceNewItemScreen_CancelConfirmation", "Discard")}
+                  </StyledText>
+                </FlipButton>
+                <FlipButton
+                  onPress={stayOnPage}
+                  bgColor="#347af0"
+                  textColor="white"
+                  style={styles.confirmButton}
+                >
+                  <StyledText style={[styles.buttonLabel, { color: "white" }]}>
+                    {t("NewActivity_KeepEditing", "Keep Editing")}
+                  </StyledText>
+                </FlipButton>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+      {/* --- END: Add Confirmation Modal --- */}
     </View>
   );
 }
@@ -1480,4 +1565,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
   },
+  // --- START: Add Modal Styles ---
+  confirmOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  confirmContainer: {
+    width: "85%",
+    maxWidth: 350,
+    padding: 25,
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  confirmText: {
+    fontSize: 18,
+    marginBottom: 25,
+    textAlign: "center",
+    lineHeight: 24,
+  },
+  confirmButtonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  confirmButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    borderRadius: 8,
+    width: "48%",
+    alignItems: "center",
+  },
+  buttonLabel: { 
+    fontSize: 16, 
+    fontWeight: "bold" 
+  },
+  // --- END: Add Modal Styles ---
 });
