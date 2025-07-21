@@ -1,202 +1,357 @@
-// src/features/openingHoursManagement/OpeningHoursManagement.jsx
-import React, { useState, useEffect } from "react";
-import { api } from "../../api/apiService"; // Adjust path if needed
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { api } from "../../api/apiService";
 import { useAuth } from "../../auth/AuthContext";
+import { Edit, Trash2, PlusCircle, Clock, Calendar, List } from "lucide-react";
 
-// --- Main Component ---
+// Common Components
+import SharedTable from "../../components/common/SharedTable";
+import Toast from "../../components/common/Toast";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
+import TabsGroup from "../../components/common/TabsGroup";
+import { Button } from "../../components/ui/button";
+
+// Page-specific Modals
+import OpeningHourEditModal from "./OpeningHourEditModal";
+import ScheduleOverrideModal from "./ScheduleOverrideModal";
+
 const OpeningHoursManagement = () => {
   const { token } = useAuth();
+
+  // Data states
   const [services, setServices] = useState([]);
   const [openingHours, setOpeningHours] = useState([]);
   const [overrides, setOverrides] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [servicesData, hoursData, overridesData] = await Promise.all([
-          api.get("/openinghours/services", token),
-          api.get("/openinghours", token),
-          api.get("/openinghours/overrides", token),
-        ]);
-        setServices(servicesData);
-        setOpeningHours(hoursData);
-        setOverrides(overridesData);
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-        console.error("Failed to fetch data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // UI states
+  const [isLoading, setIsLoading] = useState(true);
+  const [toastState, setToastState] = useState({
+    show: false,
+    message: "",
+    variant: "info",
+  });
 
-    fetchData();
+  // Modal states
+  const [hourModal, setHourModal] = useState({ isOpen: false, data: null });
+  const [overrideModal, setOverrideModal] = useState({
+    isOpen: false,
+    mode: "add",
+    data: null,
+  });
+  const [deletingOverride, setDeletingOverride] = useState(null);
+
+  // Table states
+  const [sorting, setSorting] = useState([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+
+  // --- Data Fetching ---
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [servicesData, hoursData, overridesData] = await Promise.all([
+        api.get("/openinghours/services", token),
+        api.get("/openinghours", token),
+        api.get("/openinghours/overrides", token),
+      ]);
+      setServices(servicesData);
+      setOpeningHours(hoursData);
+      setOverrides(overridesData);
+    } catch (error) {
+      showToast("error", `Failed to fetch data: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
   }, [token]);
 
-  if (loading) {
-    return <div className="p-8">Loading...</div>;
-  }
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  if (error) {
-    return <div className="p-8 text-red-500">Error: {error}</div>;
-  }
+  // --- UI Handlers ---
+  const showToast = (variant, message) =>
+    setToastState({ show: true, variant, message });
+  const handleCloseToast = () => setToastState({ ...toastState, show: false });
+
+  // --- CRUD Handlers ---
+  const handleUpdateOpeningHour = async (updatedHour) => {
+    try {
+      await api.put(`/openinghours/${updatedHour.hourId}`, updatedHour, token);
+      showToast("success", "Opening hour updated successfully.");
+      fetchData();
+      setHourModal({ isOpen: false, data: null });
+    } catch (err) {
+      showToast("error", "Failed to update opening hour.");
+    }
+  };
+
+  const handleSaveOverride = async (overrideData) => {
+    const { mode } = overrideModal;
+    try {
+      if (mode === "add") {
+        await api.post("/openinghours/overrides", overrideData, token);
+        showToast("success", "Override added successfully.");
+      } else {
+        await api.put(
+          `/openinghours/overrides/${overrideData.overrideId}`,
+          overrideData,
+          token
+        );
+        showToast("success", "Override updated successfully.");
+      }
+      fetchData();
+      setOverrideModal({ isOpen: false, mode: "add", data: null });
+    } catch (err) {
+      showToast("error", `Failed to save override.`);
+    }
+  };
+
+  const confirmDeleteOverride = async () => {
+    if (!deletingOverride) return;
+    try {
+      await api.delete(
+        `/openinghours/overrides/${deletingOverride.overrideId}`,
+        token
+      );
+      showToast("success", "Override deleted successfully.");
+      fetchData();
+      setDeletingOverride(null);
+    } catch (err) {
+      showToast("error", "Failed to delete override.");
+    }
+  };
+
+  // --- Table Column Definitions ---
+  const dayNames = useMemo(
+    () => ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"],
+    []
+  );
+
+  const servicesColumns = useMemo(
+    () => [
+      { accessorKey: "hebrewName", header: "שם השירות" },
+      {
+        accessorKey: "isActive",
+        header: "סטטוס",
+        cell: (info) => (
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              info.getValue()
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {info.getValue() ? "פעיל" : "לא פעיל"}
+          </span>
+        ),
+      },
+    ],
+    []
+  );
+
+  const hoursColumns = useMemo(
+    () => [
+      {
+        accessorFn: (row) =>
+          services.find((s) => s.serviceID === row.serviceId)?.hebrewName ||
+          "N/A",
+        header: "שירות",
+      },
+      { accessorFn: (row) => dayNames[row.dayOfWeek], header: "יום" },
+      { accessorKey: "openTime", header: "שעת פתיחה" },
+      { accessorKey: "closeTime", header: "שעת סגירה" },
+      {
+        id: "actions",
+        header: "עריכה",
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setHourModal({ isOpen: true, data: row.original })}
+          >
+            <Edit size={16} />
+          </Button>
+        ),
+      },
+    ],
+    [services, dayNames]
+  );
+
+  const overridesColumns = useMemo(
+    () => [
+      {
+        accessorFn: (row) =>
+          services.find((s) => s.serviceID === row.serviceId)?.hebrewName ||
+          "N/A",
+        header: "שירות",
+      },
+      {
+        accessorFn: (row) =>
+          new Date(row.overrideDate).toLocaleDateString("he-IL"),
+        header: "תאריך",
+      },
+      {
+        accessorKey: "isOpen",
+        header: "סטטוס",
+        cell: (info) => (
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              info.getValue()
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {info.getValue() ? "פתוח" : "סגור"}
+          </span>
+        ),
+      },
+      { accessorFn: (row) => row.openTime || "—", header: "פתיחה" },
+      { accessorFn: (row) => row.closeTime || "—", header: "סגירה" },
+      { accessorKey: "notes", header: "הערות" },
+      {
+        id: "actions",
+        header: "פעולות",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                setOverrideModal({
+                  isOpen: true,
+                  mode: "edit",
+                  data: row.original,
+                })
+              }
+            >
+              <Edit size={16} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-red-600 hover:text-red-700"
+              onClick={() => setDeletingOverride(row.original)}
+            >
+              <Trash2 size={16} />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [services]
+  );
+
+  // --- Tabs Definition for TabsGroup ---
+  const managementTabs = [
+    {
+      value: "hours",
+      label: 'לו"ז שבועי',
+      icon: Clock,
+      content: (
+        <div dir="ltr">
+          <SharedTable
+            data={openingHours}
+            columns={hoursColumns}
+            sorting={sorting}
+            setSorting={setSorting}
+            globalFilter={globalFilter}
+            setGlobalFilter={setGlobalFilter}
+          />
+        </div>
+      ),
+    },
+    {
+      value: "overrides",
+      label: 'חריגות בלו"ז',
+      icon: Calendar,
+      content: (
+        <div dir="ltr">
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={() =>
+                setOverrideModal({ isOpen: true, mode: "add", data: null })
+              }
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusCircle size={16} className="mr-2" />
+              הוסף חריגה
+            </Button>
+          </div>
+          <SharedTable
+            data={overrides}
+            columns={overridesColumns}
+            sorting={sorting}
+            setSorting={setSorting}
+            globalFilter={globalFilter}
+            setGlobalFilter={setGlobalFilter}
+          />
+        </div>
+      ),
+    },
+    {
+      value: "services",
+      label: "שירותים",
+      icon: List,
+      content: (
+        <div dir="ltr">
+          <SharedTable
+            data={services}
+            columns={servicesColumns}
+            sorting={sorting}
+            setSorting={setSorting}
+            globalFilter={globalFilter}
+            setGlobalFilter={setGlobalFilter}
+          />
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div className="p-8 bg-gray-50 min-h-full" dir="rtl">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">
+    <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
+      <Toast
+        show={toastState.show}
+        message={toastState.message}
+        variant={toastState.variant}
+        onClose={handleCloseToast}
+      />
+
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">
         ניהול שעות פתיחה
-      </h1>
-
-      <div className="space-y-8">
-        <ServiceList services={services} />
-        <OpeningHoursList openingHours={openingHours} services={services} />
-        <ScheduleOverrideList overrides={overrides} services={services} />
-      </div>
-    </div>
-  );
-};
-
-// --- Sub-components ---
-
-const ServiceList = ({ services }) => (
-  <section className="bg-white p-6 rounded-lg shadow-md">
-    <h2 className="text-2xl font-semibold text-gray-700 mb-4">שירותים</h2>
-    <div className="overflow-x-auto">
-      <table className="min-w-full bg-white">
-        <thead className="bg-gray-200">
-          <tr>
-            <th className="py-2 px-4 text-right">שם השירות</th>
-            <th className="py-2 px-4 text-right">פעיל/לא פעיל</th>
-          </tr>
-        </thead>
-        <tbody>
-          {services.map((service) => (
-            <tr key={service.serviceID} className="border-b">
-              <td className="py-2 px-4">{service.hebrewName}</td>
-              <td className="py-2 px-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                    service.isActive
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {service.isActive ? "פעיל" : "לא פעיל"}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </section>
-);
-
-const OpeningHoursList = ({ openingHours, services }) => {
-  const getServiceName = (serviceId) => {
-    const service = services.find((s) => s.serviceID === serviceId);
-    return service ? service.hebrewName : "N/A";
-  };
-
-  const formatTime = (time) => time.substring(0, 5);
-  const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-
-  return (
-    <section className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-gray-700 mb-4">
-        שעות פתיחה שבועיות
       </h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="py-2 px-4 text-right">שירות</th>
-              <th className="py-2 px-4 text-right">יום בשבוע</th>
-              <th className="py-2 px-4 text-right">שעת פתיחה</th>
-              <th className="py-2 px-4 text-right">שעת סגירה</th>
-              <th className="py-2 px-4 text-right">סטטוס</th>
-            </tr>
-          </thead>
-          <tbody>
-            {openingHours.map((hour) => (
-              <tr key={hour.id} className="border-b">
-                <td className="py-2 px-4">{getServiceName(hour.serviceId)}</td>
-                <td className="py-2 px-4">{dayNames[hour.dayOfWeek]}</td>
-                <td className="py-2 px-4">{formatTime(hour.fromTime)}</td>
-                <td className="py-2 px-4">{formatTime(hour.toTime)}</td>
-                <td className="py-2 px-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      hour.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {hour.isActive ? "פעיל" : "לא פעיל"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-};
 
-const ScheduleOverrideList = ({ overrides, services }) => {
-  const getServiceName = (serviceId) => {
-    const service = services.find((s) => s.serviceID === serviceId);
-    return service ? service.hebrewName : "N/A";
-  };
+      <TabsGroup tabs={managementTabs} />
 
-  const formatDate = (dateString) =>
-    new Date(dateString).toLocaleString("he-IL");
+      {/* Modals */}
+      {hourModal.isOpen && (
+        <OpeningHourEditModal
+          hour={hourModal.data}
+          onClose={() => setHourModal({ isOpen: false, data: null })}
+          onSave={handleUpdateOpeningHour}
+        />
+      )}
 
-  return (
-    <section className="bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-gray-700 mb-4">חריגות בלוז</h2>
-      {/* Add button can go here */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="py-2 px-4 text-right">שירות</th>
-              <th className="py-2 px-4 text-right">תיאור</th>
-              <th className="py-2 px-4 text-right">שעת התחלה</th>
-              <th className="py-2 px-4 text-right">שעת סיום</th>
-              <th className="py-2 px-4 text-right">סטטוס</th>
-            </tr>
-          </thead>
-          <tbody>
-            {overrides.map((override) => (
-              <tr key={override.id} className="border-b">
-                <td className="py-2 px-4">
-                  {getServiceName(override.serviceId)}
-                </td>
-                <td className="py-2 px-4">{override.description}</td>
-                <td className="py-2 px-4">{formatDate(override.startTime)}</td>
-                <td className="py-2 px-4">{formatDate(override.endTime)}</td>
-                <td className="py-2 px-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      override.isActive
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {override.isActive ? "פעיל" : "לא פעיל"}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+      {overrideModal.isOpen && (
+        <ScheduleOverrideModal
+          mode={overrideModal.mode}
+          override={overrideModal.data}
+          services={services}
+          onClose={() =>
+            setOverrideModal({ isOpen: false, mode: "add", data: null })
+          }
+          onSave={handleSaveOverride}
+        />
+      )}
+
+      {deletingOverride && (
+        <ConfirmationModal
+          title="אישור מחיקת חריגה"
+          message={`האם אתה בטוח שברצונך למחוק את החריגה בתאריך ${new Date(
+            deletingOverride.overrideDate
+          ).toLocaleDateString("he-IL")}?`}
+          onConfirm={confirmDeleteOverride}
+          onCancel={() => setDeletingOverride(null)}
+        />
+      )}
+    </div>
   );
 };
 

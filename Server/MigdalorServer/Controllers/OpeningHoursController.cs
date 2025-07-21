@@ -1,11 +1,13 @@
-// Controllers/OpeningHoursController.cs
+// --- Controllers/OpeningHoursController.cs ---
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MigdalorServer.Database;
-using Migdalor.DTOs;
+using Migdalor.DTOs; // Assuming DTOs are in this namespace
+using MigdalorServer.Database; // Correct context namespace
+using MigdalorServer.Models; // Correct models namespace
 
 namespace Migdalor.Admin.Panel.Controllers
 {
@@ -20,16 +22,23 @@ namespace Migdalor.Admin.Panel.Controllers
             _context = context;
         }
 
+        // =============================================
+        // Service Endpoints
+        // =============================================
+
         // GET: api/OpeningHours/services
         [HttpGet("services")]
         public async Task<ActionResult<IEnumerable<ServiceDto>>> GetServices()
         {
+            // Using the existing ServiceDto and OhService model properties
             return await _context
-                .OhServices.Select(s => new ServiceDto
+                .OhServices.AsNoTracking()
+                .Select(s => new ServiceDto
                 {
                     ServiceID = s.ServiceId,
-                    HebrewName = s.HebrewName,
-                    IsActive = (bool)s.IsActive,
+                    HebrewName = s.HebrewName ?? "",
+                    IsActive = s.IsActive ?? false,
+                    // Omitting other fields for simplicity in this context
                 })
                 .ToListAsync();
         }
@@ -40,16 +49,17 @@ namespace Migdalor.Admin.Panel.Controllers
         {
             if (id != serviceDto.ServiceID)
             {
-                return BadRequest();
+                return BadRequest("ID mismatch.");
             }
 
-            var service = await _context.Services.FindAsync(id);
+            var service = await _context.OhServices.FindAsync(id);
             if (service == null)
             {
-                return NotFound();
+                return NotFound($"Service with ID {id} not found.");
             }
 
-            service.Name = serviceDto.HebrewName;
+            // Update only the properties relevant to this management page
+            service.HebrewName = serviceDto.HebrewName;
             service.IsActive = serviceDto.IsActive;
 
             _context.Entry(service).State = EntityState.Modified;
@@ -60,7 +70,7 @@ namespace Migdalor.Admin.Panel.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Services.Any(e => e.Id == id))
+                if (!_context.OhServices.Any(e => e.ServiceId == id))
                 {
                     return NotFound();
                 }
@@ -73,19 +83,24 @@ namespace Migdalor.Admin.Panel.Controllers
             return NoContent();
         }
 
+        // =============================================
+        // Opening Hours Endpoints
+        // =============================================
+
         // GET: api/OpeningHours
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OpeningHourDto>>> GetOpeningHours()
         {
+            // Correctly references OhOpeningHours, HourId, OpenTime, and CloseTime
             return await _context
-                .OpeningHours.Select(o => new OpeningHourDto
+                .OhOpeningHours.AsNoTracking()
+                .Select(o => new OpeningHourDto
                 {
-                    Id = o.Id,
+                    HourId = o.HourId,
                     ServiceId = o.ServiceId,
                     DayOfWeek = o.DayOfWeek,
-                    FromTime = o.FromTime,
-                    ToTime = o.ToTime,
-                    IsActive = o.IsActive,
+                    OpenTime = o.OpenTime.ToString(@"hh\:mm"),
+                    CloseTime = o.CloseTime.ToString(@"hh\:mm"),
                 })
                 .ToListAsync();
         }
@@ -94,56 +109,49 @@ namespace Migdalor.Admin.Panel.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateOpeningHour(int id, OpeningHourDto openingHourDto)
         {
-            if (id != openingHourDto.Id)
+            if (id != openingHourDto.HourId)
             {
-                return BadRequest();
+                return BadRequest("ID mismatch.");
             }
 
-            var openingHour = await _context.OpeningHours.FindAsync(id);
+            var openingHour = await _context.OhOpeningHours.FindAsync(id);
             if (openingHour == null)
             {
-                return NotFound();
+                return NotFound($"Opening hour with ID {id} not found.");
             }
 
+            // Map from DTO to the entity
             openingHour.DayOfWeek = openingHourDto.DayOfWeek;
-            openingHour.FromTime = openingHourDto.FromTime;
-            openingHour.ToTime = openingHourDto.ToTime;
-            openingHour.IsActive = openingHourDto.IsActive;
+            openingHour.OpenTime = TimeSpan.Parse(openingHourDto.OpenTime);
+            openingHour.CloseTime = TimeSpan.Parse(openingHourDto.CloseTime);
+            // NOTE: There is no 'IsActive' on the OhOpeningHour model
 
             _context.Entry(openingHour).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.OpeningHours.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
+        // =============================================
+        // Schedule Override Endpoints
+        // =============================================
 
         // GET: api/OpeningHours/overrides
         [HttpGet("overrides")]
         public async Task<ActionResult<IEnumerable<ScheduleOverrideDto>>> GetScheduleOverrides()
         {
+            // Correctly maps from OhScheduleOverride to ScheduleOverrideDto
             return await _context
-                .ScheduleOverrides.Select(o => new ScheduleOverrideDto
+                .OhScheduleOverrides.AsNoTracking()
+                .Select(o => new ScheduleOverrideDto
                 {
-                    Id = o.Id,
+                    OverrideId = o.OverrideId,
                     ServiceId = o.ServiceId,
-                    StartTime = o.StartTime,
-                    EndTime = o.EndTime,
-                    Description = o.Description,
-                    IsActive = o.IsActive,
+                    OverrideDate = o.OverrideDate,
+                    IsOpen = o.IsOpen,
+                    OpenTime = o.OpenTime.HasValue ? o.OpenTime.Value.ToString(@"hh\:mm") : null,
+                    CloseTime = o.CloseTime.HasValue ? o.CloseTime.Value.ToString(@"hh\:mm") : null,
+                    Notes = o.Notes,
                 })
                 .ToListAsync();
         }
@@ -151,70 +159,60 @@ namespace Migdalor.Admin.Panel.Controllers
         // POST: api/OpeningHours/overrides
         [HttpPost("overrides")]
         public async Task<ActionResult<ScheduleOverrideDto>> AddScheduleOverride(
-            ScheduleOverrideDto scheduleOverrideDto
+            ScheduleOverrideDto dto
         )
         {
             var scheduleOverride = new OhScheduleOverride
             {
-                ServiceId = scheduleOverrideDto.ServiceId,
-                StartTime = scheduleOverrideDto.StartTime,
-                EndTime = scheduleOverrideDto.EndTime,
-                Description = scheduleOverrideDto.Description,
-                IsActive = scheduleOverrideDto.IsActive,
+                ServiceId = dto.ServiceId,
+                OverrideDate = dto.OverrideDate.Date, // Ensure it's just the date part
+                IsOpen = dto.IsOpen,
+                OpenTime = !string.IsNullOrEmpty(dto.OpenTime)
+                    ? (TimeSpan?)TimeSpan.Parse(dto.OpenTime)
+                    : null,
+                CloseTime = !string.IsNullOrEmpty(dto.CloseTime)
+                    ? (TimeSpan?)TimeSpan.Parse(dto.CloseTime)
+                    : null,
+                Notes = dto.Notes,
             };
 
-            _context.ScheduleOverrides.Add(scheduleOverride);
+            _context.OhScheduleOverrides.Add(scheduleOverride);
             await _context.SaveChangesAsync();
 
-            scheduleOverrideDto.Id = scheduleOverride.Id;
+            dto.OverrideId = scheduleOverride.OverrideId; // Set the new ID on the DTO
 
-            return CreatedAtAction(
-                nameof(GetScheduleOverrides),
-                new { id = scheduleOverride.Id },
-                scheduleOverrideDto
-            );
+            return CreatedAtAction(nameof(GetScheduleOverrides), new { id = dto.OverrideId }, dto);
         }
 
         // PUT: api/OpeningHours/overrides/5
         [HttpPut("overrides/{id}")]
-        public async Task<IActionResult> UpdateScheduleOverride(
-            int id,
-            ScheduleOverrideDto scheduleOverrideDto
-        )
+        public async Task<IActionResult> UpdateScheduleOverride(int id, ScheduleOverrideDto dto)
         {
-            if (id != scheduleOverrideDto.Id)
+            if (id != dto.OverrideId)
             {
-                return BadRequest();
+                return BadRequest("ID mismatch.");
             }
 
-            var scheduleOverride = await _context.ScheduleOverrides.FindAsync(id);
+            var scheduleOverride = await _context.OhScheduleOverrides.FindAsync(id);
             if (scheduleOverride == null)
             {
                 return NotFound();
             }
 
-            scheduleOverride.StartTime = scheduleOverrideDto.StartTime;
-            scheduleOverride.EndTime = scheduleOverrideDto.EndTime;
-            scheduleOverride.Description = scheduleOverrideDto.Description;
-            scheduleOverride.IsActive = scheduleOverrideDto.IsActive;
+            // Map all properties from the DTO to the entity
+            scheduleOverride.OverrideDate = dto.OverrideDate.Date;
+            scheduleOverride.IsOpen = dto.IsOpen;
+            scheduleOverride.OpenTime = !string.IsNullOrEmpty(dto.OpenTime)
+                ? (TimeSpan?)TimeSpan.Parse(dto.OpenTime)
+                : null;
+            scheduleOverride.CloseTime = !string.IsNullOrEmpty(dto.CloseTime)
+                ? (TimeSpan?)TimeSpan.Parse(dto.CloseTime)
+                : null;
+            scheduleOverride.Notes = dto.Notes;
+            scheduleOverride.ServiceId = dto.ServiceId;
 
             _context.Entry(scheduleOverride).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.ScheduleOverrides.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -223,13 +221,13 @@ namespace Migdalor.Admin.Panel.Controllers
         [HttpDelete("overrides/{id}")]
         public async Task<IActionResult> DeleteScheduleOverride(int id)
         {
-            var scheduleOverride = await _context.ScheduleOverrides.FindAsync(id);
+            var scheduleOverride = await _context.OhScheduleOverrides.FindAsync(id);
             if (scheduleOverride == null)
             {
                 return NotFound();
             }
 
-            _context.ScheduleOverrides.Remove(scheduleOverride);
+            _context.OhScheduleOverrides.Remove(scheduleOverride);
             await _context.SaveChangesAsync();
 
             return NoContent();
