@@ -217,6 +217,8 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "Listing deleted successfully!",
       MarketplaceItemScreen_DeleteErrorMsg: "Failed to delete listing.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
+      MarketplaceItemScreen_CannotHandleContactTitle: "Cannot Handle Contact Information",
+      MarketplaceItemScreen_CannotHandleContactMsg: "Cannot handle contact information for this item.",
 
       MarketplaceItemCard_Untitled: "Untitled",
       MarketplaceItemCard_UnknownSeller: "Unknown Seller",
@@ -839,6 +841,10 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "המודעה נמחקה בהצלחה!",
       MarketplaceItemScreen_DeleteErrorMsg: "מחיקת המודעה נכשלה.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "בעיה במחיקת תמונה",
+      MarketplaceItemScreen_CannotHandleContactTitle: "לא ניתן לטפל בפרטי יצירת קשר",
+      MarketplaceItemScreen_CannotHandleContactMsg: "לא ניתן לטפל בפרטי יצירת קשר עבור פריט זה.",
+
+
 
       MarketplaceItemCard_Untitled: "ללא כותרת",
       MarketplaceItemCard_UnknownSeller: "מוכר לא ידוע",
