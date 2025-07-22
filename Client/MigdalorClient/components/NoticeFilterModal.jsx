@@ -13,6 +13,8 @@ import { Globals } from "@/app/constants/Globals";
 import StyledText from "@/components/StyledText.jsx";
 import { useSettings } from "@/context/SettingsContext.jsx";
 
+const ItemSeparator = () => <View style={styles.itemSeparator} />;
+
 export default function FilterModal({
   visible,
   onClose,
@@ -113,6 +115,7 @@ export default function FilterModal({
             renderItem={renderCategoryItem}
             keyExtractor={(item) => item}
             style={styles.list}
+            ItemSeparatorComponent={ItemSeparator}
           />
 
           <View
@@ -187,6 +190,10 @@ const styles = StyleSheet.create({
     width: "100%",
     marginBottom: 15,
     paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#e0e0e0",
   },
   selectAllContainerVertical: {
     flexDirection: "column",
@@ -208,8 +215,14 @@ const styles = StyleSheet.create({
   },
   checkboxItem: {
     paddingHorizontal: 20,
-    paddingVertical: 5, // Increased vertical padding for more spacing
-    alignItems: Globals.userSelectedDirection === "rtl" ? "flex-end" : "flex-start", // Align items to the correct side
+    paddingVertical: 5,
+    alignItems:
+      Globals.userSelectedDirection === "rtl" ? "flex-end" : "flex-start",
+  },
+  itemSeparator: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginHorizontal: 20,
   },
   modalActions: {
     flexDirection: "row",

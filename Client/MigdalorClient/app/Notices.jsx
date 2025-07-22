@@ -506,7 +506,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
-    flexGrow: 1,
+    flex: 1,
   },
   fullWidthButton: {
     width: "100%",
@@ -523,6 +523,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
+    flexShrink: 1,
   },
   listContainerStyle: {
     paddingHorizontal: 10, // Reduced padding for wider content
@@ -531,6 +532,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: "100%",
     marginBottom: 15,
+    alignItems: "center",
   },
   errorText: {
     textAlign: "center",
