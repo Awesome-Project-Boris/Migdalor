@@ -40,6 +40,7 @@ export default function PaginatedListDisplay({
   listContainerStyle = {},
   paginationContainerStyle = {},
   flatListRef = null, // Accept optional ref
+  ListHeaderComponent,
 }) {
   const { t } = useTranslation();
   const { settings } = useSettings();
