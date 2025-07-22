@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
-// --- Mock shadcn/ui Dialog Components (from EditUserModal) ---
+// --- Mock shadcn/ui Dialog Components (reused from other modals) ---
 const Dialog = ({ open, onOpenChange, children }) => {
   if (!open) return null;
   return (
@@ -63,77 +63,59 @@ const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
 ));
 DialogTitle.displayName = "DialogTitle";
 
-// --- Main OpeningHourEditModal Component ---
+// --- Main ServiceModal Component ---
 
-const OpeningHourEditModal = ({ hour, onClose, onSave }) => {
-  const [formData, setFormData] = useState({ ...hour });
+const ServiceModal = ({ isOpen, onClose, onSave, mode, service }) => {
+  const [name, setName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  useEffect(() => {
+    if (mode === "edit" && service) {
+      setName(service.hebrewName || "");
+    } else {
+      setName("");
+    }
+  }, [mode, service, isOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!name.trim()) return;
     setIsSubmitting(true);
     try {
-      await onSave(formData);
+      await onSave({ hebrewName: name });
     } catch (error) {
-      console.error("Failed to save opening hour:", error);
-      setIsSubmitting(false); // Re-enable button on failure
+      console.error("Failed to save service:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>עריכת שעת פתיחה</DialogTitle>
+          <DialogTitle>
+            {mode === "edit" ? "ערוך שם שירות" : "הוסף שירות חדש"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                יום בשבוע
-              </label>
-              <select
-                name="dayOfWeek"
-                value={formData.dayOfWeek}
-                onChange={handleChange}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              <label
+                htmlFor="serviceName"
+                className="block text-sm font-medium text-gray-700 mb-1"
               >
-                {dayNames.map((day, index) => (
-                  <option key={index} value={index}>
-                    {day}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                שעת פתיחה
+                שם השירות
               </label>
               <input
-                type="time"
-                name="openTime"
-                value={formData.openTime}
-                onChange={handleChange}
+                id="serviceName"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                שעת סגירה
-              </label>
-              <input
-                type="time"
-                name="closeTime"
-                value={formData.closeTime}
-                onChange={handleChange}
-                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                required
               />
             </div>
           </div>
@@ -151,7 +133,7 @@ const OpeningHourEditModal = ({ hour, onClose, onSave }) => {
               disabled={isSubmitting}
               className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors disabled:bg-blue-300"
             >
-              {isSubmitting ? "שומר..." : "שמור שינויים"}
+              {isSubmitting ? "שומר..." : "שמור"}
             </button>
           </DialogFooter>
         </form>
@@ -160,4 +142,4 @@ const OpeningHourEditModal = ({ hour, onClose, onSave }) => {
   );
 };
 
-export default OpeningHourEditModal;
+export default ServiceModal;

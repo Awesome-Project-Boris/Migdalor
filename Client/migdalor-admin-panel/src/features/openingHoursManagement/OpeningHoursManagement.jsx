@@ -11,8 +11,24 @@ import TabsGroup from "../../components/common/TabsGroup";
 import { Button } from "../../components/ui/button";
 
 // Page-specific Modals
-import OpeningHourEditModal from "./OpeningHourEditModal";
 import ScheduleOverrideModal from "./ScheduleOverrideModal";
+import WeeklyScheduleEditor from "./WeeklyScheduleEditor";
+import ServiceModal from "./ServiceModal"; // Import the new modal
+
+// --- Mock Tooltip Components (from UserManagement.jsx) ---
+const TooltipProvider = ({ children }) => <>{children}</>;
+const Tooltip = ({ children }) => (
+  <div className="relative inline-flex group">{children}</div>
+);
+const TooltipTrigger = ({ children }) => <>{children}</>;
+const TooltipContent = ({ children, ...props }) => (
+  <div
+    className="absolute bottom-full mb-2 w-max px-2 py-1 text-xs font-semibold text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 transform -translate-x-1/2 left-1/2"
+    {...props}
+  >
+    {children}
+  </div>
+);
 
 const OpeningHoursManagement = () => {
   const { token } = useAuth();
@@ -31,8 +47,12 @@ const OpeningHoursManagement = () => {
   });
 
   // Modal states
-  const [hourModal, setHourModal] = useState({ isOpen: false, data: null });
   const [overrideModal, setOverrideModal] = useState({
+    isOpen: false,
+    mode: "add",
+    data: null,
+  });
+  const [serviceModal, setServiceModal] = useState({
     isOpen: false,
     mode: "add",
     data: null,
@@ -72,14 +92,58 @@ const OpeningHoursManagement = () => {
   const handleCloseToast = () => setToastState({ ...toastState, show: false });
 
   // --- CRUD Handlers ---
-  const handleUpdateOpeningHour = async (updatedHour) => {
+  const handleUpdateOpeningHours = async ({ toCreate, toUpdate, toDelete }) => {
+    const promises = [];
+
+    toCreate.forEach((hour) => {
+      const { hourId, ...createData } = hour;
+      promises.push(api.post("/openinghours", createData, token));
+    });
+
+    toUpdate.forEach((hour) => {
+      promises.push(api.put(`/openinghours/${hour.hourId}`, hour, token));
+    });
+
+    toDelete.forEach((hourId) => {
+      promises.push(api.delete(`/openinghours/${hourId}`, token));
+    });
+
     try {
-      await api.put(`/openinghours/${updatedHour.hourId}`, updatedHour, token);
-      showToast("success", "Opening hour updated successfully.");
+      await Promise.all(promises);
+      showToast("success", "Weekly schedule updated successfully.");
       fetchData();
-      setHourModal({ isOpen: false, data: null });
     } catch (err) {
-      showToast("error", "Failed to update opening hour.");
+      showToast("error", "Failed to update one or more schedule entries.");
+      console.error("Schedule update error:", err);
+    }
+  };
+
+  const handleSaveService = async (serviceData) => {
+    const { mode, data } = serviceModal;
+    try {
+      if (mode === "add") {
+        // Assuming a standard POST request for creation
+        await api.post(
+          "/services",
+          { hebrewName: serviceData.hebrewName },
+          token
+        );
+        showToast("success", "Service created successfully.");
+      } else {
+        // Assuming a standard PUT request for update
+        await api.put(
+          `/services/${data.serviceID}`,
+          { serviceID: data.serviceID, hebrewName: serviceData.hebrewName },
+          token
+        );
+        showToast("success", "Service updated successfully.");
+      }
+      fetchData();
+      setServiceModal({ isOpen: false, mode: "add", data: null });
+    } catch (err) {
+      showToast("error", `Failed to save service: ${err.message}`);
+      // Re-throw to be caught by modal's submit handler
+      throw err;
     }
   };
 
@@ -120,11 +184,6 @@ const OpeningHoursManagement = () => {
   };
 
   // --- Table Column Definitions ---
-  const dayNames = useMemo(
-    () => ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"],
-    []
-  );
-
   const servicesColumns = useMemo(
     () => [
       { accessorKey: "hebrewName", header: "שם השירות" },
@@ -143,36 +202,35 @@ const OpeningHoursManagement = () => {
           </span>
         ),
       },
-    ],
-    []
-  );
-
-  const hoursColumns = useMemo(
-    () => [
-      {
-        accessorFn: (row) =>
-          services.find((s) => s.serviceID === row.serviceId)?.hebrewName ||
-          "N/A",
-        header: "שירות",
-      },
-      { accessorFn: (row) => dayNames[row.dayOfWeek], header: "יום" },
-      { accessorKey: "openTime", header: "שעת פתיחה" },
-      { accessorKey: "closeTime", header: "שעת סגירה" },
       {
         id: "actions",
-        header: "עריכה",
+        header: "פעולות",
         cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setHourModal({ isOpen: true, data: row.original })}
-          >
-            <Edit size={16} />
-          </Button>
+          <div className="flex items-center justify-center">
+            <Tooltip>
+              <TooltipTrigger>
+                <button
+                  onClick={() =>
+                    setServiceModal({
+                      isOpen: true,
+                      mode: "edit",
+                      data: row.original,
+                    })
+                  }
+                  className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
+                >
+                  <Edit size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>ערוך שם שירות</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         ),
       },
     ],
-    [services, dayNames]
+    []
   );
 
   const overridesColumns = useMemo(
@@ -210,28 +268,39 @@ const OpeningHoursManagement = () => {
         id: "actions",
         header: "פעולות",
         cell: ({ row }) => (
-          <div className="flex items-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setOverrideModal({
-                  isOpen: true,
-                  mode: "edit",
-                  data: row.original,
-                })
-              }
-            >
-              <Edit size={16} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-red-600 hover:text-red-700"
-              onClick={() => setDeletingOverride(row.original)}
-            >
-              <Trash2 size={16} />
-            </Button>
+          <div className="flex items-center justify-center space-x-2 space-x-reverse">
+            <Tooltip>
+              <TooltipTrigger>
+                <button
+                  onClick={() =>
+                    setOverrideModal({
+                      isOpen: true,
+                      mode: "edit",
+                      data: row.original,
+                    })
+                  }
+                  className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
+                >
+                  <Edit size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>ערוך חריגה</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger>
+                <button
+                  onClick={() => setDeletingOverride(row.original)}
+                  className="p-2 rounded-full text-red-600 hover:bg-red-100"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>מחק חריגה</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         ),
       },
@@ -242,20 +311,15 @@ const OpeningHoursManagement = () => {
   // --- Tabs Definition for TabsGroup ---
   const managementTabs = [
     {
-      value: "hours",
+      value: "weekly",
       label: 'לו"ז שבועי',
       icon: Clock,
       content: (
-        <div>
-          <SharedTable
-            data={openingHours}
-            columns={hoursColumns}
-            sorting={sorting}
-            setSorting={setSorting}
-            globalFilter={globalFilter}
-            setGlobalFilter={setGlobalFilter}
-          />
-        </div>
+        <WeeklyScheduleEditor
+          services={services}
+          initialHours={openingHours}
+          onSave={handleUpdateOpeningHours}
+        />
       ),
     },
     {
@@ -292,6 +356,17 @@ const OpeningHoursManagement = () => {
       icon: List,
       content: (
         <div>
+          <div className="flex justify-end mb-4">
+            <Button
+              onClick={() =>
+                setServiceModal({ isOpen: true, mode: "add", data: null })
+              }
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <PlusCircle size={16} className="mr-2" />
+              הוסף שירות חדש
+            </Button>
+          </div>
           <SharedTable
             data={services}
             columns={servicesColumns}
@@ -306,52 +381,58 @@ const OpeningHoursManagement = () => {
   ];
 
   return (
-    <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
-      <Toast
-        show={toastState.show}
-        message={toastState.message}
-        variant={toastState.variant}
-        onClose={handleCloseToast}
-      />
-
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">
-        ניהול שעות פתיחה
-      </h2>
-
-      <TabsGroup tabs={managementTabs} />
-
-      {/* Modals */}
-      {hourModal.isOpen && (
-        <OpeningHourEditModal
-          hour={hourModal.data}
-          onClose={() => setHourModal({ isOpen: false, data: null })}
-          onSave={handleUpdateOpeningHour}
+    <TooltipProvider>
+      <div className="w-full bg-white p-6 rounded-lg shadow-md" dir="rtl">
+        <Toast
+          show={toastState.show}
+          message={toastState.message}
+          variant={toastState.variant}
+          onClose={handleCloseToast}
         />
-      )}
 
-      {overrideModal.isOpen && (
-        <ScheduleOverrideModal
-          mode={overrideModal.mode}
-          override={overrideModal.data}
-          services={services}
-          onClose={() =>
-            setOverrideModal({ isOpen: false, mode: "add", data: null })
-          }
-          onSave={handleSaveOverride}
-        />
-      )}
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">
+          ניהול שעות פתיחה
+        </h2>
 
-      {deletingOverride && (
-        <ConfirmationModal
-          title="אישור מחיקת חריגה"
-          message={`האם אתה בטוח שברצונך למחוק את החריגה בתאריך ${new Date(
-            deletingOverride.overrideDate
-          ).toLocaleDateString("he-IL")}?`}
-          onConfirm={confirmDeleteOverride}
-          onCancel={() => setDeletingOverride(null)}
-        />
-      )}
-    </div>
+        <TabsGroup tabs={managementTabs} />
+
+        {/* Modals */}
+        {overrideModal.isOpen && (
+          <ScheduleOverrideModal
+            mode={overrideModal.mode}
+            override={overrideModal.data}
+            services={services}
+            onClose={() =>
+              setOverrideModal({ isOpen: false, mode: "add", data: null })
+            }
+            onSave={handleSaveOverride}
+          />
+        )}
+
+        {serviceModal.isOpen && (
+          <ServiceModal
+            isOpen={serviceModal.isOpen}
+            onClose={() =>
+              setServiceModal({ isOpen: false, mode: "add", data: null })
+            }
+            onSave={handleSaveService}
+            mode={serviceModal.mode}
+            service={serviceModal.data}
+          />
+        )}
+
+        {deletingOverride && (
+          <ConfirmationModal
+            title="אישור מחיקת חריגה"
+            message={`האם אתה בטוח שברצונך למחוק את החריגה בתאריך ${new Date(
+              deletingOverride.overrideDate
+            ).toLocaleDateString("he-IL")}?`}
+            onConfirm={confirmDeleteOverride}
+            onCancel={() => setDeletingOverride(null)}
+          />
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 
