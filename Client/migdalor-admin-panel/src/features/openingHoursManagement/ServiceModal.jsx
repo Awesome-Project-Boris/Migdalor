@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
-import { api } from "../../api/apiService";
-import ImageUpload from "../../components/common/ImageUpload"; // Assuming this is in the same folder
+import ImageUpload from "../../components/common/ImageUpload";
 
-// --- Mock shadcn/ui Dialog Components (reused from other modals) ---
+// --- Mock shadcn/ui Dialog Components ---
 const Dialog = ({ open, onOpenChange, children }) => {
   if (!open) return null;
   return (
@@ -82,7 +81,7 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
         englishDescription: service.englishDescription || "",
         hebrewAddendum: service.hebrewAddendum || "",
         englishAddendum: service.englishAddendum || "",
-        parentServiceID: service.parentServiceID || null,
+        parentService: service.parentService || null,
         pictureId: service.pictureId || null,
         isActive: service.isActive ?? true,
       };
@@ -94,13 +93,44 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
       englishDescription: "",
       hebrewAddendum: "",
       englishAddendum: "",
-      parentServiceID: null,
+      parentService: null,
       pictureId: null,
       isActive: true,
     };
   };
 
   const [formData, setFormData] = useState(getInitialFormData());
+
+  // FIX: This logic now prevents circular dependencies by finding all descendants
+  // of the service being edited and excluding them from the parent list.
+  const unselectableParentIds = useMemo(() => {
+    if (mode !== "edit" || !service) {
+      return [];
+    }
+
+    const getDescendantIds = (serviceId, allServices) => {
+      const descendantIds = new Set();
+      const queue = [serviceId]; // Use a queue for iterative traversal (BFS)
+
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        const children = allServices.filter(
+          (s) => s.parentService === currentId
+        );
+        for (const child of children) {
+          if (!descendantIds.has(child.serviceId)) {
+            descendantIds.add(child.serviceId);
+            queue.push(child.serviceId);
+          }
+        }
+      }
+      return Array.from(descendantIds);
+    };
+
+    const descendantIds = getDescendantIds(service.serviceId, services);
+    // A service cannot be its own parent, nor can its descendants be its parent.
+    return [service.serviceId, ...descendantIds];
+  }, [mode, service, services]);
 
   useEffect(() => {
     if (isOpen) {
@@ -115,9 +145,17 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const finalValue =
+      name === "parentService"
+        ? value
+          ? parseInt(value, 10)
+          : null
+        : type === "checkbox"
+        ? checked
+        : value;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: finalValue,
     }));
   };
 
@@ -154,7 +192,6 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 py-4">
             {/* Text Inputs */}
-            <input name="serviceID" type="hidden" value={service?.serviceID} />
             <div className="md:col-span-1">
               <label
                 htmlFor="hebrewName"
@@ -253,26 +290,26 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
               ></textarea>
             </div>
 
-            {/* Parent Service Selector */}
+            {/* FIX: Use correct property names and new filter logic */}
             <div className="md:col-span-1">
               <label
-                htmlFor="parentServiceID"
+                htmlFor="parentService"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 שירות אב
               </label>
               <select
-                id="parentServiceID"
-                name="parentServiceID"
-                value={formData.parentServiceID || ""}
+                id="parentService"
+                name="parentService"
+                value={formData.parentService || ""}
                 onChange={handleChange}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="">ללא</option>
                 {services
-                  .filter((s) => s.serviceID !== service?.serviceID)
+                  .filter((s) => !unselectableParentIds.includes(s.serviceId))
                   .map((s) => (
-                    <option key={s.serviceID} value={s.serviceID}>
+                    <option key={s.serviceId} value={s.serviceId}>
                       {s.hebrewName}
                     </option>
                   ))}

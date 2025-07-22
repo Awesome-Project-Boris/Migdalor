@@ -25,7 +25,7 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                await _pushService.SendAsync(msg);
+              await _pushService.SendAsync(msg);
                 return Ok(new { status = "success" });
             }
             catch (Exception ex)

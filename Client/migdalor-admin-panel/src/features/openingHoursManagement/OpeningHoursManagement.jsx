@@ -31,7 +31,7 @@ const TooltipContent = ({ children, ...props }) => (
 );
 
 const OpeningHoursManagement = () => {
-  const { token, user } = useAuth(); // Get user for senderId
+  const { token, user } = useAuth();
 
   // Data states
   const [services, setServices] = useState([]);
@@ -104,17 +104,21 @@ const OpeningHoursManagement = () => {
     }
   };
 
+  // FIX: Correctly handle serviceId property casing
   const handleSaveService = async (serviceData) => {
     const { mode, data } = serviceModal;
+
+    // The DTO sent to the server expects PascalCase keys.
+    // The `data` object from the server has camelCase keys.
     const dto = {
-      ServiceID: data?.serviceID || 0,
+      ServiceID: data?.serviceId || 0, // Use camelCase `serviceId` from the original data
       HebrewName: serviceData.hebrewName,
       EnglishName: serviceData.englishName,
       HebrewDescription: serviceData.hebrewDescription,
       EnglishDescription: serviceData.englishDescription,
       HebrewAddendum: serviceData.hebrewAddendum,
       EnglishAddendum: serviceData.englishAddendum,
-      ParentService: serviceData.parentServiceID,
+      ParentService: serviceData.parentService, // Correctly named from the modal form
       PictureID: serviceData.pictureId,
       IsActive: serviceData.isActive,
     };
@@ -124,7 +128,8 @@ const OpeningHoursManagement = () => {
         await api.post("/services", dto, token);
         showToast("success", "Service created successfully.");
       } else {
-        await api.put(`/services/${data.serviceID}`, dto, token);
+        // Use the correct camelCase `serviceId` for the URL parameter
+        await api.put(`/services/${data.serviceId}`, dto, token);
         showToast("success", "Service updated successfully.");
       }
       fetchData();
@@ -135,7 +140,6 @@ const OpeningHoursManagement = () => {
     }
   };
 
-  // FIX: This function now also creates a notice and broadcasts a notification.
   const handleSaveOverride = async (overrideData) => {
     const { mode } = overrideModal;
 
@@ -154,7 +158,6 @@ const OpeningHoursManagement = () => {
     };
 
     try {
-      // Step 1: Save the override
       let savedOverride;
       if (mode === "add") {
         savedOverride = await api.post(
@@ -168,13 +171,12 @@ const OpeningHoursManagement = () => {
           payload,
           token
         );
-        savedOverride = payload; // Use existing payload for info
+        savedOverride = payload;
       }
       showToast("success", "Override saved successfully.");
-      fetchData(); // Refetch data to show the change immediately
+      fetchData();
       setOverrideModal({ isOpen: false, mode: "add", data: null });
 
-      // Step 2: Create and post a notice about the change
       try {
         const service = services.find((s) => s.serviceId === payload.serviceId);
         const serviceName = service ? service.hebrewName : "שירות";
@@ -193,15 +195,16 @@ const OpeningHoursManagement = () => {
 
         const noticeDto = {
           Title: noticeTitle,
-          Content: noticeContent, // Corrected from Body to Content
-          SenderId: user.id, // Corrected from user.personId to user.id
-          Category: "ספקי שירות", //do not remove or rename this category ever and all will be well!
+          Content: noticeContent,
+          SenderId: user.id,
+          Category: "עדכוני מערכת",
+          IsGlobal: true,
+          IsPinned: false,
         };
 
         const createdNotice = await api.post("/notices", noticeDto, token);
         showToast("success", "Notice created successfully.");
 
-        // Step 3: Broadcast a push notification
         const pushMessage = {
           to: "/topics/all",
           title: noticeTitle,

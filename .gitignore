@@ -594,3 +594,4 @@ appsettings.json
 keys.json
 credentials.json
 *.zip
+*firebase*.json
