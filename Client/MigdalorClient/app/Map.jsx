@@ -106,26 +106,26 @@ const styleFor = (seg) => {
 
 const MapBoundsCoordinations = [
   {
-    latitude: 32.312541,
-    longitude: 34.894063,
+    latitude: 32.312438,
+    longitude: 34.893807,
   },
   {
-    latitude: 32.31192,
-    longitude: 34.896611,
+    latitude: 32.3124,
+    longitude: 34.896995,
   },
   {
-    latitude: 32.308411,
-    longitude: 34.896262,
+    latitude: 32.307971,
+    longitude: 34.896743,
   },
   {
-    latitude: 32.308432,
-    longitude: 34.894108,
+    latitude: 32.307935,
+    longitude: 34.893604,
   },
 
-  { latitude: 32.312541, longitude: 34.894063 },
+  { latitude: 32.312438, longitude: 34.893807 },
 ];
 
-const MapBoundsForCheck = [
+const MapBoundsTesting = [
   { latitude: 32.312641, longitude: 34.893963 }, // Pushed up and left
   { latitude: 32.31202, longitude: 34.896711 }, // Pushed up and right
   { latitude: 32.308311, longitude: 34.896362 }, // Pushed down and right
@@ -133,7 +133,7 @@ const MapBoundsForCheck = [
   { latitude: 32.312641, longitude: 34.893963 }, // Close the loop
 ];
 
-const boundaryPolygonForCheck = MapBoundsForCheck.map((p) => [
+const boundaryPolygonForCheck = MapBoundsCoordinations.map((p) => [
   p.longitude,
   p.latitude,
 ]);
@@ -179,6 +179,15 @@ const Map = () => {
     [mapData.mapNodes]
   );
 
+  const navigationStateRef = useRef({
+    isNavigating,
+    navigationPath,
+    destination,
+  });
+  useEffect(() => {
+    navigationStateRef.current = { isNavigating, navigationPath, destination };
+  }, [isNavigating, navigationPath, destination]);
+
   const navigationGraph = useMemo(
     () => createGraph(mapData.mapNodes, polylines),
     [mapData.mapNodes, polylines]
@@ -219,6 +228,10 @@ const Map = () => {
     setIsNavigating(false);
     setNavigationPath([]);
     setDestination(null);
+    Toast.show({
+      type: "info",
+      text1: t("Navigation_Cancelled"),
+    });
   };
 
   const handleStartNavigationFromModal = (buildingToNavigate) => {
@@ -314,8 +327,8 @@ const Map = () => {
       locationWatcher = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
-          timeInterval: 3000, // Check every 3 seconds
-          distanceInterval: 10, // Check every 10 meters
+          timeInterval: 3000,
+          distanceInterval: 10,
         },
         (location) => {
           if (!location) return;
@@ -329,59 +342,36 @@ const Map = () => {
           );
           setIsInsideBoundary(isInside);
 
-          // --- START: MODIFIED NAVIGATION LOGIC ---
+          const { isNavigating, navigationPath, destination } =
+            navigationStateRef.current;
 
-          // Only perform navigation updates if the user is navigating and has a valid path.
           if (isNavigating && navigationPath.length > 1 && destination) {
-            // First, if user "teleports" outside the area, stop navigation immediately.
-
-            // COMMENT OUT FOR TESTING PURPOSES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Teleport protection
-            // if (!isInside) {
-            //   stopNavigation();
-            //   Toast.show({
-            //     type: "error",
-            //     text1: t("Navigation_Error"),
-            //     text2: t("Navigation_MustBeInside"),
-            //   });
-            //   return;
-            // }
-
             const nextWaypoint = navigationPath[1];
             const distanceToNextWaypoint = getDistance(
               userLocation,
               nextWaypoint
             );
 
-            // --- OFF-ROUTE LOGIC ---
-            // If the user is too far from the next waypoint, they are off-route.
             if (distanceToNextWaypoint > REROUTE_THRESHOLD) {
-              // Recalculate the entire route from their current location to the original destination.
               console.log("User is off-route. Recalculating path...");
               startNavigation(destination, userLocation);
-            }
-            // --- ON-ROUTE LOGIC ---
-            // Otherwise, the user is following the path, so we use the efficient method.
-            else {
+            } else {
               setNavigationPath((currentPath) => {
                 let remainingWaypoints = currentPath.slice(1);
-                // If we are close to the next waypoint, remove it from the list.
                 if (
                   remainingWaypoints.length > 0 &&
                   distanceToNextWaypoint < 12
                 ) {
                   remainingWaypoints = remainingWaypoints.slice(1);
                 }
-                // Update the path with the user's current location at the start.
                 return [userLocation, ...remainingWaypoints];
               });
             }
 
-            // Check for arrival at the final destination
             if (navigationPath.length <= 2 && distanceToNextWaypoint < 15) {
               setArrivalModalVisible(true);
             }
           }
-          // --- END: MODIFIED NAVIGATION LOGIC ---
         }
       );
     };
@@ -393,7 +383,7 @@ const Map = () => {
         locationWatcher.remove();
       }
     };
-  }, [isNavigating, navigationPath, destination]);
+  }, []);
 
   const startNavigation = (target, userLocationOverride = null) => {
     const userLoc = userLocationOverride || currentUserLocation;

@@ -32,6 +32,9 @@ export const BottomSheetProvider = ({ children }) => {
   const router = useRouter();
   const { user } = useAuth();
 
+  // This log will show the exact path in your console for debugging
+  console.log("This is our complete path: ", pathname);
+
   const snapPoints = useMemo(() => ["50%"], []);
 
   const openSheet = () => {
@@ -71,27 +74,29 @@ export const BottomSheetProvider = ({ children }) => {
         <BottomSheetView style={styles.sheetContent}>
           {/* Row 1 */}
           <View style={styles.row}>
-            <FlipButtonSizeless
-              style={styles.button}
-              onPress={() => {
-                router.navigate("/");
-                bottomSheetRef.current?.close();
-                console.log("Menu 1 pressed");
-              }}
-              bgColor={styles.button.backgroundColor}
-              textColor={styles.button.color}
-              flipborderwidth={3}
-            >
-              <Ionicons
-                name="home"
-                size={45}
-                color="#fff"
-                style={styles.icon}
-              />
-              <Text style={styles.buttonText}>
-                {t("SettingsPopup_HomeButton")}
-              </Text>
-            </FlipButtonSizeless>
+            {/* --- MODIFIED: This button is now hidden on the MainMenu page --- */}
+            {pathname !== "/MainMenu" && user?.personRole !== "Instructor" && (
+              <FlipButtonSizeless
+                style={styles.button}
+                onPress={() => {
+                  router.navigate("/");
+                  bottomSheetRef.current?.close();
+                }}
+                bgColor={styles.button.backgroundColor}
+                textColor={styles.button.color}
+                flipborderwidth={3}
+              >
+                <Ionicons
+                  name="home"
+                  size={45}
+                  color="#fff"
+                  style={styles.icon}
+                />
+                <Text style={styles.buttonText}>
+                  {t("SettingsPopup_HomeButton")}
+                </Text>
+              </FlipButtonSizeless>
+            )}
 
             <FlipButtonSizeless
               style={styles.button}
@@ -136,7 +141,6 @@ export const BottomSheetProvider = ({ children }) => {
               </Text>
             </FlipButtonSizeless>
 
-            {/* The "Change Layout" button will now only appear for non-instructors on the MainMenu screen. */}
             {pathname === "/MainMenu" && user?.personRole !== "Instructor" && (
               <FlipButtonSizeless
                 style={styles.button}
@@ -174,6 +178,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "space-evenly",
+    alignItems: "center",
     marginBottom: 16,
   },
   button: {

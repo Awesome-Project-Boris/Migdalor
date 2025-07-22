@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     fontWeight: "bold",
-    marginLeft: 4,
+    // marginLeft: 4,
   },
   searchInputContainer: {
     marginBottom: 10,

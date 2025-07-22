@@ -274,7 +274,7 @@ export default function Layout() {
                 <LanguageManager />
                 <AppContent />
               </NotificationsProvider>
-              <ToastManager config={toastConfig} />
+              <ToastManager config={toastConfig} zIndex={9999} />
             </SettingsProvider>
           </AuthProvider>
         </GestureHandlerRootView>

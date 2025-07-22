@@ -418,6 +418,8 @@ const resources = {
       GoodMorning_signInSuccessTitle: "Signed In",
       GoodMorning_signInSuccessMessage:
         "Your attendance has been recorded. Have a great day!",
+      GoodMorning_IdError:
+        "An error has occurred, try again or verify with administration",
 
       Services_Title: "Services and Opening Hours",
       services_clickForDetails: "Click for details",
@@ -571,6 +573,7 @@ const resources = {
       MapScreen_Legend: "Legend",
       MapScreen_Navigation: "Navigation",
       Common_Apartpment: "Apartment ",
+      Navigation_Cancelled: "Navigation cancelled",
 
       // Buildings
 
@@ -988,7 +991,7 @@ const resources = {
       ResidentList_searchingByName: "חיפוש לפי שם: ",
       ResidentList_ExplainationHeader: "איך לחפש דיירים?",
       ResidentList_Explaination:
-        "אפשר לחפש בשתי דרכים ביחד או לחוד: \n\nלפי שם: פשוט התחילו להקליד את שם הדייר/ת בתיבת החיפוש, והרשימה תתעדכן באופן אוטומטי.\n\nלפי תחומי עניין: בחרו תחום עניין אחד או יותר מהרשימה, ולאחר מכן לחצו על כפתור ה'חיפוש'.",
+        "אפשר לחפש בשתי דרכים ביחד או לחוד:\n\n<bold>לפי שם:</bold> פשוט התחילו להקליד את שם הדייר/ת בתיבת החיפוש, והרשימה תתעדכן באופן אוטומטי.\n\n<bold>לפי תחומי עניין:</bold> בחרו תחום עניין אחד או יותר מהרשימה, ולאחר מכן לחצו על כפתור ה'חיפוש'.",
 
       ResidentsCommitte_nameUnavailable: "שם לא זמין",
       ResidentsCommitte_titleUnavailable: "תואר לא זמין",
@@ -1021,6 +1024,8 @@ const resources = {
       GoodMorning_signInBoth: "דיווח נוכחות עבורי ועבור בן/בת הזוג",
       GoodMorning_signInSuccessTitle: "דיווח בוצע",
       GoodMorning_signInSuccessMessage: "הנוכחות שלך נרשמה. שיהיה לך יום נהדר!",
+      GoodMorning_IdError:
+        "התרחשה שגיאה, נסו שוב או וודאו נוהל בוקר טוב עם ההנהלה",
 
       Services_Title: "שירותים ושעות פתיחה",
       services_clickForDetails: "יש ללחוץ לפרטים",
@@ -1165,6 +1170,7 @@ const resources = {
       Navigation_DistanceTo: "מרחק אל {{destination}}:",
       MapScreen_Legend: "מקרא",
       MapScreen_Navigation: "ניווט",
+      Navigation_Cancelled: "הניווט בוטל",
 
       // Buildings
 

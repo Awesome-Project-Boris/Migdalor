@@ -4,7 +4,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-} from "react-native"; // 'Text' import removed
+  Image, // Image component is now imported
+} from "react-native";
 
 import { Stack } from "expo-router";
 
@@ -14,8 +15,9 @@ import FlipButton from "../components/FlipButton";
 import Greeting from "../components/MainMenuHelloNameplate";
 import Header from "../components/Header";
 import { EditToggleButton } from "../components/MainMenuFinishEditButton";
-import StyledText from "@/components/StyledText"; // Import StyledText
+import StyledText from "@/components/StyledText";
 
+import { useRouter, usePathname, Href } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
 import { useTranslation } from "react-i18next";
@@ -62,6 +64,9 @@ export default function Index() {
 
   const latestButtonDataRef = useRef(initialDataStructure);
   const prevEditingRef = useRef(editing);
+  const pathname = usePathname();
+
+  console.log("This is our complete path: ", pathname);
 
   const now = new Date();
   const options = {
@@ -215,11 +220,20 @@ export default function Index() {
     prevEditingRef.current = editing;
   }, [editing]);
 
+  const ListHeader = (
+    <>
+      <Image
+        source={require("../assets/images/icon.png")}
+        style={styles.logo}
+      />
+      <Greeting />
+    </>
+  );
+
   if (isLoadingOrder) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <ActivityIndicator size="large" color="#006aab" />
-        {/* Replaced Text with StyledText and added a style */}
         <StyledText style={styles.loadingText}>
           {t("MainMenuScreen_loadingMenu")}
         </StyledText>
@@ -236,7 +250,6 @@ export default function Index() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
         <Header />
-        <Greeting />
         {showDevButton && (
           <>
             <FlipButton
@@ -258,7 +271,11 @@ export default function Index() {
           </>
         )}
         <EditToggleButton onSave={saveOrder} />
-        <MainMenuButtons data={buttonData} onDragEnd={handleDragEnd} />
+        <MainMenuButtons
+          data={buttonData}
+          onDragEnd={handleDragEnd}
+          ListHeaderComponent={ListHeader}
+        />
       </View>
     </>
   );
@@ -271,16 +288,21 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     backgroundColor: "#fbe6d0",
   },
+  logo: {
+    width: 300,
+    height: 300,
+    resizeMode: "contain",
+    alignSelf: "center",
+    marginTop: 20,
+    marginBottom: 10,
+  },
   loadingText: {
-    // Added style for the loading text
     marginTop: 10,
     fontSize: 18,
     color: "#333",
   },
   toggleButton: {
     width: 300,
-    // --- FIX: Removed fixed height to allow the button to grow ---
-    // height: 70,
     marginBottom: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
