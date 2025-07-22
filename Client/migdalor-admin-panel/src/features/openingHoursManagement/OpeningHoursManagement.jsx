@@ -13,7 +13,7 @@ import { Button } from "../../components/ui/button";
 // Page-specific Modals
 import ScheduleOverrideModal from "./ScheduleOverrideModal";
 import WeeklyScheduleEditor from "./WeeklyScheduleEditor";
-import ServiceModal from "./ServiceModal"; // Import the new modal
+import ServiceModal from "./ServiceModal";
 
 // --- Mock Tooltip Components (from UserManagement.jsx) ---
 const TooltipProvider = ({ children }) => <>{children}</>;
@@ -68,7 +68,7 @@ const OpeningHoursManagement = () => {
     setIsLoading(true);
     try {
       const [servicesData, hoursData, overridesData] = await Promise.all([
-        api.get("/services", token), // Corrected endpoint
+        api.get("/services", token),
         api.get("/openinghours", token),
         api.get("/openinghours/overrides", token),
       ]);
@@ -92,35 +92,22 @@ const OpeningHoursManagement = () => {
   const handleCloseToast = () => setToastState({ ...toastState, show: false });
 
   // --- CRUD Handlers ---
-  const handleUpdateOpeningHours = async ({ toCreate, toUpdate, toDelete }) => {
-    const promises = [];
 
-    toCreate.forEach((hour) => {
-      const { hourId, ...createData } = hour;
-      promises.push(api.post("/openinghours", createData, token));
-    });
-
-    toUpdate.forEach((hour) => {
-      promises.push(api.put(`/openinghours/${hour.hourId}`, hour, token));
-    });
-
-    toDelete.forEach((hourId) => {
-      promises.push(api.delete(`/openinghours/${hourId}`, token));
-    });
-
+  // FIX: This function now sends all changes in a single batch request.
+  const handleUpdateOpeningHours = async (updateData) => {
     try {
-      await Promise.all(promises);
+      // The 'updateData' object already has the { toCreate, toUpdate, toDelete } structure.
+      await api.post("/openinghours/batch-update", updateData, token);
       showToast("success", "Weekly schedule updated successfully.");
-      fetchData();
+      fetchData(); // Refetch all data to reflect the changes.
     } catch (err) {
-      showToast("error", "Failed to update one or more schedule entries.");
+      showToast("error", `Failed to update schedule: ${err.message}`);
       console.error("Schedule update error:", err);
     }
   };
 
   const handleSaveService = async (serviceData) => {
     const { mode, data } = serviceModal;
-    // Prepare the DTO to match the backend expectations
     const dto = {
       ServiceID: data?.serviceID || 0,
       HebrewName: serviceData.hebrewName,
@@ -240,7 +227,7 @@ const OpeningHoursManagement = () => {
     () => [
       {
         accessorFn: (row) =>
-          services.find((s) => s.serviceID === row.serviceId)?.hebrewName ||
+          services.find((s) => s.serviceId === row.serviceId)?.hebrewName ||
           "N/A",
         header: "שירות",
       },
@@ -421,7 +408,7 @@ const OpeningHoursManagement = () => {
             onSave={handleSaveService}
             mode={serviceModal.mode}
             service={serviceModal.data}
-            services={services} // Pass the full list of services
+            services={services}
           />
         )}
 

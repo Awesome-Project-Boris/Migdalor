@@ -11,6 +11,14 @@ using MigdalorServer.Models; // Correct models namespace
 
 namespace Migdalor.Admin.Panel.Controllers
 {
+    // NEW DTO: Defines the structure for the batch update payload from the frontend.
+    public class WeeklyScheduleUpdateDto
+    {
+        public List<OpeningHourDto> ToCreate { get; set; } = new List<OpeningHourDto>();
+        public List<OpeningHourDto> ToUpdate { get; set; } = new List<OpeningHourDto>();
+        public List<int> ToDelete { get; set; } = new List<int>();
+    }
+
     [Route("api/[controller]")]
     [ApiController]
     public class OpeningHoursController : ControllerBase
@@ -23,67 +31,6 @@ namespace Migdalor.Admin.Panel.Controllers
         }
 
         // =============================================
-        // Service Endpoints
-        // =============================================
-
-        // GET: api/OpeningHours/services
-        [HttpGet("services")]
-        public async Task<ActionResult<IEnumerable<ServiceDto>>> GetServices()
-        {
-            // Using the existing ServiceDto and OhService model properties
-            return await _context
-                .OhServices.AsNoTracking()
-                .Select(s => new ServiceDto
-                {
-                    ServiceID = s.ServiceId,
-                    HebrewName = s.HebrewName ?? "",
-                    IsActive = s.IsActive ?? false,
-                    // Omitting other fields for simplicity in this context
-                })
-                .ToListAsync();
-        }
-
-        // PUT: api/OpeningHours/services/5
-        [HttpPut("services/{id}")]
-        public async Task<IActionResult> UpdateService(int id, ServiceDto serviceDto)
-        {
-            if (id != serviceDto.ServiceID)
-            {
-                return BadRequest("ID mismatch.");
-            }
-
-            var service = await _context.OhServices.FindAsync(id);
-            if (service == null)
-            {
-                return NotFound($"Service with ID {id} not found.");
-            }
-
-            // Update only the properties relevant to this management page
-            service.HebrewName = serviceDto.HebrewName;
-            service.IsActive = serviceDto.IsActive;
-
-            _context.Entry(service).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.OhServices.Any(e => e.ServiceId == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // =============================================
         // Opening Hours Endpoints
         // =============================================
 
@@ -91,7 +38,6 @@ namespace Migdalor.Admin.Panel.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<OpeningHourDto>>> GetOpeningHours()
         {
-            // Correctly references OhOpeningHours, HourId, OpenTime, and CloseTime
             return await _context
                 .OhOpeningHours.AsNoTracking()
                 .Select(o => new OpeningHourDto
@@ -105,32 +51,76 @@ namespace Migdalor.Admin.Panel.Controllers
                 .ToListAsync();
         }
 
-        // PUT: api/OpeningHours/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateOpeningHour(int id, OpeningHourDto openingHourDto)
+        // NEW ENDPOINT: Handles batch creation, updates, and deletion of opening hours in a single transaction.
+        [HttpPost("batch-update")]
+        public async Task<IActionResult> BatchUpdateOpeningHours([FromBody] WeeklyScheduleUpdateDto dto)
         {
-            if (id != openingHourDto.HourId)
+            if (dto == null)
             {
-                return BadRequest("ID mismatch.");
+                return BadRequest("Invalid payload.");
             }
 
-            var openingHour = await _context.OhOpeningHours.FindAsync(id);
-            if (openingHour == null)
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                return NotFound($"Opening hour with ID {id} not found.");
+                try
+                {
+                    // 1. Handle Deletions
+                    if (dto.ToDelete.Any())
+                    {
+                        var hoursToDelete = await _context.OhOpeningHours
+                            .Where(h => dto.ToDelete.Contains(h.HourId))
+                            .ToListAsync();
+
+                        _context.OhOpeningHours.RemoveRange(hoursToDelete);
+                    }
+
+                    // 2. Handle Updates
+                    if (dto.ToUpdate.Any())
+                    {
+                        foreach (var hourDto in dto.ToUpdate)
+                        {
+                            var hourToUpdate = await _context.OhOpeningHours.FindAsync(hourDto.HourId);
+                            if (hourToUpdate != null)
+                            {
+                                hourToUpdate.OpenTime = TimeSpan.Parse(hourDto.OpenTime);
+                                hourToUpdate.CloseTime = TimeSpan.Parse(hourDto.CloseTime);
+                                _context.Entry(hourToUpdate).State = EntityState.Modified;
+                            }
+                        }
+                    }
+
+                    // 3. Handle Creations
+                    if (dto.ToCreate.Any())
+                    {
+                        foreach (var hourDto in dto.ToCreate)
+                        {
+                            var newHour = new OhOpeningHour
+                            {
+                                ServiceId = hourDto.ServiceId,
+                                DayOfWeek = hourDto.DayOfWeek,
+                                OpenTime = TimeSpan.Parse(hourDto.OpenTime),
+                                CloseTime = TimeSpan.Parse(hourDto.CloseTime)
+                            };
+                            _context.OhOpeningHours.Add(newHour);
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return Ok(new { message = "Weekly schedule updated successfully." });
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    // Log the exception (ex) here for debugging purposes
+                    return StatusCode(500, "An error occurred while updating the schedule. The operation was rolled back.");
+                }
             }
-
-            // Map from DTO to the entity
-            openingHour.DayOfWeek = openingHourDto.DayOfWeek;
-            openingHour.OpenTime = TimeSpan.Parse(openingHourDto.OpenTime);
-            openingHour.CloseTime = TimeSpan.Parse(openingHourDto.CloseTime);
-            // NOTE: There is no 'IsActive' on the OhOpeningHour model
-
-            _context.Entry(openingHour).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
+
+        // REMOVED: The single PUT endpoint is now obsolete.
+        // The new batch-update endpoint handles all modifications.
 
         // =============================================
         // Schedule Override Endpoints
@@ -140,7 +130,6 @@ namespace Migdalor.Admin.Panel.Controllers
         [HttpGet("overrides")]
         public async Task<ActionResult<IEnumerable<ScheduleOverrideDto>>> GetScheduleOverrides()
         {
-            // Correctly maps from OhScheduleOverride to ScheduleOverrideDto
             return await _context
                 .OhScheduleOverrides.AsNoTracking()
                 .Select(o => new ScheduleOverrideDto
@@ -165,7 +154,7 @@ namespace Migdalor.Admin.Panel.Controllers
             var scheduleOverride = new OhScheduleOverride
             {
                 ServiceId = dto.ServiceId,
-                OverrideDate = dto.OverrideDate.Date, // Ensure it's just the date part
+                OverrideDate = dto.OverrideDate.Date,
                 IsOpen = dto.IsOpen,
                 OpenTime = !string.IsNullOrEmpty(dto.OpenTime)
                     ? (TimeSpan?)TimeSpan.Parse(dto.OpenTime)
@@ -179,7 +168,7 @@ namespace Migdalor.Admin.Panel.Controllers
             _context.OhScheduleOverrides.Add(scheduleOverride);
             await _context.SaveChangesAsync();
 
-            dto.OverrideId = scheduleOverride.OverrideId; // Set the new ID on the DTO
+            dto.OverrideId = scheduleOverride.OverrideId;
 
             return CreatedAtAction(nameof(GetScheduleOverrides), new { id = dto.OverrideId }, dto);
         }
@@ -199,7 +188,6 @@ namespace Migdalor.Admin.Panel.Controllers
                 return NotFound();
             }
 
-            // Map all properties from the DTO to the entity
             scheduleOverride.OverrideDate = dto.OverrideDate.Date;
             scheduleOverride.IsOpen = dto.IsOpen;
             scheduleOverride.OpenTime = !string.IsNullOrEmpty(dto.OpenTime)

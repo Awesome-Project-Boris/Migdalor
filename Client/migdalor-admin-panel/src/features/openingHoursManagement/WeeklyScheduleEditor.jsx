@@ -1,27 +1,26 @@
 import React, { useState, useEffect, useMemo } from "react";
 import TabsGroup from "../../components/common/TabsGroup";
 import { Button } from "../../components/ui/button";
-import { Save } from "lucide-react";
+import { Save, Lock, Unlock, Trash2 } from "lucide-react";
+import ConfirmationModal from "../../components/common/ConfirmationModal"; // Import the modal
 
 const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
   const [selectedServiceId, setSelectedServiceId] = useState(null);
   const [schedule, setSchedule] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [unlockedDays, setUnlockedDays] = useState({});
+  // NEW STATE: To manage the confirmation dialog
+  const [dayToDelete, setDayToDelete] = useState(null);
 
   const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
-
-  // Memoize the creation of the service tree structure to prevent recalculation on every render.
   const servicesTree = useMemo(() => {
     if (!services || services.length === 0) {
       return [];
     }
-
     const serviceMap = {};
     services.forEach((service) => {
-      // FIX: Use 'serviceId' (camelCase) to match the property from the API response.
       serviceMap[service.serviceId] = { ...service, children: [] };
     });
-
     const rootNodes = [];
     Object.values(serviceMap).forEach((serviceNode) => {
       if (serviceNode.parentService && serviceMap[serviceNode.parentService]) {
@@ -30,31 +29,25 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
         rootNodes.push(serviceNode);
       }
     });
-
     return rootNodes;
   }, [services]);
 
-  // Set the default selected service when the component loads or services change.
   useEffect(() => {
     if (servicesTree && servicesTree.length > 0 && !selectedServiceId) {
       const firstService = servicesTree[0];
-      // FIX: Use 'serviceId' to match the property name.
       setSelectedServiceId(firstService.serviceId);
     }
   }, [servicesTree, selectedServiceId]);
 
-  // Function to create the weekly schedule for the currently selected service from the initialHours prop.
   const createScheduleForService = () => {
     if (!selectedServiceId) return {};
 
     const serviceHours = initialHours.filter(
       (h) => h.serviceId === selectedServiceId
     );
-
     const weekSchedule = {};
     dayNames.forEach((name, index) => {
-      const serverDayOfWeek = index + 1; // Server uses 1-based index for dayOfWeek (Sunday=1)
-
+      const serverDayOfWeek = index + 1;
       const morning = serviceHours.find(
         (h) => h.dayOfWeek === serverDayOfWeek && h.openTime < "12:00"
       );
@@ -63,6 +56,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
       );
 
       weekSchedule[index] = {
+        hasInitialEntry: !!(morning || afternoon),
         morning: {
           openTime: morning?.openTime || "00:00",
           closeTime: morning?.closeTime || "00:00",
@@ -78,12 +72,11 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     return weekSchedule;
   };
 
-  // Re-create the schedule whenever the selected service or initial hours change.
   useEffect(() => {
     setSchedule(createScheduleForService());
+    setUnlockedDays({});
   }, [selectedServiceId, initialHours]);
 
-  // Handles changes to the time inputs.
   const handleTimeChange = (dayIndex, period, field, value) => {
     setSchedule((prev) => ({
       ...prev,
@@ -97,7 +90,6 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     }));
   };
 
-  // Compares the current schedule with the initial one and prepares data for the onSave callback.
   const handleSave = async () => {
     if (!selectedServiceId) return;
     setIsSubmitting(true);
@@ -105,7 +97,6 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     const originalServiceHours = initialHours.filter(
       (h) => h.serviceId === selectedServiceId
     );
-
     const toCreate = [];
     const toUpdate = [];
     const toDelete = [];
@@ -115,7 +106,6 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
       const serverDay = day + 1;
       const newDayData = schedule[day];
 
-      // Process morning slot
       const originalMorning = originalServiceHours.find(
         (h) => h.dayOfWeek === serverDay && h.openTime < "12:00"
       );
@@ -149,7 +139,6 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
         });
       }
 
-      // Process afternoon slot
       const originalAfternoon = originalServiceHours.find(
         (h) => h.dayOfWeek === serverDay && h.openTime >= "12:00"
       );
@@ -191,7 +180,6 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     }
   };
 
-  // Find the currently selected service object to display its name.
   const selectedService = useMemo(() => {
     if (!selectedServiceId || !services) {
       return null;
@@ -199,106 +187,178 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     return services.find((s) => s.serviceId === selectedServiceId);
   }, [selectedServiceId, services]);
 
-  // Generate tab data for each day of the week.
-  const dayTabs = dayNames.map((day, index) => ({
-    value: day,
-    label: day,
-    content: (
-      <div className="p-4 bg-gray-50 rounded-lg border" dir="rtl">
-        <h3 className="text-lg font-semibold mb-4">
-          {`שעות פתיחה ליום ${day}${
-            selectedService ? ` - ${selectedService.hebrewName}` : ""
-          }`}
-        </h3>
-        <div className="grid grid-cols-1 gap-4">
-          {/* Morning Schedule */}
-          <div className="p-4 border rounded-md bg-white">
-            <h4 className="font-bold mb-2">בוקר</h4>
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  פתיחה
-                </label>
-                <input
-                  type="time"
-                  value={schedule[index]?.morning.openTime || "00:00"}
-                  onChange={(e) =>
-                    handleTimeChange(
-                      index,
-                      "morning",
-                      "openTime",
-                      e.target.value
-                    )
-                  }
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  סגירה
-                </label>
-                <input
-                  type="time"
-                  value={schedule[index]?.morning.closeTime || "00:00"}
-                  onChange={(e) =>
-                    handleTimeChange(
-                      index,
-                      "morning",
-                      "closeTime",
-                      e.target.value
-                    )
-                  }
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                />
+  const handleUnlockDay = (dayIndex) => {
+    setUnlockedDays((prev) => ({ ...prev, [dayIndex]: true }));
+  };
+
+  // UPDATE: This function now opens the confirmation dialog.
+  const handleDeleteDayHours = (dayIndex) => {
+    setDayToDelete(dayIndex);
+  };
+
+  // NEW: This function performs the actual deletion after confirmation.
+  const confirmDeleteDayHours = async () => {
+    if (dayToDelete === null) return;
+
+    const daySchedule = schedule[dayToDelete];
+    if (!daySchedule) return;
+
+    const toDelete = [];
+    if (daySchedule.morning.hourId) {
+      toDelete.push(daySchedule.morning.hourId);
+    }
+    if (daySchedule.afternoon.hourId) {
+      toDelete.push(daySchedule.afternoon.hourId);
+    }
+
+    if (toDelete.length > 0) {
+      setIsSubmitting(true);
+      try {
+        await onSave({
+          toCreate: [],
+          toUpdate: [],
+          toDelete: toDelete,
+        });
+      } catch (error) {
+        console.error("Failed to delete day hours", error);
+      } finally {
+        setIsSubmitting(false);
+        setDayToDelete(null); // Close the modal
+      }
+    } else {
+      setDayToDelete(null); // Close if there's nothing to delete
+    }
+  };
+
+  const dayTabs = dayNames.map((day, index) => {
+    const daySchedule = schedule[index];
+    const isDayActive = daySchedule?.hasInitialEntry || unlockedDays[index];
+
+    return {
+      value: day,
+      label: day,
+      content: (
+        <div className="p-4 bg-gray-50 rounded-lg border" dir="rtl">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">
+              {`שעות פתיחה ליום ${day}${
+                selectedService ? ` - ${selectedService.hebrewName}` : ""
+              }`}
+            </h3>
+            {!isDayActive ? (
+              <Button
+                variant="outline"
+                onClick={() => handleUnlockDay(index)}
+                disabled={isSubmitting}
+              >
+                <Unlock size={16} className="ml-2" />
+                הוסף שעות פתיחה ליום זה
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={() => handleDeleteDayHours(index)}
+                disabled={isSubmitting}
+              >
+                <Trash2 size={16} className="ml-2" />
+                מחק שעות פתיחה ליום זה
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {/* Morning Schedule */}
+            <div className="p-4 border rounded-md bg-white">
+              <h4 className="font-bold mb-2">בוקר</h4>
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    פתיחה
+                  </label>
+                  <input
+                    type="time"
+                    value={daySchedule?.morning.openTime || "00:00"}
+                    disabled={!isDayActive || isSubmitting}
+                    onChange={(e) =>
+                      handleTimeChange(
+                        index,
+                        "morning",
+                        "openTime",
+                        e.target.value
+                      )
+                    }
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md disabled:bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    סגירה
+                  </label>
+                  <input
+                    type="time"
+                    value={daySchedule?.morning.closeTime || "00:00"}
+                    disabled={!isDayActive || isSubmitting}
+                    onChange={(e) =>
+                      handleTimeChange(
+                        index,
+                        "morning",
+                        "closeTime",
+                        e.target.value
+                      )
+                    }
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md disabled:bg-gray-100"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          {/* Afternoon Schedule */}
-          <div className="p-4 border rounded-md bg-white">
-            <h4 className="font-bold mb-2">אחר הצהריים</h4>
-            <div className="flex items-center space-x-4 space-x-reverse">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  פתיחה
-                </label>
-                <input
-                  type="time"
-                  value={schedule[index]?.afternoon.openTime || "00:00"}
-                  onChange={(e) =>
-                    handleTimeChange(
-                      index,
-                      "afternoon",
-                      "openTime",
-                      e.target.value
-                    )
-                  }
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  סגירה
-                </label>
-                <input
-                  type="time"
-                  value={schedule[index]?.afternoon.closeTime || "00:00"}
-                  onChange={(e) =>
-                    handleTimeChange(
-                      index,
-                      "afternoon",
-                      "closeTime",
-                      e.target.value
-                    )
-                  }
-                  className="mt-1 block w-full p-2 border border-gray-300 rounded-md"
-                />
+            {/* Afternoon Schedule */}
+            <div className="p-4 border rounded-md bg-white">
+              <h4 className="font-bold mb-2">אחר הצהריים</h4>
+              <div className="flex items-center space-x-4 space-x-reverse">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    פתיחה
+                  </label>
+                  <input
+                    type="time"
+                    value={daySchedule?.afternoon.openTime || "00:00"}
+                    disabled={!isDayActive || isSubmitting}
+                    onChange={(e) =>
+                      handleTimeChange(
+                        index,
+                        "afternoon",
+                        "openTime",
+                        e.target.value
+                      )
+                    }
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md disabled:bg-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    סגירה
+                  </label>
+                  <input
+                    type="time"
+                    value={daySchedule?.afternoon.closeTime || "00:00"}
+                    disabled={!isDayActive || isSubmitting}
+                    onChange={(e) =>
+                      handleTimeChange(
+                        index,
+                        "afternoon",
+                        "closeTime",
+                        e.target.value
+                      )
+                    }
+                    className="mt-1 block w-full p-2 border border-gray-300 rounded-md disabled:bg-gray-100"
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    ),
-  }));
+      ),
+    };
+  });
 
   if (!services || services.length === 0) {
     return (
@@ -314,10 +374,8 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
         <h3 className="text-lg font-bold mb-4 text-right">שירותים</h3>
         <ul>
           {servicesTree.map((parentService) => (
-            // FIX: Use 'serviceId' for the key to match the API data.
             <li key={parentService.serviceId}>
               <button
-                // FIX: Use 'serviceId' to match the API data.
                 onClick={() => setSelectedServiceId(parentService.serviceId)}
                 className={`w-full text-right p-3 rounded-md text-sm font-medium transition-colors ${
                   selectedServiceId === parentService.serviceId
@@ -330,10 +388,8 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
               {parentService.children.length > 0 && (
                 <ul className="pr-4 border-r-2 border-gray-200 mr-2 my-1">
                   {parentService.children.map((childService) => (
-                    // FIX: Use 'serviceId' for the key to match the API data.
                     <li key={childService.serviceId}>
                       <button
-                        // FIX: Use 'serviceId' to match the API data.
                         onClick={() =>
                           setSelectedServiceId(childService.serviceId)
                         }
@@ -366,6 +422,16 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
           </Button>
         </div>
       </main>
+
+      {/* RENDER THE MODAL */}
+      {dayToDelete !== null && (
+        <ConfirmationModal
+          title="אישור מחיקת שעות"
+          message={`האם אתה בטוח שברצונך למחוק את כל שעות הפתיחה ליום ${dayNames[dayToDelete]} עבור "${selectedService?.hebrewName}"?`}
+          onConfirm={confirmDeleteDayHours}
+          onCancel={() => setDayToDelete(null)}
+        />
+      )}
     </div>
   );
 };
