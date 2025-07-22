@@ -135,21 +135,25 @@ const OpeningHoursManagement = () => {
     }
   };
 
-  // FIX: This function now ensures serviceId is an integer before sending.
+  // FIX: This function now explicitly checks for a null/undefined serviceId.
   const handleSaveOverride = async (overrideData) => {
     const { mode } = overrideModal;
+
+    // Add validation to prevent sending invalid data.
+    if (
+      overrideData.serviceId === null ||
+      overrideData.serviceId === undefined ||
+      overrideData.serviceId === ""
+    ) {
+      showToast("error", "Please select a service.");
+      return;
+    }
 
     // Create a new payload and ensure serviceId is a number.
     const payload = {
       ...overrideData,
       serviceId: parseInt(overrideData.serviceId, 10),
     };
-
-    // Add validation to prevent sending invalid data.
-    if (isNaN(payload.serviceId)) {
-      showToast("error", "Please select a service.");
-      return;
-    }
 
     try {
       if (mode === "add") {

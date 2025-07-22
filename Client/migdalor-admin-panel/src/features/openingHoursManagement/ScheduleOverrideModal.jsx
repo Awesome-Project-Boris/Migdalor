@@ -89,8 +89,9 @@ const ScheduleOverrideModal = ({
           .split("T")[0],
       });
     } else {
+      // FIX: Initialize with null to force user selection.
       setFormData({
-        serviceId: services.length > 0 ? services[0].serviceID : "",
+        serviceId: null,
         overrideDate: new Date().toISOString().split("T")[0],
         isOpen: true,
         openTime: "09:00",
@@ -111,9 +112,9 @@ const ScheduleOverrideModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    // FIX: Prepare data but let the parent component handle parsing and validation.
     const finalData = {
       ...formData,
-      serviceId: parseInt(formData.serviceId),
       openTime: formData.isOpen ? formData.openTime : null,
       closeTime: formData.isOpen ? formData.closeTime : null,
     };
@@ -121,6 +122,8 @@ const ScheduleOverrideModal = ({
       await onSave(finalData);
     } catch (error) {
       console.error("Failed to save override:", error);
+    } finally {
+      // Ensure submitting state is always reset.
       setIsSubmitting(false);
     }
   };
@@ -146,12 +149,18 @@ const ScheduleOverrideModal = ({
               </label>
               <select
                 name="serviceId"
-                value={formData.serviceId}
+                value={formData.serviceId || ""} // Use || "" to handle initial null value
                 onChange={handleChange}
+                required // Make selection mandatory
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
+                {/* FIX: Add a disabled placeholder option */}
+                <option value="" disabled>
+                  בחר שירות...
+                </option>
+                {/* FIX: Use 'serviceId' (camelCase) to match API data */}
                 {services.map((s) => (
-                  <option key={s.serviceID} value={s.serviceID}>
+                  <option key={s.serviceId} value={s.serviceId}>
                     {s.hebrewName}
                   </option>
                 ))}
@@ -164,7 +173,7 @@ const ScheduleOverrideModal = ({
               <input
                 type="date"
                 name="overrideDate"
-                value={formData.overrideDate}
+                value={formData.overrideDate || ""}
                 onChange={handleChange}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
@@ -174,7 +183,7 @@ const ScheduleOverrideModal = ({
                 type="checkbox"
                 id="isOpen"
                 name="isOpen"
-                checked={formData.isOpen}
+                checked={formData.isOpen || false}
                 onChange={handleChange}
                 className="ml-2 h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               />
@@ -194,7 +203,7 @@ const ScheduleOverrideModal = ({
                   <input
                     type="time"
                     name="openTime"
-                    value={formData.openTime}
+                    value={formData.openTime || ""}
                     onChange={handleChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   />
@@ -206,7 +215,7 @@ const ScheduleOverrideModal = ({
                   <input
                     type="time"
                     name="closeTime"
-                    value={formData.closeTime}
+                    value={formData.closeTime || ""}
                     onChange={handleChange}
                     className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   />
@@ -219,7 +228,7 @@ const ScheduleOverrideModal = ({
               </label>
               <textarea
                 name="notes"
-                value={formData.notes}
+                value={formData.notes || ""}
                 onChange={handleChange}
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 rows="3"
