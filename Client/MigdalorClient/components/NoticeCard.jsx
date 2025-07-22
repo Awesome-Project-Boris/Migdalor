@@ -39,7 +39,6 @@ export default function NoticeCard({ data, onPress, isNew }) {
     writingDirection: isRtl ? "rtl" : "ltr",
   };
 
-  // ✅ Pass isRtl to the metaRow style
   const metaRowStyle = [
     styles.metaRow,
     { flexDirection: isRtl ? "row-reverse" : "row" },
@@ -58,7 +57,6 @@ export default function NoticeCard({ data, onPress, isNew }) {
 
         {senderName && (
           <View style={metaRowStyle}>
-            {/* ✅ Size increased */}
             <Ionicons name="person-outline" size={18} color="#444" />
             <StyledText style={[styles.noticeSender, textStyle]}>
               {senderName}
@@ -68,7 +66,6 @@ export default function NoticeCard({ data, onPress, isNew }) {
 
         {data.noticeCategory && (
           <View style={metaRowStyle}>
-            {/* ✅ Size increased */}
             <Ionicons name="pricetag-outline" size={18} color="#444" />
             <StyledText style={[styles.noticeCategory, textStyle]}>
               {data.noticeCategory}
@@ -78,7 +75,6 @@ export default function NoticeCard({ data, onPress, isNew }) {
         )}
 
         <View style={metaRowStyle}>
-          {/* ✅ Size increased */}
           <Ionicons name="calendar-outline" size={18} color="#444" />
           <StyledText style={[styles.noticeDate, textStyle]}>
             {displayDate}
@@ -155,9 +151,9 @@ const styles = StyleSheet.create({
     color: "#444",
   },
   noticeSnippet: {
-    fontSize: 18, // Slightly smaller for snippet
+    fontSize: 18,
     color: "#333",
-    lineHeight: 24, // Adjust line height
+    lineHeight: 24,
     marginTop: 10,
   },
   newBadge: {

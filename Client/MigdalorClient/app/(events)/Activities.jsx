@@ -30,6 +30,8 @@ const ActivitiesListHeader = ({
   isPermissionLoading,
   canInitiate,
   router,
+  sortMode,
+  handleToggleSort,
 }) => (
   <>
     <View style={styles.plaqueContainer}>
@@ -59,6 +61,14 @@ const ActivitiesListHeader = ({
       </>
     )}
 
+    <FlipButton onPress={handleToggleSort} style={styles.sortButton}>
+      <StyledText style={styles.sortButtonText}>
+        {sortMode === "closest"
+          ? t("Activities_SortByNewest", "Sort by Newest")
+          : t("Activities_SortByClosest", "Sort by Closest")}
+      </StyledText>
+    </FlipButton>
+
     <FloatingLabelInput
       label={t("Common_SearchPlaceholder", "Search by name...")}
       value={searchTerm}
@@ -83,6 +93,13 @@ export default function ActivitiesScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [canInitiate, setCanInitiate] = useState(false);
   const [isPermissionLoading, setIsPermissionLoading] = useState(true);
+
+  const [sortMode, setSortMode] = useState("closest");
+
+  const handleToggleSort = () => {
+    setSortMode((prev) => (prev === "closest" ? "newest" : "closest"));
+    setCurrentPage(1);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -159,14 +176,20 @@ export default function ActivitiesScreen() {
       );
     }
 
-    return filtered.sort((a, b) => {
+    // ✅ Create a new array with the spread (...) operator before sorting
+    return [...filtered].sort((a, b) => {
       const aIsNew = isItemNew("events", a.startDate);
       const bIsNew = isItemNew("events", b.startDate);
       if (aIsNew && !bIsNew) return -1;
       if (!aIsNew && bIsNew) return 1;
-      return new Date(b.startDate) - new Date(a.startDate);
+
+      if (sortMode === "closest") {
+        return new Date(a.startDate) - new Date(b.startDate);
+      } else {
+        return new Date(b.startDate) - new Date(a.startDate);
+      }
     });
-  }, [allActivities, searchTerm, isItemNew]);
+  }, [allActivities, searchTerm, isItemNew, sortMode]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -184,8 +207,6 @@ export default function ActivitiesScreen() {
       flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
     }
   };
-
-  // --- REMOVED: Unused inner ListHeader component ---
 
   if (isLoading && !allActivities.length) {
     return (
@@ -224,13 +245,15 @@ export default function ActivitiesScreen() {
             isPermissionLoading={isPermissionLoading}
             canInitiate={canInitiate}
             router={router}
+            sortMode={sortMode}
+            handleToggleSort={handleToggleSort}
           />
         }
         listContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <EventCard
             event={item}
-            isNew={isItemNew("events", item.startDate)} // Pass the isNew prop
+            isNew={isItemNew("events", item.startDate)}
             onPress={() =>
               router.push({
                 pathname: "/EventFocus",
@@ -260,13 +283,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fef1e6",
   },
-  content: {
-    flex: 1,
-    marginTop: 5,
-    paddingHorizontal: 16,
-  },
   searchContainer: {
     marginBottom: 20,
+  },
+  sortButton: {
+    backgroundColor: "#f0f0f0",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  sortButtonText: {
+    fontWeight: "bold",
+    textAlign: "center",
   },
   centered: {
     flex: 1,
@@ -283,9 +313,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-  },
-  listContentContainer: {
-    alignItems: "center",
   },
   listContainer: {
     paddingTop: 75,

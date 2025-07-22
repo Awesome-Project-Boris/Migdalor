@@ -441,6 +441,8 @@ const resources = {
 
       Activities_MyCreatedActivities: "My created activities",
       Activities_AddNew: "Suggest a new acitivity",
+      Activities_SortByClosest: "Sort by Closest",
+      Activities_SortByNewest: "Sort by Newest",
 
       MyActivities_ParticipationChecked: "Events with checked participation",
       MyActivities_ParticipationNotChecked:
@@ -464,7 +466,7 @@ const resources = {
       Errors_Participant_Fetch: "Could not fetch participants.",
       Errors_Auth_NoUser:
         "Could not identify the current user. Please log in again.",
-      EventCard_Registered: " Registered",
+      EventCard_Registered: "{{count}} / {{capacity}} Registered",
       EventCard_MoreDetails: "Click for more details",
       Classes_NoClasses: "No classes available at the moment.",
       Activities_NoActivities: "No activities available at the moment.",
@@ -495,6 +497,8 @@ const resources = {
       Common_Edit: "Edit",
       EventFocus_FinalizeDisclaimer: "Click once you've marked all attendants",
       EventFocus_FinalizeButton: "Finalize Marking",
+
+      EventFocus_RecurrenceDay: "Day(s)",
 
       // New Activity
 
@@ -1063,7 +1067,6 @@ const resources = {
       Errors_Event_Fetch: "לא ניתן היה לטעון את האירועים.",
       Errors_Participant_Fetch: "לא ניתן היה לטעון את המשתתפים.",
       Errors_Auth_NoUser: "לא ניתן היה לזהות את המשתמש. יש להתחבר מחדש.",
-      EventCard_Registered: " רשומים",
       EventCard_MoreDetails: "לחץ לפרטים נוספים",
       Classes_NoClasses: "אין חוגים זמינים כרגע.",
       Activities_NoActivities: "אין פעילויות זמינות כרגע.",
@@ -1071,6 +1074,8 @@ const resources = {
       MyActivities_ParticipationChecked: "פעילויות שנוכחותן נבדקו",
       MyActivities_ParticipationNotChecked: "פעילויות שנוכחותן לא נבדקו",
       MyActivities_ClearFilter: "ניקוי בחירת כפתורים",
+      Activities_SortByClosest: "סינון לפי הקרובים ביותר",
+      Activities_SortByNewest: "סינון לפי החדשים ביותר",
 
       EventFocus_Date: "תאריך",
       EventFocus_Time: "שעה",
@@ -1090,6 +1095,7 @@ const resources = {
         "נותרו {{count}} מקומות פנויים - ההרשמה בפנים!",
       EventFocus_SpacesAvailable:
         "נותרו {{count}} מקומות פנויים - להרשמה למטה!",
+      EventCard_Registered: "נרשמו  {{capacity}} / {{count}} ",
 
       EventFocus_ThanksForMarking: "תודה שסימנת נוכחות.",
       EventFocus_WantToChange: "האם ברצונך לבצע שינוי?",
@@ -1097,6 +1103,7 @@ const resources = {
       Common_Edit: "עריכה",
       EventFocus_FinalizeDisclaimer: "יש ללחוץ לאחר סימון כל הנוכחים.",
       EventFocus_FinalizeButton: "סיום סימון",
+      EventFocus_RecurrenceDay: "ביום ( ימים )",
 
       // New Activity
 

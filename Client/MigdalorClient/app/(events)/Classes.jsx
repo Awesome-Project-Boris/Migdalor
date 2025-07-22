@@ -18,6 +18,19 @@ import { useNotifications } from "@/context/NotificationsContext";
 
 const ITEMS_PER_PAGE = 5;
 
+// ✅ 1. Helper function to get a sortable value for the day of the week
+const dayOrder = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+const getDayValue = (recurrenceRule) => {
+  if (!recurrenceRule) return 7; // Rules without a day go to the end
+  const byDayPart = recurrenceRule
+    .split(";")
+    .find((part) => part.startsWith("BYDAY="));
+  if (!byDayPart) return 7;
+
+  const dayCode = byDayPart.split("=")[1].substring(0, 2);
+  return dayOrder[dayCode] ?? 7;
+};
+
 // Defined outside the main component to prevent re-rendering
 const ClassesListHeader = ({ t, isRtl, searchTerm, setSearchTerm }) => (
   <>
@@ -79,8 +92,7 @@ export default function ClassesScreen() {
   );
 
   const filteredClasses = useMemo(() => {
-    // The 'allActivities' or 'allClasses' variable should be used here
-    const sourceArray = allClasses; // Or allClasses for the other file
+    const sourceArray = allClasses;
 
     let filtered = sourceArray;
     if (searchTerm) {
@@ -90,14 +102,23 @@ export default function ClassesScreen() {
       );
     }
 
+    // ✅ 2. Update the sort function
     return filtered.sort((a, b) => {
+      // Keep "new" items at the top
       const aIsNew = isItemNew("events", a.startDate);
       const bIsNew = isItemNew("events", b.startDate);
       if (aIsNew && !bIsNew) return -1;
       if (!aIsNew && bIsNew) return 1;
+
+      // Then, sort by day of the week
+      const dayA = getDayValue(a.recurrenceRule);
+      const dayB = getDayValue(b.recurrenceRule);
+      if (dayA !== dayB) return dayA - dayB;
+
+      // Finally, sort by start date as a fallback
       return new Date(b.startDate) - new Date(a.startDate);
     });
-  }, [allClasses, searchTerm, isItemNew]); // Or [allClasses, searchTerm, isItemNew]
+  }, [allClasses, searchTerm, isItemNew]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -156,7 +177,7 @@ export default function ClassesScreen() {
         renderItem={({ item }) => (
           <EventCard
             event={item}
-            isNew={isItemNew("events", item.startDate)} // Pass the isNew prop
+            isNew={isItemNew("events", item.startDate)}
             onPress={() =>
               router.push({
                 pathname: "/EventFocus",
@@ -232,6 +253,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    // marginTop: 60,
   },
 });

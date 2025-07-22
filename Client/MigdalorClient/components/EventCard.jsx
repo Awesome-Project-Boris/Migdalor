@@ -22,7 +22,7 @@ const EventCard = ({ event, onPress, isNew }) => {
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
 
   const imageUrl = event.picturePath
-    ? { uri: `${Globals.API_BASE_URL}${event.picturePath.replace("~/", "")}` } // Added replace for safety
+    ? { uri: `${Globals.API_BASE_URL}${event.picturePath.replace("~/", "")}` }
     : placeholderImage;
 
   const cardDetailsStyle = [
@@ -40,7 +40,6 @@ const EventCard = ({ event, onPress, isNew }) => {
       <View style={cardDetailsStyle}>
         <StyledText style={styles.cardTitle}>{event.eventName}</StyledText>
 
-        {/* Only render if hostName exists */}
         {hostName && (
           <View
             style={[
@@ -53,7 +52,6 @@ const EventCard = ({ event, onPress, isNew }) => {
           </View>
         )}
 
-        {/* Only render capacity info if it exists and the event is not recurring */}
         {hasCapacity && !event.isRecurring && (
           <>
             <View
@@ -63,10 +61,12 @@ const EventCard = ({ event, onPress, isNew }) => {
               ]}
             >
               <Ionicons name="people-outline" size={16} color="#555" />
+              {/* ✅ This is the corrected line using i18n interpolation */}
               <StyledText style={styles.registrationText}>
-                {`${registeredCount} / ${event.capacity} ${t(
-                  "EventCard_Registered"
-                )}`}
+                {t("EventCard_Registered", {
+                  count: registeredCount,
+                  capacity: event.capacity,
+                })}
               </StyledText>
             </View>
             {remainingSpots > 0 && (
