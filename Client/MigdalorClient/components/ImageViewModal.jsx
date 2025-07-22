@@ -89,7 +89,9 @@ function ImageViewModal({ visible, imageUri, onClose, onRemove, onAdd }) {
               ]}
             >
               <Ionicons name="arrow-back-outline" size={24} color="#fff" />
-              <StyledText style={styles.buttonText}>{t("Return_Image")}</StyledText>
+              <StyledText style={styles.buttonText}>
+                {t("Return_Image")}
+              </StyledText>
             </FlipButton>
           </View>
         </View>
@@ -144,10 +146,10 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "center", 
+    justifyContent: "center",
     width: "100%",
     marginTop: 10,
-    gap: 15, 
+    gap: 15,
   },
   buttonContainerColumn: {
     flexDirection: "column",
@@ -160,8 +162,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderRadius: 10,
-    flexShrink: 1, 
-    borderWidth: 0, 
+    flexShrink: 1,
+    borderWidth: 0,
   },
   buttonColumn: {
     marginHorizontal: 0,

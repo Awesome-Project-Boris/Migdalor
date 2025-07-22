@@ -94,7 +94,8 @@ namespace MigdalorServer.Controllers
                         PictureId = e.PictureId,
                         PicturePath = pg.PicPath,
                         IsRecurring = e.IsRecurring,
-                        RecurrenceRule = e.RecurrenceRule, 
+                        RecurrenceRule = e.RecurrenceRule,
+                        DateCreated = DateTime.SpecifyKind(e.DateCreated, DateTimeKind.Utc),
                         StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
                         EndDate = e.EndDate.HasValue
                             ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc)
@@ -142,8 +143,8 @@ namespace MigdalorServer.Controllers
                                              PicturePath = pg.PicPath,
                                              IsRecurring = e.IsRecurring,
                                              RecurrenceRule = e.RecurrenceRule,
-                                             StartDate = e.StartDate,
-                                             EndDate = e.EndDate,
+                                             StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                                             EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : null,
                                              Capacity = e.Capacity,
                                              Host = h == null ? null : new HostDto
                                              {
@@ -251,8 +252,8 @@ namespace MigdalorServer.Controllers
                         Description = e.Description,
                         Location = e.Location,
                         IsRecurring = e.IsRecurring,
-                        StartDate = e.StartDate,
-                        EndDate = e.EndDate,
+                        StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                        EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : null,
                         Capacity = e.Capacity
                     })
                     .ToListAsync();
@@ -340,6 +341,11 @@ namespace MigdalorServer.Controllers
                     return Conflict("An event with this name already exists. Please choose a different name.");
                 }
 
+                var israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
+                var israelStartDate = TimeZoneInfo.ConvertTimeFromUtc(eventDto.StartDate, israelTimeZone);
+
+                var israelEndDate = TimeZoneInfo.ConvertTimeFromUtc(eventDto.EndDate, israelTimeZone);
+
                 var newEvent = new OhEvent
                 {
                     EventName = eventDto.EventName,
@@ -350,8 +356,9 @@ namespace MigdalorServer.Controllers
                     Capacity = eventDto.Capacity,
                     IsRecurring = false,
                     RecurrenceRule = null,
-                    StartDate = eventDto.StartDate,
-                    EndDate = eventDto.EndDate,
+                    StartDate = israelStartDate,
+                    EndDate = israelEndDate,
+                    DateCreated = DateTime.UtcNow
                 };
 
                 _context.OhEvents.Add(newEvent);
@@ -384,8 +391,8 @@ namespace MigdalorServer.Controllers
                     Title = e.EventName,
                     Description = e.Description,
                     Location = e.Location,
-                    StartTime = e.StartDate,
-                    EndTime = e.EndDate ?? e.StartDate,
+                    StartTime = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                    EndTime = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
                     SourceTable = "OH_Events",
                     NavigationEventId = e.EventId,
                     Status = "Scheduled" // One-time events are always considered scheduled
@@ -458,7 +465,8 @@ namespace MigdalorServer.Controllers
                 StartDate = createDto.StartDate,
                 EndDate = createDto.EndDate,
                 PictureId = createDto.PictureId, // Add this line
-                ParticipationChecked = false
+                ParticipationChecked = false,
+                DateCreated = DateTime.UtcNow
             };
 
             _context.OhEvents.Add(newEvent);
@@ -577,18 +585,18 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                var latestEventStartDate = await _context.OhEvents
-                    .OrderByDescending(e => e.EventId)
-                    .Select(e => e.StartDate)
+                var latestCreationDate = await _context.OhEvents
+                    .OrderByDescending(e => e.DateCreated)
+                    .Select(e => e.DateCreated)
                     .FirstOrDefaultAsync();
 
-                if (latestEventStartDate == default)
+                if (latestCreationDate == default)
                 {
                     return NotFound("No events found.");
                 }
 
                 // --- FIX: Specify that the DateTime from the DB should be treated as UTC ---
-                var utcDate = DateTime.SpecifyKind(latestEventStartDate, DateTimeKind.Utc);
+                var utcDate = DateTime.SpecifyKind(latestCreationDate, DateTimeKind.Utc);
 
                 return Ok(utcDate);
             }

@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -51,7 +51,7 @@ const ActivitiesListHeader = ({
           </Text>
         </FlipButton>
         <FlipButton
-          onPress={() => router.push("/(events)/MyActivities")}
+          onPress={() => router.push("/MyActivities")}
           style={styles.myActivitiesButton}
         >
           <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
@@ -82,6 +82,7 @@ const ActivitiesListHeader = ({
 export default function ActivitiesScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams();
   const flatListRef = useRef(null);
   const isRtl = i18n.dir() === "rtl";
 
@@ -144,26 +145,34 @@ export default function ActivitiesScreen() {
     }
   }, []);
 
+  const fetchEvents = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
+      if (!response.ok)
+        throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
+      const data = await response.json();
+      setAllActivities(data.activities || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t]);
+
   useFocusEffect(
     useCallback(() => {
-      const fetchEvents = async () => {
-        setIsLoading(true);
-        try {
-          const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
-          if (!response.ok)
-            throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
-          const data = await response.json();
-          setAllActivities(data.activities || []);
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setIsLoading(false);
-        }
-      };
       fetchEvents();
       checkInitiatePermission();
-    }, [t, checkInitiatePermission])
+    }, [fetchEvents, checkInitiatePermission])
   );
+
+  useEffect(() => {
+    if (params.refresh) {
+      console.log("Refresh signal received, fetching new activities...");
+      fetchEvents();
+    }
+  }, [params.refresh, fetchEvents]);
 
   const filteredActivities = useMemo(() => {
     const sourceArray = allActivities;
@@ -176,17 +185,16 @@ export default function ActivitiesScreen() {
       );
     }
 
-    // ✅ Create a new array with the spread (...) operator before sorting
     return [...filtered].sort((a, b) => {
-      const aIsNew = isItemNew("events", a.startDate);
-      const bIsNew = isItemNew("events", b.startDate);
+      const aIsNew = isItemNew("events", a.dateCreated);
+      const bIsNew = isItemNew("events", b.dateCreated);
       if (aIsNew && !bIsNew) return -1;
       if (!aIsNew && bIsNew) return 1;
 
       if (sortMode === "closest") {
         return new Date(a.startDate) - new Date(b.startDate);
       } else {
-        return new Date(b.startDate) - new Date(a.startDate);
+        return new Date(b.dateCreated) - new Date(a.dateCreated);
       }
     });
   }, [allActivities, searchTerm, isItemNew, sortMode]);
@@ -253,7 +261,7 @@ export default function ActivitiesScreen() {
         renderItem={({ item }) => (
           <EventCard
             event={item}
-            isNew={isItemNew("events", item.startDate)}
+            isNew={isItemNew("events", item.dateCreated)}
             onPress={() =>
               router.push({
                 pathname: "/EventFocus",

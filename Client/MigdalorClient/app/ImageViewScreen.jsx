@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  View,
-  StyleSheet,
-  SafeAreaView,
-  Image, // Use the standard Image component
-} from "react-native";
+import { View, StyleSheet, SafeAreaView, Image } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -42,14 +37,13 @@ export default function ImageViewScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* ✅ The Zoomable View is now the primary content container */}
       <ReactNativeZoomableView
         maxZoom={3.0}
         minZoom={1}
         zoomStep={0.5}
         initialZoom={1}
         bindToBorders={true}
-        style={StyleSheet.absoluteFill} // Make it fill the entire safe area
+        style={StyleSheet.absoluteFill}
       >
         <Image
           source={{ uri: imageUri }}
@@ -58,7 +52,6 @@ export default function ImageViewScreen() {
         />
       </ReactNativeZoomableView>
 
-      {/* The controls now float on top of the zoomable view */}
       <View style={[styles.topButtonContainer, { top: insets.top }]}>
         <FlipButton
           onPress={handleReturn}
@@ -101,7 +94,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 15,
     paddingVertical: 10,
-    zIndex: 10, // Ensure buttons are on top
+    zIndex: 10,
   },
   topButton: {
     padding: 8,

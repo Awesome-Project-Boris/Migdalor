@@ -393,6 +393,8 @@ export default function NewActivity() {
         text1: t("NewActivity_SuccessTitle"),
         text2: t("NewActivity_SuccessMessage"),
       });
+
+      router.setParams({ refresh: new Date().getTime().toString() });
       router.back();
     } catch (err) {
       if (uploadedPicId) {

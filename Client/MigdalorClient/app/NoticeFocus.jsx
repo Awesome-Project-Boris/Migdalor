@@ -6,8 +6,10 @@ import {
   ActivityIndicator,
   Button,
   Dimensions,
+  TouchableOpacity, // ✅ Import TouchableOpacity
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Image as ExpoImage } from "expo-image"; // ✅ Import ExpoImage
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -53,7 +55,7 @@ export default function NoticeFocus() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const { noticeId, hebSenderName, engSenderName } = useLocalSearchParams();
+  const { noticeId } = useLocalSearchParams();
   const router = useRouter();
 
   const fetchNoticeDetails = useCallback(async () => {
@@ -102,6 +104,15 @@ export default function NoticeFocus() {
     }
   }, [noticeId, fetchNoticeDetails]);
 
+  // ✅ Handler to navigate to the image view screen
+  const handleImagePress = (imageUri, altText) => {
+    if (!imageUri) return;
+    router.push({
+      pathname: "/ImageViewScreen",
+      params: { imageUri, altText },
+    });
+  };
+
   if (isLoading) {
     return (
       <>
@@ -146,8 +157,16 @@ export default function NoticeFocus() {
   }
 
   const isRTL = i18n.dir() === "rtl";
-  const senderName = isRTL ? hebSenderName : engSenderName;
+  const senderName = isRTL
+    ? noticeData.hebSenderName
+    : noticeData.engSenderName;
   const textAlignStyle = { textAlign: isRTL ? "right" : "left" };
+
+  // ✅ Construct the full image URL if a path exists
+  const imageUrl = noticeData.picturePath
+    ? `${Globals.API_BASE_URL}${noticeData.picturePath}`
+    : null;
+  const imageAltText = t("NoticeFocus_ImageAlt", "תמונה של הודעה לדיירים");
 
   return (
     <>
@@ -164,6 +183,21 @@ export default function NoticeFocus() {
             {noticeData.noticeTitle ?? "No Title"}
           </StyledText>
         </View>
+
+        {/* ✅ Conditionally render the image container */}
+        {imageUrl && (
+          <TouchableOpacity
+            onPress={() => handleImagePress(imageUrl, imageAltText)}
+          >
+            <View style={styles.imageContainer}>
+              <ExpoImage
+                source={{ uri: imageUrl }}
+                style={styles.noticeImage}
+                contentFit="cover"
+              />
+            </View>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.contentPlaque}>
           <View style={styles.metadataSection}>
@@ -288,6 +322,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333333",
+  },
+  // ✅ New styles for the image
+  imageContainer: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 15,
+    overflow: "hidden",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  noticeImage: {
+    width: "100%",
+    height: 220,
+    backgroundColor: "#e0e0e0", // Placeholder color
   },
   metadataSection: {
     gap: 15,

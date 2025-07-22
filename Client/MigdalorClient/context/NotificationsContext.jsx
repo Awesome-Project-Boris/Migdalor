@@ -54,9 +54,9 @@ export const NotificationsProvider = ({ children }) => {
     const isItemNew = useCallback((key, itemDate) => {
 
         // TEMP: Disable "New" tag for events until backend provides a proper creation date.
-    if (key === 'events') {
-        return false;
-    }
+    // if (key === 'events') {
+    //     return false;
+    // }
 
         if (!key || !itemDate || !lastVisited[key]) {
             return false;

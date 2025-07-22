@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingTop: 50,
-    backgroundColor: "#fbe6d0",
+    backgroundColor: "#fef1e6",
   },
   loadingText: {
     marginTop: 10,

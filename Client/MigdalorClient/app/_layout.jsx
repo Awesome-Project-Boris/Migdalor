@@ -234,6 +234,13 @@ function AppContent() {
               headerShown: false,
             }}
           />
+          <Stack.Screen
+            name="MyActivities"
+            options={{
+              title: "User created activities",
+              headerShown: false,
+            }}
+          />
         </Stack>
       </BottomSheetProvider>
     </MainMenuEditProvider>

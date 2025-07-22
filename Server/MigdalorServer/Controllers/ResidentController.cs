@@ -105,6 +105,10 @@ namespace MigdalorServer.Controllers
                 resident.HomePlace = dto.HomePlace ?? resident.HomePlace;
                 resident.Profession = dto.Profession ?? resident.Profession;
                 resident.ResidentDescription = dto.ResidentDescription ?? resident.ResidentDescription;
+                resident.IsCommittee = dto.IsCommittee ?? resident.IsCommittee;
+                resident.HebCommitteeName = dto.HebCommitteeName ?? resident.HebCommitteeName;
+                resident.EngCommitteeName = dto.EngCommitteeName ?? resident.EngCommitteeName;
+
 
                 // Handle nullable Guid for SpouseId
                 if (dto.SpouseId.HasValue)
@@ -230,6 +234,47 @@ namespace MigdalorServer.Controllers
             {
                 Console.WriteLine($"Error in RestoreUser: {e}");
                 return StatusCode(500, "An internal server error occurred while activating the resident.");
+            }
+        }
+
+        // Add this method inside the ResidentController class
+
+        [HttpGet("CommitteeMembers")]
+        public async Task<IActionResult> GetCommitteeMembers()
+        {
+            try
+            {
+                using MigdalorDBContext db = new MigdalorDBContext();
+
+                var committeeMembers = await db.OhResidents
+                    .Where(r => r.IsCommittee == true && r.IsActive == true)
+                    .Join(db.OhPeople, // Join with OhPeople to get names
+                        resident => resident.ResidentId,
+                        person => person.PersonId,
+                        (resident, person) => new { resident, person })
+                    .GroupJoin(db.OhPictures, // Left Join with OhPictures for the photo
+                        combined => combined.person.ProfilePicId,
+                        picture => picture.PicId,
+                        (combined, pictures) => new { combined.resident, combined.person, pictures })
+                    .SelectMany(
+                        x => x.pictures.DefaultIfEmpty(),
+                        (x, picture) => new CommitteeMemberDto
+                        {
+                            UserId = x.person.PersonId,
+                            HebName = x.person.HebFirstName + " " + x.person.HebLastName,
+                            EngName = x.person.EngFirstName + " " + x.person.EngLastName,
+                            HebCommitteeTitle = x.resident.HebCommitteeName,
+                            EngCommitteeTitle = x.resident.EngCommitteeName,
+                            PhotoUrl = picture != null ? picture.PicPath : null
+                        })
+                    .ToListAsync();
+
+                return Ok(committeeMembers);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error in GetCommitteeMembers: {e}");
+                return StatusCode(500, "An internal server error occurred while fetching committee members.");
             }
         }
     }

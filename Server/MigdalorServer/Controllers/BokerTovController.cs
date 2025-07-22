@@ -99,17 +99,18 @@ namespace MigdalorServer.Controllers
             if (attendanceRecord == null)
             {
                 _logger.LogWarning("MarkAttendance failed: No record found for ResidentId {residentId}", residentId);
-                return false; // Record not found
+                return false; 
             }
 
-            // Update the date to today before marking attendance.
-            attendanceRecord.AttendanceDate = DateTime.Now.Date;
+            var israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
+            var israelTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, israelTimeZone);
 
-            // Only update if they haven't already signed in for this new "day"
+            attendanceRecord.AttendanceDate = israelTime.Date;
+
             if (!attendanceRecord.HasSignedIn)
             {
                 attendanceRecord.HasSignedIn = true;
-                attendanceRecord.SignInTime = DateTime.Now;
+                attendanceRecord.SignInTime = DateTime.UtcNow;
             }
             return true;
         }

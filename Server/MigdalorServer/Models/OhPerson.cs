@@ -40,52 +40,22 @@ namespace MigdalorServer.Models
         //public static OhPerson GetPersonByIDForProfile(Guid ID)
         public static dynamic GetPersonByIDForProfile(Guid ID)
         {
-            //using MigdalorDBContext db = new MigdalorDBContext();
             using var db = new MigdalorDBContext();
-
-            //Console.WriteLine($"[DEBUG] Incoming ID: {ID}");
-            var directPerson = db.OhPeople.Find(ID);
-            //Console.WriteLine(directPerson == null
-            //    ? "[DEBUG] OhPeople.Find returned null"
-            //    : $"[DEBUG] OhPeople.Find succeeded: {directPerson.HebFirstName} {directPerson.HebLastName}");
-
 
             var result = (
                 from person in db.OhPeople
-
-                    // 1) find their resident record
                 join resident in db.OhResidents on person.PersonId equals resident.ResidentId
-
-                // 2) left‑join into OhPeople again for the spouse
                 join spouse in db.OhPeople on resident.SpouseId equals spouse.PersonId into spGroup
                 from s in spGroup.DefaultIfEmpty()
-
-                    // LEFT JOIN to privacy settings
                 join privacy in db.OhPrivacySettings on person.PersonId equals privacy.PersonId into privacyGroup
                 from ps in privacyGroup.DefaultIfEmpty()
-
-                    // 3) filter to the one you want
                 where person.PersonId == ID
-
-                // join into profile picture (left)
-                join profPic in db.OhPictures
-                    on person.ProfilePicId equals profPic.PicId
-                    into profPicGroup
+                join profPic in db.OhPictures on person.ProfilePicId equals profPic.PicId into profPicGroup
                 from pp in profPicGroup.DefaultIfEmpty()
-
-                    // join into additional picture 1 (left)
-                join add1 in db.OhPictures
-                    on resident.AdditionalPic1Id equals add1.PicId
-                    into add1Group
+                join add1 in db.OhPictures on resident.AdditionalPic1Id equals add1.PicId into add1Group
                 from p1 in add1Group.DefaultIfEmpty()
-
-                    // join into additional picture 2 (left)
-                join add2 in db.OhPictures
-                    on resident.AdditionalPic2Id equals add2.PicId
-                    into add2Group
+                join add2 in db.OhPictures on resident.AdditionalPic2Id equals add2.PicId into add2Group
                 from p2 in add2Group.DefaultIfEmpty()
-
-                    // 4) project everything you need, including spouse names
                 select new
                 {
                     // --- from OH_People ---
@@ -93,7 +63,6 @@ namespace MigdalorServer.Models
                     phoneNumber = person.PhoneNumber,
                     hebName = person.HebFirstName + " " + person.HebLastName,
                     engName = person.EngFirstName + " " + person.EngLastName,
-                    //profilePicID = person.ProfilePicId,
                     email = person.Email,
 
                     // --- from OH_Residents ---
@@ -101,64 +70,47 @@ namespace MigdalorServer.Models
                     homePlace = resident.HomePlace,
                     profession = resident.Profession,
                     residentDescription = resident.ResidentDescription,
-                    //additionalPic1ID = resident.AdditionalPic1Id,
-                    //additionalPic2ID = resident.AdditionalPic2Id,
                     residentApartmentNumber = resident.ResidentApartmentNumber,
+
+                    // ✅ ADD THE NEW COMMITTEE FIELDS HERE
+                    isCommittee = resident.IsCommittee,
+                    hebCommitteeName = resident.HebCommitteeName,
+                    engCommitteeName = resident.EngCommitteeName,
 
                     // --- spouse info (may be null) ---
                     spouseId = resident.SpouseId,
                     spouseHebName = resident.SpouseHebName,
                     spouseEngName = resident.SpouseEngName,
 
-                    // profile‑picture data (or null)
-                    profilePicture = pp == null
-                        ? null
-                        : new
-                        {
-                            pp.PicId,
-                            pp.PicName,
-                            pp.PicPath,
-                            pp.PicAlt,
-                            //pp.UploaderId,
-                            //pp.PicRole,
-                            //pp.ListingId,
-                            //pp.DateTime
-                        },
+                    // profile-picture data (or null)
+                    profilePicture = pp == null ? null : new
+                    {
+                        pp.PicId,
+                        pp.PicName,
+                        pp.PicPath,
+                        pp.PicAlt,
+                    },
 
                     // additional pic #1 (or null)
-                    additionalPicture1 = p1 == null
-                        ? null
-                        : new
-                        {
-                            p1.PicId,
-                            p1.PicName,
-                            p1.PicPath,
-                            p1.PicAlt,
-                            //p1.UploaderId,
-                            //p1.PicRole,
-                            //p1.ListingId,
-                            //p1.DateTime
-                        },
+                    additionalPicture1 = p1 == null ? null : new
+                    {
+                        p1.PicId,
+                        p1.PicName,
+                        p1.PicPath,
+                        p1.PicAlt,
+                    },
 
                     // additional pic #2 (or null)
-                    additionalPicture2 = p2 == null
-                        ? null
-                        : new
-                        {
-                            p2.PicId,
-                            p2.PicName,
-                            p2.PicPath,
-                            p2.PicAlt,
-                            //p2.UploaderId,
-                            //p2.PicRole,
-                            //p2.ListingId,
-                            //p2.DateTime
-                        },
+                    additionalPicture2 = p2 == null ? null : new
+                    {
+                        p2.PicId,
+                        p2.PicName,
+                        p2.PicPath,
+                        p2.PicAlt,
+                    },
 
                     residentInterests = resident.InterestNames.Select(i => new { name = i.InterestName }).ToList(),
-                    // Project the privacy settings. If 'ps' is null (no record exists),
-                    // create a new DTO with default values. Otherwise, use the value from 'ps',
-                    // providing 'true' as a fallback if any individual property is null.
+
                     privacySettings = ps == null ? new PrivacySettingsDto() : new PrivacySettingsDto
                     {
                         ShowPartner = ps.ShowPartner ?? true,
@@ -176,14 +128,12 @@ namespace MigdalorServer.Models
                 }
             ).FirstOrDefault();
 
-            //var json = JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true });
-            //Console.WriteLine(json);
-
             if (result == null)
                 throw new Exception("User not found");
 
             return result;
         }
+
 
         public static async Task UpdateProfileAndPrivacyAsync(UpdateProfileRequestDto request)
 

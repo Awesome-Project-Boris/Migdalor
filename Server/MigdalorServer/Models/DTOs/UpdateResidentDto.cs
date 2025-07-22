@@ -24,5 +24,8 @@ namespace MigdalorServer.Models.DTOs
         public string? HomePlace { get; set; }
         public string? Profession { get; set; }
         public string? ResidentDescription { get; set; }
+        public bool? IsCommittee { get; set; }
+        public string? HebCommitteeName { get; set; }
+        public string? EngCommitteeName { get; set; }
     }
 }

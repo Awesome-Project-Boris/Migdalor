@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals";
 import EventCard from "@/components/EventCard";
@@ -18,10 +18,9 @@ import { useNotifications } from "@/context/NotificationsContext";
 
 const ITEMS_PER_PAGE = 5;
 
-// ✅ 1. Helper function to get a sortable value for the day of the week
 const dayOrder = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
 const getDayValue = (recurrenceRule) => {
-  if (!recurrenceRule) return 7; // Rules without a day go to the end
+  if (!recurrenceRule) return 7;
   const byDayPart = recurrenceRule
     .split(";")
     .find((part) => part.startsWith("BYDAY="));
@@ -31,7 +30,6 @@ const getDayValue = (recurrenceRule) => {
   return dayOrder[dayCode] ?? 7;
 };
 
-// Defined outside the main component to prevent re-rendering
 const ClassesListHeader = ({ t, isRtl, searchTerm, setSearchTerm }) => (
   <>
     <View style={styles.plaqueContainer}>
@@ -52,6 +50,7 @@ const ClassesListHeader = ({ t, isRtl, searchTerm, setSearchTerm }) => (
 export default function ClassesScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams();
   const flatListRef = useRef(null);
   const isRtl = i18n.dir() === "rtl";
   const { updateLastVisited, isItemNew } = useNotifications();
@@ -71,25 +70,36 @@ export default function ClassesScreen() {
     }, [updateLastVisited])
   );
 
+  const fetchEvents = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
+      if (!response.ok)
+        throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
+      const data = await response.json();
+
+      console.log("Those are all the events: ", data);
+
+      setAllClasses(data.classes || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t]);
+
   useFocusEffect(
     useCallback(() => {
-      const fetchEvents = async () => {
-        setIsLoading(true);
-        try {
-          const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
-          if (!response.ok)
-            throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
-          const data = await response.json();
-          setAllClasses(data.classes || []);
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setIsLoading(false);
-        }
-      };
       fetchEvents();
-    }, [t])
+    }, [fetchEvents])
   );
+
+  useEffect(() => {
+    if (params.refresh) {
+      console.log("Refresh signal received, fetching new classes...");
+      fetchEvents();
+    }
+  }, [params.refresh, fetchEvents]);
 
   const filteredClasses = useMemo(() => {
     const sourceArray = allClasses;
@@ -102,20 +112,16 @@ export default function ClassesScreen() {
       );
     }
 
-    // ✅ 2. Update the sort function
-    return filtered.sort((a, b) => {
-      // Keep "new" items at the top
-      const aIsNew = isItemNew("events", a.startDate);
-      const bIsNew = isItemNew("events", b.startDate);
+    return [...filtered].sort((a, b) => {
+      const aIsNew = isItemNew("events", a.dateCreated);
+      const bIsNew = isItemNew("events", b.dateCreated);
       if (aIsNew && !bIsNew) return -1;
-      if (!aIsNew && bIsNew) return 1;
+      if (!bIsNew && bIsNew) return 1;
 
-      // Then, sort by day of the week
       const dayA = getDayValue(a.recurrenceRule);
       const dayB = getDayValue(b.recurrenceRule);
       if (dayA !== dayB) return dayA - dayB;
 
-      // Finally, sort by start date as a fallback
       return new Date(b.startDate) - new Date(a.startDate);
     });
   }, [allClasses, searchTerm, isItemNew]);
@@ -177,7 +183,7 @@ export default function ClassesScreen() {
         renderItem={({ item }) => (
           <EventCard
             event={item}
-            isNew={isItemNew("events", item.startDate)}
+            isNew={isItemNew("events", item.dateCreated)}
             onPress={() =>
               router.push({
                 pathname: "/EventFocus",

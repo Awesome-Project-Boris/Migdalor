@@ -217,8 +217,10 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "Listing deleted successfully!",
       MarketplaceItemScreen_DeleteErrorMsg: "Failed to delete listing.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
-      MarketplaceItemScreen_CannotHandleContactTitle: "Cannot Handle Contact Information",
-      MarketplaceItemScreen_CannotHandleContactMsg: "Cannot handle contact information for this item.",
+      MarketplaceItemScreen_CannotHandleContactTitle:
+        "Cannot Handle Contact Information",
+      MarketplaceItemScreen_CannotHandleContactMsg:
+        "Cannot handle contact information for this item.",
 
       MarketplaceItemCard_Untitled: "Untitled",
       MarketplaceItemCard_UnknownSeller: "Unknown Seller",
@@ -394,6 +396,10 @@ const resources = {
       ResidentsCommittePage_title: "The Committee",
       ResidentsCommittePage_contact: "Contact the Committee",
       ResidentsCommittePage_committeeNotFound: "No committee members found.",
+      ResidentsCommittePage_introText:
+        "Here you can find the details of the dedicated members of the residents' committee. Feel free to reach out to them with any questions or suggestions.",
+
+      ResidentsCommittePage_fetchError: "Failed to load committee members.",
 
       UserProfileCard_unnamedUser: "Unnamed User",
 
@@ -445,6 +451,7 @@ const resources = {
       Activities_AddNew: "Suggest a new acitivity",
       Activities_SortByClosest: "Sort by Closest",
       Activities_SortByNewest: "Sort by Newest",
+      Activities_NoActivitiesFound: "No activities found.",
 
       MyActivities_ParticipationChecked: "Events with checked participation",
       MyActivities_ParticipationNotChecked:
@@ -841,10 +848,10 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "המודעה נמחקה בהצלחה!",
       MarketplaceItemScreen_DeleteErrorMsg: "מחיקת המודעה נכשלה.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "בעיה במחיקת תמונה",
-      MarketplaceItemScreen_CannotHandleContactTitle: "לא ניתן לטפל בפרטי יצירת קשר",
-      MarketplaceItemScreen_CannotHandleContactMsg: "לא ניתן לטפל בפרטי יצירת קשר עבור פריט זה.",
-
-
+      MarketplaceItemScreen_CannotHandleContactTitle:
+        "לא ניתן לטפל בפרטי יצירת קשר",
+      MarketplaceItemScreen_CannotHandleContactMsg:
+        "לא ניתן לטפל בפרטי יצירת קשר עבור פריט זה.",
 
       MarketplaceItemCard_Untitled: "ללא כותרת",
       MarketplaceItemCard_UnknownSeller: "מוכר לא ידוע",
@@ -1009,6 +1016,11 @@ const resources = {
       ResidentsCommittePage_contact: "צור קשר עם הוועד",
       ResidentsCommittePage_committeeNotFound: "לא נמצאו חברי ועד.",
 
+      ResidentsCommittePage_introText:
+        "כאן תוכלו למצוא את פרטי חברי ועד הדיירים המסורים. אתם מוזמנים לפנות אליהם בכל שאלה או הצעה.",
+
+      ResidentsCommittePage_fetchError: "תקלה בהבאת פרטי חברי הוועד",
+
       UserProfileCard_unnamedUser: "משתמש ללא שם",
 
       Common_viewAllDataButton: "הצג את כל הנתונים",
@@ -1082,6 +1094,7 @@ const resources = {
       MyActivities_ClearFilter: "ניקוי בחירת כפתורים",
       Activities_SortByClosest: "סינון לפי הקרובים ביותר",
       Activities_SortByNewest: "סינון לפי החדשים ביותר",
+      Activities_NoActivitiesFound: "לא נמצאו פעילויות",
 
       EventFocus_Date: "תאריך",
       EventFocus_Time: "שעה",
@@ -1235,6 +1248,8 @@ const resources = {
       Notifications_NewNotice: "מודעה חדשה פורסמה - לחץ/י לקריאה",
       Notifications_NewEvent: "פעילות או חוג חדשים - לחץ/י לצפייה",
       Notifications_NoNew: "אין התראות חדשות",
+
+      // Residents Committee
     },
   },
 };
