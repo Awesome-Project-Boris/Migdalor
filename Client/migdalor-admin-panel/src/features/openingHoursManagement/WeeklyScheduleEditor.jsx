@@ -10,44 +10,40 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
 
   const dayNames = ["ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת"];
 
+  // Memoize the creation of the service tree structure to prevent recalculation on every render.
   const servicesTree = useMemo(() => {
     if (!services || services.length === 0) {
       return [];
     }
 
-    // This is a more robust, recursive way to build the tree.
-    const findChildren = (parentId) => {
-      return services
-        .filter((service) => service.parentServiceID === parentId)
-        .map((service) => ({
-          ...service,
-          children: findChildren(service.serviceID),
-        }));
-    };
+    const serviceMap = {};
+    services.forEach((service) => {
+      // FIX: Use 'serviceId' (camelCase) to match the property from the API response.
+      serviceMap[service.serviceId] = { ...service, children: [] };
+    });
 
-    // Root nodes are those with no parentServiceID or whose parent doesn't exist.
-    return services
-      .filter(
-        (service) =>
-          !service.parentServiceID ||
-          !services.some((s) => s.serviceID === service.parentServiceID)
-      )
-      .map((rootService) => ({
-        ...rootService,
-        children: findChildren(rootService.serviceID),
-      }));
+    const rootNodes = [];
+    Object.values(serviceMap).forEach((serviceNode) => {
+      if (serviceNode.parentService && serviceMap[serviceNode.parentService]) {
+        serviceMap[serviceNode.parentService].children.push(serviceNode);
+      } else {
+        rootNodes.push(serviceNode);
+      }
+    });
+
+    return rootNodes;
   }, [services]);
 
-  // Set the default selected service when the component loads
+  // Set the default selected service when the component loads or services change.
   useEffect(() => {
     if (servicesTree && servicesTree.length > 0 && !selectedServiceId) {
-      // Default to the first parent service, or the first service if none have children
       const firstService = servicesTree[0];
-      setSelectedServiceId(firstService.serviceID);
+      // FIX: Use 'serviceId' to match the property name.
+      setSelectedServiceId(firstService.serviceId);
     }
   }, [servicesTree, selectedServiceId]);
 
-  // Function to create the schedule for the currently selected service
+  // Function to create the weekly schedule for the currently selected service from the initialHours prop.
   const createScheduleForService = () => {
     if (!selectedServiceId) return {};
 
@@ -57,8 +53,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
 
     const weekSchedule = {};
     dayNames.forEach((name, index) => {
-      // Adjust for server's 1-based index for dayOfWeek (Sunday=1)
-      const serverDayOfWeek = index + 1;
+      const serverDayOfWeek = index + 1; // Server uses 1-based index for dayOfWeek (Sunday=1)
 
       const morning = serviceHours.find(
         (h) => h.dayOfWeek === serverDayOfWeek && h.openTime < "12:00"
@@ -83,11 +78,12 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     return weekSchedule;
   };
 
-  // Re-create the schedule whenever the selected service or initial hours change
+  // Re-create the schedule whenever the selected service or initial hours change.
   useEffect(() => {
     setSchedule(createScheduleForService());
   }, [selectedServiceId, initialHours]);
 
+  // Handles changes to the time inputs.
   const handleTimeChange = (dayIndex, period, field, value) => {
     setSchedule((prev) => ({
       ...prev,
@@ -101,6 +97,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     }));
   };
 
+  // Compares the current schedule with the initial one and prepares data for the onSave callback.
   const handleSave = async () => {
     if (!selectedServiceId) return;
     setIsSubmitting(true);
@@ -118,7 +115,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
       const serverDay = day + 1;
       const newDayData = schedule[day];
 
-      // Check morning slot
+      // Process morning slot
       const originalMorning = originalServiceHours.find(
         (h) => h.dayOfWeek === serverDay && h.openTime < "12:00"
       );
@@ -152,7 +149,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
         });
       }
 
-      // Check afternoon slot
+      // Process afternoon slot
       const originalAfternoon = originalServiceHours.find(
         (h) => h.dayOfWeek === serverDay && h.openTime >= "12:00"
       );
@@ -194,6 +191,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     }
   };
 
+  // Generate tab data for each day of the week.
   const dayTabs = dayNames.map((day, index) => ({
     value: day,
     label: day,
@@ -201,6 +199,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
       <div className="p-4 bg-gray-50 rounded-lg border" dir="rtl">
         <h3 className="text-lg font-semibold mb-4">שעות פתיחה ליום {day}</h3>
         <div className="grid grid-cols-1 gap-4">
+          {/* Morning Schedule */}
           <div className="p-4 border rounded-md bg-white">
             <h4 className="font-bold mb-2">בוקר</h4>
             <div className="flex items-center space-x-4 space-x-reverse">
@@ -242,6 +241,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
               </div>
             </div>
           </div>
+          {/* Afternoon Schedule */}
           <div className="p-4 border rounded-md bg-white">
             <h4 className="font-bold mb-2">אחר הצהריים</h4>
             <div className="flex items-center space-x-4 space-x-reverse">
@@ -302,29 +302,31 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
         <h3 className="text-lg font-bold mb-4 text-right">שירותים</h3>
         <ul>
           {servicesTree.map((parentService) => (
-            <React.Fragment key={parentService.serviceID}>
-              <li>
-                <button
-                  onClick={() => setSelectedServiceId(parentService.serviceID)}
-                  className={`w-full text-right p-3 rounded-md text-sm font-medium transition-colors ${
-                    selectedServiceId === parentService.serviceID
-                      ? "bg-blue-600 text-white"
-                      : "hover:bg-gray-200"
-                  }`}
-                >
-                  {parentService.hebrewName}
-                </button>
-              </li>
+            // FIX: Use 'serviceId' for the key to match the API data.
+            <li key={parentService.serviceId}>
+              <button
+                // FIX: Use 'serviceId' to match the API data.
+                onClick={() => setSelectedServiceId(parentService.serviceId)}
+                className={`w-full text-right p-3 rounded-md text-sm font-medium transition-colors ${
+                  selectedServiceId === parentService.serviceId
+                    ? "bg-blue-600 text-white"
+                    : "hover:bg-gray-200"
+                }`}
+              >
+                {parentService.hebrewName}
+              </button>
               {parentService.children.length > 0 && (
                 <ul className="pr-4 border-r-2 border-gray-200 mr-2 my-1">
                   {parentService.children.map((childService) => (
-                    <li key={childService.serviceID}>
+                    // FIX: Use 'serviceId' for the key to match the API data.
+                    <li key={childService.serviceId}>
                       <button
+                        // FIX: Use 'serviceId' to match the API data.
                         onClick={() =>
-                          setSelectedServiceId(childService.serviceID)
+                          setSelectedServiceId(childService.serviceId)
                         }
                         className={`w-full text-right p-3 rounded-md text-sm font-medium transition-colors ${
-                          selectedServiceId === childService.serviceID
+                          selectedServiceId === childService.serviceId
                             ? "bg-blue-500 text-white"
                             : "hover:bg-gray-200"
                         }`}
@@ -335,7 +337,7 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
                   ))}
                 </ul>
               )}
-            </React.Fragment>
+            </li>
           ))}
         </ul>
       </aside>

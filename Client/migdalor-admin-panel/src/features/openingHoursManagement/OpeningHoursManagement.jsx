@@ -68,7 +68,7 @@ const OpeningHoursManagement = () => {
     setIsLoading(true);
     try {
       const [servicesData, hoursData, overridesData] = await Promise.all([
-        api.get("/openinghours/services", token),
+        api.get("/services", token), // Corrected endpoint
         api.get("/openinghours", token),
         api.get("/openinghours/overrides", token),
       ]);
@@ -120,29 +120,32 @@ const OpeningHoursManagement = () => {
 
   const handleSaveService = async (serviceData) => {
     const { mode, data } = serviceModal;
+    // Prepare the DTO to match the backend expectations
+    const dto = {
+      ServiceID: data?.serviceID || 0,
+      HebrewName: serviceData.hebrewName,
+      EnglishName: serviceData.englishName,
+      HebrewDescription: serviceData.hebrewDescription,
+      EnglishDescription: serviceData.englishDescription,
+      HebrewAddendum: serviceData.hebrewAddendum,
+      EnglishAddendum: serviceData.englishAddendum,
+      ParentService: serviceData.parentServiceID,
+      PictureID: serviceData.pictureId,
+      IsActive: serviceData.isActive,
+    };
+
     try {
       if (mode === "add") {
-        // Assuming a standard POST request for creation
-        await api.post(
-          "/services",
-          { hebrewName: serviceData.hebrewName },
-          token
-        );
+        await api.post("/services", dto, token);
         showToast("success", "Service created successfully.");
       } else {
-        // Assuming a standard PUT request for update
-        await api.put(
-          `/services/${data.serviceID}`,
-          { serviceID: data.serviceID, hebrewName: serviceData.hebrewName },
-          token
-        );
+        await api.put(`/services/${data.serviceID}`, dto, token);
         showToast("success", "Service updated successfully.");
       }
       fetchData();
       setServiceModal({ isOpen: false, mode: "add", data: null });
     } catch (err) {
       showToast("error", `Failed to save service: ${err.message}`);
-      // Re-throw to be caught by modal's submit handler
       throw err;
     }
   };
@@ -190,15 +193,15 @@ const OpeningHoursManagement = () => {
       {
         accessorKey: "isActive",
         header: "סטטוס",
-        cell: (info) => (
+        cell: ({ row }) => (
           <span
             className={`px-3 py-1 rounded-full text-sm font-semibold ${
-              info.getValue()
+              row.original.isActive
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
             }`}
           >
-            {info.getValue() ? "פעיל" : "לא פעיל"}
+            {row.original.isActive ? "פעיל" : "לא פעיל"}
           </span>
         ),
       },
@@ -223,7 +226,7 @@ const OpeningHoursManagement = () => {
                 </button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>ערוך שם שירות</p>
+                <p>ערוך שירות</p>
               </TooltipContent>
             </Tooltip>
           </div>
@@ -418,6 +421,7 @@ const OpeningHoursManagement = () => {
             onSave={handleSaveService}
             mode={serviceModal.mode}
             service={serviceModal.data}
+            services={services} // Pass the full list of services
           />
         )}
 

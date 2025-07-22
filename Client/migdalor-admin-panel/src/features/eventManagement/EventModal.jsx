@@ -6,7 +6,7 @@ import RRuleGenerator from "./RRuleGenerator";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import SpouseCommand from "../../components/common/SpouseCommand";
-import ImageUpload from "./ImageUpload"; // Import the new component
+import ImageUpload from "../../components/common/ImageUpload"; // Import the new component
 
 // Helper function to convert UTC date strings to the format needed by <input type="datetime-local">
 const convertToInputFormat = (dateString) => {
