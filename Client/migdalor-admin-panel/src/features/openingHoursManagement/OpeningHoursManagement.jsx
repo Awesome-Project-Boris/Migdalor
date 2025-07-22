@@ -93,13 +93,11 @@ const OpeningHoursManagement = () => {
 
   // --- CRUD Handlers ---
 
-  // FIX: This function now sends all changes in a single batch request.
   const handleUpdateOpeningHours = async (updateData) => {
     try {
-      // The 'updateData' object already has the { toCreate, toUpdate, toDelete } structure.
       await api.post("/openinghours/batch-update", updateData, token);
       showToast("success", "Weekly schedule updated successfully.");
-      fetchData(); // Refetch all data to reflect the changes.
+      fetchData();
     } catch (err) {
       showToast("error", `Failed to update schedule: ${err.message}`);
       console.error("Schedule update error:", err);
@@ -137,16 +135,30 @@ const OpeningHoursManagement = () => {
     }
   };
 
+  // FIX: This function now ensures serviceId is an integer before sending.
   const handleSaveOverride = async (overrideData) => {
     const { mode } = overrideModal;
+
+    // Create a new payload and ensure serviceId is a number.
+    const payload = {
+      ...overrideData,
+      serviceId: parseInt(overrideData.serviceId, 10),
+    };
+
+    // Add validation to prevent sending invalid data.
+    if (isNaN(payload.serviceId)) {
+      showToast("error", "Please select a service.");
+      return;
+    }
+
     try {
       if (mode === "add") {
-        await api.post("/openinghours/overrides", overrideData, token);
+        await api.post("/openinghours/overrides", payload, token);
         showToast("success", "Override added successfully.");
       } else {
         await api.put(
-          `/openinghours/overrides/${overrideData.overrideId}`,
-          overrideData,
+          `/openinghours/overrides/${payload.overrideId}`,
+          payload,
           token
         );
         showToast("success", "Override updated successfully.");
