@@ -217,6 +217,8 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "Listing deleted successfully!",
       MarketplaceItemScreen_DeleteErrorMsg: "Failed to delete listing.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
+      MarketplaceItemScreen_CannotHandleContactTitle: "Cannot Handle Contact Information",
+      MarketplaceItemScreen_CannotHandleContactMsg: "Cannot handle contact information for this item.",
 
       MarketplaceItemCard_Untitled: "Untitled",
       MarketplaceItemCard_UnknownSeller: "Unknown Seller",
@@ -418,6 +420,8 @@ const resources = {
       GoodMorning_signInSuccessTitle: "Signed In",
       GoodMorning_signInSuccessMessage:
         "Your attendance has been recorded. Have a great day!",
+      GoodMorning_IdError:
+        "An error has occurred, try again or verify with administration",
 
       Services_Title: "Services and Opening Hours",
       services_clickForDetails: "Click for details",
@@ -439,6 +443,8 @@ const resources = {
 
       Activities_MyCreatedActivities: "My created activities",
       Activities_AddNew: "Suggest a new acitivity",
+      Activities_SortByClosest: "Sort by Closest",
+      Activities_SortByNewest: "Sort by Newest",
 
       MyActivities_ParticipationChecked: "Events with checked participation",
       MyActivities_ParticipationNotChecked:
@@ -462,7 +468,7 @@ const resources = {
       Errors_Participant_Fetch: "Could not fetch participants.",
       Errors_Auth_NoUser:
         "Could not identify the current user. Please log in again.",
-      EventCard_Registered: " Registered",
+      EventCard_Registered: "{{count}} / {{capacity}} Registered",
       EventCard_MoreDetails: "Click for more details",
       Classes_NoClasses: "No classes available at the moment.",
       Activities_NoActivities: "No activities available at the moment.",
@@ -493,6 +499,8 @@ const resources = {
       Common_Edit: "Edit",
       EventFocus_FinalizeDisclaimer: "Click once you've marked all attendants",
       EventFocus_FinalizeButton: "Finalize Marking",
+
+      EventFocus_RecurrenceDay: "Day(s)",
 
       // New Activity
 
@@ -571,6 +579,7 @@ const resources = {
       MapScreen_Legend: "Legend",
       MapScreen_Navigation: "Navigation",
       Common_Apartpment: "Apartment ",
+      Navigation_Cancelled: "Navigation cancelled",
 
       // Buildings
 
@@ -832,6 +841,10 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "המודעה נמחקה בהצלחה!",
       MarketplaceItemScreen_DeleteErrorMsg: "מחיקת המודעה נכשלה.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "בעיה במחיקת תמונה",
+      MarketplaceItemScreen_CannotHandleContactTitle: "לא ניתן לטפל בפרטי יצירת קשר",
+      MarketplaceItemScreen_CannotHandleContactMsg: "לא ניתן לטפל בפרטי יצירת קשר עבור פריט זה.",
+
+
 
       MarketplaceItemCard_Untitled: "ללא כותרת",
       MarketplaceItemCard_UnknownSeller: "מוכר לא ידוע",
@@ -988,7 +1001,7 @@ const resources = {
       ResidentList_searchingByName: "חיפוש לפי שם: ",
       ResidentList_ExplainationHeader: "איך לחפש דיירים?",
       ResidentList_Explaination:
-        "אפשר לחפש בשתי דרכים ביחד או לחוד: \n\nלפי שם: פשוט התחילו להקליד את שם הדייר/ת בתיבת החיפוש, והרשימה תתעדכן באופן אוטומטי.\n\nלפי תחומי עניין: בחרו תחום עניין אחד או יותר מהרשימה, ולאחר מכן לחצו על כפתור ה'חיפוש'.",
+        "אפשר לחפש בשתי דרכים ביחד או לחוד:\n\n<bold>לפי שם:</bold> פשוט התחילו להקליד את שם הדייר/ת בתיבת החיפוש, והרשימה תתעדכן באופן אוטומטי.\n\n<bold>לפי תחומי עניין:</bold> בחרו תחום עניין אחד או יותר מהרשימה, ולאחר מכן לחצו על כפתור ה'חיפוש'.",
 
       ResidentsCommitte_nameUnavailable: "שם לא זמין",
       ResidentsCommitte_titleUnavailable: "תואר לא זמין",
@@ -1021,6 +1034,8 @@ const resources = {
       GoodMorning_signInBoth: "דיווח נוכחות עבורי ועבור בן/בת הזוג",
       GoodMorning_signInSuccessTitle: "דיווח בוצע",
       GoodMorning_signInSuccessMessage: "הנוכחות שלך נרשמה. שיהיה לך יום נהדר!",
+      GoodMorning_IdError:
+        "התרחשה שגיאה, נסו שוב או וודאו נוהל בוקר טוב עם ההנהלה",
 
       Services_Title: "שירותים ושעות פתיחה",
       services_clickForDetails: "יש ללחוץ לפרטים",
@@ -1058,7 +1073,6 @@ const resources = {
       Errors_Event_Fetch: "לא ניתן היה לטעון את האירועים.",
       Errors_Participant_Fetch: "לא ניתן היה לטעון את המשתתפים.",
       Errors_Auth_NoUser: "לא ניתן היה לזהות את המשתמש. יש להתחבר מחדש.",
-      EventCard_Registered: " רשומים",
       EventCard_MoreDetails: "לחץ לפרטים נוספים",
       Classes_NoClasses: "אין חוגים זמינים כרגע.",
       Activities_NoActivities: "אין פעילויות זמינות כרגע.",
@@ -1066,6 +1080,8 @@ const resources = {
       MyActivities_ParticipationChecked: "פעילויות שנוכחותן נבדקו",
       MyActivities_ParticipationNotChecked: "פעילויות שנוכחותן לא נבדקו",
       MyActivities_ClearFilter: "ניקוי בחירת כפתורים",
+      Activities_SortByClosest: "סינון לפי הקרובים ביותר",
+      Activities_SortByNewest: "סינון לפי החדשים ביותר",
 
       EventFocus_Date: "תאריך",
       EventFocus_Time: "שעה",
@@ -1085,6 +1101,7 @@ const resources = {
         "נותרו {{count}} מקומות פנויים - ההרשמה בפנים!",
       EventFocus_SpacesAvailable:
         "נותרו {{count}} מקומות פנויים - להרשמה למטה!",
+      EventCard_Registered: "נרשמו  {{capacity}} / {{count}} ",
 
       EventFocus_ThanksForMarking: "תודה שסימנת נוכחות.",
       EventFocus_WantToChange: "האם ברצונך לבצע שינוי?",
@@ -1092,6 +1109,7 @@ const resources = {
       Common_Edit: "עריכה",
       EventFocus_FinalizeDisclaimer: "יש ללחוץ לאחר סימון כל הנוכחים.",
       EventFocus_FinalizeButton: "סיום סימון",
+      EventFocus_RecurrenceDay: "ביום ( ימים )",
 
       // New Activity
 
@@ -1165,6 +1183,7 @@ const resources = {
       Navigation_DistanceTo: "מרחק אל {{destination}}:",
       MapScreen_Legend: "מקרא",
       MapScreen_Navigation: "ניווט",
+      Navigation_Cancelled: "הניווט בוטל",
 
       // Buildings
 

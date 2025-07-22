@@ -16,7 +16,13 @@ const Header: React.FC = () => {
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const showBackButton = router.canGoBack();
+  const settingsPaths = [
+    "/FontSettings",
+    "/LanguageSettings",
+    "/NotificationSettings",
+  ];
+  const showBackButton =
+    router.canGoBack() && !settingsPaths.includes(pathname);
 
   // --- MODIFIED: This function now ONLY toggles the drawer ---
   const handleBellPress = () => {
@@ -143,7 +149,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
-    zIndex: 1000,
+    zIndex: 9001,
   },
   leftContainer: {
     flexDirection: "row",
@@ -184,7 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f8f8",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    zIndex: 999,
+    zIndex: 9000,
     padding: 5,
   },
   notificationItem: {

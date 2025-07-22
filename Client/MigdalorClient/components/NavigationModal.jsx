@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   Text,
 } from "react-native";
-import { useTranslation } from "react-i18next"; // FOR TESTING PURPOSES
+import { useTranslation } from "react-i18next";
 import FlipButtonSizeless from "@/components/FlipButtonSizeless";
 import { Ionicons } from "@expo/vector-icons";
 import { Globals } from "@/app/constants/Globals";
@@ -18,19 +18,11 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Step 1: Prepare a clean, searchable list with translated names one time.
-
   const searchableItems = useMemo(() => {
-    // Return early if there's no data to process
     if (!mapData || !mapData.buildings) return [];
-
     const allItems = [];
-
-    // Loop through each structure from the API
     mapData.buildings.forEach((structure) => {
-      // Case 1: The structure is a major, named building
       if (structure.buildingName) {
-        // Add the building itself as a searchable item
         allItems.push({
           type: "building",
           rawName: structure.buildingName,
@@ -39,8 +31,6 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
           }),
           ...structure,
         });
-
-        // Add all apartments nested under this building, with a reference to the parent
         if (structure.apartments) {
           structure.apartments.forEach((apt) => {
             allItems.push({
@@ -56,17 +46,14 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
             });
           });
         }
-      }
-      // Case 2: The structure is a small, unnamed residence (duplex, etc.)
-      else {
-        // For these, add only the apartments as top-level searchable items
+      } else {
         if (structure.apartments) {
           structure.apartments.forEach((apt) => {
             allItems.push({
               type: "apartment",
               rawName: String(apt.displayNumber),
               translatedName: `${t("Common_Apartment")} ${apt.displayNumber}`,
-              buildingTranslatedName: "", // Intentionally blank as there's no parent building name
+              buildingTranslatedName: "",
               ...apt,
               physicalBuildingID: structure.buildingID,
               entranceNodeIds: structure.entranceNodeIds,
@@ -75,15 +62,12 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
         }
       }
     });
-
     return allItems;
   }, [mapData, t]);
 
-  // Step 2: Filter the pre-prepared list without calling t() again.
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
     const lowerCaseSearch = searchTerm.toLowerCase();
-
     return searchableItems.filter((item) => {
       const rawMatch = item.rawName.toLowerCase().includes(lowerCaseSearch);
       const translatedMatch = item.translatedName
@@ -98,10 +82,14 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
     onStartNavigation(item);
   };
 
-  // Step 3: Render the item using the pre-translated name.
+  const isRTL = Globals.userSelectedDirection === "rtl";
+
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.resultItem}
+      style={[
+        styles.resultItem,
+        { flexDirection: isRTL ? "row-reverse" : "row" },
+      ]}
       onPress={() => handleSelectItem(item)}
     >
       <Ionicons
@@ -109,10 +97,25 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
         size={24}
         color="#555"
       />
-      <View style={styles.resultTextContainer}>
-        <Text style={styles.resultTitle}>{item.translatedName}</Text>
-        {item.type === "apartment" && (
-          <Text style={styles.resultSubtitle}>
+      <View
+        style={[
+          styles.resultTextContainer,
+          { [isRTL ? "marginRight" : "marginLeft"]: 15 },
+        ]}
+      >
+        <Text
+          style={[styles.resultTitle, { textAlign: isRTL ? "right" : "left" }]}
+        >
+          {item.translatedName}
+        </Text>
+        {/* --- MODIFIED: Only render subtitle if it has content --- */}
+        {item.type === "apartment" && item.buildingTranslatedName && (
+          <Text
+            style={[
+              styles.resultSubtitle,
+              { textAlign: isRTL ? "right" : "left" },
+            ]}
+          >
             {item.buildingTranslatedName}
           </Text>
         )}
@@ -132,7 +135,7 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
           <Text style={styles.modalTitle}>{t("Navigation_Title")}</Text>
         </View>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { textAlign: isRTL ? "right" : "left" }]}
           placeholder={t("Navigation_SearchPlaceholder")}
           value={searchTerm}
           onChangeText={setSearchTerm}
@@ -189,7 +192,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   resultItem: {
-    flexDirection: "row",
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 20,
@@ -197,7 +199,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
   },
   resultTextContainer: {
-    marginLeft: 15,
+    flex: 1,
   },
   resultTitle: {
     fontSize: 18,

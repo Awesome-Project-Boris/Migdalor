@@ -12,7 +12,6 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   TouchableOpacity,
-  Text,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -68,10 +67,56 @@ const FloatingLabelInput = forwardRef(
       zIndex: 2,
     };
 
-    // Offsets
+    // --- START: MODIFICATIONS ---
+
+    // Define constants for icon positioning and styling
     const clearOffset = 10 * scale;
     const eyeSize = 24 * scale;
     const buttonSide = alignRight ? "left" : "right";
+    const paddingSide = alignRight ? "paddingLeft" : "paddingRight";
+    const iconAreaWidth = eyeSize + clearOffset + 5 * scale; // Calculate space for the icon + buffer
+
+    // Adjust icon's vertical position for multiline inputs
+    const iconTopPosition = props.multiline
+      ? 12 * scale // Position near the top for multiline
+      : (2 * size - eyeSize) / 2; // Keep centered for single line
+
+    // Base style for the TextInput
+    const textInputStyle = [
+      styles.textInput,
+      {
+        width: "100%",
+        height: 2 * size,
+        fontSize: 16 * scale,
+        paddingHorizontal: 10 * scale,
+        borderRadius: 4 * scale,
+        textAlign: alignRight ? "right" : "left",
+      },
+      props.inputStyle, // Apply custom styles like multiline height
+    ];
+
+    // If an icon is visible (clear button or password eye), add padding to that side
+    if (value?.length > 0 || secureTextEntry) {
+      textInputStyle.push({ [paddingSide]: iconAreaWidth });
+    }
+
+    // If multiline, add top padding to align the start of the text with the icon
+    if (props.multiline) {
+      textInputStyle.push({ paddingTop: iconTopPosition });
+    }
+
+    const iconContainerStyle = {
+      position: "absolute",
+      [buttonSide]: clearOffset,
+      top: iconTopPosition,
+      zIndex: 3,
+      justifyContent: "center",
+      alignItems: "center",
+      height: eyeSize,
+      width: eyeSize,
+    };
+
+    // --- END: MODIFICATIONS ---
 
     return (
       <TouchableWithoutFeedback onPress={() => inputRef.current?.focus()}>
@@ -83,18 +128,7 @@ const FloatingLabelInput = forwardRef(
               ref={inputRef}
               {...props}
               secureTextEntry={secureTextEntry && !showPassword}
-              style={[
-                styles.textInput,
-                {
-                  width: "100%",
-                  height: 2 * size,
-                  fontSize: 16 * scale,
-                  paddingHorizontal: 10 * scale,
-                  borderRadius: 4 * scale,
-                  textAlign: alignRight ? "right" : "left",
-                },
-                props.inputStyle,
-              ]}
+              style={textInputStyle} // Use the dynamically generated style
               value={value}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
@@ -104,12 +138,7 @@ const FloatingLabelInput = forwardRef(
             {secureTextEntry ? (
               <TouchableOpacity
                 onPress={() => setShowPassword((v) => !v)}
-                style={{
-                  position: "absolute",
-                  [buttonSide]: clearOffset,
-                  top: (2 * size - eyeSize) / 2,
-                  zIndex: 3,
-                }}
+                style={iconContainerStyle}
               >
                 <Ionicons
                   name={showPassword ? "eye" : "eye-off"}
@@ -124,14 +153,10 @@ const FloatingLabelInput = forwardRef(
                     onChangeText("");
                     inputRef.current?.focus();
                   }}
-                  style={{
-                    position: "absolute",
-                    [buttonSide]: clearOffset,
-                    top: (2 * size - eyeSize) / 2,
-                    zIndex: 3,
-                  }}
+                  style={iconContainerStyle}
                 >
-                  <Text style={{ fontSize: eyeSize, color: "grey" }}>×</Text>
+                  {/* Using a proper icon instead of text 'x' */}
+                  <Ionicons name="close-circle" size={eyeSize} color="grey" />
                 </TouchableOpacity>
               )
             )}
@@ -156,6 +181,7 @@ const styles = StyleSheet.create({
   innerContainer: {
     width: "100%",
     position: "relative",
+    justifyContent: "center", // Center content vertically
   },
   textInput: {
     color: "#000",

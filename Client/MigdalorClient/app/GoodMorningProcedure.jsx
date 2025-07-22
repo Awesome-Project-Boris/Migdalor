@@ -39,7 +39,6 @@ export default function GoodMorningProcedure() {
     }).start();
 
     const fetchUserData = async () => {
-      // ... (fetchUserData logic remains the same)
       try {
         const storedToken = await AsyncStorage.getItem("jwt");
         const storedUserId = await AsyncStorage.getItem("userID");
@@ -63,7 +62,7 @@ export default function GoodMorningProcedure() {
         Toast.show({
           type: "error",
           text1: t("Common_Error"),
-          text2: "Could not retrieve your profile details.",
+          text2: t("GoodMorning_IdError"),
         });
       } finally {
         setIsLoading(false);
@@ -74,7 +73,6 @@ export default function GoodMorningProcedure() {
   }, [sunAnimation]);
 
   const handleSignIn = async (includeSpouse) => {
-    // ... (handleSignIn logic remains the same)
     setIsLoading(true);
     try {
       const storedToken = await AsyncStorage.getItem("jwt");
@@ -113,7 +111,7 @@ export default function GoodMorningProcedure() {
       Toast.show({
         type: "error",
         text1: t("Common_Error"),
-        text2: error.message,
+        text2: t("GoodMorning_IdError"),
         position: "top",
       });
     } finally {

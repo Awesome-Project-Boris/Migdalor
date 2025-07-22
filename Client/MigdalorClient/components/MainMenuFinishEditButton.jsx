@@ -3,7 +3,7 @@
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
 import { StyleSheet } from "react-native"; // 'Text' import removed
-import React from 'react';
+import React from "react";
 import { useTranslation } from "react-i18next";
 import StyledText from "@/components/StyledText.jsx"; // Import StyledText
 
@@ -20,7 +20,7 @@ export function EditToggleButton({ onSave }) {
   const handlePress = () => {
     // console.log("Finish editing pressed (just toggles state now)");
     setEditing(false);
- };
+  };
 
   return (
     <FlipButton
@@ -31,7 +31,9 @@ export function EditToggleButton({ onSave }) {
       flipborderwidth={3}
     >
       {/* Replaced Text with StyledText */}
-      <StyledText style={styles.toggleButtonText}>{t('MainMenuScreen_DoneButton')}</StyledText>
+      <StyledText style={styles.toggleButtonText}>
+        {t("MainMenuScreen_DoneButton")}
+      </StyledText>
     </FlipButton>
   );
 }
@@ -40,14 +42,13 @@ export function EditToggleButton({ onSave }) {
 const styles = StyleSheet.create({
   toggleButton: {
     width: 300,
-    height: 70,
     marginBottom: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 8,
     alignSelf: "center",
     // boxShadow is not standard RN, use elevation/shadow props if needed
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -57,7 +58,7 @@ const styles = StyleSheet.create({
   toggleButtonText: {
     color: "#000000",
     fontSize: 24, // Base font size is defined, so StyledText can scale it
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

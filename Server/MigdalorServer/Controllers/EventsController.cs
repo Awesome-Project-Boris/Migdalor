@@ -94,10 +94,11 @@ namespace MigdalorServer.Controllers
                         PictureId = e.PictureId,
                         PicturePath = pg.PicPath,
                         IsRecurring = e.IsRecurring,
+                        RecurrenceRule = e.RecurrenceRule, 
                         StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
                         EndDate = e.EndDate.HasValue
-              ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc)
-              : (DateTime?)null,
+                            ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc)
+                            : (DateTime?)null,
                         Capacity = e.Capacity,
                         ParticipantsCount = e.OhEventRegistrations.Count(),
                         HostName = host != null ? host.HebFirstName + " " + host.HebLastName : "N/A"
