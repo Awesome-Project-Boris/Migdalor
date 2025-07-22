@@ -1,3 +1,4 @@
+// src/pages/AdminLayout.jsx
 import React, { useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import SidebarButton from "./SidebarButton";
@@ -7,24 +8,20 @@ import {
   FileText,
   LogOut,
   MessageSquare,
-  CalendarDays, // Import the new icon
+  CalendarDays,
+  Clock, // <-- Import the Clock icon
 } from "lucide-react";
 import UserManagement from "../../features/userManagement/UserManagement";
 import NoticeManagement from "../../features/noticeManagement/NoticeManagement";
 import Dashboard from "../../pages/Dashboard";
 import Reports from "../../features/reports/Reports";
 import EventManagement from "../../features/eventManagement/EventManagement";
+import OpeningHoursManagement from "../../features/openingHoursManagement/OpeningHoursManagement"; // <-- Import the new component
 
-/**
- * The main layout for the admin panel.
- * It includes a sidebar for navigation and a main content area
- * where the selected page is displayed.
- */
 const AdminLayout = () => {
   const [activePage, setActivePage] = useState("dashboard");
   const { logout } = useAuth();
 
-  // Renders the component corresponding to the active page.
   const renderContent = () => {
     switch (activePage) {
       case "users":
@@ -35,6 +32,9 @@ const AdminLayout = () => {
         return <Reports />;
       case "events":
         return <EventManagement />;
+      // Add the new case for opening hours
+      case "openingHours": // <-- Add this case
+        return <OpeningHoursManagement />;
       case "dashboard":
       default:
         return <Dashboard setActivePage={setActivePage} />;
@@ -67,12 +67,18 @@ const AdminLayout = () => {
             isActive={activePage === "notices"}
             onClick={() => setActivePage("notices")}
           />
-          {/* New Button for Event Management */}
           <SidebarButton
             icon={<CalendarDays size={20} />}
             label="ניהול אירועים"
             isActive={activePage === "events"}
             onClick={() => setActivePage("events")}
+          />
+          {/* Add the new button for Opening Hours */}
+          <SidebarButton
+            icon={<Clock size={20} />} // <-- Add this button
+            label="ניהול שעות פתיחה"
+            isActive={activePage === "openingHours"}
+            onClick={() => setActivePage("openingHours")}
           />
           <SidebarButton
             icon={<FileText size={20} />}

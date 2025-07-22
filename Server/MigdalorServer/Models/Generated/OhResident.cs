@@ -56,6 +56,12 @@ namespace MigdalorServer.Models
         public int? AdditionalPic2Id { get; set; }
         [Column("residentApartmentNumber")]
         public Guid? ResidentApartmentNumber { get; set; }
+        [Column("isCommittee")]
+        public bool? IsCommittee { get; set; }
+        [StringLength(100)]
+        public string? HebCommitteeName { get; set; }
+        [StringLength(100)]
+        public string? EngCommitteeName { get; set; }
 
         [ForeignKey("AdditionalPic1Id")]
         [InverseProperty("OhResidentAdditionalPic1s")]

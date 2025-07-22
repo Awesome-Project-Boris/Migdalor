@@ -46,7 +46,7 @@ const SharedTable = ({
   });
 
   return (
-    <div>
+    <div dir="rtl">
       <div className="relative mb-4">
         <input
           placeholder="חיפוש..."

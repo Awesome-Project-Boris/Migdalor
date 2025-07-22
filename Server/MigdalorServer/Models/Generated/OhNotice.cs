@@ -29,10 +29,15 @@ namespace MigdalorServer.Models
         [StringLength(100)]
         [Unicode(false)]
         public string? NoticeSubCategory { get; set; }
+        [Column("PictureID")]
+        public int? PictureId { get; set; }
 
         [ForeignKey("NoticeCategory")]
         [InverseProperty("OhNotices")]
         public virtual OhCategory? NoticeCategoryNavigation { get; set; }
+        [ForeignKey("PictureId")]
+        [InverseProperty("OhNotices")]
+        public virtual OhPicture? Picture { get; set; }
         [ForeignKey("SenderId")]
         [InverseProperty("OhNotices")]
         public virtual OhPerson? Sender { get; set; }
