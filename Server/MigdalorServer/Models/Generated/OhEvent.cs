@@ -35,6 +35,7 @@ namespace MigdalorServer.Models
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public bool ParticipationChecked { get; set; }
+        public DateTime DateCreated { get; set; }
 
         [InverseProperty("Event")]
         public virtual ICollection<OhEventInstance> OhEventInstances { get; set; }

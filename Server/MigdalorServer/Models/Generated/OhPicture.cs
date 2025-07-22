@@ -12,6 +12,7 @@ namespace MigdalorServer.Models
         public OhPicture()
         {
             OhActivities = new HashSet<OhActivity>();
+            OhNotices = new HashSet<OhNotice>();
             OhPeople = new HashSet<OhPerson>();
             OhResidentAdditionalPic1s = new HashSet<OhResident>();
             OhResidentAdditionalPic2s = new HashSet<OhResident>();
@@ -50,6 +51,8 @@ namespace MigdalorServer.Models
         public virtual OhPerson? Uploader { get; set; }
         [InverseProperty("Pic")]
         public virtual ICollection<OhActivity> OhActivities { get; set; }
+        [InverseProperty("Picture")]
+        public virtual ICollection<OhNotice> OhNotices { get; set; }
         [InverseProperty("ProfilePic")]
         public virtual ICollection<OhPerson> OhPeople { get; set; }
         [InverseProperty("AdditionalPic1")]

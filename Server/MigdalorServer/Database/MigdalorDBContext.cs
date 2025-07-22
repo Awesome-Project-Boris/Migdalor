@@ -8,6 +8,10 @@ namespace MigdalorServer.Database
 {
     public partial class MigdalorDBContext : DbContext
     {
+        public MigdalorDBContext()
+        {
+        }
+
         public MigdalorDBContext(DbContextOptions<MigdalorDBContext> options)
             : base(options)
         {
@@ -120,6 +124,8 @@ namespace MigdalorServer.Database
             {
                 entity.HasKey(e => e.EventId)
                     .HasName("PK__Events__7944C87002AC49E8");
+
+                entity.Property(e => e.DateCreated).HasDefaultValueSql("(getutcdate())");
             });
 
             modelBuilder.Entity<OhEventInstance>(entity =>
@@ -188,6 +194,11 @@ namespace MigdalorServer.Database
                     .WithMany(p => p.OhNotices)
                     .HasForeignKey(d => d.NoticeCategory)
                     .HasConstraintName("FK_Notices_Category");
+
+                entity.HasOne(d => d.Picture)
+                    .WithMany(p => p.OhNotices)
+                    .HasForeignKey(d => d.PictureId)
+                    .HasConstraintName("FK_OH_Notices_OH_Pictures");
 
                 entity.HasOne(d => d.Sender)
                     .WithMany(p => p.OhNotices)
