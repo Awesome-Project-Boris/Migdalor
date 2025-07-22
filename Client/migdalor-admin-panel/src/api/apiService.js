@@ -1,8 +1,8 @@
 import { API_BASE_URL } from "../config";
 
 /**
- * A centralized handler for processing API responses.
- * It checks the content type to decide whether to return a file blob or JSON.
+ * A centralized handler for processing standard API responses (JSON or files).
+ * It should be used for all API calls except for login.
  * @param {Response} response - The raw response from the fetch call.
  * @returns {Promise<Blob|any>} A promise that resolves to a file blob or parsed JSON.
  */
@@ -25,15 +25,50 @@ const handleResponse = async (response) => {
         return response.blob();
     }
 
-    // Otherwise, handle as JSON for all other API calls
+    // Otherwise, handle as JSON for all other standard API calls
     return response.json();
 };
+
+/**
+ * A specific handler for the login response, which is expected to be plain text (the JWT).
+ * @param {Response} response - The raw response from the login fetch call.
+ * @returns {Promise<string>} A promise that resolves to the token string.
+ */
+const handleLoginResponse = async (response) => {
+    if (!response.ok) {
+        // For login, the error message might be plain text
+        const errorText = await response.text();
+        throw new Error(errorText || `Login failed with status: ${response.status}`);
+    }
+    // The successful login response is the raw token string
+    return response.text();
+};
+
 
 /**
  * A centralized API service for making requests to the backend.
  */
 export const api = {
     API_BASE_URL,
+
+    /**
+     * NEW: Performs a login request and returns the raw token.
+     * This function is specifically for user authentication.
+     * @param {string} phoneNumber
+     * @param {string} password
+     * @returns {Promise<string>} The JWT token string.
+     */
+    async postLogin(phoneNumber, password) {
+        const response = await fetch(`${API_BASE_URL}/People/login`, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ PhoneNumber: phoneNumber, Password: password }),
+        });
+        // Use the new, specific handler for the login response
+        return handleLoginResponse(response);
+    },
 
     /**
      * Performs a GET request.

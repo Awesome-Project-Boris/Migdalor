@@ -81,18 +81,16 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   /**
-   * Logs in the user by calling the API and storing the received token.
+   * Logs in the user by calling the dedicated login API service
+   * and storing the received token.
    * @param {string} phoneNumber
    * @param {string} password
    */
   const login = async (phoneNumber, password) => {
     try {
       setIsLoading(true);
-      const response = await api.post("/People/login", {
-        PhoneNumber: phoneNumber,
-        Password: password,
-      });
-      const newToken = response; // Assuming the response is the token string.
+      // UPDATED: Use the new, dedicated postLogin function from the api service
+      const newToken = await api.postLogin(phoneNumber, password);
       localStorage.setItem("migdalor_admin_token", newToken);
       setToken(newToken);
       // Verification and user state update will be triggered by the useEffect hook.

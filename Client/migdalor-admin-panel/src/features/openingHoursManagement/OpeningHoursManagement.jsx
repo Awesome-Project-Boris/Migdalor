@@ -31,7 +31,7 @@ const TooltipContent = ({ children, ...props }) => (
 );
 
 const OpeningHoursManagement = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth(); // Get user for senderId
 
   // Data states
   const [services, setServices] = useState([]);
@@ -135,11 +135,10 @@ const OpeningHoursManagement = () => {
     }
   };
 
-  // FIX: This function now explicitly checks for a null/undefined serviceId.
+  // FIX: This function now also creates a notice and broadcasts a notification.
   const handleSaveOverride = async (overrideData) => {
     const { mode } = overrideModal;
 
-    // Add validation to prevent sending invalid data.
     if (
       overrideData.serviceId === null ||
       overrideData.serviceId === undefined ||
@@ -149,28 +148,83 @@ const OpeningHoursManagement = () => {
       return;
     }
 
-    // Create a new payload and ensure serviceId is a number.
     const payload = {
       ...overrideData,
       serviceId: parseInt(overrideData.serviceId, 10),
     };
 
     try {
+      // Step 1: Save the override
+      let savedOverride;
       if (mode === "add") {
-        await api.post("/openinghours/overrides", payload, token);
-        showToast("success", "Override added successfully.");
+        savedOverride = await api.post(
+          "/openinghours/overrides",
+          payload,
+          token
+        );
       } else {
         await api.put(
           `/openinghours/overrides/${payload.overrideId}`,
           payload,
           token
         );
-        showToast("success", "Override updated successfully.");
+        savedOverride = payload; // Use existing payload for info
       }
-      fetchData();
+      showToast("success", "Override saved successfully.");
+      fetchData(); // Refetch data to show the change immediately
       setOverrideModal({ isOpen: false, mode: "add", data: null });
+
+      // Step 2: Create and post a notice about the change
+      try {
+        const service = services.find((s) => s.serviceId === payload.serviceId);
+        const serviceName = service ? service.hebrewName : "שירות";
+        const formattedDate = new Date(payload.overrideDate).toLocaleDateString(
+          "he-IL"
+        );
+        const statusText = payload.isOpen
+          ? `פתוח בין השעות ${payload.openTime} - ${payload.closeTime}`
+          : "סגור";
+
+        const noticeTitle = `עדכון שעות פתיחה: ${serviceName}`;
+        let noticeContent = `שינוי בלוח הזמנים עבור שירות '${serviceName}' בתאריך ${formattedDate}.\nהשירות יהיה ${statusText}.`;
+        if (payload.notes) {
+          noticeContent += `\nהערות: ${payload.notes}`;
+        }
+
+        const noticeDto = {
+          Title: noticeTitle,
+          Content: noticeContent, // Corrected from Body to Content
+          SenderId: user.id, // Corrected from user.personId to user.id
+          Category: "ספקי שירות", //do not remove or rename this category ever and all will be well!
+        };
+
+        const createdNotice = await api.post("/notices", noticeDto, token);
+        showToast("success", "Notice created successfully.");
+
+        // Step 3: Broadcast a push notification
+        const pushMessage = {
+          to: "/topics/all",
+          title: noticeTitle,
+          body: noticeContent,
+          sound: "default",
+          badge: "0",
+          data: {
+            noticeId: createdNotice.noticeId,
+            category: noticeDto.Category,
+            hebSenderName: `${user?.hebFirstName} ${user?.hebLastName}`,
+          },
+        };
+
+        await api.post("/notifications/broadcast", pushMessage, token);
+        showToast("success", "Notification sent to all users.");
+      } catch (notificationError) {
+        showToast(
+          "warning",
+          `Override was saved, but failed to send notification: ${notificationError.message}`
+        );
+      }
     } catch (err) {
-      showToast("error", `Failed to save override.`);
+      showToast("error", `Failed to save override: ${err.message}`);
     }
   };
 

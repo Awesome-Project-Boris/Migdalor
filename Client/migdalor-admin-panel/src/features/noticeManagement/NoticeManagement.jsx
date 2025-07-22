@@ -119,7 +119,7 @@ const NoticeManagement = () => {
       SenderId: user.id, // Always use the ID of the logged-in admin
     };
 
-    if (isEditMode) {
+    if (isEditMode && !noticePayload.Title.startsWith('עדכון:')) {
       noticePayload.Title = `עדכון: ${noticePayload.Title}`;
     }
 
