@@ -82,14 +82,14 @@ const ScheduleOverrideModal = ({
 
   useEffect(() => {
     if (mode === "edit" && override) {
+      // FIX: Avoid timezone conversion issues by splitting the date string directly.
+      // This prevents the date from shifting back by one day.
+      const formattedDate = override.overrideDate.split("T")[0];
       setFormData({
         ...override,
-        overrideDate: new Date(override.overrideDate)
-          .toISOString()
-          .split("T")[0],
+        overrideDate: formattedDate,
       });
     } else {
-      // FIX: Initialize with null to force user selection.
       setFormData({
         serviceId: null,
         overrideDate: new Date().toISOString().split("T")[0],
@@ -99,7 +99,7 @@ const ScheduleOverrideModal = ({
         notes: "",
       });
     }
-  }, [mode, override, services]);
+  }, [mode, override]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -112,7 +112,6 @@ const ScheduleOverrideModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // FIX: Prepare data but let the parent component handle parsing and validation.
     const finalData = {
       ...formData,
       openTime: formData.isOpen ? formData.openTime : null,
@@ -123,7 +122,6 @@ const ScheduleOverrideModal = ({
     } catch (error) {
       console.error("Failed to save override:", error);
     } finally {
-      // Ensure submitting state is always reset.
       setIsSubmitting(false);
     }
   };
@@ -149,16 +147,14 @@ const ScheduleOverrideModal = ({
               </label>
               <select
                 name="serviceId"
-                value={formData.serviceId || ""} // Use || "" to handle initial null value
+                value={formData.serviceId || ""}
                 onChange={handleChange}
-                required // Make selection mandatory
+                required
                 className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                {/* FIX: Add a disabled placeholder option */}
                 <option value="" disabled>
                   בחר שירות...
                 </option>
-                {/* FIX: Use 'serviceId' (camelCase) to match API data */}
                 {services.map((s) => (
                   <option key={s.serviceId} value={s.serviceId}>
                     {s.hebrewName}
