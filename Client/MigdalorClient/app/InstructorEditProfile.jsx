@@ -6,6 +6,9 @@ import {
   Image,
   Alert,
   Modal,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  I18nManager,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -57,6 +60,8 @@ export default function InstructorEditProfile() {
   const [imageToViewUri, setImageToViewUri] = useState(null);
   const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
   const [clearedPic, setClearedPic] = useState(false);
+  const [isImagePickerModalVisible, setImagePickerModalVisible] =
+    useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -130,8 +135,14 @@ export default function InstructorEditProfile() {
   };
 
   const handleImagePress = () => {
-    setImageToViewUri(profileImage.uri || null);
-    setShowImageViewModal(true);
+    const isDefault =
+      !profileImage.uri || profileImage.uri.includes("defaultUser.png");
+    if (isDefault) {
+      handleAddImage();
+    } else {
+      setImageToViewUri(profileImage.uri || null);
+      setShowImageViewModal(true);
+    }
   };
 
   const handleRemoveImage = () => {
@@ -169,94 +180,108 @@ export default function InstructorEditProfile() {
     }
   };
 
-  const pickImage = async (source) => {
-    setShowImageViewModal(false);
-    let result;
-    try {
-      if (source === "camera") {
-        const cameraPermission =
-          await ImagePicker.requestCameraPermissionsAsync();
-        if (cameraPermission.status !== "granted") {
-          Alert.alert(
-            t("ImagePicker_permissionDeniedTitle"),
-            t("ImagePicker_cameraPermissionDeniedMessage")
-          );
-          return;
-        }
-        result = await ImagePicker.launchCameraAsync({
-          allowsEditing: true,
-          quality: 0.7,
-        });
-      } else {
-        const libraryPermission =
-          await ImagePicker.requestMediaLibraryPermissionsAsync();
-        if (libraryPermission.status !== "granted") {
-          Alert.alert(
-            t("ImagePicker_permissionDeniedTitle"),
-            t("ImagePicker_libraryPermissionDeniedMessage")
-          );
-          return;
-        }
-        result = await ImagePicker.launchImageLibraryAsync({
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: true,
-          quality: 0.7,
-        });
-      }
+  const handleAddImage = () => {
+    setShowImageViewModal(false); // Close the view modal first
+    setImagePickerModalVisible(true); // Open the new custom modal
+  };
 
-      if (!result.canceled && result.assets?.[0]?.uri) {
+  const handleTakePhoto = async () => {
+    setImagePickerModalVisible(false);
+    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+    if (cameraPermission.status !== "granted") {
+      Alert.alert(
+        t("ImagePicker_permissionDeniedTitle"),
+        t("ImagePicker_cameraPermissionDeniedMessage")
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      try {
         const newUri = await copyImageToAppDir(result.assets[0].uri);
         setProfilePic({
           PicPath: newUri,
           PicAlt: "Instructor Profile Picture",
         });
         setClearedPic(false);
-        setShowImageViewModal(false);
+      } catch (error) {
+        Alert.alert(t("ImagePicker_errorTitle"), error.message);
       }
-    } catch (error) {
-      Alert.alert(t("ImagePicker_errorTitle"), error.message);
     }
   };
 
-  const handleAddImage = () => {
-    Alert.alert(
-      t("ImagePicker_selectSourceTitle"),
-      t("ImagePicker_selectSourceMessage"),
-      [
-        {
-          text: t("ImagePicker_takePhotoButton"),
-          onPress: () => pickImage("camera"),
-        },
-        {
-          text: t("ImagePicker_chooseFromLibraryButton"),
-          onPress: () => pickImage("gallery"),
-        },
-        {
-          text: t("ImagePicker_chooseFromHistoryButton"),
-          onPress: () => {
-            setShowImageViewModal(false);
-            setHistoryModalVisible(true);
-          },
-        },
-        { text: t("ImagePicker_cancelButton"), style: "cancel" },
-      ]
-    );
+  const handleChooseFromLibrary = async () => {
+    setImagePickerModalVisible(false);
+    const libraryPermission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (libraryPermission.status !== "granted") {
+      Alert.alert(
+        t("ImagePicker_permissionDeniedTitle"),
+        t("ImagePicker_libraryPermissionDeniedMessage")
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      try {
+        const newUri = await copyImageToAppDir(result.assets[0].uri);
+        setProfilePic({
+          PicPath: newUri,
+          PicAlt: "Instructor Profile Picture",
+        });
+        setClearedPic(false);
+      } catch (error) {
+        Alert.alert(t("ImagePicker_errorTitle"), error.message);
+      }
+    }
+  };
+
+  const handleChooseFromHistory = () => {
+    setImagePickerModalVisible(false);
+    setHistoryModalVisible(true);
   };
 
   const deletePicture = async (pictureId) => {
     if (!pictureId) return;
-    try {
-      const response = await fetch(
-        `${Globals.API_BASE_URL}/api/Picture/${pictureId}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (!response.ok) throw new Error("Failed to delete old picture.");
-      console.log(`Successfully deleted picture ID: ${pictureId}`);
-    } catch (error) {
-      console.error(error.message);
+
+    const storedUserID = await AsyncStorage.getItem("userID");
+    if (!storedUserID) {
+      throw new Error("User ID not found, cannot delete picture.");
     }
+
+    const response = await fetch(
+      `${Globals.API_BASE_URL}/api/Picture/delete`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await AsyncStorage.getItem("jwt")}`,
+        },
+        body: JSON.stringify({
+          PicId: pictureId,
+          UserId: storedUserID,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      let errorMsg = "Failed to delete old picture.";
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.message || errorMsg;
+      } catch (e) {
+        // Ignore if response is not JSON
+      }
+      throw new Error(errorMsg);
+    }
+    console.log(`Successfully deleted picture ID: ${pictureId}`);
   };
 
   const uploadImage = async (imageUri, role, altText, uploaderId) => {
@@ -274,69 +299,61 @@ export default function InstructorEditProfile() {
     formData.append("picRoles", role);
     formData.append("picAlts", altText);
     formData.append("uploaderId", uploaderId);
-    try {
-      const uploadResponse = await fetch(
-        `${Globals.API_BASE_URL}/api/Picture`,
-        { method: "POST", body: formData }
-      );
-      const uploadResults = await uploadResponse.json();
-      if (
-        !uploadResponse.ok ||
-        !Array.isArray(uploadResults) ||
-        uploadResults.length === 0 ||
-        !uploadResults[0].success
-      ) {
-        const errorMsg =
-          uploadResults?.[0]?.errorMessage ||
-          `Image upload failed (HTTP ${uploadResponse.status})`;
-        throw new Error(errorMsg);
+
+    const uploadResponse = await fetch(
+      `${Globals.API_BASE_URL}/api/Picture`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("jwt")}`,
+        },
+        body: formData,
       }
-      await safeDeleteFile(imageUri);
-      return {
-        PicID: uploadResults[0].picId,
-        PicPath: uploadResults[0].serverPath,
-        PicName: uploadResults[0].originalFileName,
-        PicAlt: altText,
-        UploaderId: uploaderId,
-        PicRole: role,
-        DateTime: new Date().toISOString(),
-      };
-    } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: t("MarketplaceNewItemScreen_imageUploadFailedTitle"),
-        text2: error.message,
-        position: "top",
-      });
-      throw error;
+    );
+    const uploadResults = await uploadResponse.json();
+    if (
+      !uploadResponse.ok ||
+      !Array.isArray(uploadResults) ||
+      uploadResults.length === 0 ||
+      !uploadResults[0].success
+    ) {
+      const errorMsg =
+        uploadResults?.[0]?.errorMessage ||
+        `Image upload failed (HTTP ${uploadResponse.status})`;
+      throw new Error(errorMsg);
     }
+    await safeDeleteFile(imageUri);
+    return {
+      PicID: uploadResults[0].picId,
+      PicPath: uploadResults[0].serverPath,
+      PicName: uploadResults[0].originalFileName,
+      PicAlt: altText,
+      UploaderId: uploaderId,
+      PicRole: role,
+      DateTime: new Date().toISOString(),
+    };
   };
 
-  const processImage = async (
+  const prepareFinalPicData = async (
     currentPic,
     initialPic,
     clearedFlag,
     role,
     altText
   ) => {
-    const storedUserID = await AsyncStorage.getItem("userID");
     if (currentPic.PicPath?.startsWith("file://")) {
-      if (initialPic?.PicID) await deletePicture(initialPic.PicID);
+      const storedUserID = await AsyncStorage.getItem("userID");
       return await uploadImage(
         currentPic.PicPath,
         role,
-        currentPic.PicAlt || altText,
+        altText,
         storedUserID
       );
     }
     if (clearedFlag) {
-      if (initialPic?.PicID) await deletePicture(initialPic.PicID);
       return null;
     }
     if (currentPic.PicPath?.startsWith("/Images/")) {
-      if (initialPic?.PicID && initialPic.PicID !== currentPic.PicID) {
-        await deletePicture(initialPic.PicID);
-      }
       return currentPic;
     }
     return initialPic;
@@ -357,10 +374,11 @@ export default function InstructorEditProfile() {
       return;
     }
 
-    try {
-      const storedUserID = await AsyncStorage.getItem("userID");
+    const oldPicIdToDelete = initialPicRef.current?.PicID;
+    let newlyUploadedPicData = null;
 
-      const finalProfilePicData = await processImage(
+    try {
+      newlyUploadedPicData = await prepareFinalPicData(
         profilePic,
         initialPicRef.current,
         clearedPic,
@@ -368,6 +386,9 @@ export default function InstructorEditProfile() {
         "Instructor Profile Picture"
       );
 
+      const newPicId = newlyUploadedPicData?.PicID || null;
+
+      const storedUserID = await AsyncStorage.getItem("userID");
       const response = await fetch(
         `${Globals.API_BASE_URL}/api/People/UpdateInstructorProfile`,
         {
@@ -380,7 +401,7 @@ export default function InstructorEditProfile() {
             personId: storedUserID,
             phoneNumber: form.mobilePhone,
             email: form.email,
-            profilePicId: finalProfilePicData?.PicID || null,
+            profilePicId: newPicId,
           }),
         }
       );
@@ -388,6 +409,11 @@ export default function InstructorEditProfile() {
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || "Failed to update profile");
+      }
+
+      const pictureWasChanged = oldPicIdToDelete !== newPicId;
+      if (oldPicIdToDelete && pictureWasChanged) {
+        await deletePicture(oldPicIdToDelete);
       }
 
       Toast.show({
@@ -401,6 +427,18 @@ export default function InstructorEditProfile() {
         text1: "Update Failed",
         text2: error.message,
       });
+
+      if (
+        newlyUploadedPicData &&
+        newlyUploadedPicData.PicPath?.startsWith("/Images/")
+      ) {
+        try {
+          await deletePicture(newlyUploadedPicData.PicID);
+          console.log("Cleaned up orphaned new image.");
+        } catch (cleanupError) {
+          console.error("Failed to clean up orphaned new image:", cleanupError);
+        }
+      }
     }
   };
 
@@ -429,7 +467,8 @@ export default function InstructorEditProfile() {
 
     // Compare form fields
     if (
-      String(form.mobilePhone).trim() !== String(initialForm.mobilePhone).trim() ||
+      String(form.mobilePhone).trim() !==
+        String(initialForm.mobilePhone).trim() ||
       String(form.email).trim() !== String(initialForm.email).trim()
     ) {
       return true;
@@ -444,9 +483,9 @@ export default function InstructorEditProfile() {
     if (clearedPic) {
       return true;
     }
-    
+
     if ((profilePic.PicID || null) !== (initialPicState?.PicID || null)) {
-        return true;
+      return true;
     }
 
     return false;
@@ -544,6 +583,100 @@ export default function InstructorEditProfile() {
         initialPictureIdInSlot={initialPicRef.current?.PicID}
       />
 
+      {/* --- START: Custom Image Picker Modal --- */}
+      <Modal
+        visible={isImagePickerModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setImagePickerModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.confirmOverlay}
+          activeOpacity={1}
+          onPressOut={() => setImagePickerModalVisible(false)}
+        >
+          <TouchableWithoutFeedback>
+            <View style={styles.imagePickerContainer}>
+              <ScrollView
+                style={{ width: "100%" }}
+                contentContainerStyle={{ alignItems: "center" }}
+              >
+                <View style={{ paddingHorizontal: 20, width: "100%" }}>
+                  <StyledText
+                    style={[
+                      styles.imagePickerTitle,
+                      {
+                        textAlign:
+                          Globals.userSelectedDirection === "rtl"
+                            ? "right"
+                            : "left",
+                      },
+                    ]}
+                    maxFontSize={36}
+                  >
+                    {t("ImagePicker_selectSourceTitle")}
+                  </StyledText>
+                  <StyledText
+                    style={[
+                      styles.imagePickerMessage,
+                      {
+                        textAlign:
+                          Globals.userSelectedDirection === "rtl"
+                            ? "right"
+                            : "left",
+                      },
+                    ]}
+                    maxFontSize={30}
+                  >
+                    {t("ImagePicker_selectSourceMessage")}
+                  </StyledText>
+                </View>
+                <View style={styles.imagePickerButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.imagePickerButton}
+                    onPress={handleTakePhoto}
+                  >
+                    <StyledText style={styles.imagePickerButtonText}>
+                      {t("ImagePicker_takePhotoButton")}
+                    </StyledText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.imagePickerButton}
+                    onPress={handleChooseFromLibrary}
+                  >
+                    <StyledText style={styles.imagePickerButtonText}>
+                      {t("ImagePicker_chooseFromLibraryButton")}
+                    </StyledText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.imagePickerButton}
+                    onPress={handleChooseFromHistory}
+                  >
+                    <StyledText style={styles.imagePickerButtonText}>
+                      {t("ImagePicker_chooseFromHistoryButton", "History")}
+                    </StyledText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.imagePickerButton, styles.cancelButton]}
+                    onPress={() => setImagePickerModalVisible(false)}
+                  >
+                    <StyledText
+                      style={[
+                        styles.imagePickerButtonText,
+                        styles.cancelButtonText,
+                      ]}
+                    >
+                      {t("ImagePicker_cancelButton")}
+                    </StyledText>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      </Modal>
+      {/* --- END: Custom Image Picker Modal --- */}
+
       {/* --- START: Add Confirmation Modal --- */}
       {showConfirm && (
         <Modal visible={true} transparent={true} animationType="fade">
@@ -563,7 +696,10 @@ export default function InstructorEditProfile() {
                   style={styles.confirmButton}
                 >
                   <StyledText style={styles.buttonLabel}>
-                    {t("MarketplaceNewItemScreen_CancelConfirmation", "Discard")}
+                    {t(
+                      "MarketplaceNewItemScreen_CancelConfirmation",
+                      "Discard"
+                    )}
                   </StyledText>
                 </FlipButton>
                 <FlipButton
@@ -623,7 +759,12 @@ const styles = StyleSheet.create({
     width: "100%",
     textAlign: "center",
   },
-  editableContainer: { width: "100%", alignItems: "center", marginTop: 30, gap: 30 },
+  editableContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 30,
+    gap: 30,
+  },
   inputContainer: { width: "85%", alignSelf: "center" },
   buttonRow: {
     flexDirection: "row",
@@ -694,4 +835,52 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   // --- END: Add Modal Styles ---
+  // --- START: Custom Image Picker Modal Styles ---
+  imagePickerContainer: {
+    width: "90%",
+    maxWidth: 400,
+    backgroundColor: "white",
+    borderRadius: 14,
+    alignItems: "center",
+    paddingTop: 20,
+    maxHeight: "80%",
+  },
+  imagePickerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    width: "100%",
+    marginBottom: 8,
+    writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
+  },
+  imagePickerMessage: {
+    fontSize: 14,
+    width: "100%",
+    marginBottom: 20,
+    color: "#333",
+    writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
+  },
+  imagePickerButtonContainer: {
+    width: "100%",
+    borderTopWidth: 1,
+    borderTopColor: "#dbdbdb",
+  },
+  imagePickerButton: {
+    paddingVertical: 16,
+    width: "100%",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#dbdbdb",
+  },
+  imagePickerButtonText: {
+    fontSize: 18,
+    color: "#007AFF",
+  },
+  cancelButton: {
+    borderBottomWidth: 0, // No border for the last button
+  },
+  cancelButtonText: {
+    fontWeight: "bold",
+    color: "red",
+  },
+  // --- END: Custom Image Picker Modal Styles ---
 });

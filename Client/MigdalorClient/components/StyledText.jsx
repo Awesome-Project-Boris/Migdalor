@@ -1,5 +1,3 @@
-// migdalor/src/components/common/StyledText.jsx
-
 import React from "react";
 import { Text, StyleSheet } from "react-native";
 import { useSettings } from "@/context/SettingsContext"; // Adjust path if needed
@@ -8,11 +6,11 @@ const StyledText = (props) => {
   const { settings } = useSettings();
   const isRTL = settings.language === "he";
 
-  const { style, ...rest } = props;
+  // Destructure maxFontSize from the component's props
+  const { style, maxFontSize, ...rest } = props;
 
   const flattenedStyle = StyleSheet.flatten(style);
 
-  // Separate text-alignment from other styles to avoid conflicts
   const { fontSize, lineHeight, textAlign, ...restOfStyles } =
     flattenedStyle || {};
 
@@ -20,19 +18,23 @@ const StyledText = (props) => {
 
   // Apply font-size scaling from settings
   if (fontSize) {
-    const newFontSize = fontSize * settings.fontSizeMultiplier;
+    let newFontSize = fontSize * settings.fontSizeMultiplier;
+
+    // If maxFontSize is provided and the calculated size exceeds it, cap the font size.
+    if (maxFontSize && newFontSize > maxFontSize) {
+      newFontSize = maxFontSize;
+    }
+
     finalStyle.fontSize = newFontSize;
+
+    // Adjust lineHeight proportionally if it exists to maintain spacing
     if (lineHeight) {
-      finalStyle.lineHeight = lineHeight * settings.fontSizeMultiplier;
+      const originalRatio = lineHeight / fontSize;
+      finalStyle.lineHeight = newFontSize * originalRatio;
     }
   }
 
-  // **THIS IS THE CRITICAL FIX**
-  // Set default text alignment based on language.
-  // A specific style like `textAlign: 'center'` will override this default.
   finalStyle.textAlign = textAlign || (isRTL ? "right" : "left");
-
-  // Ensure the writing direction is set correctly for proper text rendering
   finalStyle.writingDirection = isRTL ? "rtl" : "ltr";
 
   return <Text style={finalStyle} {...rest} />;
