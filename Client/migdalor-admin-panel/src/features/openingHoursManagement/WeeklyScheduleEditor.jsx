@@ -191,13 +191,25 @@ const WeeklyScheduleEditor = ({ services, initialHours, onSave }) => {
     }
   };
 
+  // Find the currently selected service object to display its name.
+  const selectedService = useMemo(() => {
+    if (!selectedServiceId || !services) {
+      return null;
+    }
+    return services.find((s) => s.serviceId === selectedServiceId);
+  }, [selectedServiceId, services]);
+
   // Generate tab data for each day of the week.
   const dayTabs = dayNames.map((day, index) => ({
     value: day,
     label: day,
     content: (
       <div className="p-4 bg-gray-50 rounded-lg border" dir="rtl">
-        <h3 className="text-lg font-semibold mb-4">שעות פתיחה ליום {day}</h3>
+        <h3 className="text-lg font-semibold mb-4">
+          {`שעות פתיחה ליום ${day}${
+            selectedService ? ` - ${selectedService.hebrewName}` : ""
+          }`}
+        </h3>
         <div className="grid grid-cols-1 gap-4">
           {/* Morning Schedule */}
           <div className="p-4 border rounded-md bg-white">
