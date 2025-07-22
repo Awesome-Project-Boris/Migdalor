@@ -9,6 +9,7 @@ import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import { defaultConfig } from "@tamagui/config/v4";
 import { useTranslation, I18nextProvider } from "react-i18next"; // Import the provider
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 // --- All Provider Imports ---
 import { AuthProvider } from "@/context/AuthProvider";
@@ -50,6 +51,7 @@ function LanguageManager() {
  * This component contains the app's navigation and logic.
  */
 function AppContent() {
+  const { expoPushToken, notification } = usePushNotifications(); // Call the hook here
   const router = useRouter();
   const { isLoading: areSettingsLoading } = useSettings();
 
