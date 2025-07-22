@@ -1,11 +1,11 @@
 import React from "react";
-import { View, StyleSheet, Dimensions } from "react-native"; // 'Text' import removed
+import { View, StyleSheet, Dimensions } from "react-native";
 import DraggableFlatList from "react-native-draggable-flatlist";
 import * as Animatable from "react-native-animatable";
 import { useRouter } from "expo-router";
 import { useMainMenuEdit } from "../context/MainMenuEditProvider";
 import FlipButton from "./FlipButton";
-import StyledText from "@/components/StyledText.jsx"; // Import StyledText
+import StyledText from "@/components/StyledText.jsx";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -21,10 +21,18 @@ const jiggle = {
 
 export default function MainMenuButtons({ data, onDragEnd }) {
   const router = useRouter();
-  const { editing } = useMainMenuEdit();
+  const { editing, setEditing } = useMainMenuEdit();
 
   const renderItem = ({ item, drag, isActive }) => {
-    const handleLongPress = editing ? drag : undefined;
+    const handleLongPress = () => {
+      if (!editing) {
+        setEditing(true);
+      }
+      if (drag) {
+        drag();
+      }
+    };
+
     const handlePress = () => {
       if (!editing && item.destination) {
         router.navigate(item.destination);
@@ -43,14 +51,15 @@ export default function MainMenuButtons({ data, onDragEnd }) {
         style={[styles.item, isActive && styles.activeItem]}
       >
         <FlipButton
-          onLongPress={handleLongPress}
+          onLongPress={handleLongPress} // Use the new, corrected handler
           delayLongPress={300}
-          disabled={isActive || (!editing && !item.destination)}
+          // Button presses are disabled when an item is being dragged
+          // The handlePress function already prevents navigation while editing
+          disabled={isActive}
           onPress={handlePress}
           style={styles.touchable}
           flipborderwidth={5}
         >
-          {/* Replaced Text with StyledText */}
           <StyledText style={styles.itemText}>{item.name}</StyledText>
         </FlipButton>
       </Animatable.View>
@@ -98,7 +107,7 @@ const styles = StyleSheet.create({
   },
   itemText: {
     textAlign: "center",
-    fontSize: 24, // Base font size is defined, so StyledText can scale it
+    fontSize: 24,
     color: "#000",
   },
   activeItem: {

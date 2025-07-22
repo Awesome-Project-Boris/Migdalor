@@ -4,7 +4,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  Image, // Image component is now imported
 } from "react-native";
 
 import { Stack } from "expo-router";
@@ -17,7 +16,6 @@ import Header from "../components/Header";
 import { EditToggleButton } from "../components/MainMenuFinishEditButton";
 import StyledText from "@/components/StyledText";
 
-import { useRouter, usePathname, Href } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
 import { useTranslation } from "react-i18next";
@@ -64,9 +62,6 @@ export default function Index() {
 
   const latestButtonDataRef = useRef(initialDataStructure);
   const prevEditingRef = useRef(editing);
-  const pathname = usePathname();
-
-  console.log("This is our complete path: ", pathname);
 
   const now = new Date();
   const options = {
@@ -143,31 +138,51 @@ export default function Index() {
     const loadOrder = async () => {
       console.log("Loading menu order...");
       setIsLoadingOrder(true);
-      let finalData = initialDataStructure;
       try {
+        // ✅ Separate the Good Morning button from the rest of the buttons
+        const goodMorningButton = isGoodMorningProcedureVisible
+          ? initialDataStructure.find((item) => item.key === "menu1")
+          : null;
+        const otherButtons = initialDataStructure.filter(
+          (item) => item.key !== "menu1"
+        );
+
         const savedOrderJson = await AsyncStorage.getItem(ASYNC_STORAGE_KEY);
+        let sortedOtherButtons = otherButtons;
+
         if (savedOrderJson !== null) {
           const savedKeys = JSON.parse(savedOrderJson);
+          // Apply the saved order ONLY to the other buttons
           const orderedData = savedKeys
-            .map((key) => initialDataStructure.find((item) => item.key === key))
+            .map((key) => otherButtons.find((item) => item.key === key))
             .filter((item) => item !== undefined);
+
           const currentKeys = new Set(orderedData.map((item) => item.key));
-          const newItems = initialDataStructure.filter(
+          const newItems = otherButtons.filter(
             (item) => !currentKeys.has(item.key)
           );
-          finalData = [...orderedData, ...newItems];
+          sortedOtherButtons = [...orderedData, ...newItems];
         } else {
           console.log("No saved menu order found.");
         }
-      } catch (error) {
-        console.error("Failed to load menu order:", error);
-      } finally {
+
+        // ✅ Combine the lists, ensuring the Good Morning button is always first if it exists
+        const finalData = goodMorningButton
+          ? [goodMorningButton, ...sortedOtherButtons]
+          : sortedOtherButtons;
+
         setButtonData(finalData);
         latestButtonDataRef.current = finalData;
+      } catch (error) {
+        console.error("Failed to load menu order:", error);
+        setButtonData(initialDataStructure); // Fallback to default
+        latestButtonDataRef.current = initialDataStructure;
+      } finally {
         setIsLoadingOrder(false);
         console.log("Finished loading menu order.");
       }
     };
+
     console.log("Checking user role:", user?.personRole);
     if (user?.personRole !== "Instructor") {
       loadOrder();
@@ -220,16 +235,6 @@ export default function Index() {
     prevEditingRef.current = editing;
   }, [editing]);
 
-  const ListHeader = (
-    <>
-      <Image
-        source={require("../assets/images/icon.png")}
-        style={styles.logo}
-      />
-      <Greeting />
-    </>
-  );
-
   if (isLoadingOrder) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
@@ -250,6 +255,7 @@ export default function Index() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
         <Header />
+        <Greeting />
         {showDevButton && (
           <>
             <FlipButton
@@ -271,11 +277,7 @@ export default function Index() {
           </>
         )}
         <EditToggleButton onSave={saveOrder} />
-        <MainMenuButtons
-          data={buttonData}
-          onDragEnd={handleDragEnd}
-          ListHeaderComponent={ListHeader}
-        />
+        <MainMenuButtons data={buttonData} onDragEnd={handleDragEnd} />
       </View>
     </>
   );
@@ -287,14 +289,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: 50,
     backgroundColor: "#fbe6d0",
-  },
-  logo: {
-    width: 300,
-    height: 300,
-    resizeMode: "contain",
-    alignSelf: "center",
-    marginTop: 20,
-    marginBottom: 10,
   },
   loadingText: {
     marginTop: 10,
