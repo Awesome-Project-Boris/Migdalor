@@ -11,6 +11,8 @@ import {
   Alert,
   Animated,
   Easing,
+  I18nManager,
+  TouchableWithoutFeedback,
 } from "react-native";
 import StyledText from "@/components/StyledText"; // Import StyledText
 
@@ -90,6 +92,15 @@ export default function EditProfile() {
     aboutMe: "",
     residentApartmentNumber: null,
   });
+
+  // --- START: State for custom image picker modal ---
+  const [isImagePickerModalVisible, setImagePickerModalVisible] =
+    useState(false);
+  const [imagePickerContext, setImagePickerContext] = useState({
+    type: null,
+    setFn: null,
+  });
+  // --- END: State for custom image picker modal ---
 
   const [isPrivacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [privacySettings, setPrivacySettings] = useState({
@@ -237,12 +248,6 @@ export default function EditProfile() {
 
         const dataToSet = { ...parsedData };
 
-        // if (dataToSet.residentApartmentNumber) {
-        //   dataToSet.residentApartmentNumber = getApartmentNumberFromGuid(
-        //     dataToSet.residentApartmentNumber
-        //   );
-        // }
-
         if (dataToSet.residentInterests) {
           const interests = dataToSet.residentInterests;
           setUserInterests(interests);
@@ -360,10 +365,6 @@ export default function EditProfile() {
         return value.trim() === "" || regexHebrewEnglish.test(value)
           ? null
           : t("EditProfileScreen_errorMessagePartner");
-      // case "residentApartmentNumber":
-      //   return value.trim() === "" || /^[0-9]+$/.test(value)
-      //     ? null
-      //     : t("EditProfileScreen_errorMessageApartmentNumber");
       case "mobilePhone":
         const requiredError = isRequired(value);
         if (requiredError) return requiredError;
@@ -423,19 +424,24 @@ export default function EditProfile() {
   };
 
   const handleAddImage = async () => {
-    switch (imageTypeToClear) {
+    setShowImageViewModal(false); // Close the view modal first
+    const type = imageTypeToClear;
+    let setFn;
+    switch (type) {
       case "main":
-        pickImage("main", setProfilePic);
+        setFn = setProfilePic;
         break;
       case "add1":
-        pickImage("add1", setAdditionalPic1);
+        setFn = setAdditionalPic1;
         break;
       case "add2":
-        pickImage("add2", setAdditionalPic2);
+        setFn = setAdditionalPic2;
         break;
       default:
         console.error("Invalid image type:", imageTypeToClear);
+        return;
     }
+    pickImage(type, setFn);
   };
 
   const uploadImage = async (imageUri, role, altText, uploaderId) => {
@@ -664,10 +670,33 @@ export default function EditProfile() {
   };
 
   const handleImagePress = (type) => {
-    setImageTypeToClear(type);
     const uriToDisplay = getDisplayUriForType(type);
-    setImageToViewUri(uriToDisplay);
-    setShowImageViewModal(true);
+    const isDefault =
+      !uriToDisplay || uriToDisplay.includes("defaultUser.png");
+
+    if (isDefault) {
+      // If it's a default image, go straight to picking a new one
+      let setFn;
+      switch (type) {
+        case "main":
+          setFn = setProfilePic;
+          break;
+        case "add1":
+          setFn = setAdditionalPic1;
+          break;
+        case "add2":
+          setFn = setAdditionalPic2;
+          break;
+        default:
+          return;
+      }
+      pickImage(type, setFn);
+    } else {
+      // If an image exists, show the view/remove/change modal
+      setImageTypeToClear(type);
+      setImageToViewUri(uriToDisplay);
+      setShowImageViewModal(true);
+    }
   };
 
   const [showImageViewModal, setShowImageViewModal] = useState(false);
@@ -695,8 +724,8 @@ export default function EditProfile() {
     }
   };
 
+  // --- START: Custom Image Picker Modal Logic ---
   const pickImage = async (type, setFn) => {
-    const role = type === "main" ? "Profile picture" : "Extra picture";
     const libraryPermission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (libraryPermission.status !== "granted") {
@@ -707,110 +736,106 @@ export default function EditProfile() {
       );
       return;
     }
-    Alert.alert(
-      t("ImagePicker_selectSourceTitle"),
-      t("ImagePicker_selectSourceMessage"),
-      [
-        {
-          text: t("ImagePicker_takePhotoButton"),
-          onPress: async () => {
-            const cameraPermission =
-              await ImagePicker.requestCameraPermissionsAsync();
-            if (cameraPermission.status !== "granted") {
-              Alert.alert(
-                t("ImagePicker_permissionDeniedTitle"),
-                t("ImagePicker_cameraPermissionDeniedMessage"),
-                [{ text: t("ImagePicker_cancelButton") }]
-              );
-              return;
-            }
-            const result = await ImagePicker.launchCameraAsync({
-              allowsEditing: true,
-              quality: 0.5,
-            });
-            if (!result.canceled && result.assets?.[0]?.uri) {
-              try {
-                const newUri = await copyImageToAppDir(
-                  result.assets[0].uri,
-                  "camera"
-                );
-                let defaultAlt =
-                  type === "main"
-                    ? "Profile picture"
-                    : type === "add1"
-                    ? "Extra picture 1"
-                    : "Extra picture 2";
-                setFn((prev) => ({
-                  ...prev,
-                  PicPath: newUri,
-                  PicAlt: defaultAlt,
-                }));
-                setImageToViewUri(newUri);
-              } catch (copyError) {
-                Alert.alert(
-                  t("ImagePicker_errorTitle"),
-                  t("ImagePicker_saveCameraImageFailure"),
-                  [{ text: t("ImagePicker_cancelButton") }]
-                );
-              }
-            }
-          },
-        },
-        {
-          text: t("ImagePicker_chooseFromLibraryButton"),
-          onPress: async () => {
-            try {
-              let result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                allowsEditing: true,
-                quality: 0.7,
-              });
-              if (!result.canceled && result.assets?.[0]?.uri) {
-                try {
-                  const newUri = await copyImageToAppDir(
-                    result.assets[0].uri,
-                    "library"
-                  );
-                  let defaultAlt =
-                    type === "main"
-                      ? "Profile picture"
-                      : type === "add1"
-                      ? "Extra picture 1"
-                      : "Extra picture 2";
-                  setFn((prev) => ({
-                    ...prev,
-                    PicPath: newUri,
-                    PicAlt: defaultAlt,
-                  }));
-                  setImageToViewUri(newUri);
-                } catch (copyError) {
-                  Alert.alert(
-                    t("ImagePicker_errorTitle"),
-                    t("ImagePicker_saveLibraryImageFailure"),
-                    [{ text: t("ImagePicker_cancelButton") }]
-                  );
-                }
-              }
-            } catch (error) {
-              Alert.alert(
-                t("ImagePicker_errorTitle"),
-                t("ImagePicker_openLibraryFailure"),
-                [{ text: t("ImagePicker_cancelButton") }]
-              );
-            }
-          },
-        },
-        {
-          text: t("ImagePicker_chooseFromHistoryButton", "History"),
-          onPress: () => {
-            setShowImageViewModal(false);
-            openHistoryModal(role, type);
-          },
-        },
-        { text: t("ImagePicker_cancelButton"), style: "cancel" },
-      ]
-    );
+    setImagePickerContext({ type, setFn });
+    setImagePickerModalVisible(true);
   };
+
+  const handleTakePhoto = async () => {
+    setImagePickerModalVisible(false);
+    const { type, setFn } = imagePickerContext;
+
+    const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+    if (cameraPermission.status !== "granted") {
+      Alert.alert(
+        t("ImagePicker_permissionDeniedTitle"),
+        t("ImagePicker_cameraPermissionDeniedMessage"),
+        [{ text: t("ImagePicker_cancelButton") }]
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.5,
+    });
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      try {
+        const newUri = await copyImageToAppDir(
+          result.assets[0].uri,
+          "camera"
+        );
+        let defaultAlt =
+          type === "main"
+            ? "Profile picture"
+            : type === "add1"
+            ? "Extra picture 1"
+            : "Extra picture 2";
+        setFn((prev) => ({
+          ...prev,
+          PicPath: newUri,
+          PicAlt: defaultAlt,
+        }));
+        setImageToViewUri(newUri);
+      } catch (copyError) {
+        Alert.alert(
+          t("ImagePicker_errorTitle"),
+          t("ImagePicker_saveCameraImageFailure"),
+          [{ text: t("ImagePicker_cancelButton") }]
+        );
+      }
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    setImagePickerModalVisible(false);
+    const { type, setFn } = imagePickerContext;
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets?.[0]?.uri) {
+        try {
+          const newUri = await copyImageToAppDir(
+            result.assets[0].uri,
+            "library"
+          );
+          let defaultAlt =
+            type === "main"
+              ? "Profile picture"
+              : type === "add1"
+              ? "Extra picture 1"
+              : "Extra picture 2";
+          setFn((prev) => ({
+            ...prev,
+            PicPath: newUri,
+            PicAlt: defaultAlt,
+          }));
+          setImageToViewUri(newUri);
+        } catch (copyError) {
+          Alert.alert(
+            t("ImagePicker_errorTitle"),
+            t("ImagePicker_saveLibraryImageFailure"),
+            [{ text: t("ImagePicker_cancelButton") }]
+          );
+        }
+      }
+    } catch (error) {
+      Alert.alert(
+        t("ImagePicker_errorTitle"),
+        t("ImagePicker_openLibraryFailure"),
+        [{ text: t("ImagePicker_cancelButton") }]
+      );
+    }
+  };
+
+  const handleChooseFromHistory = () => {
+    setImagePickerModalVisible(false);
+    const { type } = imagePickerContext;
+    const role = type === "main" ? "Profile picture" : "Extra picture";
+    openHistoryModal(role, type);
+  };
+  // --- END: Custom Image Picker Modal Logic ---
 
   const deletePicture = async (pictureId) => {
     if (!pictureId) return;
@@ -866,7 +891,6 @@ export default function EditProfile() {
       const apartmentNum = parseInt(cleanedForm.residentApartmentNumber);
 
       if (!isNaN(apartmentNum) && apartmentNum > 0) {
-        // Step 1: Call the find-or-create endpoint first.
         const apartmentResponse = await fetch(
           `${Globals.API_BASE_URL}/api/apartments/find-or-create`,
           {
@@ -878,7 +902,6 @@ export default function EditProfile() {
 
         if (!apartmentResponse.ok) {
           const errorData = await apartmentResponse.json();
-          // If the apartment number is invalid, show an error and stop.
           Toast.show({
             type: "error",
             text1: t(
@@ -896,7 +919,6 @@ export default function EditProfile() {
         }
 
         const apartmentData = await apartmentResponse.json();
-        // Step 2: Extract the GUID from the response.
         apartmentGuid = apartmentData.apartmentNumber;
       }
 
@@ -919,7 +941,7 @@ export default function EditProfile() {
         if (currentPic.PicPath?.startsWith("file://")) {
           if (initialPic?.picId) await deletePicture(initialPic.picId, role);
           return await uploadImage(
-            currentPic.PicPath, // Pass the image URI from PicPath
+            currentPic.PicPath,
             role,
             currentPic.PicAlt || altText,
             storedUserID
@@ -982,7 +1004,6 @@ export default function EditProfile() {
         finalAdd2PicData || {
           PicID: null,
           PicName: "",
-
           PicPath: "",
           PicAlt: "",
         }
@@ -991,7 +1012,6 @@ export default function EditProfile() {
 
       const apiurl = `${Globals.API_BASE_URL}/api/People/UpdateProfile/${storedUserID}`;
       const requestBody = {
-        // Manually map properties from cleanedForm
         name: cleanedForm.name,
         partner: cleanedForm.partner,
         mobilePhone: cleanedForm.mobilePhone,
@@ -999,7 +1019,6 @@ export default function EditProfile() {
         origin: cleanedForm.origin,
         profession: cleanedForm.profession,
         aboutMe: cleanedForm.aboutMe,
-        // Use the fetched GUID with the correct property name
         ResidentApartmentNumber: apartmentGuid,
         PersonId: storedUserID,
         profilePicture: finalProfilePicData,
@@ -1061,8 +1080,8 @@ export default function EditProfile() {
   ];
 
   const buttonStyle = [
-    styles.actionButton, // A new base style for both buttons
-    isMaxFontSize && { width: "85%" }, // Wider buttons for column layout
+    styles.actionButton,
+    isMaxFontSize && { width: "85%" },
   ];
 
   return (
@@ -1078,41 +1097,19 @@ export default function EditProfile() {
           <BouncyButton
             shrinkScale={0.95}
             onPress={() => handleImagePress("main")}
-            disabled={!profilePic.PicPath?.trim()}
           >
             {profilePic.PicPath === "" ? (
-              <>
-                <Image
-                  alt={profilePic.PicAlt}
-                  source={
-                    profilePic.PicPath
-                      ? { uri: profilePic.PicPath }
-                      : defaultUserImage
-                  }
-                  style={styles.profileImage}
-                />
-                <Card.Background></Card.Background>
-                <YStack
-                  f={1}
-                  jc="center"
-                  ai="center"
-                  backgroundColor="rgba(0,0,0,0.4)"
-                ></YStack>
-              </>
+              <Image
+                source={defaultUserImage}
+                style={styles.profileImage}
+                alt={t("EditProfileScreen_addProfilePicture")}
+              />
             ) : (
-              <YStack
-                f={1}
-                jc="center"
-                ai="center"
-                p="$2"
-                style={{ direction: Globals.userSelectedDirection }}
-              >
-                <Image
-                  alt={profilePic.PicAlt}
-                  source={profileImage}
-                  style={styles.profileImage}
-                />
-              </YStack>
+              <Image
+                alt={profilePic.PicAlt}
+                source={profileImage}
+                style={styles.profileImage}
+              />
             )}
           </BouncyButton>
         </View>
@@ -1282,7 +1279,6 @@ export default function EditProfile() {
             <BouncyButton
               shrinkScale={0.95}
               onPress={() => handleImagePress("add1")}
-              disabled={!additionalPic1.PicPath?.trim()}
             >
               <Image
                 alt={additionalPic1.PicAlt}
@@ -1293,7 +1289,6 @@ export default function EditProfile() {
             <BouncyButton
               shrinkScale={0.95}
               onPress={() => handleImagePress("add2")}
-              disabled={!additionalPic2.PicPath?.trim()}
             >
               <Image
                 alt={additionalPic2.PicAlt}
@@ -1338,7 +1333,6 @@ export default function EditProfile() {
         </View>
       </ScrollView>
 
-      {/* --- START: Scroll indicator view --- */}
       {showScrollIndicator && (
         <Animated.View
           style={[
@@ -1348,12 +1342,11 @@ export default function EditProfile() {
               transform: [{ translateY: bounceValue }],
             },
           ]}
-          pointerEvents="none" // Allows touches to pass through the indicator
+          pointerEvents="none"
         >
           <Ionicons name="chevron-down" size={40} color="#FFFFFF" />
         </Animated.View>
       )}
-      {/* --- END: Scroll indicator view --- */}
 
       <ImageHistory
         visible={isHistoryModalVisible}
@@ -1386,7 +1379,75 @@ export default function EditProfile() {
         onSave={handleSavePrivacySettings}
       />
 
-      {/* --- START: Add Confirmation Modal --- */}
+      {/* --- START: Custom Image Picker Modal --- */}
+      <Modal
+        visible={isImagePickerModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setImagePickerModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.confirmOverlay}
+          activeOpacity={1}
+          onPressOut={() => setImagePickerModalVisible(false)}
+        >
+          <TouchableWithoutFeedback>
+            <View style={styles.imagePickerContainer}>
+              <ScrollView style={{ width: "100%" }} contentContainerStyle={{ alignItems: 'center' }}>
+                <View style={{ paddingHorizontal: 20, width: '100%' }}>
+                  <StyledText style={[styles.imagePickerTitle, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]} maxFontSize={36}>
+                    {t("ImagePicker_selectSourceTitle")}
+                  </StyledText>
+                  <StyledText style={[styles.imagePickerMessage, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]} maxFontSize={30}>
+                    {t("ImagePicker_selectSourceMessage")}
+                  </StyledText>
+                </View>
+                <View style={styles.imagePickerButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.imagePickerButton}
+                    onPress={handleTakePhoto}
+                  >
+                    <StyledText style={styles.imagePickerButtonText}>
+                      {t("ImagePicker_takePhotoButton")}
+                    </StyledText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.imagePickerButton}
+                    onPress={handleChooseFromLibrary}
+                  >
+                    <StyledText style={styles.imagePickerButtonText}>
+                      {t("ImagePicker_chooseFromLibraryButton")}
+                    </StyledText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.imagePickerButton}
+                    onPress={handleChooseFromHistory}
+                  >
+                    <StyledText style={styles.imagePickerButtonText}>
+                      {t("ImagePicker_chooseFromHistoryButton", "History")}
+                    </StyledText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.imagePickerButton, styles.cancelButton]}
+                    onPress={() => setImagePickerModalVisible(false)}
+                  >
+                    <StyledText
+                      style={[
+                        styles.imagePickerButtonText,
+                        styles.cancelButtonText,
+                      ]}
+                    >
+                      {t("ImagePicker_cancelButton")}
+                    </StyledText>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </View>
+          </TouchableWithoutFeedback>
+        </TouchableOpacity>
+      </Modal>
+      {/* --- END: Custom Image Picker Modal --- */}
+
       {showConfirm && (
         <Modal visible={true} transparent={true} animationType="fade">
           <View style={styles.confirmOverlay}>
@@ -1426,7 +1487,6 @@ export default function EditProfile() {
           </View>
         </Modal>
       )}
-      {/* --- END: Add Confirmation Modal --- */}
     </View>
   );
 }
@@ -1509,16 +1569,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionButtonText: {
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  saveButtonText: {
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  cancelButtonText: {
     fontSize: 26,
     fontWeight: "bold",
     textAlign: "center",
@@ -1628,17 +1678,16 @@ const styles = StyleSheet.create({
     zIndex: 10,
     height: 60,
     width: 60,
-    borderRadius: 30, // This makes it a circle
+    borderRadius: 30,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
     justifyContent: "center",
     alignItems: "center",
-    elevation: 3, // Adds a subtle shadow on Android
-    shadowColor: "#000", // Adds a subtle shadow on iOS
+    elevation: 3,
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.22,
     shadowRadius: 2.22,
   },
-  // --- START: Add Modal Styles ---
   confirmOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.6)",
@@ -1680,5 +1729,73 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  // --- END: Add Modal Styles ---
-});
+  // --- START: Custom Image Picker Modal Styles ---
+  imagePickerContainer: {
+    width: "90%",
+    maxWidth: 400,
+    backgroundColor: "white",
+    borderRadius: 14,
+    alignItems: "center",
+    paddingTop: 20,
+    maxHeight: "80%",
+  },
+  imagePickerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    width: "100%",
+    marginBottom: 8,
+    writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
+  },
+  imagePickerMessage: {
+    fontSize: 14,
+    width: "100%",
+    marginBottom: 20,
+    color: "#333",
+    writingDirection: I18nManager.isRTL ? "rtl" : "ltr",
+  },
+  imagePickerButtonContainer: {
+    width: "100%",
+    borderTopWidth: 1,
+    borderTopColor: "#dbdbdb",
+  },
+  imagePickerButton: {
+    paddingVertical: 16,
+    width: "100%",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#dbdbdb",
+  },
+  imagePickerButtonText: {
+    fontSize: 18,
+    color: "#007AFF",
+  },
+  cancelButton: {
+    borderBottomWidth: 0, // No border for the last button
+  },
+  cancelButtonText: {
+    fontWeight: "bold",
+    color: "red",
+  },
+  // --- END: Custom Image Picker Modal Styles ---
+  profileImageWrapper: {
+    width: 300,
+    height: 300,
+    borderRadius: 60,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  profileImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 60,
+  },
+  profileImageOverlayText: {
+    color: "white",
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+    paddingHorizontal: 10,
+  },
+})
