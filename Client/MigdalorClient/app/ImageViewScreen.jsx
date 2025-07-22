@@ -3,15 +3,15 @@ import {
   View,
   StyleSheet,
   SafeAreaView,
-  ActivityIndicator,
+  Image, // Use the standard Image component
 } from "react-native";
-import { Image as ExpoImage } from "expo-image";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
+import { ReactNativeZoomableView } from "@openspacelabs/react-native-zoomable-view";
 import FlipButton from "../components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
-import StyledText from "../components/StyledText"; // Import StyledText
+import StyledText from "../components/StyledText";
 
 export default function ImageViewScreen() {
   const { t } = useTranslation();
@@ -27,7 +27,7 @@ export default function ImageViewScreen() {
   };
 
   if (!imageUri || typeof imageUri !== "string") {
-    console.error("ImageViewScreen: Invalid or missing imageUri", imageUri);
+    // Error handling remains the same
     return (
       <SafeAreaView style={styles.errorContainer}>
         <StyledText style={styles.errorText}>
@@ -40,46 +40,41 @@ export default function ImageViewScreen() {
     );
   }
 
-  console.log(`ImageViewScreen displaying: URI=${imageUri}, Alt=${altText}`);
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={[styles.topButtonContainer, { top: insets.top }]}>
-          <FlipButton
-            onPress={handleReturn}
-            style={styles.topButton}
-            bgColor="white"
-            textColor="black"
-          >
-            <StyledText style={styles.buttonText}>{t("Common_backButton")}</StyledText>
-            <Ionicons name="arrow-back" size={28} color="black" />
-          </FlipButton>
-        </View>
-
-        <ExpoImage
+      {/* ✅ The Zoomable View is now the primary content container */}
+      <ReactNativeZoomableView
+        maxZoom={3.0}
+        minZoom={1}
+        zoomStep={0.5}
+        initialZoom={1}
+        bindToBorders={true}
+        style={StyleSheet.absoluteFill} // Make it fill the entire safe area
+      >
+        <Image
           source={{ uri: imageUri }}
           style={styles.image}
-          contentFit="contain"
-          alt={altText}
-          placeholder={require("../assets/images/loading_placeholder.png")}
-          transition={300}
-          onError={(e) =>
-            console.error(
-              "[ExpoImage] Error loading image:",
-              e?.error || "Unknown error",
-              "URI:",
-              imageUri
-            )
-          }
-          onLoadStart={() => console.log("[ExpoImage] Load Start:", imageUri)}
-          onLoad={(e) => console.log("[ExpoImage] Load Success:", e?.source)}
+          resizeMode="contain"
         />
+      </ReactNativeZoomableView>
+
+      {/* The controls now float on top of the zoomable view */}
+      <View style={[styles.topButtonContainer, { top: insets.top }]}>
+        <FlipButton
+          onPress={handleReturn}
+          style={styles.topButton}
+          bgColor="white"
+          textColor="black"
+        >
+          <StyledText style={styles.buttonText}>
+            {t("Common_backButton")}
+          </StyledText>
+          <Ionicons name="arrow-back" size={28} color="black" />
+        </FlipButton>
       </View>
 
       <View style={styles.altTextContainer}>
-        <StyledText style={styles.altTextStyle}></StyledText>
-        {/* <StyledText style={styles.altTextStyle}>{altText}</StyledText> */}
+        <StyledText style={styles.altTextStyle}>{altText}</StyledText>
       </View>
     </SafeAreaView>
   );
@@ -90,12 +85,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "black",
   },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "black",
-  },
+  // ✅ The wrapper container is no longer needed
+  // container: { ... },
   image: {
     flex: 1,
     width: "100%",
@@ -110,19 +101,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 15,
     paddingVertical: 10,
-    zIndex: 10,
+    zIndex: 10, // Ensure buttons are on top
   },
   topButton: {
     padding: 8,
     borderRadius: 20,
-  },
-  imageInfoContainer: {
-    alignItems: "flex-end",
-  },
-  imageInfoText: {
-    color: "rgba(200, 200, 200, 0.8)",
-    fontSize: 11,
-    maxWidth: 150,
   },
   errorContainer: {
     flex: 1,
