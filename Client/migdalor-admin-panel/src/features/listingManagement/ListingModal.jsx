@@ -199,26 +199,40 @@ const ListingModal = ({ isOpen, onClose, onSave, listingId }) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ImageUpload
-                label="תמונה ראשית"
-                onImageUploadSuccess={(picId) =>
-                  handleImageUploadSuccess(picId, "main")
-                }
-                existingImage={mainImage}
-                picRole="marketplace"
-                picAlt={`Main photo for ${formData.title}`}
-                uploaderId={user?.id}
-              />
-              <ImageUpload
-                label="תמונה נוספת"
-                onImageUploadSuccess={(picId) =>
-                  handleImageUploadSuccess(picId, "extra")
-                }
-                existingImage={extraImage}
-                picRole="marketplace_extra"
-                picAlt={`Extra photo for ${formData.title}`}
-                uploaderId={user?.id}
-              />
+              <div>
+                <h4 className="text-lg font-semibold mb-2 text-gray-800">
+                  תמונה ראשית
+                </h4>
+                <ImageUpload
+                  token={token}
+                  onImageUploadSuccess={(picId) =>
+                    handleImageUploadSuccess(picId, "main")
+                  }
+                  existingImage={mainImage}
+                  picRole="marketplace"
+                  picAlt={`Main photo for ${formData.title}`}
+                  uploaderId={user?.id}
+                  eventName={formData.title}
+                  eventDescription={formData.description}
+                />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold mb-2 text-gray-800">
+                  תמונה נוספת
+                </h4>
+                <ImageUpload
+                  token={token}
+                  onImageUploadSuccess={(picId) =>
+                    handleImageUploadSuccess(picId, "extra")
+                  }
+                  existingImage={extraImage}
+                  picRole="marketplace_extra"
+                  picAlt={`Extra photo for ${formData.title}`}
+                  uploaderId={user?.id}
+                  eventName={formData.title}
+                  eventDescription={formData.description}
+                />
+              </div>
             </div>
 
             <div className="flex justify-end space-x-4 pt-4 border-t">
