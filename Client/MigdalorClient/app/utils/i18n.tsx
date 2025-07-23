@@ -429,6 +429,21 @@ const resources = {
       GoodMorning_IdError:
         "An error has occurred, try again or verify with administration",
 
+      services_overrides_title: "Schedule Changes",
+      services_overrides_intro:
+        "Please note! Schedule changes are planned for the following services this week:",
+      services_overrides_footer:
+        "For more details, please check the notices or the service page.",
+      service_override_unavailable_date:
+        "On {{date}}, the service will be unavailable.",
+      service_override_unavailable_datetime:
+        "On {{date}} from {{startTime}} to {{endTime}}, the service will be unavailable.",
+      service_override_available_date:
+        "On {{date}}, the service will operate at different hours.",
+      service_override_available_datetime:
+        "On {{date}}, the service will be open from {{startTime}} to {{endTime}}.",
+      service_override_notes: "Reason: {{notes}}",
+
       Services_Title: "Services and Opening Hours",
       services_clickForDetails: "Click for details",
       Errors_Service_Fetch: "Could not fetch services.",
@@ -1048,6 +1063,21 @@ const resources = {
       GoodMorning_signInSuccessMessage: "הנוכחות שלך נרשמה. שיהיה לך יום נהדר!",
       GoodMorning_IdError:
         "התרחשה שגיאה, נסו שוב או וודאו נוהל בוקר טוב עם ההנהלה",
+
+      services_overrides_title: "שינויים בלוח הזמנים",
+      services_overrides_intro:
+        "שימו לב! במהלך השבוע הקרוב צפויים שינויים בלוח הזמנים של השירותים הבאים:",
+      services_overrides_footer:
+        "לפרטים נוספים, אנא עיינו בלוח המודעות או בדף השירות.",
+      service_override_unavailable_date:
+        "בתאריך {{date}}, השירות לא יהיה זמין.",
+      service_override_unavailable_datetime:
+        "בתאריך {{date}} בין השעות {{startTime}} ל-{{endTime}}, השירות לא יהיה זמין.",
+      service_override_available_date:
+        "בתאריך {{date}}, השירות יפעל בשעות שונות.",
+      service_override_available_datetime:
+        "בתאריך {{date}}, השירות יהיה פתוח בין השעות {{startTime}} ל-{{endTime}}.",
+      service_override_notes: "סיבה: {{notes}}",
 
       Services_Title: "שירותים ושעות פתיחה",
       services_clickForDetails: "יש ללחוץ לפרטים",

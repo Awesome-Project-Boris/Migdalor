@@ -97,6 +97,7 @@ const layoutEvents = (events) => {
     if (isNaN(end.getTime()) || end <= start) {
       end = new Date(start.getTime() + 60 * 60 * 1000);
     }
+    // Return original event data alongside processed times for layout
     return { ...e, startTime: start, endTime: end };
   });
 
@@ -183,10 +184,44 @@ const ViewSwitcher = ({ viewMode, setViewMode, onGoToToday, t }) => (
   </View>
 );
 
-const DailyView = ({ events, handleItemPress, t, isRtl }) => {
+const DailyView = ({ events, handleItemPress, t, isRtl, selectedDate }) => {
   const hourHeight = 80;
   const hours = Array.from({ length: 19 }, (_, i) => i + 5);
-  const laidOutEvents = useMemo(() => layoutEvents(events), [events]);
+  const viewStartHour = 5;
+
+  // FIX: Process events to filter and cap them according to the view window (05:00-24:00)
+  const laidOutEvents = useMemo(() => {
+    if (!events || !selectedDate) return [];
+
+    const viewStartDate = new Date(selectedDate);
+    viewStartDate.setUTCHours(viewStartHour, 0, 0, 0);
+
+    const viewEndDate = new Date(selectedDate);
+    viewEndDate.setUTCHours(24, 0, 0, 0);
+
+    const processedEvents = events
+      .filter((e) => {
+        const start = new Date(e.startTime);
+        const end = new Date(e.endTime);
+        return start < viewEndDate && end > viewStartDate;
+      })
+      .map((e) => {
+        const originalStartTime = new Date(e.startTime);
+        // Cap the start time for any event that begins before the view window
+        const startTimeForLayout = new Date(
+          Math.max(originalStartTime.getTime(), viewStartDate.getTime())
+        );
+
+        return {
+          ...e,
+          startTime: startTimeForLayout, // For layout calculation
+          originalStartTime: originalStartTime, // For display
+          endTime: new Date(e.endTime),
+        };
+      });
+
+    return layoutEvents(processedEvents);
+  }, [events, selectedDate]);
 
   return (
     <View style={styles.timelineContainer}>
@@ -206,17 +241,21 @@ const DailyView = ({ events, handleItemPress, t, isRtl }) => {
           />
         ))}
         {laidOutEvents.map((event, index) => {
-          const start = event.startTime;
+          const start = event.startTime; // This is now the capped start time
           const end = event.endTime;
           const timelineEnd = new Date(start);
           timelineEnd.setHours(23, 59, 59, 999);
           const cappedEnd = new Date(
             Math.min(end.getTime(), timelineEnd.getTime())
           );
-          const cappedDurationMillis = cappedEnd.getTime() - start.getTime();
+
+          // Calculate top based on the capped start time
           const top =
-            (start.getHours() - 5) * hourHeight +
-            (start.getMinutes() / 60) * hourHeight;
+            (start.getUTCHours() - viewStartHour) * hourHeight +
+            (start.getUTCMinutes() / 60) * hourHeight;
+
+          // Calculate height based on the duration from the capped start
+          const cappedDurationMillis = cappedEnd.getTime() - start.getTime();
           const height = Math.max(
             30,
             (cappedDurationMillis / (1000 * 60 * 60)) * hourHeight - 2
@@ -272,7 +311,8 @@ const DailyView = ({ events, handleItemPress, t, isRtl }) => {
                   { textAlign: isRtl ? "right" : "left" },
                 ]}
               >
-                {`${formatTime(event.startTime)} - ${formatTime(
+                {/* FIX: Display the original, non-capped start time */}
+                {`${formatTime(event.originalStartTime)} - ${formatTime(
                   event.endTime
                 )}`}
               </Text>
@@ -500,17 +540,12 @@ const TimetableScreen = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      // This function runs when the screen comes into focus
       const today = new Date();
       const todayStr = today.toISOString().split("T")[0];
-
-      // 1. Clear all previous data to prevent duplicates
       setItems({});
       loadedMonths.clear();
-
-      // 2. Reset view to today's date and fetch fresh data
       setSelectedDate(todayStr);
-      setCurrentMonth(todayStr); // Reset the calendar view as well
+      setCurrentMonth(todayStr);
 
       loadItemsForMonth({
         dateString: todayStr,
@@ -518,13 +553,11 @@ const TimetableScreen = () => {
         month: today.getMonth() + 1,
         day: today.getDate(),
       });
-
-      // 3. Return a cleanup function to run when the user navigates away
       return () => {
         setItems({});
         loadedMonths.clear();
       };
-    }, [loadItemsForMonth]) // Dependency ensures the effect has the latest fetch function
+    }, [loadItemsForMonth])
   );
 
   const handleItemPress = (item) => {
@@ -601,7 +634,7 @@ const TimetableScreen = () => {
       styles.itemContainer,
       isCancelled && styles.cancelledItemContainer,
       isRescheduled && styles.rescheduledItemContainer,
-      { flexDirection: isRtl ? "row-reverse" : "row" }, // Add this line
+      { flexDirection: isRtl ? "row-reverse" : "row" },
     ];
 
     return (
@@ -628,7 +661,7 @@ const TimetableScreen = () => {
               style={[
                 styles.statusBadge,
                 isCancelled ? styles.cancelledBadge : styles.rescheduledBadge,
-                { alignSelf: isRtl ? "flex-end" : "flex-start" }, // This line fixes the alignment
+                { alignSelf: isRtl ? "flex-end" : "flex-start" },
               ]}
             >
               <Text style={styles.statusBadgeText}>
@@ -690,12 +723,10 @@ const TimetableScreen = () => {
       {viewMode === "monthly" && (
         <Calendar
           onDayPress={(day) => {
-            // Update the onDayPress logic
             setSelectedDate(day.dateString);
-            setCurrentMonth(day.dateString); // Also set the visible month
+            setCurrentMonth(day.dateString);
           }}
           onMonthChange={(month) => {
-            // Update the onMonthChange logic
             setCurrentMonth(month.dateString);
             loadItemsForMonth(month);
           }}
@@ -733,30 +764,26 @@ const TimetableScreen = () => {
       {viewMode === "daily" ? (
         <ScrollView
           style={{ flex: 1 }}
-          stickyHeaderIndices={[1]} // This tells the ScrollView to "stick" the second child (index 1) to the top.
-          showsVerticalScrollIndicator={false} // Optional: for a cleaner look
+          stickyHeaderIndices={[1]}
+          showsVerticalScrollIndicator={false}
         >
-          {/* Child 0: The part that scrolls away */}
           <View style={styles.headerPlaque}>
             <Text style={styles.pageTitle}>{t("Timetable_Title")}</Text>
             <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle")}</Text>
             <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
           </View>
-
-          {/* Child 1: The View Switcher that will become sticky */}
           <ViewSwitcher
             viewMode={viewMode}
             setViewMode={setViewMode}
             t={t}
             onGoToToday={goToToday}
           />
-
-          {/* Child 2: The main content */}
           <DailyView
             events={items[selectedDate] || []}
             handleItemPress={handleItemPress}
             t={t}
             isRtl={isRtl}
+            selectedDate={selectedDate}
           />
         </ScrollView>
       ) : (
@@ -924,7 +951,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     flexGrow: 1,
-    minHeight: 1440,
+    minHeight: 1600,
   },
   hoursColumn: { width: 60, paddingTop: 10 },
   hourText: { position: "absolute", right: 0, fontSize: 16, color: "#666" },
