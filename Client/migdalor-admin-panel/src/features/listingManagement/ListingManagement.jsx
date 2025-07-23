@@ -7,6 +7,21 @@ import ConfirmationModal from "../../components/common/ConfirmationModal";
 import ListingModal from "./ListingModal";
 import { Edit, Trash2, PlusCircle } from "lucide-react";
 
+// --- Mock Tooltip Components for styling consistency ---
+const TooltipProvider = ({ children }) => <>{children}</>;
+const Tooltip = ({ children }) => (
+  <div className="relative inline-flex group">{children}</div>
+);
+const TooltipTrigger = ({ children }) => <>{children}</>;
+const TooltipContent = ({ children, ...props }) => (
+  <div
+    className="absolute bottom-full mb-2 w-max px-2 py-1 text-xs font-semibold text-white bg-gray-900 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 transform -translate-x-1/2 left-1/2"
+    {...props}
+  >
+    {children}
+  </div>
+);
+
 const ListingManagement = () => {
   const { token } = useAuth();
   const [listings, setListings] = useState([]);
@@ -98,26 +113,50 @@ const ListingManagement = () => {
       },
       {
         accessorKey: "isActive",
-        header: "פעיל",
-        cell: ({ row }) => (row.original.isActive ? "כן" : "לא"),
+        header: "סטטוס",
+        cell: ({ row }) => (
+          <span
+            className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+              row.original.isActive
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            }`}
+          >
+            {row.original.isActive ? "פעיל" : "לא פעיל"}
+          </span>
+        ),
       },
       {
         id: "actions",
         header: "פעולות",
         cell: ({ row }) => (
-          <div className="flex space-x-2">
-            <button
-              onClick={() => handleOpenModal(row.original.listingId)}
-              className="p-1 text-blue-600 hover:text-blue-800"
-            >
-              <Edit size={20} />
-            </button>
-            <button
-              onClick={() => handleDeleteClick(row.original)}
-              className="p-1 text-red-600 hover:text-red-800"
-            >
-              <Trash2 size={20} />
-            </button>
+          <div className="flex items-center justify-center space-x-2 space-x-reverse">
+            <Tooltip>
+              <TooltipTrigger>
+                <button
+                  onClick={() => handleOpenModal(row.original.listingId)}
+                  className="p-2 rounded-full text-blue-600 hover:bg-blue-100"
+                >
+                  <Edit size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>ערוך מודעה</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger>
+                <button
+                  onClick={() => handleDeleteClick(row.original)}
+                  className="p-2 rounded-full text-red-600 hover:bg-red-100"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>מחק מודעה</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
         ),
       },
@@ -126,52 +165,54 @@ const ListingManagement = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <Toast
-        show={toastState.show}
-        message={toastState.message}
-        variant={toastState.variant}
-        onClose={handleCloseToast}
-      />
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        ניהול מודעות בלוח
-      </h1>
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => handleOpenModal()}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-        >
-          <PlusCircle size={20} className="ml-2" />
-          צור מודעה חדשה
-        </button>
+    <TooltipProvider>
+      <div className="p-6 bg-white min-h-screen rounded-lg shadow-md" dir="rtl">
+        <Toast
+          show={toastState.show}
+          message={toastState.message}
+          variant={toastState.variant}
+          onClose={handleCloseToast}
+        />
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">
+          ניהול מודעות שוק
+        </h1>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => handleOpenModal()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+          >
+            <PlusCircle size={20} className="ml-2" />
+            צור מודעה חדשה
+          </button>
+        </div>
+        {isLoading ? (
+          <div className="text-center p-4">טוען נתונים...</div>
+        ) : (
+          <SharedTable
+            data={listings}
+            columns={columns}
+            globalFilter={globalFilter}
+            setGlobalFilter={setGlobalFilter}
+            sorting={sorting}
+            setSorting={setSorting}
+          />
+        )}
+        <ListingModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSaveListing}
+          listingId={activeListingId}
+        />
+        {deletingListing && (
+          <ConfirmationModal
+            title="אישור מחיקת מודעה"
+            message={`האם אתה בטוח שברצונך למחוק את המודעה "${deletingListing.title}"?`}
+            onConfirm={confirmDelete}
+            onCancel={() => setDeletingListing(null)}
+          />
+        )}
       </div>
-      {isLoading ? (
-        <div className="text-center p-4">טוען נתונים...</div>
-      ) : (
-        <SharedTable
-          data={listings}
-          columns={columns}
-          globalFilter={globalFilter}
-          setGlobalFilter={setGlobalFilter}
-          sorting={sorting}
-          setSorting={setSorting}
-        />
-      )}
-      <ListingModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={handleSaveListing}
-        listingId={activeListingId}
-      />
-      {deletingListing && (
-        <ConfirmationModal
-          title="אישור מחיקת מודעה"
-          message={`האם אתה בטוח שברצונך למחוק את המודעה "${deletingListing.title}"?`}
-          onConfirm={confirmDelete}
-          onCancel={() => setDeletingListing(null)}
-        />
-      )}
-    </div>
+    </TooltipProvider>
   );
 };
 

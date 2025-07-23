@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import InputField from "../../components/common/InputField";
 import ImageUpload from "../../components/common/ImageUpload";
+import SpouseCommand from "../../components/common/SpouseCommand"; // Import SpouseCommand
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 
@@ -15,6 +16,7 @@ const ListingModal = ({ isOpen, onClose, onSave, listingId }) => {
     extraPicId: null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [users, setUsers] = useState([]);
   const [mainImage, setMainImage] = useState(null);
   const [extraImage, setExtraImage] = useState(null);
@@ -22,7 +24,7 @@ const ListingModal = ({ isOpen, onClose, onSave, listingId }) => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const usersData = await api.get("/People", token);
+        const usersData = await api.get("/people/all-names", token);
         setUsers(usersData);
       } catch (error) {
         console.error("Failed to fetch users", error);
@@ -36,7 +38,6 @@ const ListingModal = ({ isOpen, onClose, onSave, listingId }) => {
 
   const fetchListingDetails = useCallback(async () => {
     if (!listingId) {
-      // For new listings, default the seller to the current admin user
       setFormData({
         title: "",
         description: "",
@@ -49,35 +50,36 @@ const ListingModal = ({ isOpen, onClose, onSave, listingId }) => {
       return;
     }
 
+    setIsLoading(true);
     try {
-      // We need a detailed endpoint for a single listing if it exists,
-      // for now, we'll filter from the main list as a fallback.
-      // Ideally, this would be `api.get(`/AdminListings/${listingId}`, token)`
-      const allListings = await api.get("/AdminListings", token);
-      const listingDetails = allListings.find((l) => l.listingId === listingId);
+      const listingDetails = await api.get(
+        `/Listings/Details/${listingId}`,
+        token
+      );
 
       if (listingDetails) {
         setFormData({
           title: listingDetails.title || "",
           description: listingDetails.description || "",
-          sellerId: listingDetails.sellerId || "", // This needs to be added to the DTO
-          mainPicId: null, // Pic IDs are handled via upload
-          extraPicId: null,
+          sellerId: listingDetails.sellerId || "",
+          mainPicId: listingDetails.mainPicture?.picId || null,
+          extraPicId: listingDetails.extraPicture?.picId || null,
         });
-        // Set existing images for display
         setMainImage(
-          listingDetails.mainPicturePath
-            ? { serverPath: listingDetails.mainPicturePath }
+          listingDetails.mainPicture
+            ? { serverPath: listingDetails.mainPicture.picPath }
             : null
         );
         setExtraImage(
-          listingDetails.extraPicturePath
-            ? { serverPath: listingDetails.extraPicturePath }
+          listingDetails.extraPicture
+            ? { serverPath: listingDetails.extraPicture.picPath }
             : null
         );
       }
     } catch (error) {
       console.error("Failed to fetch listing details", error);
+    } finally {
+      setIsLoading(false);
     }
   }, [listingId, token, user]);
 
@@ -89,7 +91,11 @@ const ListingModal = ({ isOpen, onClose, onSave, listingId }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSellerSelect = (sellerId) => {
+    setFormData((prev) => ({ ...prev, sellerId }));
   };
 
   const handleImageUploadSuccess = (picId, role) => {
@@ -142,101 +148,97 @@ const ListingModal = ({ isOpen, onClose, onSave, listingId }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div
-        className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl"
-        dir="rtl"
-      >
+    <div
+      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+      dir="rtl"
+    >
+      <div className="relative bg-white p-6 rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center pb-4 border-b">
-          <h2 className="text-2xl font-semibold">
+          <h3 className="text-xl font-semibold">
             {listingId ? "עריכת מודעה" : "יצירת מודעה חדשה"}
-          </h2>
+          </h3>
           <button
             onClick={handleClose}
-            className="p-1 rounded-full hover:bg-gray-200"
+            className="text-gray-500 hover:text-gray-800"
           >
             <X size={24} />
           </button>
         </div>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <InputField
-            label="כותרת"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-          />
-          <InputField
-            label="תיאור"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            type="textarea"
-          />
-          <div className="flex flex-col">
-            <label
-              htmlFor="sellerId"
-              className="mb-2 font-semibold text-gray-700"
-            >
-              מוכר
-            </label>
-            <select
-              id="sellerId"
-              name="sellerId"
-              value={formData.sellerId}
-              onChange={handleChange}
-              className="p-2 border rounded-md"
-              required
-            >
-              <option value="">בחר מוכר</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.fullName}
-                </option>
-              ))}
-            </select>
-          </div>
+        {isLoading ? (
+          <div className="py-8 text-center">טוען פרטי מודעה...</div>
+        ) : (
+          <form onSubmit={handleSubmit} className="py-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="כותרת"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                required
+              />
+              <SpouseCommand
+                users={users}
+                currentUser={null} // Pass null so no user is filtered out
+                selectedSpouseId={formData.sellerId}
+                onSelectSpouse={handleSellerSelect}
+                label="מוכר"
+                placeholder="בחר מוכר..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 text-right">
+                תיאור
+              </label>
+              <textarea
+                name="description"
+                value={formData.description || ""}
+                onChange={handleChange}
+                rows="4"
+                className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
+              />
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ImageUpload
-              label="תמונה ראשית"
-              onImageUploadSuccess={(picId) =>
-                handleImageUploadSuccess(picId, "main")
-              }
-              existingImage={mainImage}
-              picRole="marketplace"
-              picAlt={`Main photo for ${formData.title}`}
-              uploaderId={user?.id}
-            />
-            <ImageUpload
-              label="תמונה נוספת"
-              onImageUploadSuccess={(picId) =>
-                handleImageUploadSuccess(picId, "extra")
-              }
-              existingImage={extraImage}
-              picRole="marketplace_extra"
-              picAlt={`Extra photo for ${formData.title}`}
-              uploaderId={user?.id}
-            />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ImageUpload
+                label="תמונה ראשית"
+                onImageUploadSuccess={(picId) =>
+                  handleImageUploadSuccess(picId, "main")
+                }
+                existingImage={mainImage}
+                picRole="marketplace"
+                picAlt={`Main photo for ${formData.title}`}
+                uploaderId={user?.id}
+              />
+              <ImageUpload
+                label="תמונה נוספת"
+                onImageUploadSuccess={(picId) =>
+                  handleImageUploadSuccess(picId, "extra")
+                }
+                existingImage={extraImage}
+                picRole="marketplace_extra"
+                picAlt={`Extra photo for ${formData.title}`}
+                uploaderId={user?.id}
+              />
+            </div>
 
-          <div className="flex justify-end space-x-4 pt-4 border-t">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-            >
-              ביטול
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-            >
-              {isSubmitting ? "שומר..." : "שמור שינויים"}
-            </button>
-          </div>
-        </form>
+            <div className="flex justify-end space-x-4 pt-4 border-t">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+              >
+                ביטול
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+              >
+                {isSubmitting ? "שומר..." : "שמור שינויים"}
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );
