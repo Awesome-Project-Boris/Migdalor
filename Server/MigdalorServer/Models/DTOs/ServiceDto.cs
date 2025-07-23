@@ -1,4 +1,6 @@
-﻿namespace Migdalor.DTOs
+﻿using System.Collections.Generic;
+
+namespace Migdalor.DTOs
 {
     public class ServiceDto
     {
@@ -11,6 +13,7 @@
         public string HebrewAddendum { get; set; }
         public string EnglishAddendum { get; set; }
         public int? PictureID { get; set; }
+        public string? PicturePath { get; set; } // Added this property
         public bool IsActive { get; set; }
 
         public List<OpeningHourDto> OpeningHours { get; set; } = new List<OpeningHourDto>();
