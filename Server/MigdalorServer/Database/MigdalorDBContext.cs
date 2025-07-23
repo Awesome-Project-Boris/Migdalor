@@ -21,6 +21,7 @@ namespace MigdalorServer.Database
         public virtual DbSet<OhEvent> OhEvents { get; set; } = null!;
         public virtual DbSet<OhEventInstance> OhEventInstances { get; set; } = null!;
         public virtual DbSet<OhEventRegistration> OhEventRegistrations { get; set; } = null!;
+        public virtual DbSet<OhInfoSheet> OhInfoSheets { get; set; } = null!;
         public virtual DbSet<OhInterest> OhInterests { get; set; } = null!;
         public virtual DbSet<OhListing> OhListings { get; set; } = null!;
         public virtual DbSet<OhMapNode> OhMapNodes { get; set; } = null!;
@@ -150,6 +151,12 @@ namespace MigdalorServer.Database
                     .WithMany(p => p.OhEventRegistrations)
                     .HasForeignKey(d => d.EventId)
                     .HasConstraintName("FK_EventRegistrations_Events");
+            });
+
+            modelBuilder.Entity<OhInfoSheet>(entity =>
+            {
+                entity.HasKey(e => e.InfoKey)
+                    .HasName("PK__OH_InfoS__789A07FE2EB71597");
             });
 
             modelBuilder.Entity<OhInterest>(entity =>

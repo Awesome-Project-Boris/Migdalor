@@ -1,0 +1,4 @@
+CREATE TABLE OH_InfoSheet (
+    InfoKey NVARCHAR(100) PRIMARY KEY,
+    InfoValue NVARCHAR(MAX) NOT NULL
+);
