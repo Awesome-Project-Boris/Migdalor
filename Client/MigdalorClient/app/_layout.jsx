@@ -16,7 +16,7 @@ import { AuthProvider } from "@/context/AuthProvider";
 import { SettingsProvider, useSettings } from "@/context/SettingsContext";
 import { BottomSheetProvider } from "@/components/BottomSheetMain";
 import { MainMenuEditProvider } from "@/context/MainMenuEditProvider";
-import { MarketplaceProvider } from "@/context/MarketplaceProvider";
+import { NotificationsProvider } from "@/context/NotificationsContext";
 import { toastConfig } from "@/components/CustomToasts";
 
 // --- i18n Initialization ---
@@ -87,160 +87,163 @@ function AppContent() {
   return (
     <MainMenuEditProvider>
       <BottomSheetProvider>
-        <MarketplaceProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            {/* --- YOUR ENTIRE NAVIGATION STACK IS PRESERVED --- */}
-            <Stack.Screen
-              name="index"
-              options={{ title: "Index Page", headerShown: false }}
-            />
-            <Stack.Screen
-              name="LoginScreen"
-              options={{
-                title: "Login Screen",
-                headerBackTitleStyle: { fontSize: 30 },
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="(settings)"
-              options={{
-                title: "Settings",
-                headerShown: false,
-                headerRight: () => (
-                  <Ionicons name="settings" size={24} color="#ccc" />
-                ),
-              }}
-            />
-            <Stack.Screen
-              name="(events)"
-              options={{
-                title: "Classes and Activities",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="Marketplace"
-              options={{
-                title: "Marketplace",
-                headerShown: false,
-                headerRight: () => (
-                  <Ionicons name="bag" size={24} color="#ccc" />
-                ),
-              }}
-            />
-            <Stack.Screen
-              name="MarketplaceNewItem"
-              options={{
-                title: "Marketplace new item",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="MarketplaceItem"
-              options={{ title: "Marketplace item", headerShown: false }}
-            />
-            <Stack.Screen
-              name="ImageViewScreen"
-              options={{
-                title: "Image view screen",
-                headerShown: false,
-                presentation: "modal",
-              }}
-            />
-            <Stack.Screen
-              name="Map"
-              options={{ title: "Site map", headerShown: false }}
-            />
-            <Stack.Screen
-              name="Profile"
-              options={{ title: "Profile", headerShown: false }}
-            />
-            <Stack.Screen
-              name="EditProfile"
-              options={{ title: "Edit Profile", headerShown: false }}
-            />
-            <Stack.Screen
-              name="InstructorProfile"
-              options={{
-                title: "Instructor Profile",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="InstructorEditProfile"
-              options={{
-                title: "Edit Instructor Profile",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="MainMenu"
-              options={{ title: "Main Menu", headerShown: false }}
-            />
-            <Stack.Screen
-              name="InstructorMainMenu"
-              options={{
-                title: "Instructor Main Menu",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="Events"
-              options={{ title: "Events", headerShown: false }}
-            />
-            <Stack.Screen
-              name="Notices"
-              options={{ title: "Notices", headerShown: false }}
-            />
-            <Stack.Screen
-              name="ResidentList"
-              options={{ title: "Resident List", headerShown: false }}
-            />
-            <Stack.Screen
-              name="CommittieePage"
-              options={{ title: "Committiee Page", headerShown: false }}
-            />
-            <Stack.Screen
-              name="NoticeFocus"
-              options={{ title: "Notice Page", headerShown: false }}
-            />
-            <Stack.Screen
-              name="TimeTable"
-              options={{ title: "Time table Page", headerShown: false }}
-            />
-            <Stack.Screen
-              name="EventFocus"
-              options={{ title: "Event Page", headerShown: false }}
-            />
-            <Stack.Screen
-              name="NewActivity"
-              options={{
-                title: "New Activity",
-                headerShown: false,
-                presentation: "modal",
-              }}
-            />
-            <Stack.Screen
-              name="GoodMorningProcedure"
-              options={{
-                title: "Good morning procedure",
-                headerShown: false,
-              }}
-            />
-            <Stack.Screen
-              name="PublicServices"
-              options={{ title: "Public services", headerShown: false }}
-            />
-            <Stack.Screen
-              name="PublicServicesFocus"
-              options={{
-                title: "public services details",
-                headerShown: false,
-              }}
-            />
-          </Stack>
-        </MarketplaceProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* --- YOUR ENTIRE NAVIGATION STACK IS PRESERVED --- */}
+          <Stack.Screen
+            name="index"
+            options={{ title: "Index Page", headerShown: false }}
+          />
+          <Stack.Screen
+            name="LoginScreen"
+            options={{
+              title: "Login Screen",
+              headerBackTitleStyle: { fontSize: 30 },
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="(settings)"
+            options={{
+              title: "Settings",
+              headerShown: false,
+              headerRight: () => (
+                <Ionicons name="settings" size={24} color="#ccc" />
+              ),
+            }}
+          />
+          <Stack.Screen
+            name="(events)"
+            options={{
+              title: "Classes and Activities",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Marketplace"
+            options={{
+              title: "Marketplace",
+              headerShown: false,
+              headerRight: () => <Ionicons name="bag" size={24} color="#ccc" />,
+            }}
+          />
+          <Stack.Screen
+            name="MarketplaceNewItem"
+            options={{
+              title: "Marketplace new item",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="MarketplaceItem"
+            options={{ title: "Marketplace item", headerShown: false }}
+          />
+          <Stack.Screen
+            name="ImageViewScreen"
+            options={{
+              title: "Image view screen",
+              headerShown: false,
+              presentation: "modal",
+            }}
+          />
+          <Stack.Screen
+            name="Map"
+            options={{ title: "Site map", headerShown: false }}
+          />
+          <Stack.Screen
+            name="Profile"
+            options={{ title: "Profile", headerShown: false }}
+          />
+          <Stack.Screen
+            name="EditProfile"
+            options={{ title: "Edit Profile", headerShown: false }}
+          />
+          <Stack.Screen
+            name="InstructorProfile"
+            options={{
+              title: "Instructor Profile",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="InstructorEditProfile"
+            options={{
+              title: "Edit Instructor Profile",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="MainMenu"
+            options={{ title: "Main Menu", headerShown: false }}
+          />
+          <Stack.Screen
+            name="InstructorMainMenu"
+            options={{
+              title: "Instructor Main Menu",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Events"
+            options={{ title: "Events", headerShown: false }}
+          />
+          <Stack.Screen
+            name="Notices"
+            options={{ title: "Notices", headerShown: false }}
+          />
+          <Stack.Screen
+            name="ResidentList"
+            options={{ title: "Resident List", headerShown: false }}
+          />
+          <Stack.Screen
+            name="CommittieePage"
+            options={{ title: "Committiee Page", headerShown: false }}
+          />
+          <Stack.Screen
+            name="NoticeFocus"
+            options={{ title: "Notice Page", headerShown: false }}
+          />
+          <Stack.Screen
+            name="TimeTable"
+            options={{ title: "Time table Page", headerShown: false }}
+          />
+          <Stack.Screen
+            name="EventFocus"
+            options={{ title: "Event Page", headerShown: false }}
+          />
+          <Stack.Screen
+            name="NewActivity"
+            options={{
+              title: "New Activity",
+              headerShown: false,
+              presentation: "modal",
+            }}
+          />
+          <Stack.Screen
+            name="GoodMorningProcedure"
+            options={{
+              title: "Good morning procedure",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="PublicServices"
+            options={{ title: "Public services", headerShown: false }}
+          />
+          <Stack.Screen
+            name="PublicServicesFocus"
+            options={{
+              title: "public services details",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="MyActivities"
+            options={{
+              title: "User created activities",
+              headerShown: false,
+            }}
+          />
+        </Stack>
       </BottomSheetProvider>
     </MainMenuEditProvider>
   );
@@ -276,9 +279,11 @@ export default function Layout() {
         <GestureHandlerRootView style={{ flex: 1 }}>
           <AuthProvider>
             <SettingsProvider>
-              <LanguageManager />
-              <AppContent />
-              <ToastManager config={toastConfig} />
+              <NotificationsProvider>
+                <LanguageManager />
+                <AppContent />
+              </NotificationsProvider>
+              <ToastManager config={toastConfig} zIndex={9999} />
             </SettingsProvider>
           </AuthProvider>
         </GestureHandlerRootView>

@@ -112,21 +112,20 @@ const resources = {
       EditProfileScreen_noInterests: "No Hobbies to display",
       EditProfileScreen_editInterestsButton: "Select Hobbies",
 
-      ApartmentSelector_Exists: "This apartment is already in our system.",
+      ApartmentSelector_Exists: "This apartment number is legal.",
       ApartmentSelector_Potential:
         "This is a valid apartment. It will be added to our system upon saving.",
       ApartmentSelector_Invalid:
         "This apartment number is not within the valid range.",
 
       interestModal_title: "Edit Hobbies",
-      interestModal_searchPlaceholder: "Search for an Hobbies...",
+      interestModal_searchPlaceholder: "Search for Hobbies...",
       interestModal_selectExisting: "Select from existing",
       interestModal_noResults: "No Hobbies found.",
       interestModal_addNew: "Or add a new one",
-      interestModal_addPlaceholder: "Type a new Hobbie ( Hebrew )",
+      interestModal_addPlaceholder: "Type a new Hobby ( Hebrew )",
       interestModal_addButton: "Add",
       interestModal_acceptButton: "Accept",
-      interestModa_newlyAdded: "Newly added Hobbies",
 
       interestModal_yourSelections: "Your Selections",
       interestModal_existsTitle: "Hobby Exists",
@@ -176,6 +175,8 @@ const resources = {
       Events_Confirm_Cancellation: "Confirm Cancellation",
       Events_Confirm_Move: "Confirm Move",
       Events_DescriptionPlaceholder: "e.g., Personal emergency, etc.",
+      Events_ClassesTab: "Classes",
+      Events_ActivitiesTab: "Activities",
 
       SettingsPopup_SettingsButton: "Settings",
       SettingsPopup_HomeButton: "Home",
@@ -216,6 +217,10 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "Listing deleted successfully!",
       MarketplaceItemScreen_DeleteErrorMsg: "Failed to delete listing.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "Picture Deletion Issue",
+      MarketplaceItemScreen_CannotHandleContactTitle:
+        "Cannot Handle Contact Information",
+      MarketplaceItemScreen_CannotHandleContactMsg:
+        "Cannot handle contact information for this item.",
 
       MarketplaceItemCard_Untitled: "Untitled",
       MarketplaceItemCard_UnknownSeller: "Unknown Seller",
@@ -382,12 +387,19 @@ const resources = {
       ResidentSearchScreen_noInterestsSelected: "No Hobbies selected",
       ResidentList_searchingByHobbies: "Searching by Hobbies: ",
       ResidentList_searchingByName: "Searching by Name: ",
+      ResidentList_ExplainationHeader: "How to Find a Resident",
+      ResidentList_Explaination:
+        "You can search in two ways, together or on their own: \n\n<bold>By Name:</bold> Simply begin typing a person's name in the search box. The list will update automatically as you type.\n\n<bold>By Hobby:</bold> Choose one or more interests from the list and then press the 'Search' button.",
 
       ResidentsCommitte_nameUnavailable: "Name Unavailable",
       ResidentsCommitte_titleUnavailable: "Title Unavailable",
       ResidentsCommittePage_title: "The Committee",
       ResidentsCommittePage_contact: "Contact the Committee",
       ResidentsCommittePage_committeeNotFound: "No committee members found.",
+      ResidentsCommittePage_introText:
+        "Here you can find the details of the dedicated members of the residents' committee. Feel free to reach out to them with any questions or suggestions.",
+
+      ResidentsCommittePage_fetchError: "Failed to load committee members.",
 
       UserProfileCard_unnamedUser: "Unnamed User",
 
@@ -414,6 +426,8 @@ const resources = {
       GoodMorning_signInSuccessTitle: "Signed In",
       GoodMorning_signInSuccessMessage:
         "Your attendance has been recorded. Have a great day!",
+      GoodMorning_IdError:
+        "An error has occurred, try again or verify with administration",
 
       Services_Title: "Services and Opening Hours",
       services_clickForDetails: "Click for details",
@@ -435,8 +449,21 @@ const resources = {
 
       Activities_MyCreatedActivities: "My created activities",
       Activities_AddNew: "Suggest a new acitivity",
+      Activities_SortByClosest: "Sort by Closest",
+      Activities_SortByNewest: "Sort by Newest",
+      Activities_NoActivitiesFound: "No activities found.",
+
+      MyActivities_ParticipationChecked: "Events with checked participation",
+      MyActivities_ParticipationNotChecked:
+        "Events with unchecked participation",
+      MyActivities_ClearFilter: "Clear button choice",
+
       Events_ClassesTitle: "Classes",
       Events_ActivitiesTitle: "Activities",
+      Events_MeetingRescheduled: "Meeting Rescheduled",
+      Events_MeetingCancelled: "Meeting Cancelled",
+      Events_ParticipantsHaveBeenNotified: "Participants have been notified.",
+      Update_Failed: "Update Failed",
       Common_SearchPlaceholder: "Search by name...",
       Common_Cancel: "Cancel",
       Common_Register: "Register",
@@ -448,10 +475,11 @@ const resources = {
       Errors_Participant_Fetch: "Could not fetch participants.",
       Errors_Auth_NoUser:
         "Could not identify the current user. Please log in again.",
-      EventCard_Registered: " Registered",
+      EventCard_Registered: "{{count}} / {{capacity}} Registered",
       EventCard_MoreDetails: "Click for more details",
       Classes_NoClasses: "No classes available at the moment.",
       Activities_NoActivities: "No activities available at the moment.",
+
       EventFocus_Date: "Date",
       EventFocus_Time: "Time",
       EventFocus_Location: "Location",
@@ -478,6 +506,8 @@ const resources = {
       Common_Edit: "Edit",
       EventFocus_FinalizeDisclaimer: "Click once you've marked all attendants",
       EventFocus_FinalizeButton: "Finalize Marking",
+
+      EventFocus_RecurrenceDay: "Day(s)",
 
       // New Activity
 
@@ -517,7 +547,8 @@ const resources = {
       // Timetable
 
       Timetable_Title: "Timetable",
-      Timetable_SubTitle: "Timetable shows planned activities and classes",
+      Timetable_SubTitle:
+        "This timetable shows all planned classes and activities. To make things clear, cancelled events are marked in red, rescheduled events are in yellow, and events happening as planned are in blue. In the Daily View, you can scroll down to see the full schedule for today. In the Weekly and Monthly views, simply tap on any day to see its planned activities.",
       Timetable_NoActivities: "No activities planned for today.",
       Today: "Today",
       Timetable_daily: "Daily",
@@ -528,6 +559,13 @@ const resources = {
       Location: "Location",
       Type: "Type",
       TimeTable_Time: "Time",
+      Timetable_Cancelled: "Cancelled",
+      Timetable_Rescheduled: "Rescheduled",
+      hour: "hour",
+      hours: "hours",
+      TimeTable_Location: "Location",
+      TimeTable_Status: "Status",
+      TimeTable_Notes: "Notes",
 
       // Navigation
 
@@ -548,6 +586,7 @@ const resources = {
       MapScreen_Legend: "Legend",
       MapScreen_Navigation: "Navigation",
       Common_Apartpment: "Apartment ",
+      Navigation_Cancelled: "Navigation cancelled",
 
       // Buildings
 
@@ -556,6 +595,51 @@ const resources = {
       MapScreen_Pool: "Swimming Pool",
       MapScreen_GrasslandsAndFountain: "Main Lawn and Fountain",
       MapScreen_OakComplexAndPetanque: "Petanque court and oak tree complex",
+
+      MapScreen_Tavor: "Tavor Building",
+      MapScreen_Carmel: "Carmel Building",
+      MapScreen_Gilboa: "Gilboa Building",
+
+      Map_Pin1:
+        "1st Floor: Reception, Resident Services, Lobby, Cafeteria, and passage to apartments. Exit to main lawn.",
+      Map_Pin2:
+        "Ground Floor (0): Restaurant, Events Hall, Barber Shop, Laundry Room, Art Classrooms, and exit to the Gym and Swimming Pool.",
+      Map_Pin3:
+        "Building A - Apartments 101-120, 201-220, 301-332, and 401-432.",
+      Map_Pin4:
+        "Building B - Apartments 131-149, 231-249, 331-349, and 431-449.",
+      Map_Pin5: "Ground Floor (0): Health Clinic and Multipurpose Hall.",
+      Map_Pin6: "2nd Floor: Studio, Synagogue, and a small lecture room.",
+      Map_Pin7: "Gym",
+      Map_Pin8: "Swimming pool",
+      Map_Pin9:
+        "Stairs - Passage between the main lawn and the swimming pool, gym, and events hall.",
+      Map_Pin10: "Fountain and main lawn.",
+      Map_Pin11:
+        "Entrance to Building B - Descent to the Gallery and underground passages to the Tavor, Carmel, and Gilboa buildings.",
+      Map_Pin12: "Tavor Building - Apartments 1151-1354.",
+
+      Map_Pin13: "Carmel Building - Apartments 2151-2354.",
+
+      Map_Pin14: "Gilboa Building - Apartments 3151-3354.",
+
+      Map_Pin15: "Oak Compound and Petanque Court.",
+
+      Map_Pin16:
+        "Passage between buildings A and B - on Floors 0, 1, and 2 only.",
+      Map_Pin17: "The Grocery Store.",
+      Map_Pin18: "Entrance to Building B",
+      Map_Pin19: "Gated and guarded entrance",
+      MapScreen_LegendText:
+        "Red Arrows - Mark the direction of traffic on the road.\nGreen Route - Symbolizes the roads within the compound.\nYellow Paths - Symbolize the pedestrian walkways.\nYellow Pins - Mark points of interest that you can click on to get more information.",
+
+      // Notification Drawer and symbols
+
+      Item_New: "New",
+      Notifications_NewListing: "New item in the Marketplace - click to view",
+      Notifications_NewNotice: "New notice published - click to read",
+      Notifications_NewEvent: "New activity or class added - click to see",
+      Notifications_NoNew: "No new notifications",
     },
   },
   he: {
@@ -662,7 +746,7 @@ const resources = {
       EditProfileScreen_noInterests: "אין תחביבים להציג",
       EditProfileScreen_editInterestsButton: "לבחירת תחביבים",
 
-      ApartmentSelector_Exists: "דירה זו כבר קיימת במערכת",
+      ApartmentSelector_Exists: "מספר הדירה חוקי וניתן לשימוש",
       ApartmentSelector_Potential:
         "זוהי דירה חוקית, היא תתווסף למערכת במהלך השמירה",
       ApartmentSelector_Invalid: "מספר דירה זה אינו בטווח החוקי",
@@ -675,7 +759,6 @@ const resources = {
       interestModal_addPlaceholder: " הכניסו תחביב חדש ( עברית )",
       interestModal_addButton: "הוספה",
       interestModal_acceptButton: "אישור",
-      interestModa_newlyAdded: "תחביבים חדשים",
 
       interestModal_yourSelections: "הבחירות שלך",
       interestModal_existsTitle: "תחביב קיים",
@@ -720,6 +803,8 @@ const resources = {
       Events_Confirm_Cancellation: "אשר ביטול",
       Events_Confirm_Move: "אשר העברה",
       Events_DescriptionPlaceholder: "לדוגמה, מקרה חירום אישי וכו'.",
+      Events_ClassesTab: "חוגים",
+      Events_ActivitiesTab: "פעילויות",
 
       SettingsPopup_SettingsButton: "הגדרות",
       SettingsPopup_HomeButton: "בית",
@@ -763,6 +848,10 @@ const resources = {
       MarketplaceItemScreen_DeleteSuccessMsg: "המודעה נמחקה בהצלחה!",
       MarketplaceItemScreen_DeleteErrorMsg: "מחיקת המודעה נכשלה.",
       MarketplaceItemScreen_PicDeleteErrorTitle: "בעיה במחיקת תמונה",
+      MarketplaceItemScreen_CannotHandleContactTitle:
+        "לא ניתן לטפל בפרטי יצירת קשר",
+      MarketplaceItemScreen_CannotHandleContactMsg:
+        "לא ניתן לטפל בפרטי יצירת קשר עבור פריט זה.",
 
       MarketplaceItemCard_Untitled: "ללא כותרת",
       MarketplaceItemCard_UnknownSeller: "מוכר לא ידוע",
@@ -917,12 +1006,20 @@ const resources = {
 
       ResidentList_searchingByHobbies: "חיפוש לפי תחביבים: ",
       ResidentList_searchingByName: "חיפוש לפי שם: ",
+      ResidentList_ExplainationHeader: "איך לחפש דיירים?",
+      ResidentList_Explaination:
+        "אפשר לחפש בשתי דרכים ביחד או לחוד:\n\n<bold>לפי שם:</bold> פשוט התחילו להקליד את שם הדייר/ת בתיבת החיפוש, והרשימה תתעדכן באופן אוטומטי.\n\n<bold>לפי תחומי עניין:</bold> בחרו תחום עניין אחד או יותר מהרשימה, ולאחר מכן לחצו על כפתור ה'חיפוש'.",
 
       ResidentsCommitte_nameUnavailable: "שם לא זמין",
       ResidentsCommitte_titleUnavailable: "תואר לא זמין",
       ResidentsCommittePage_title: "וועד דיירים",
       ResidentsCommittePage_contact: "צור קשר עם הוועד",
       ResidentsCommittePage_committeeNotFound: "לא נמצאו חברי ועד.",
+
+      ResidentsCommittePage_introText:
+        "כאן תוכלו למצוא את פרטי חברי ועד הדיירים המסורים. אתם מוזמנים לפנות אליהם בכל שאלה או הצעה.",
+
+      ResidentsCommittePage_fetchError: "תקלה בהבאת פרטי חברי הוועד",
 
       UserProfileCard_unnamedUser: "משתמש ללא שם",
 
@@ -949,6 +1046,8 @@ const resources = {
       GoodMorning_signInBoth: "דיווח נוכחות עבורי ועבור בן/בת הזוג",
       GoodMorning_signInSuccessTitle: "דיווח בוצע",
       GoodMorning_signInSuccessMessage: "הנוכחות שלך נרשמה. שיהיה לך יום נהדר!",
+      GoodMorning_IdError:
+        "התרחשה שגיאה, נסו שוב או וודאו נוהל בוקר טוב עם ההנהלה",
 
       Services_Title: "שירותים ושעות פתיחה",
       services_clickForDetails: "יש ללחוץ לפרטים",
@@ -972,6 +1071,10 @@ const resources = {
       Activities_AddNew: "להצעת פעילות חדשה",
       Events_ClassesTitle: "חוגים",
       Events_ActivitiesTitle: "פעילויות",
+      Events_MeetingRescheduled: "פגישה נדחתה",
+      Events_MeetingCancelled: "פגישה בוטלה",
+      Events_ParticipantsHaveBeenNotified: "המשתתפים עודכנו",
+      Update_Failed: "עדכון נכשל",
       Common_SearchPlaceholder: "חיפוש לפי שם...",
       Common_Cancel: "ביטול",
       Common_Register: "הירשם",
@@ -982,10 +1085,17 @@ const resources = {
       Errors_Event_Fetch: "לא ניתן היה לטעון את האירועים.",
       Errors_Participant_Fetch: "לא ניתן היה לטעון את המשתתפים.",
       Errors_Auth_NoUser: "לא ניתן היה לזהות את המשתמש. יש להתחבר מחדש.",
-      EventCard_Registered: " רשומים",
       EventCard_MoreDetails: "לחץ לפרטים נוספים",
       Classes_NoClasses: "אין חוגים זמינים כרגע.",
       Activities_NoActivities: "אין פעילויות זמינות כרגע.",
+
+      MyActivities_ParticipationChecked: "פעילויות שנוכחותן נבדקו",
+      MyActivities_ParticipationNotChecked: "פעילויות שנוכחותן לא נבדקו",
+      MyActivities_ClearFilter: "ניקוי בחירת כפתורים",
+      Activities_SortByClosest: "סינון לפי הקרובים ביותר",
+      Activities_SortByNewest: "סינון לפי החדשים ביותר",
+      Activities_NoActivitiesFound: "לא נמצאו פעילויות",
+
       EventFocus_Date: "תאריך",
       EventFocus_Time: "שעה",
       EventFocus_Location: "מיקום",
@@ -1004,6 +1114,7 @@ const resources = {
         "נותרו {{count}} מקומות פנויים - ההרשמה בפנים!",
       EventFocus_SpacesAvailable:
         "נותרו {{count}} מקומות פנויים - להרשמה למטה!",
+      EventCard_Registered: "נרשמו  {{capacity}} / {{count}} ",
 
       EventFocus_ThanksForMarking: "תודה שסימנת נוכחות.",
       EventFocus_WantToChange: "האם ברצונך לבצע שינוי?",
@@ -1011,6 +1122,7 @@ const resources = {
       Common_Edit: "עריכה",
       EventFocus_FinalizeDisclaimer: "יש ללחוץ לאחר סימון כל הנוכחים.",
       EventFocus_FinalizeButton: "סיום סימון",
+      EventFocus_RecurrenceDay: "ביום ( ימים )",
 
       // New Activity
 
@@ -1048,7 +1160,8 @@ const resources = {
       // Timetable
 
       Timetable_Title: "תוכניה",
-      Timetable_SubTitle: "תוכניה זו מציגה את הפעילויות והחוגים המתוכננים",
+      Timetable_SubTitle:
+        "תוכניה זו מציגה את החוגים והפעילויות המתוכננים - פעילויות וחוגים מבוטלים באדום, כאלה שנדחו בצהוב, ומתבצעים כמתוכנן בכחול. יש לגלול מטה במבט היומי על מנת לראות את לוח הזמנים של היום. בלוח השבועי הניתן לבחור יום ולראות את פעילותיו, וכך גם בלוח החודשי.",
       Timetable_NoActivities: "אין פעילות מתוכננת להיום",
       Today: "היום",
       Timetable_daily: "יומי",
@@ -1057,7 +1170,14 @@ const resources = {
       TimeTable_Minutes: "דקות",
       TimeTable_Location: "מיקום",
       TimeTable_Type: "סוג",
-      TimeTable_Time: "שעה",
+      Timetable_Cancelled: "בוטל",
+      Timetable_Rescheduled: "נדחה",
+      hour: "שעה",
+      hours: "שעות",
+      minutes: "דקות",
+      TimeTable_Time: "זמן",
+      TimeTable_Status: "סטטוס",
+      TimeTable_Notes: "הערות",
 
       // Navigation
       Navigation_Error: "שגיאת ניווט",
@@ -1076,15 +1196,60 @@ const resources = {
       Navigation_DistanceTo: "מרחק אל {{destination}}:",
       MapScreen_Legend: "מקרא",
       MapScreen_Navigation: "ניווט",
+      Navigation_Cancelled: "הניווט בוטל",
 
       // Buildings
 
-      MapScreen_B1: "בניין שלב א",
-      MapScreen_B2: "בניין שלב ב",
+      MapScreen_B1: "בניין שלב א'",
+      MapScreen_B2: "בניין שלב ב'",
       MapScreen_Pool: "הבריכה",
       MapScreen_GrasslandsAndFountain: "מדשאה ומזרקה",
       MapScreen_OakComplexAndPetanque: "מגרש פטאנק ומתחם עץ האלון",
       Common_Apartpment: "דירה ",
+
+      MapScreen_Tavor: "בניין תבור",
+      MapScreen_Carmel: "בניין כרמל",
+      MapScreen_Gilboa: "בניין גלבוע",
+
+      Map_Pin1:
+        "קומה 1: קבלה, שירותי דיירים, לובי, קפיטריה ומעבר לדירות. יציאה למדשאה המרכזית.",
+      Map_Pin2:
+        "קומת קרקע (0): מסעדה, אולם אירועים, מספרה, מכבסה, חדרי אומנות ויציאה לחדר הכושר ולבריכת השחייה.",
+      Map_Pin3: "בניין א' - דירות 101-120, 201-220, 301-332, ו-401-432.",
+      Map_Pin4: "בניין ב' - דירות 131-149, 231-249, 331-349, ו-431-449.",
+      Map_Pin5: "קומת קרקע (0): מרפאה ואולם רב-תכליתי.",
+      Map_Pin6: "קומה 2: סטודיו, בית כנסת וחדר הרצאות קטן.",
+      Map_Pin7: "חדר כושר",
+      Map_Pin8: "בריכת שחייה",
+      Map_Pin9:
+        "מדרגות - מעבר בין המדשאה המרכזית לבין בריכת השחייה, חדר הכושר ואולם האירועים.",
+      Map_Pin10: "המזרקה והמדשאה המרכזית.",
+      Map_Pin11:
+        "כניסה לבניין ב' - ירידה לגלריה ולמעברים התת-קרקעיים לבנייני תבור, כרמל וגלבוע.",
+      Map_Pin12: "בניין תבור - דירות 1151-1354.",
+
+      Map_Pin13: "בניין כרמל - דירות 2151-2354.",
+
+      Map_Pin14: "בניין גלבוע - דירות 3151-3354.",
+
+      Map_Pin15: "מתחם עץ האלון ומגרש הפטאנק.",
+
+      Map_Pin16: "מעבר בין בניין א' לבניין ב' - בקומות 0, 1 ו-2 בלבד.",
+      Map_Pin17: "מיני מרקט המכולת",
+      Map_Pin18: "כניסה לבניין שלב ב'",
+      Map_Pin19: "שער כניסה ושומר",
+      MapScreen_LegendText:
+        "החיצים האדומים - מסמנים את כיוון התנועה בכביש.\nהמסלול הירוק - מסמל את כבישי המתחם.\nהשבילים הצהובים - מסמלים את המדרכות הרגליות.\nהסיכות הצהובות - מסמנות נקודות עניין שאפשר ללחוץ עליהן על מנת לקבל עוד מידע.",
+
+      // Notification Drawer and symbols
+
+      Item_New: "חדש",
+      Notifications_NewListing: "פריט חדש בשוק - לחץ/י לצפייה",
+      Notifications_NewNotice: "מודעה חדשה פורסמה - לחץ/י לקריאה",
+      Notifications_NewEvent: "פעילות או חוג חדשים - לחץ/י לצפייה",
+      Notifications_NoNew: "אין התראות חדשות",
+
+      // Residents Committee
     },
   },
 };
@@ -1110,9 +1275,9 @@ export const initializeI18n = async () => {
     interpolation: {
       escapeValue: false,
     },
-  react: {
-    useSuspense: false, // Important for controlling splash screen
-  },
+    react: {
+      useSuspense: false, // Important for controlling splash screen
+    },
   });
 };
 

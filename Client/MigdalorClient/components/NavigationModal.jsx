@@ -18,37 +18,78 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
 
+  const searchableItems = useMemo(() => {
+    if (!mapData || !mapData.buildings) return [];
+    const allItems = [];
+    mapData.buildings.forEach((structure) => {
+      if (structure.buildingName) {
+        allItems.push({
+          type: "building",
+          rawName: structure.buildingName,
+          translatedName: t(structure.buildingName, {
+            defaultValue: structure.buildingName,
+          }),
+          ...structure,
+        });
+        if (structure.apartments) {
+          structure.apartments.forEach((apt) => {
+            allItems.push({
+              type: "apartment",
+              rawName: String(apt.displayNumber),
+              translatedName: `${t("Common_Apartment")} ${apt.displayNumber}`,
+              buildingTranslatedName: t(structure.buildingName, {
+                defaultValue: structure.buildingName,
+              }),
+              ...apt,
+              physicalBuildingID: structure.buildingID,
+              entranceNodeIds: structure.entranceNodeIds,
+            });
+          });
+        }
+      } else {
+        if (structure.apartments) {
+          structure.apartments.forEach((apt) => {
+            allItems.push({
+              type: "apartment",
+              rawName: String(apt.displayNumber),
+              translatedName: `${t("Common_Apartment")} ${apt.displayNumber}`,
+              buildingTranslatedName: "",
+              ...apt,
+              physicalBuildingID: structure.buildingID,
+              entranceNodeIds: structure.entranceNodeIds,
+            });
+          });
+        }
+      }
+    });
+    return allItems;
+  }, [mapData, t]);
+
   const searchResults = useMemo(() => {
     if (!searchTerm.trim()) return [];
     const lowerCaseSearch = searchTerm.toLowerCase();
-
-    const buildings = mapData.buildings
-      .filter((b) => b.buildingName?.toLowerCase().includes(lowerCaseSearch))
-      .map((b) => ({ type: "building", ...b }));
-
-    const apartments = mapData.buildings.flatMap((b) =>
-      b.apartments
-        .filter((a) => String(a.displayNumber).includes(lowerCaseSearch))
-        .map((a) => ({
-          type: "apartment",
-          ...a,
-          buildingName: b.buildingName,
-          physicalBuildingID: b.buildingID,
-          entranceNodeIds: b.entranceNodeIds,
-        }))
-    );
-
-    return [...buildings, ...apartments];
-  }, [searchTerm, mapData]);
+    return searchableItems.filter((item) => {
+      const rawMatch = item.rawName.toLowerCase().includes(lowerCaseSearch);
+      const translatedMatch = item.translatedName
+        .toLowerCase()
+        .includes(lowerCaseSearch);
+      return rawMatch || translatedMatch;
+    });
+  }, [searchTerm, searchableItems]);
 
   const handleSelectItem = (item) => {
     setSearchTerm("");
     onStartNavigation(item);
   };
 
+  const isRTL = Globals.userSelectedDirection === "rtl";
+
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      style={styles.resultItem}
+      style={[
+        styles.resultItem,
+        { flexDirection: isRTL ? "row-reverse" : "row" },
+      ]}
       onPress={() => handleSelectItem(item)}
     >
       <Ionicons
@@ -56,15 +97,26 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
         size={24}
         color="#555"
       />
-      <View style={styles.resultTextContainer}>
-        <Text style={styles.resultTitle}>
-          {item.type === "building"
-            ? t(item.buildingName, { defaultValue: item.buildingName })
-            : `${t("Common_Apartment")} ${item.displayNumber}`}
+      <View
+        style={[
+          styles.resultTextContainer,
+          { [isRTL ? "marginRight" : "marginLeft"]: 15 },
+        ]}
+      >
+        <Text
+          style={[styles.resultTitle, { textAlign: isRTL ? "right" : "left" }]}
+        >
+          {item.translatedName}
         </Text>
-        {item.type === "apartment" && (
-          <Text style={styles.resultSubtitle}>
-            {t(item.buildingName, { defaultValue: item.buildingName })}
+        {/* --- MODIFIED: Only render subtitle if it has content --- */}
+        {item.type === "apartment" && item.buildingTranslatedName && (
+          <Text
+            style={[
+              styles.resultSubtitle,
+              { textAlign: isRTL ? "right" : "left" },
+            ]}
+          >
+            {item.buildingTranslatedName}
           </Text>
         )}
       </View>
@@ -83,7 +135,7 @@ const NavigationModal = ({ visible, mapData, onClose, onStartNavigation }) => {
           <Text style={styles.modalTitle}>{t("Navigation_Title")}</Text>
         </View>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { textAlign: isRTL ? "right" : "left" }]}
           placeholder={t("Navigation_SearchPlaceholder")}
           value={searchTerm}
           onChangeText={setSearchTerm}
@@ -140,7 +192,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   resultItem: {
-    flexDirection: "row",
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 20,
@@ -148,7 +199,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
   },
   resultTextContainer: {
-    marginLeft: 15,
+    flex: 1,
   },
   resultTitle: {
     fontSize: 18,

@@ -94,8 +94,12 @@ namespace MigdalorServer.Controllers
                         PictureId = e.PictureId,
                         PicturePath = pg.PicPath,
                         IsRecurring = e.IsRecurring,
-                        StartDate = e.StartDate,
-                        EndDate = e.EndDate,
+                        RecurrenceRule = e.RecurrenceRule,
+                        DateCreated = DateTime.SpecifyKind(e.DateCreated, DateTimeKind.Utc),
+                        StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                        EndDate = e.EndDate.HasValue
+                            ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc)
+                            : (DateTime?)null,
                         Capacity = e.Capacity,
                         ParticipantsCount = e.OhEventRegistrations.Count(),
                         HostName = host != null ? host.HebFirstName + " " + host.HebLastName : "N/A"
@@ -139,8 +143,8 @@ namespace MigdalorServer.Controllers
                                              PicturePath = pg.PicPath,
                                              IsRecurring = e.IsRecurring,
                                              RecurrenceRule = e.RecurrenceRule,
-                                             StartDate = e.StartDate,
-                                             EndDate = e.EndDate,
+                                             StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                                             EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : null,
                                              Capacity = e.Capacity,
                                              Host = h == null ? null : new HostDto
                                              {
@@ -226,6 +230,13 @@ namespace MigdalorServer.Controllers
         }
 
         // GET: api/events/host/{hostId}
+        
+        // 5. GET: api/events/host/{hostId}
+        // Pulls all events hosted by a specific person
+
+        // OBSOLETE - Not all the details we want 
+
+
         [HttpGet("host/{hostId}")]
         public async Task<ActionResult<IEnumerable<EventDto>>> GetEventsByHost(Guid hostId)
         {
@@ -241,8 +252,8 @@ namespace MigdalorServer.Controllers
                         Description = e.Description,
                         Location = e.Location,
                         IsRecurring = e.IsRecurring,
-                        StartDate = e.StartDate,
-                        EndDate = e.EndDate,
+                        StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                        EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : null,
                         Capacity = e.Capacity
                     })
                     .ToListAsync();
@@ -330,6 +341,11 @@ namespace MigdalorServer.Controllers
                     return Conflict("An event with this name already exists. Please choose a different name.");
                 }
 
+                var israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
+                var israelStartDate = TimeZoneInfo.ConvertTimeFromUtc(eventDto.StartDate, israelTimeZone);
+
+                var israelEndDate = TimeZoneInfo.ConvertTimeFromUtc(eventDto.EndDate, israelTimeZone);
+
                 var newEvent = new OhEvent
                 {
                     EventName = eventDto.EventName,
@@ -340,8 +356,9 @@ namespace MigdalorServer.Controllers
                     Capacity = eventDto.Capacity,
                     IsRecurring = false,
                     RecurrenceRule = null,
-                    StartDate = eventDto.StartDate,
-                    EndDate = eventDto.EndDate,
+                    StartDate = israelStartDate,
+                    EndDate = israelEndDate,
+                    DateCreated = DateTime.UtcNow
                 };
 
                 _context.OhEvents.Add(newEvent);
@@ -374,8 +391,8 @@ namespace MigdalorServer.Controllers
                     Title = e.EventName,
                     Description = e.Description,
                     Location = e.Location,
-                    StartTime = e.StartDate,
-                    EndTime = e.EndDate ?? e.StartDate,
+                    StartTime = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                    EndTime = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
                     SourceTable = "OH_Events",
                     NavigationEventId = e.EventId,
                     Status = "Scheduled" // One-time events are always considered scheduled
@@ -448,7 +465,8 @@ namespace MigdalorServer.Controllers
                 StartDate = createDto.StartDate,
                 EndDate = createDto.EndDate,
                 PictureId = createDto.PictureId, // Add this line
-                ParticipationChecked = false
+                ParticipationChecked = false,
+                DateCreated = DateTime.UtcNow
             };
 
             _context.OhEvents.Add(newEvent);
@@ -522,5 +540,72 @@ namespace MigdalorServer.Controllers
 
             return NoContent();
         }
+       
+        // Instead of Host/id - here we get more data relevant for events specificially - no time limits
+        // Especially for administrative purposes
+
+        [HttpGet("creator/{creatorId}")]
+        public async Task<IActionResult> GetEventsByCreator(Guid creatorId)
+        {
+            try
+            {
+                var query = from e in _context.OhEvents
+                                // Perform a LEFT JOIN with the pictures table
+                            join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
+                            from pg in picGroup.DefaultIfEmpty()
+                                // Filter by the creator's ID and for non-recurring events
+                            where e.HostId == creatorId && !e.IsRecurring
+                            orderby e.StartDate descending
+                            select new MyActivitiesDto
+                            {
+                                EventId = e.EventId,
+                                EventName = e.EventName,
+                                Description = e.Description,
+                                Location = e.Location,
+                                IsRecurring = e.IsRecurring,
+                                PictureId = e.PictureId,
+                                PicturePath = pg.PicPath,
+                                StartDate = e.StartDate,
+                                EndDate = e.EndDate,
+                                ParticipationChecked = e.ParticipationChecked
+                            };
+
+                var userEvents = await query.AsNoTracking().ToListAsync();
+
+                return Ok(userEvents ?? new List<MyActivitiesDto>());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpGet("latest-timestamp")]
+        public async Task<ActionResult<DateTime>> GetLatestEventTimestamp()
+        {
+            try
+            {
+                var latestCreationDate = await _context.OhEvents
+                    .OrderByDescending(e => e.DateCreated)
+                    .Select(e => e.DateCreated)
+                    .FirstOrDefaultAsync();
+
+                if (latestCreationDate == default)
+                {
+                    return NotFound("No events found.");
+                }
+
+                // --- FIX: Specify that the DateTime from the DB should be treated as UTC ---
+                var utcDate = DateTime.SpecifyKind(latestCreationDate, DateTimeKind.Utc);
+
+                return Ok(utcDate);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching latest event timestamp: {ex.Message}");
+                return StatusCode(500, "An internal server error occurred.");
+            }
+        }
+
     }
 }

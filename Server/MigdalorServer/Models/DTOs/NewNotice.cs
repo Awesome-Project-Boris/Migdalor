@@ -13,4 +13,6 @@ public class NewNotice
     public string Category { get; set; }
 
     public string? SubCategory { get; set; } = null;
+
+    public int? PictureId { get; set; }
 }

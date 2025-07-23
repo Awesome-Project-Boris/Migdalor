@@ -18,35 +18,42 @@ namespace MigdalorServer.Models
         {
             using MigdalorDBContext db = new();
 
-            // The query now joins OhNotices with OhPeople (via the Sender navigation property)
-            // to retrieve the sender's names.
-            var noticesWithSenders = db.OhNotices
-                .Include(n => n.Sender) // Eagerly load the related OhPerson entity (performs a JOIN)
+            // Step 1: Fetch the data from the database, including related entities.
+            // The query is materialized here with ToList().
+            var noticesFromDb = db.OhNotices
+                .Include(n => n.Sender)
                 .Include(n => n.NoticeCategoryNavigation)
                 .OrderByDescending(n => n.CreationDate)
-                .Select(n => new
-                {
-                    n.NoticeId,
-                    // Hebrew name from the joined OH_People table.
-                    HebSenderName = n.Sender != null ? n.Sender.HebFirstName + " " + n.Sender.HebLastName : "שולח לא ידוע",
-                    // English name from the joined OH_People table. Handles potential nulls.
-                    EngSenderName = n.Sender != null ? (n.Sender.EngFirstName + " " + n.Sender.EngLastName).Trim() : "Unknown Sender",
-                    n.CreationDate,
-                    n.NoticeTitle,
-                    n.NoticeMessage,
-                    n.NoticeCategory,
-                    n.NoticeSubCategory,
-                    // Safely access the category color, handling potential nulls.
-                    CategoryColor = n.NoticeCategoryNavigation != null ? n.NoticeCategoryNavigation.CategoryColor : null
-                })
-                .ToList<dynamic>();
+                .ToList();
 
-            return noticesWithSenders;
+            // Step 2: Now that the data is in memory, project to the final dynamic object.
+            // This allows us to run C# code like DateTime.SpecifyKind.
+            var result = noticesFromDb.Select(n => new
+            {
+                n.NoticeId,
+                // Hebrew name from the joined OH_People table.
+                HebSenderName = n.Sender != null ? n.Sender.HebFirstName + " " + n.Sender.HebLastName : "שולח לא ידוע",
+                // English name from the joined OH_People table. Handles potential nulls.
+                EngSenderName = n.Sender != null ? (n.Sender.EngFirstName + " " + n.Sender.EngLastName).Trim() : "Unknown Sender",
+
+                CreationDate = n.CreationDate.HasValue
+                    ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc)
+                    : (DateTime?)null,
+
+                n.NoticeTitle,
+                n.NoticeMessage,
+                n.NoticeCategory,
+                n.NoticeSubCategory,
+                // Safely access the category color, handling potential nulls.
+                CategoryColor = n.NoticeCategoryNavigation != null ? n.NoticeCategoryNavigation.CategoryColor : null
+            })
+            .ToList<dynamic>();
+
+            return result;
         }
 
         public static OhNotice AddOhNotice(NewNotice notice)
         {
-            // --- !! Add Logging !! ---
             Console.WriteLine("[AddOhNotice] Method Entry. Received Title: " + notice?.Title);
             var ohNotice = new OhNotice
             {

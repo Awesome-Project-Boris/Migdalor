@@ -227,7 +227,7 @@ export default function AddNewItem() {
         if (!trimmedValue.trim()) {
           return t("MarketplaceNewItemScreen_errorTitleRequired");
         }
-        if (value.length >= ITEM_NAME_LIMIT) {
+        if (value.length > ITEM_NAME_LIMIT) {
           return t("MarketplaceNewItemScreen_errorTitleTooLong", {
             count: ITEM_NAME_LIMIT,
           });
@@ -235,7 +235,7 @@ export default function AddNewItem() {
         return null;
 
       case "itemDescription":
-        if (value.length >= DESCRIPTION_LIMIT) {
+        if (value.length > DESCRIPTION_LIMIT) {
           return t("MarketplaceNewItemScreen_errorDescriptionTooLong", {
             count: DESCRIPTION_LIMIT,
           });
@@ -659,7 +659,15 @@ export default function AddNewItem() {
           />
 
           {formErrors.itemName ? (
-            <StyledText style={styles.errorText}>
+            <StyledText
+              style={{
+                ...styles.errorText,
+                alignSelf:
+                  Globals.userSelectedDirection === "rtl"
+                    ? "flex-end"
+                    : "flex-start",
+              }}
+            >
               {formErrors.itemName}
             </StyledText>
           ) : (
@@ -679,7 +687,15 @@ export default function AddNewItem() {
             maxLength={DESCRIPTION_LIMIT}
           />
           {formErrors.itemDescription ? (
-            <StyledText style={styles.errorText}>
+            <StyledText
+              style={{
+                ...styles.errorText,
+                alignSelf:
+                  Globals.userSelectedDirection === "rtl"
+                    ? "flex-end"
+                    : "flex-start",
+              }}
+            >
               {formErrors.itemDescription}
             </StyledText>
           ) : (

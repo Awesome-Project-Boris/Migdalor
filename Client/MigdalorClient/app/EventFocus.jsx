@@ -17,9 +17,30 @@ import FlipButton from "@/components/FlipButton";
 import Header from "@/components/Header";
 import { Image as ExpoImage } from "expo-image";
 import StyledText from "@/components/StyledText";
-import { useSettings } from "@/context/SettingsContext.jsx"; // Import useSettings
+import { useSettings } from "@/context/SettingsContext.jsx";
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
+
+// ✅ 1. Helper function to parse and translate recurrence days
+const formatRecurrenceDays = (rule, t) => {
+  if (!rule) return null;
+
+  const byDayPart = rule.split(";").find((part) => part.startsWith("BYDAY="));
+  if (!byDayPart) return null;
+
+  const dayCodes = byDayPart.split("=")[1].split(",");
+  const dayMap = {
+    SU: t("Days_Sunday", "Sunday"),
+    MO: t("Days_Monday", "Monday"),
+    TU: t("Days_Tuesday", "Tuesday"),
+    WE: t("Days_Wednesday", "Wednesday"),
+    TH: t("Days_Thursday", "Thursday"),
+    FR: t("Days_Friday", "Friday"),
+    SA: t("Days_Saturday", "Saturday"),
+  };
+
+  return dayCodes.map((code) => dayMap[code] || code).join(", ");
+};
 
 const formatTime = (dateString) => {
   if (!dateString) return "";
@@ -36,7 +57,7 @@ export default function EventFocusScreen() {
   const [eventId, setEventId] = useState(null);
   const { i18n, t } = useTranslation();
   const router = useRouter();
-  const { settings } = useSettings(); // Get settings from context
+  const { settings } = useSettings();
 
   const [currentUserId, setCurrentUserId] = useState(null);
   const [event, setEvent] = useState(null);
@@ -151,8 +172,6 @@ export default function EventFocusScreen() {
     );
   };
 
-  console.log("This is the event host details: ", event);
-
   const handleHostPress = () => {
     if (!event?.host?.hostId || event.host.role?.toLowerCase() === "admin")
       return;
@@ -201,7 +220,9 @@ export default function EventFocusScreen() {
     ? { uri: `${Globals.API_BASE_URL}${event.picturePath}` }
     : placeholderImage;
 
-  // NEW: Check for large font setting
+  // ✅ 2. Get the formatted day string
+  const recurrenceDayString = formatRecurrenceDays(event.recurrenceRule, t);
+
   const isLargeFont = settings.fontSizeMultiplier >= 2;
 
   const DetailRow = ({
@@ -212,7 +233,6 @@ export default function EventFocusScreen() {
     isLink,
     isLast = false,
   }) => {
-    // Render a vertical layout for large fonts
     if (isLargeFont) {
       return (
         <TouchableOpacity
@@ -228,7 +248,7 @@ export default function EventFocusScreen() {
           >
             <Ionicons
               name={icon}
-              size={24 * settings.fontSizeMultiplier} // Scale icon with font
+              size={24 * settings.fontSizeMultiplier}
               color="#8c7a6b"
               style={isRtl ? styles.iconRtl : styles.iconLtr}
             />
@@ -248,7 +268,6 @@ export default function EventFocusScreen() {
       );
     }
 
-    // Original row layout for default font size
     return (
       <TouchableOpacity
         onPress={onPress}
@@ -291,11 +310,22 @@ export default function EventFocusScreen() {
         </StyledText>
 
         <View style={styles.detailsContainer}>
-          <DetailRow
-            icon="calendar-outline"
-            label={t("EventFocus_Date", "Date")}
-            value={new Date(event.startDate).toLocaleDateString("en-GB")}
-          />
+          {/* ✅ 3. Conditionally render the new DetailRow for recurrence */}
+          {event.isRecurring && recurrenceDayString && (
+            <DetailRow
+              icon="repeat-outline"
+              label={t("EventFocus_RecurrenceDay", "Day")}
+              value={recurrenceDayString}
+            />
+          )}
+
+          {!event.isRecurring && (
+            <DetailRow
+              icon="calendar-outline"
+              label={t("EventFocus_Date", "Date")}
+              value={new Date(event.startDate).toLocaleDateString("en-GB")}
+            />
+          )}
           <DetailRow
             icon="time-outline"
             label={t("EventFocus_Time", "Time")}
@@ -442,7 +472,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: isLast ? 0 : 1,
     borderBottomColor: "#f5eadd",
   }),
-  // NEW STYLES FOR VERTICAL LAYOUT
   detailColumn: (isLast = false) => ({
     flexDirection: "column",
     paddingVertical: 12,
@@ -456,7 +485,6 @@ const styles = StyleSheet.create({
   detailValueColumn: {
     paddingHorizontal: 8,
   },
-  // END NEW STYLES
   iconLtr: {
     marginRight: 15,
     color: "#8c7a6b",

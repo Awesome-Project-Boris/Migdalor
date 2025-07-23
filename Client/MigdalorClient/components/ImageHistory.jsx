@@ -137,9 +137,9 @@ export default function ImageHistory({
       !clearedPictureIds.includes(pictureId);
     if (isCurrentlyInUse) {
       Toast.show({
-        type: "warning",
-        text1: "Cannot Delete",
-        text2: "This picture is currently in use on your profile edit screen.",
+        type: "error",
+        text1: t("Deletion_Failed"),
+        text2: t("PictureIsInUse"),
         duration: 4000,
       });
       return;

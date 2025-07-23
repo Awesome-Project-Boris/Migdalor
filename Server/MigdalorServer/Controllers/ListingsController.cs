@@ -82,40 +82,41 @@ namespace MigdalorServer.Controllers
         {
             try
             {
-                var listings = await _context
-                    .OhListings.Where(l => l.IsActive!.Value) // Filter for active listings
-                    .Include(l => l.Seller) // Include Seller navigation property
+                // Step 1: Fetch the raw data and bring it into memory with ToListAsync()
+                var intermediateData = await _context
+                    .OhListings.Where(l => l.IsActive!.Value)
+                    .Include(l => l.Seller)
                     .Select(l => new
                     {
                         Listing = l,
-                        SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName, // Combine seller names
-                        // Get the main picture (role 'marketplace') or the first one if 'marketplace' role doesn't exist or fallback to null
+                        SellerName = l.Seller.HebFirstName + " " + l.Seller.HebLastName,
                         MainPicture = _context
-                            .OhPictures.Where(p => p.ListingId == l.ListingId) // Filter pictures for this listing
-                            .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1) // Prioritize 'marketplace' role
-                            .ThenBy(p => p.DateTime) // Then by date as a fallback ordering
-                            .FirstOrDefault(), // Take the first one matching the criteria
+                            .OhPictures.Where(p => p.ListingId == l.ListingId)
+                            .OrderBy(p => p.PicRole == "marketplace" ? 0 : 1)
+                            .ThenBy(p => p.DateTime)
+                            .FirstOrDefault(),
                     })
-                    .OrderByDescending(l => l.Listing.Date) // Order by listing date, newest first
-                    .Select(l_info => new ListingSummary
-                    {
-                        ListingId = l_info.Listing.ListingId,
-                        Title = l_info.Listing.Title,
-                        Description = l_info.Listing.Description,
-                        Date = l_info.Listing.Date,
-                        SellerId = l_info.Listing.SellerId,
-                        SellerName = l_info.SellerName,
-                        MainImagePath =
-                            l_info.MainPicture != null ? l_info.MainPicture.PicPath : null, // Select the path or null
-                    })
-                    .ToListAsync(); // Execute the query
+                    .OrderByDescending(l => l.Listing.Date)
+                    .ToListAsync();
 
-                return Ok(listings);
+                // Step 2: Now that the data is in memory, create the final DTOs with the corrected date
+                var finalResult = intermediateData.Select(l_info => new ListingSummary
+                {
+                    ListingId = l_info.Listing.ListingId,
+                    Title = l_info.Listing.Title,
+                    Description = l_info.Listing.Description,
+                    // --- APPLY THE FIX HERE ---
+                    Date = DateTime.SpecifyKind(l_info.Listing.Date, DateTimeKind.Utc),
+                    SellerId = l_info.Listing.SellerId,
+                    SellerName = l_info.SellerName,
+                    MainImagePath = l_info.MainPicture != null ? l_info.MainPicture.PicPath : null,
+                }).ToList();
+
+                return Ok(finalResult);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"ERROR in GetActiveListingsSummary: {ex.Message}");
-                // Log the exception details (consider using a proper logging framework)
                 return StatusCode(500, "An error occurred while fetching listings.");
             }
         }
@@ -195,6 +196,33 @@ namespace MigdalorServer.Controllers
                         error = ex.Message,
                     }
                 );
+            }
+        }
+
+        [HttpGet("latest-timestamp")]
+        public async Task<ActionResult<DateTime>> GetLatestListingTimestamp()
+        {
+            try
+            {
+                var latestListingDate = await _context.OhListings
+                    .OrderByDescending(l => l.Date)
+                    .Select(l => l.Date)
+                    .FirstOrDefaultAsync();
+
+                if (latestListingDate == default)
+                {
+                    return NotFound("No listings found.");
+                }
+
+                // --- FIX: Specify that the DateTime from the DB should be treated as UTC ---
+                var utcDate = DateTime.SpecifyKind(latestListingDate, DateTimeKind.Utc);
+
+                return Ok(utcDate);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error fetching latest listing timestamp: {ex.Message}");
+                return StatusCode(500, "An internal server error occurred.");
             }
         }
 

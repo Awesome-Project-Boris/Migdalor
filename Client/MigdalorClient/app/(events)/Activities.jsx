@@ -6,35 +6,110 @@ import React, {
   useEffect,
 } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { Globals } from "@/app/constants/Globals";
+import { Globals } from "../../app/constants/Globals";
 import EventCard from "@/components/EventCard";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Header from "@/components/Header";
 import FlipButton from "@/components/FlipButton";
 import StyledText from "@/components/StyledText";
+import { useNotifications } from "@/context/NotificationsContext";
 
 const ITEMS_PER_PAGE = 5;
+
+// Defined outside the main component to prevent re-rendering on every state change
+const ActivitiesListHeader = ({
+  t,
+  isRtl,
+  searchTerm,
+  setSearchTerm,
+  isPermissionLoading,
+  canInitiate,
+  router,
+  sortMode,
+  handleToggleSort,
+}) => (
+  <>
+    <View style={styles.plaqueContainer}>
+      <StyledText style={styles.mainTitle}>
+        {t("Events_ActivitiesTitle")}
+      </StyledText>
+    </View>
+
+    {!isPermissionLoading && canInitiate && (
+      <>
+        <FlipButton
+          onPress={() => router.push("/NewActivity")}
+          style={styles.newActivityButton}
+        >
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+            {t("Activities_AddNew")}
+          </Text>
+        </FlipButton>
+        <FlipButton
+          onPress={() => router.push("/MyActivities")}
+          style={styles.myActivitiesButton}
+        >
+          <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
+            {t("Activities_MyCreatedActivities")}
+          </Text>
+        </FlipButton>
+      </>
+    )}
+
+    <FlipButton onPress={handleToggleSort} style={styles.sortButton}>
+      <StyledText style={styles.sortButtonText}>
+        {sortMode === "closest"
+          ? t("Activities_SortByNewest", "Sort by Newest")
+          : t("Activities_SortByClosest", "Sort by Closest")}
+      </StyledText>
+    </FlipButton>
+
+    <FloatingLabelInput
+      label={t("Common_SearchPlaceholder", "Search by name...")}
+      value={searchTerm}
+      onChangeText={setSearchTerm}
+      style={styles.searchContainer}
+      alignRight={isRtl}
+    />
+  </>
+);
 
 export default function ActivitiesScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams();
   const flatListRef = useRef(null);
   const isRtl = i18n.dir() === "rtl";
 
+  const { updateLastVisited, isItemNew } = useNotifications();
   const [allActivities, setAllActivities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
   const [canInitiate, setCanInitiate] = useState(false);
   const [isPermissionLoading, setIsPermissionLoading] = useState(true);
+
+  const [sortMode, setSortMode] = useState("closest");
+
+  const handleToggleSort = () => {
+    setSortMode((prev) => (prev === "closest" ? "newest" : "closest"));
+    setCurrentPage(1);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        console.log("Events page unfocused, updating last visited time.");
+        updateLastVisited("events");
+      };
+    }, [updateLastVisited])
+  );
 
   const checkInitiatePermission = useCallback(async () => {
     setIsPermissionLoading(true);
@@ -70,37 +145,59 @@ export default function ActivitiesScreen() {
     }
   }, []);
 
+  const fetchEvents = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
+      if (!response.ok)
+        throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
+      const data = await response.json();
+      setAllActivities(data.activities || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t]);
+
   useFocusEffect(
     useCallback(() => {
-      const fetchEvents = async () => {
-        setIsLoading(true);
-        try {
-          const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
-          if (!response.ok)
-            throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
-          const data = await response.json();
-          console;
-          setAllActivities(data.activities || []);
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setIsLoading(false);
-        }
-      };
       fetchEvents();
       checkInitiatePermission();
-    }, [t, checkInitiatePermission])
+    }, [fetchEvents, checkInitiatePermission])
   );
 
-  const filteredActivities = useMemo(() => {
-    if (!searchTerm) {
-      return allActivities;
+  useEffect(() => {
+    if (params.refresh) {
+      console.log("Refresh signal received, fetching new activities...");
+      fetchEvents();
     }
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return allActivities.filter((c) =>
-      c.eventName.toLowerCase().includes(lowercasedTerm)
-    );
-  }, [allActivities, searchTerm]);
+  }, [params.refresh, fetchEvents]);
+
+  const filteredActivities = useMemo(() => {
+    const sourceArray = allActivities;
+
+    let filtered = sourceArray;
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      filtered = sourceArray.filter((c) =>
+        c.eventName.toLowerCase().includes(lowercasedTerm)
+      );
+    }
+
+    return [...filtered].sort((a, b) => {
+      const aIsNew = isItemNew("events", a.dateCreated);
+      const bIsNew = isItemNew("events", b.dateCreated);
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+
+      if (sortMode === "closest") {
+        return new Date(a.startDate) - new Date(b.startDate);
+      } else {
+        return new Date(b.dateCreated) - new Date(a.dateCreated);
+      }
+    });
+  }, [allActivities, searchTerm, isItemNew, sortMode]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -118,50 +215,6 @@ export default function ActivitiesScreen() {
       flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
     }
   };
-
-  const ListHeader = () => (
-    <>
-      <View style={styles.plaqueContainer}>
-        <StyledText style={styles.mainTitle}>
-          {t("Events_ActivitiesTitle")}
-        </StyledText>
-      </View>
-
-      {!isPermissionLoading && canInitiate && (
-        <>
-          <FlipButton
-            onPress={() => router.push("/NewActivity")}
-            style={styles.newActivityButton}
-            bgColor="#ffffff"
-            textColor="#000000"
-          >
-            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("Activities_AddNew", "Add a new activity")}
-            </Text>
-          </FlipButton>
-
-          <FlipButton
-            onPress={() => console.log("Push!")} // Will navigate to the new page later
-            style={styles.newActivityButton}
-            bgColor="#ffffff"
-            textColor="#000000"
-          >
-            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-              {t("Activities_MyCreatedActivities", "My Created Activities")}
-            </Text>
-          </FlipButton>
-        </>
-      )}
-
-      <FloatingLabelInput
-        label={t("Common_SearchPlaceholder", "Search by name...")}
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-        style={styles.searchContainer}
-        alignRight={i18n.dir() === "rtl"}
-      />
-    </>
-  );
 
   if (isLoading && !allActivities.length) {
     return (
@@ -191,11 +244,24 @@ export default function ActivitiesScreen() {
       <PaginatedListDisplay
         flatListRef={flatListRef}
         items={itemsForCurrentPage}
-        ListHeaderComponent={ListHeader}
+        ListHeaderComponent={
+          <ActivitiesListHeader
+            t={t}
+            isRtl={isRtl}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            isPermissionLoading={isPermissionLoading}
+            canInitiate={canInitiate}
+            router={router}
+            sortMode={sortMode}
+            handleToggleSort={handleToggleSort}
+          />
+        }
         listContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <EventCard
             event={item}
+            isNew={isItemNew("events", item.dateCreated)}
             onPress={() =>
               router.push({
                 pathname: "/EventFocus",
@@ -223,15 +289,22 @@ export default function ActivitiesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fef1e6", // Added background color
-  },
-  content: {
-    flex: 1,
-    marginTop: 5,
-    paddingHorizontal: 16,
+    backgroundColor: "#fef1e6",
   },
   searchContainer: {
     marginBottom: 20,
+  },
+  sortButton: {
+    backgroundColor: "#f0f0f0",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  sortButtonText: {
+    fontWeight: "bold",
+    textAlign: "center",
   },
   centered: {
     flex: 1,
@@ -248,22 +321,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-    marginBottom: 20,
-  },
-  listContentContainer: {
-    alignItems: "center",
   },
   listContainer: {
-    paddingTop: 75, // Top padding to account for the Header
+    paddingTop: 75,
     paddingHorizontal: 16,
     paddingBottom: 40,
     alignSelf: "center",
     width: "95%",
   },
   newActivityButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#28a745",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  myActivitiesButton: {
+    backgroundColor: "#17a2b8",
     paddingVertical: 12,
     borderRadius: 8,
     marginBottom: 20,
@@ -282,6 +355,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginTop: 60, // Added requested margin
   },
 });

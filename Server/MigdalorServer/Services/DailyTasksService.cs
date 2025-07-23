@@ -134,11 +134,13 @@ namespace MigdalorServer.Services
         /// <summary>
         /// Generates an Excel report from a given list of attendance records.
         /// </summary>
+        /// 
         private async Task GenerateReportFromData(List<OhBokerTov> records, MigdalorDBContext dbContext)
         {
-            // CORRECTED: The report is for today's date.
             var reportDate = DateTime.Now.Date;
             _logger.LogInformation("Generating Boker Tov report for date: {reportDate}", reportDate);
+
+            var israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
 
             var residentIds = records.Select(r => r.ResidentId).ToList();
             var personData = await (
@@ -151,12 +153,17 @@ namespace MigdalorServer.Services
             var reportData = records.Select(r =>
             {
                 var pData = personData.GetValueOrDefault(r.ResidentId);
+
+                var localSignInTime = r.HasSignedIn && r.SignInTime.HasValue
+                    ? TimeZoneInfo.ConvertTimeFromUtc(r.SignInTime.Value, israelTimeZone)
+                    : (DateTime?)null;
+
                 return new
                 {
                     FullName = pData?.FullName ?? "Unknown Resident",
                     PhoneNumber = pData?.PhoneNumber ?? "N/A",
                     HasSignedIn = r.HasSignedIn ? "כן" : "לא",
-                    SignInTime = r.HasSignedIn && r.SignInTime.HasValue ? r.SignInTime.Value.ToLocalTime().ToString("HH:mm") : "N/A"
+                    SignInTime = localSignInTime?.ToString("HH:mm") ?? "N/A"
                 };
             }).ToList();
 
@@ -200,8 +207,7 @@ namespace MigdalorServer.Services
                 workbook.SaveAs(filePath);
                 _logger.LogInformation("Report saved successfully to {filePath}", filePath);
             }
-        }
-
+        } 
         /// <summary>
         /// Called when the application is shutting down. Stops the timer.
         /// </summary>

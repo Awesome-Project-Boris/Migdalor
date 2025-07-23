@@ -20,19 +20,41 @@ namespace MigdalorServer.Controllers
     public class NoticesController : ControllerBase
     {
         // GET: api/<NoticeController>
+        // In NoticesController.cs
+
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
             try
             {
-                return Ok(OhNotice.GetNotices());
+                var notices = await (from n in _context.OhNotices
+                                     join s in _context.OhPeople on n.SenderId equals s.PersonId
+                                     join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
+                                     join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
+                                     from pg in picGroup.DefaultIfEmpty()
+                                     orderby n.CreationDate descending
+                                     select new NoticeDto
+                                     {
+                                         NoticeId = n.NoticeId,
+                                         SenderId = n.SenderId,
+                                         EngSenderName = s.EngFirstName + " " + s.EngLastName,
+                                         HebSenderName = s.HebFirstName + " " + s.HebLastName,
+                                         CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
+                                         NoticeTitle = n.NoticeTitle,
+                                         NoticeMessage = n.NoticeMessage,
+                                         NoticeCategory = n.NoticeCategory,
+                                         NoticeSubCategory = n.NoticeSubCategory,
+                                         PictureId = n.PictureId,
+                                         PicturePath = pg.PicPath,
+                                         CategoryColor = cat.CategoryColor
+                                     }).ToListAsync();
+
+                return Ok(notices);
             }
             catch (Exception e)
             {
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    e.InnerException?.Message ?? e.Message
-                );
+                _logger.LogError(e, "Failed to retrieve notices.");
+                return StatusCode(500, e.InnerException?.Message ?? e.Message);
             }
         }
 
@@ -49,6 +71,8 @@ namespace MigdalorServer.Controllers
         [HttpGet("{category}")]
         public IActionResult Get(string category)
         {
+            // This method uses a static call. If you need the timezone fix here as well,
+            // it would need to be rewritten similar to the main Get() method above.
             try
             {
                 return Ok(OhNotice.GetOhNoticesByCategory(category));
@@ -65,32 +89,47 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        [HttpGet("{id:int}")] // Route accepts an 'id' parameter
-        public async Task<ActionResult<OhNotice>> GetNoticeById(int id) // id matches the route parameter
+        [HttpGet("{id:int}")]
+        public async Task<ActionResult<NoticeDto>> GetNoticeById(int id)
         {
-            if (id <= 0) // Basic validation
+            if (id <= 0)
             {
                 return BadRequest("Invalid Notice ID provided.");
             }
 
             try
             {
-                // Find the notice by its primary key (noticeID in the DB)
-                // Ensure your NoticeModel has the correct primary key property mapped (e.g., NoticeId)
-                var notice = await _context.OhNotices.FindAsync(id);
+                var notice = await (from n in _context.OhNotices
+                                    where n.NoticeId == id
+                                    join s in _context.OhPeople on n.SenderId equals s.PersonId
+                                    join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
+                                    join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
+                                    from pg in picGroup.DefaultIfEmpty()
+                                    select new NoticeDto
+                                    {
+                                        NoticeId = n.NoticeId,
+                                        SenderId = n.SenderId,
+                                        EngSenderName = s.EngFirstName + " " + s.EngLastName,
+                                        HebSenderName = s.HebFirstName + " " + s.HebLastName,
+                                        CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
+                                        NoticeTitle = n.NoticeTitle,
+                                        NoticeMessage = n.NoticeMessage,
+                                        NoticeCategory = n.NoticeCategory,
+                                        NoticeSubCategory = n.NoticeSubCategory,
+                                        PictureId = n.PictureId,
+                                        PicturePath = pg.PicPath, // Include the picture path
+                                        CategoryColor = cat.CategoryColor
+                                    }).FirstOrDefaultAsync();
 
                 if (notice == null)
                 {
-                    return NotFound($"Notice with ID {id} not found."); // Return 404 if not found
+                    return NotFound($"Notice with ID {id} not found.");
                 }
-
-                return Ok(notice); // Return 200 OK with the notice data
+                return Ok(notice);
             }
             catch (Exception ex)
             {
-                // Log the exception (replace Console.WriteLine with your actual logger)
-                Console.WriteLine($"Error fetching notice with ID {id}: {ex.Message}");
-                // Return a generic 500 error to the client
+                _logger.LogError(ex, $"Error fetching notice with ID {id}");
                 return StatusCode(500, "An internal server error occurred.");
             }
         }
@@ -104,50 +143,48 @@ namespace MigdalorServer.Controllers
         // using System.Security.Claims;
 
         [HttpPost]
-        [Authorize(Roles = "admin")] // 1. Authorize attribute now checks for the lowercase "admin" role.
-                                     // 2. This requires a valid JWT with the corresponding role claim.
-        public IActionResult Post([FromBody] NewNotice notice)
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> Post([FromBody] NewNotice noticeDto)
         {
-            // --- Model Validation (Best Practice) ---
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            // --- Security Enhancement: Verify Sender ID from Token ---
-            // Get the user's ID from the token's claims.
             var senderIdFromToken = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            // Check if the ID from the token matches the one in the request body.
-            // This prevents an admin from creating a notice on behalf of someone else.
-            if (string.IsNullOrEmpty(senderIdFromToken) || notice.SenderId.ToString() != senderIdFromToken)
+            if (string.IsNullOrEmpty(senderIdFromToken) || noticeDto.SenderId.ToString() != senderIdFromToken)
             {
-                _logger.LogWarning("Forbidden Action: User {TokenUserId} attempted to post a notice with a mismatched SenderId {BodySenderId}.", senderIdFromToken, notice.SenderId);
-                return Forbid(); // Return 403 Forbidden
+                _logger.LogWarning("Forbidden Action: User {TokenUserId} attempted to post a notice with a mismatched SenderId {BodySenderId}.", senderIdFromToken, noticeDto.SenderId);
+                return Forbid();
             }
 
-            _logger.LogInformation("POST /api/Notices called by admin {AdminId} with title: {NoticeTitle}", senderIdFromToken, notice?.Title);
+            _logger.LogInformation("POST /api/Notices called by admin {AdminId} with title: {NoticeTitle}", senderIdFromToken, noticeDto?.Title);
 
             try
             {
-                var createdNotice = OhNotice.AddOhNotice(notice);
+                var newNotice = new OhNotice
+                {
+                    NoticeTitle = noticeDto.Title,
+                    NoticeMessage = noticeDto.Content,
+                    SenderId = noticeDto.SenderId,
+                    NoticeCategory = noticeDto.Category,
+                    NoticeSubCategory = noticeDto.SubCategory,
+                    PictureId = noticeDto.PictureId, // Map the new field
+                    CreationDate = DateTime.UtcNow // Set creation date
+                };
 
-                _logger.LogInformation("Notice created successfully with ID: {NoticeId}", createdNotice.NoticeId);
+                _context.OhNotices.Add(newNotice);
+                await _context.SaveChangesAsync();
 
-                return Ok(createdNotice);
+                _logger.LogInformation("Notice created successfully with ID: {NoticeId}", newNotice.NoticeId);
+
+                // Return the created object
+                return CreatedAtAction(nameof(GetNoticeById), new { id = newNotice.NoticeId }, newNotice);
             }
             catch (Exception e)
             {
                 _logger.LogError(e, "Error occurred in POST /api/Notices. Message: {ErrorMessage}", e.Message);
-                if (e.InnerException != null)
-                {
-                    _logger.LogError(e.InnerException, "Inner Exception details.");
-                }
-
-                return StatusCode(
-                    StatusCodes.Status500InternalServerError,
-                    "An internal error occurred while creating the notice."
-                );
+                return StatusCode(500, "An internal error occurred while creating the notice.");
             }
         }
 
@@ -171,6 +208,34 @@ namespace MigdalorServer.Controllers
                         StatusCodes.Status500InternalServerError,
                         e.InnerException?.Message ?? e.Message
                     );
+            }
+        }
+
+        [HttpGet("latest-timestamp")]
+        public async Task<ActionResult<DateTime>> GetLatestNoticeTimestamp()
+        {
+            try
+            {
+                var latestNoticeDate = await _context.OhNotices
+                    .Where(n => n.CreationDate.HasValue)
+                    .OrderByDescending(n => n.CreationDate)
+                    .Select(n => n.CreationDate.Value) // Use .Value since we filtered for non-null
+                    .FirstOrDefaultAsync();
+
+                if (latestNoticeDate == default)
+                {
+                    return NotFound("No notices with a creation date found.");
+                }
+
+                // --- FIX: Specify that the DateTime from the DB should be treated as UTC ---
+                var utcDate = DateTime.SpecifyKind(latestNoticeDate, DateTimeKind.Utc);
+
+                return Ok(utcDate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching latest notice timestamp.");
+                return StatusCode(500, "An internal server error occurred.");
             }
         }
 

@@ -152,13 +152,13 @@ export default function Events() {
           const errorText = await response.text();
           throw new Error(errorText || "Failed to update meeting.");
       }
-      
-      const successMessage = isRescheduling ? "Meeting Rescheduled" : "Meeting Cancelled";
-      Toast.show({ type: "success", text1: successMessage, text2: "Participants have been notified."});
+
+      const successMessage = isRescheduling ? t("Events_MeetingRescheduled") : t("Events_MeetingCancelled");
+      Toast.show({ type: "success", text1: successMessage, text2: t("Events_ParticipantsHaveBeenNotified") });
       resetForm();
 
     } catch (error) {
-      Toast.show({ type: "error", text1: "Update Failed", text2: error.message });
+      Toast.show({ type: "error", text1: t("Update_Failed"), text2: error.message });
     } finally {
       setIsSubmitting(false);
     }

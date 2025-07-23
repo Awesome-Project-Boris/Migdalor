@@ -13,9 +13,9 @@ namespace MigdalorServer.Models
     public partial class OhListing
     {
         public static async Task<OhListing> CreateAndLinkPicturesAsync(
-            ListingCreation listingDto, // Uses DTO with optional Pic IDs
-            MigdalorDBContext dbContext
-        )
+    ListingCreation listingDto, // Uses DTO with optional Pic IDs
+    MigdalorDBContext dbContext
+)
         {
             if (listingDto == null)
                 throw new ArgumentNullException(nameof(listingDto));
@@ -27,31 +27,27 @@ namespace MigdalorServer.Models
                     nameof(listingDto.SellerId)
                 );
 
-            // --- 1. Validation & Basic Sanitization ---
-
-            // Title Validation & Sanitization
             if (string.IsNullOrWhiteSpace(listingDto.Title))
             {
                 throw new ValidationException("Listing title cannot be empty.");
             }
-            string sanitizedTitle = listingDto.Title.Trim(); // Basic trim
-            if (sanitizedTitle.Length > 100) // Check against DB limit [cite: 8]
+            string sanitizedTitle = listingDto.Title.Trim();
+            if (sanitizedTitle.Length > 100)
             {
                 throw new ValidationException("Listing title cannot exceed 100 characters.");
             }
 
-            string sanitizedDescription = listingDto.Description?.Trim(); // Trim if not null
-            if (sanitizedDescription != null && sanitizedDescription.Length > 300) // Check against DB limit [cite: 8]
+            string sanitizedDescription = listingDto.Description?.Trim();
+            if (sanitizedDescription != null && sanitizedDescription.Length > 300)
             {
                 throw new ValidationException("Listing description cannot exceed 300 characters.");
             }
 
-            // --- 2. Create Listing Entity (using sanitized values) ---
             var newListing = new OhListing
             {
                 ListingId = 0,
-                Title = sanitizedTitle, // Use sanitized value
-                Description = sanitizedDescription, // Use sanitized value (could be null)
+                Title = sanitizedTitle,
+                Description = sanitizedDescription,
                 SellerId = listingDto.SellerId,
                 IsActive = true,
                 Date = DateTime.UtcNow,
@@ -59,27 +55,21 @@ namespace MigdalorServer.Models
 
             dbContext.OhListings.Add(newListing);
 
-            // --- 3. Save Listing to get the ID ---
             try
             {
-                await dbContext.SaveChangesAsync(); // Let EF Core handle parameterization
+                await dbContext.SaveChangesAsync();
             }
             catch (DbUpdateException ex)
             {
-                // Handle potential database-level errors (e.g., unique constraints, FK violations)
                 Console.WriteLine(
                     $"ERROR saving initial listing: {ex.Message} | Inner: {ex.InnerException?.Message}"
                 );
-                // You might want to throw a more specific custom exception here
                 throw new InvalidOperationException(
                     "Failed to save the new listing to the database.",
                     ex
                 );
             }
-            // newListing.ListingId is now populated
 
-
-            // --- 4. Link Pictures (logic remains the same) ---
             var pictureIdsToLink = new List<int>();
             if (listingDto.MainPicId.HasValue)
                 pictureIdsToLink.Add(listingDto.MainPicId.Value);
@@ -104,7 +94,6 @@ namespace MigdalorServer.Models
                         && !pictures.Any(p => p.PicId == listingDto.MainPicId.Value)
                     )
                     {
-                        // Consider rolling back or throwing a more severe error if main pic link fails
                         throw new InvalidOperationException(
                             $"Main picture (ID: {listingDto.MainPicId.Value}) required for linking was not found or already linked."
                         );
@@ -120,15 +109,13 @@ namespace MigdalorServer.Models
                 {
                     try
                     {
-                        await dbContext.SaveChangesAsync(); // Save picture FK updates
+                        await dbContext.SaveChangesAsync();
                     }
                     catch (DbUpdateException ex)
                     {
-                        // Handle errors linking pictures
                         Console.WriteLine(
                             $"ERROR saving picture links for listing {newListing.ListingId}: {ex.Message} | Inner: {ex.InnerException?.Message}"
                         );
-                        // Decide on error handling: maybe log and continue, or throw?
                         throw new InvalidOperationException(
                             "Failed to link pictures to the new listing.",
                             ex
@@ -139,7 +126,6 @@ namespace MigdalorServer.Models
 
             return newListing;
         }
-
         public async Task<List<ListingSummary>> GetActiveListingSummariesAsync(
             MigdalorDBContext _context
         )

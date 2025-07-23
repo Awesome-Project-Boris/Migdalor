@@ -17,6 +17,7 @@ import FilterModal from "../components/NoticeFilterModal";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import StyledText from "@/components/StyledText";
 import { useSettings } from "@/context/SettingsContext";
+import { useNotifications } from "@/context/NotificationsContext";
 
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -49,6 +50,7 @@ export default function NoticesScreen() {
   const flatListRef = useRef(null);
   const { settings } = useSettings();
   const useColumnLayout = settings.fontSizeMultiplier >= 2;
+  const { updateLastVisited, isItemNew } = useNotifications();
 
   const [allNotices, setAllNotices] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,6 +64,15 @@ export default function NoticesScreen() {
   const [isFilterModalVisible, setIsFilterModalVisible] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        console.log("Notices unfocused, updating last visited time.");
+        updateLastVisited("notices");
+      };
+    }, [updateLastVisited])
+  );
 
   const fetchNoticesCallback = useCallback(async () => {
     setIsLoading(true);
@@ -174,6 +185,12 @@ export default function NoticesScreen() {
     }
 
     filtered.sort((a, b) => {
+      const aIsNew = isItemNew("notices", a.creationDate);
+      const bIsNew = isItemNew("notices", b.creationDate);
+
+      if (aIsNew && !bIsNew) return -1;
+      if (!aIsNew && bIsNew) return 1;
+
       const dateA = new Date(a.creationDate);
       const dateB = new Date(b.creationDate);
       if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
@@ -228,6 +245,7 @@ export default function NoticesScreen() {
       <View style={styles.cardContainer}>
         <NoticeCard
           data={item}
+          isNew={isItemNew("notices", item.creationDate)} // Pass the isNew prop
           onPress={() =>
             router.push({
               pathname: "/NoticeFocus",
@@ -241,7 +259,7 @@ export default function NoticesScreen() {
         />
       </View>
     ),
-    [router]
+    [router, isItemNew]
   );
 
   const keyExtractor = useCallback((item) => item.noticeId.toString(), []);
@@ -488,7 +506,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#ddd",
-    flexGrow: 1,
+    flex: 1,
   },
   fullWidthButton: {
     width: "100%",
@@ -505,6 +523,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
+    flexShrink: 1,
   },
   listContainerStyle: {
     paddingHorizontal: 10, // Reduced padding for wider content
@@ -513,6 +532,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: "100%",
     marginBottom: 15,
+    alignItems: "center",
   },
   errorText: {
     textAlign: "center",

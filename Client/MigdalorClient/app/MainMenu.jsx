@@ -4,7 +4,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-} from "react-native"; // 'Text' import removed
+} from "react-native";
 
 import { Stack } from "expo-router";
 
@@ -14,7 +14,7 @@ import FlipButton from "../components/FlipButton";
 import Greeting from "../components/MainMenuHelloNameplate";
 import Header from "../components/Header";
 import { EditToggleButton } from "../components/MainMenuFinishEditButton";
-import StyledText from "@/components/StyledText"; // Import StyledText
+import StyledText from "@/components/StyledText";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Toast } from "toastify-react-native";
@@ -138,31 +138,51 @@ export default function Index() {
     const loadOrder = async () => {
       console.log("Loading menu order...");
       setIsLoadingOrder(true);
-      let finalData = initialDataStructure;
       try {
+        // ✅ Separate the Good Morning button from the rest of the buttons
+        const goodMorningButton = isGoodMorningProcedureVisible
+          ? initialDataStructure.find((item) => item.key === "menu1")
+          : null;
+        const otherButtons = initialDataStructure.filter(
+          (item) => item.key !== "menu1"
+        );
+
         const savedOrderJson = await AsyncStorage.getItem(ASYNC_STORAGE_KEY);
+        let sortedOtherButtons = otherButtons;
+
         if (savedOrderJson !== null) {
           const savedKeys = JSON.parse(savedOrderJson);
+          // Apply the saved order ONLY to the other buttons
           const orderedData = savedKeys
-            .map((key) => initialDataStructure.find((item) => item.key === key))
+            .map((key) => otherButtons.find((item) => item.key === key))
             .filter((item) => item !== undefined);
+
           const currentKeys = new Set(orderedData.map((item) => item.key));
-          const newItems = initialDataStructure.filter(
+          const newItems = otherButtons.filter(
             (item) => !currentKeys.has(item.key)
           );
-          finalData = [...orderedData, ...newItems];
+          sortedOtherButtons = [...orderedData, ...newItems];
         } else {
           console.log("No saved menu order found.");
         }
-      } catch (error) {
-        console.error("Failed to load menu order:", error);
-      } finally {
+
+        // ✅ Combine the lists, ensuring the Good Morning button is always first if it exists
+        const finalData = goodMorningButton
+          ? [goodMorningButton, ...sortedOtherButtons]
+          : sortedOtherButtons;
+
         setButtonData(finalData);
         latestButtonDataRef.current = finalData;
+      } catch (error) {
+        console.error("Failed to load menu order:", error);
+        setButtonData(initialDataStructure); // Fallback to default
+        latestButtonDataRef.current = initialDataStructure;
+      } finally {
         setIsLoadingOrder(false);
         console.log("Finished loading menu order.");
       }
     };
+
     console.log("Checking user role:", user?.personRole);
     if (user?.personRole !== "Instructor") {
       loadOrder();
@@ -219,7 +239,6 @@ export default function Index() {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <ActivityIndicator size="large" color="#006aab" />
-        {/* Replaced Text with StyledText and added a style */}
         <StyledText style={styles.loadingText}>
           {t("MainMenuScreen_loadingMenu")}
         </StyledText>
@@ -269,18 +288,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     paddingTop: 50,
-    backgroundColor: "#fbe6d0",
+    backgroundColor: "#fef1e6",
   },
   loadingText: {
-    // Added style for the loading text
     marginTop: 10,
     fontSize: 18,
     color: "#333",
   },
   toggleButton: {
     width: 300,
-    // --- FIX: Removed fixed height to allow the button to grow ---
-    // height: 70,
     marginBottom: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,

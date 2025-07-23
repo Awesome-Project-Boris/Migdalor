@@ -1,12 +1,22 @@
 import React from "react";
-import { Modal, View, StyleSheet } from "react-native";
+import { Modal, View, Text, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
-import StyledText from "@/components/StyledText";
-import FlipButtonSizeless from "@/components/FlipButtonSizeless"; // Import the new button
+import FlipButtonSizeless from "@/components/FlipButtonSizeless"; // Ensure this path is correct
 
 const NodeInfoModal = ({ visible, node, onClose }) => {
   const { t } = useTranslation();
-  if (!visible || !node) return null;
+
+  if (!node) {
+    return null;
+  }
+
+  // --- FIX: Special-case the 'Legend' translation key ---
+  // If the description is our specific key, translate it.
+  // Otherwise, use the description directly as it's from the database.
+  const descriptionText =
+    node.description === "MapScreen_LegendText"
+      ? t("MapScreen_LegendText")
+      : node.description;
 
   return (
     <Modal
@@ -17,16 +27,12 @@ const NodeInfoModal = ({ visible, node, onClose }) => {
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <StyledText style={styles.modalText}>
-            {t(node.description, { defaultValue: node.description })}
-          </StyledText>
-          <View style={styles.buttonContainer}>
-            <FlipButtonSizeless onPress={onClose} style={styles.closeButton}>
-              <StyledText style={styles.closeButtonText}>
-                {t("MapScreen_backToMapButton")}
-              </StyledText>
-            </FlipButtonSizeless>
-          </View>
+          <Text style={styles.modalText}>{descriptionText}</Text>
+          <FlipButtonSizeless style={styles.buttonClose} onPress={onClose}>
+            <Text style={styles.textStyle}>
+              {t("Common_BackButtonShort", "Back")}
+            </Text>
+          </FlipButtonSizeless>
         </View>
       </View>
     </Modal>
@@ -38,44 +44,42 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalView: {
-    width: "85%",
     margin: 20,
     backgroundColor: "white",
     borderRadius: 20,
-    padding: 25,
-    paddingBottom: 20, // Add padding at the bottom
+    padding: 35,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    width: "85%",
   },
   modalText: {
-    marginBottom: 25, // Increased bottom margin
+    marginBottom: 20,
     textAlign: "center",
-    fontSize: 20, // 2. Made text bigger
-    lineHeight: 28,
+    fontSize: 16,
+    lineHeight: 24,
   },
-  closeButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 8,
-    alignSelf: "center",
+  buttonClose: {
+    backgroundColor: "#2196F3",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: 20,
   },
-  closeButtonText: {
-    fontSize: 18,
+  textStyle: {
+    color: "white",
     fontWeight: "bold",
-    color: "#333",
-  },
-  buttonContainer: {
-    width: "100%",
-    paddingTop: 10,
-    marginTop: "auto",
+    textAlign: "center",
+    fontSize: 16,
   },
 });
 

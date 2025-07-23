@@ -6,7 +6,7 @@ import React, {
   useEffect,
 } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Globals } from "@/app/constants/Globals";
 import EventCard from "@/components/EventCard";
@@ -14,14 +14,46 @@ import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import FloatingLabelInput from "@/components/FloatingLabelInput";
 import Header from "@/components/Header";
 import StyledText from "@/components/StyledText";
+import { useNotifications } from "@/context/NotificationsContext";
 
 const ITEMS_PER_PAGE = 5;
+
+const dayOrder = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+const getDayValue = (recurrenceRule) => {
+  if (!recurrenceRule) return 7;
+  const byDayPart = recurrenceRule
+    .split(";")
+    .find((part) => part.startsWith("BYDAY="));
+  if (!byDayPart) return 7;
+
+  const dayCode = byDayPart.split("=")[1].substring(0, 2);
+  return dayOrder[dayCode] ?? 7;
+};
+
+const ClassesListHeader = ({ t, isRtl, searchTerm, setSearchTerm }) => (
+  <>
+    <View style={styles.plaqueContainer}>
+      <StyledText style={styles.mainTitle}>
+        {t("Events_ClassesTitle")}
+      </StyledText>
+    </View>
+    <FloatingLabelInput
+      label={t("Common_SearchPlaceholder", "Search by name...")}
+      value={searchTerm}
+      onChangeText={setSearchTerm}
+      style={styles.searchContainer}
+      alignRight={isRtl}
+    />
+  </>
+);
 
 export default function ClassesScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const params = useLocalSearchParams();
   const flatListRef = useRef(null);
   const isRtl = i18n.dir() === "rtl";
+  const { updateLastVisited, isItemNew } = useNotifications();
 
   const [allClasses, setAllClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,35 +63,68 @@ export default function ClassesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      const fetchEvents = async () => {
-        setIsLoading(true);
-        try {
-          const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
-          if (!response.ok)
-            throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
-          const data = await response.json();
-          setAllClasses(data.classes || []);
-          console.log("All data on classes: ", data);
-          console.log("Classes focus: ", data.classes);
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setIsLoading(false);
-        }
+      return () => {
+        console.log("Events page unfocused, updating last visited time.");
+        updateLastVisited("events");
       };
-      fetchEvents();
-    }, [t])
+    }, [updateLastVisited])
   );
 
-  const filteredClasses = useMemo(() => {
-    if (!searchTerm) {
-      return allClasses;
+  const fetchEvents = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${Globals.API_BASE_URL}/api/events`);
+      if (!response.ok)
+        throw new Error(t("Errors_Event_Fetch", "Could not fetch events."));
+      const data = await response.json();
+
+      console.log("Those are all the events: ", data);
+
+      setAllClasses(data.classes || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return allClasses.filter((c) =>
-      c.eventName.toLowerCase().includes(lowercasedTerm)
-    );
-  }, [allClasses, searchTerm]);
+  }, [t]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchEvents();
+    }, [fetchEvents])
+  );
+
+  useEffect(() => {
+    if (params.refresh) {
+      console.log("Refresh signal received, fetching new classes...");
+      fetchEvents();
+    }
+  }, [params.refresh, fetchEvents]);
+
+  const filteredClasses = useMemo(() => {
+    const sourceArray = allClasses;
+
+    let filtered = sourceArray;
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      filtered = sourceArray.filter((c) =>
+        c.eventName.toLowerCase().includes(lowercasedTerm)
+      );
+    }
+
+    return [...filtered].sort((a, b) => {
+      const aIsNew = isItemNew("events", a.dateCreated);
+      const bIsNew = isItemNew("events", b.dateCreated);
+      if (aIsNew && !bIsNew) return -1;
+      if (!bIsNew && bIsNew) return 1;
+
+      const dayA = getDayValue(a.recurrenceRule);
+      const dayB = getDayValue(b.recurrenceRule);
+      if (dayA !== dayB) return dayA - dayB;
+
+      return new Date(b.startDate) - new Date(a.startDate);
+    });
+  }, [allClasses, searchTerm, isItemNew]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -77,23 +142,6 @@ export default function ClassesScreen() {
       flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
     }
   };
-
-  const ListHeader = () => (
-    <>
-      <View style={styles.plaqueContainer}>
-        <StyledText style={styles.mainTitle}>
-          {t("Events_ClassesTitle")}
-        </StyledText>
-      </View>
-      <FloatingLabelInput
-        label={t("Common_SearchPlaceholder", "Search by name...")}
-        value={searchTerm}
-        onChangeText={setSearchTerm}
-        style={styles.searchContainer}
-        alignRight={isRtl}
-      />
-    </>
-  );
 
   if (isLoading && !allClasses.length) {
     return (
@@ -123,11 +171,19 @@ export default function ClassesScreen() {
       <PaginatedListDisplay
         flatListRef={flatListRef}
         items={itemsForCurrentPage}
-        ListHeaderComponent={ListHeader}
+        ListHeaderComponent={
+          <ClassesListHeader
+            t={t}
+            isRtl={isRtl}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
+        }
         listContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <EventCard
             event={item}
+            isNew={isItemNew("events", item.dateCreated)}
             onPress={() =>
               router.push({
                 pathname: "/EventFocus",
@@ -153,7 +209,7 @@ export default function ClassesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fef1e6", // Added background color
+    backgroundColor: "#fef1e6",
   },
   content: {
     flex: 1,
@@ -181,7 +237,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     color: "#333",
-    marginBottom: 20,
   },
   listContainer: {
     paddingTop: 75,
@@ -204,6 +259,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginTop: 60, // Added requested margin
   },
 });

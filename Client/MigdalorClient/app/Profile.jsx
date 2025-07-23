@@ -186,12 +186,15 @@ export default function Profile() {
           }
           const userData = await response.json();
 
+          console.log("This is user data: ", userData);
+
           const apartmentDisplayNumber = getApartmentNumberFromGuid(
             userData.residentApartmentNumber
           );
 
           if (!isActive) return;
-          setForm({
+          setForm((prevForm) => ({
+            ...prevForm,
             mobilePhone: userData.phoneNumber || "",
             email: userData.email || "",
             arrivalYear: userData.dateOfArrival || "",
@@ -202,7 +205,18 @@ export default function Profile() {
               [],
             aboutMe: userData.residentDescription || "",
             residentApartmentNumber: apartmentDisplayNumber || "",
-          });
+
+            name:
+              (Globals.userSelectedLanguage === "he"
+                ? userData.hebName
+                : userData.engName) || "",
+
+            partner:
+              (Globals.userSelectedLanguage === "he"
+                ? userData.spouseHebName
+                : userData.spouseEngName) || "",
+          }));
+
           console.log(
             "userData.profilePicture looking for image:",
             userData.profilePicture
@@ -807,18 +821,18 @@ const styles = StyleSheet.create({
     borderRadius: 60,
   },
   scrollIndicator: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 20,
-    alignSelf: 'center',
+    alignSelf: "center",
     zIndex: 10,
     height: 60,
     width: 60,
     borderRadius: 30, // This makes it a circle
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 3, // Adds a subtle shadow on Android
-    shadowColor: '#000', // Adds a subtle shadow on iOS
+    shadowColor: "#000", // Adds a subtle shadow on iOS
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.22,
     shadowRadius: 2.22,

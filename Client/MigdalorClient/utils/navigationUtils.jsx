@@ -42,6 +42,7 @@ export const createGraph = (nodes, segments) => {
  * @param {String|Number} startNodeId - The ID of the starting node.
  * @returns {Object} An object containing distances to all nodes and the previous node in the path.
  */
+
 export const dijkstra = (graph, startNodeId) => {
     const distances = {};
     const prev = {};
@@ -107,6 +108,7 @@ export const getPath = (prev, startNodeId, targetNodeId) => {
  * @param {Array} walkableNodes - An array of map nodes that are part of walkable paths.
  * @returns {Object|null} The closest node object or null.
  */
+
 export const findClosestWalkableNode = (userLocation, walkableNodes) => {
     if (!userLocation || !walkableNodes || walkableNodes.length === 0) return null;
     

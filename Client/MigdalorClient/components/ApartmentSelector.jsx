@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View } from "react-native";
 import FloatingLabelInput from "./FloatingLabelInput";
 import StyledText from "./StyledText";
@@ -7,14 +7,23 @@ import { Globals } from "@/app/constants/Globals";
 
 const ApartmentSelector = ({ value, onApartmentChange, error }) => {
   const { t } = useTranslation();
-  const [inputValue, setInputValue] = React.useState(
-    value ? String(value) : ""
-  );
-  const [status, setStatus] = React.useState({ message: "", color: "grey" });
-  const [existingApartments, setExistingApartments] = React.useState(new Set());
-  const debounceTimeout = React.useRef(null);
+  const [inputValue, setInputValue] = useState(value ? String(value) : "");
+  const [status, setStatus] = useState({ message: "", color: "grey" });
+  const [existingApartments, setExistingApartments] = useState(new Set());
 
-  React.useEffect(() => {
+  // --- FIX: Add a loading state ---
+  const [isLoading, setIsLoading] = useState(true);
+  const debounceTimeout = useRef(null);
+
+  useEffect(() => {
+    const newInputValue = value ? String(value) : "";
+    if (newInputValue !== inputValue) {
+      setInputValue(newInputValue);
+      validateApartment(Number(newInputValue));
+    }
+  }, [value]);
+
+  useEffect(() => {
     const fetchExistingApartments = async () => {
       try {
         const response = await fetch(
@@ -24,21 +33,41 @@ const ApartmentSelector = ({ value, onApartmentChange, error }) => {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        setExistingApartments(new Set(data));
+        const numericData = data.map(Number);
+        const newApartmentSet = new Set(numericData);
+        setExistingApartments(newApartmentSet);
+
+        // --- FIX: Re-validate the initial value now that data is loaded ---
+        if (inputValue) {
+          validateApartment(Number(inputValue), false, newApartmentSet);
+        }
       } catch (e) {
         console.error("Failed to fetch existing apartments:", e);
+      } finally {
+        // --- FIX: Mark loading as complete ---
+        setIsLoading(false);
       }
     };
     fetchExistingApartments();
-  }, []);
+  }, []); // This effect should only run once on mount
 
-  const validateApartment = (num) => {
+  // --- FIX: Add guard clauses to prevent running with incomplete data ---
+  const validateApartment = (
+    num,
+    isDebounced = true,
+    apartmentSet = existingApartments
+  ) => {
+    // Don't run validation until the fetch is complete
+    if (isLoading && isDebounced) {
+      return;
+    }
+
     if (isNaN(num) || num <= 0) {
       setStatus({ message: "", color: "grey" });
       return;
     }
 
-    if (existingApartments.has(num)) {
+    if (apartmentSet.has(num)) {
       setStatus({ message: t("ApartmentSelector_Exists"), color: "green" });
     } else if (
       (num >= 101 && num <= 120) ||
@@ -50,7 +79,7 @@ const ApartmentSelector = ({ value, onApartmentChange, error }) => {
       (num >= 331 && num <= 349) ||
       (num >= 431 && num <= 449)
     ) {
-      setStatus({ message: t("ApartmentSelector_Potential"), color: "blue" });
+      setStatus({ message: t("ApartmentSelector_Exists"), color: "green" });
     } else {
       setStatus({ message: t("ApartmentSelector_Invalid"), color: "red" });
     }
@@ -67,7 +96,6 @@ const ApartmentSelector = ({ value, onApartmentChange, error }) => {
     }, 500);
   };
 
-  // Determine text alignment based on global settings
   const textAlignStyle = {
     textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left",
   };
@@ -79,12 +107,10 @@ const ApartmentSelector = ({ value, onApartmentChange, error }) => {
         value={inputValue}
         onChangeText={handleInputChange}
         keyboardType="numeric"
-        // 1. Apply RTL alignment to the input field
         alignRight={Globals.userSelectedDirection === "rtl"}
       />
       {status.message && (
         <StyledText
-          // 2. Apply RTL alignment to the status message
           style={{
             fontSize: 20,
             color: status.color,
@@ -96,7 +122,6 @@ const ApartmentSelector = ({ value, onApartmentChange, error }) => {
         </StyledText>
       )}
       {error && (
-        // 3. Apply RTL alignment to the error message
         <StyledText
           style={{
             fontSize: 20,

@@ -7,6 +7,8 @@
         public string Description { get; set; }
         public string Location { get; set; }
         public bool IsRecurring { get; set; }
+        public string? RecurrenceRule { get; set; }
+        public DateTime DateCreated { get; set; }
         public string HostName { get; set; }
         public int? PictureId { get; set; }
         public string? PicturePath { get; set; }
