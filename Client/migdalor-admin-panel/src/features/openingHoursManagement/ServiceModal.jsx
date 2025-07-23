@@ -68,7 +68,7 @@ DialogTitle.displayName = "DialogTitle";
 // --- Main ServiceModal Component ---
 
 const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingImage, setExistingImage] = useState(null);
 
@@ -101,8 +101,6 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
 
   const [formData, setFormData] = useState(getInitialFormData());
 
-  // FIX: This logic now prevents circular dependencies by finding all descendants
-  // of the service being edited and excluding them from the parent list.
   const unselectableParentIds = useMemo(() => {
     if (mode !== "edit" || !service) {
       return [];
@@ -110,7 +108,7 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
 
     const getDescendantIds = (serviceId, allServices) => {
       const descendantIds = new Set();
-      const queue = [serviceId]; // Use a queue for iterative traversal (BFS)
+      const queue = [serviceId];
 
       while (queue.length > 0) {
         const currentId = queue.shift();
@@ -128,15 +126,15 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
     };
 
     const descendantIds = getDescendantIds(service.serviceId, services);
-    // A service cannot be its own parent, nor can its descendants be its parent.
     return [service.serviceId, ...descendantIds];
   }, [mode, service, services]);
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(getInitialFormData());
+      const initialData = getInitialFormData();
+      setFormData(initialData);
       if (mode === "edit" && service?.picturePath) {
-        setExistingImage(service.picturePath);
+        setExistingImage({ serverPath: service.picturePath });
       } else {
         setExistingImage(null);
       }
@@ -290,7 +288,6 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
               ></textarea>
             </div>
 
-            {/* FIX: Use correct property names and new filter logic */}
             <div className="md:col-span-1">
               <label
                 htmlFor="parentService"
@@ -316,7 +313,6 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
               </select>
             </div>
 
-            {/* IsActive Checkbox */}
             <div className="md:col-span-1 flex items-end pb-1">
               <div className="flex items-center">
                 <input
@@ -340,10 +336,13 @@ const ServiceModal = ({ isOpen, onClose, onSave, mode, service, services }) => {
             <div className="md:col-span-2">
               <ImageUpload
                 token={token}
-                eventName={formData.hebrewName}
-                eventDescription={formData.hebrewDescription}
+                uploaderId={user?.id}
                 onImageUploadSuccess={handleImageUploadSuccess}
                 existingImage={existingImage}
+                picRole="service"
+                picAlt={`Service image for ${formData.hebrewName}`}
+                eventName={formData.hebrewName}
+                eventDescription={formData.hebrewDescription}
               />
             </div>
           </div>
