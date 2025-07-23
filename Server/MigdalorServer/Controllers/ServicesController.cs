@@ -3,9 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Migdalor.DTOs; // Make sure this using statement points to your DTOs folder
+using Migdalor.DTOs;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
+using MigdalorServer.Models.DTOs;
 
 namespace Migdalor.Controllers
 {
@@ -20,23 +21,19 @@ namespace Migdalor.Controllers
             _context = context;
         }
 
-        // GET: api/services
-        /// <summary>
-        /// Gets a flat list of all services.
-        /// </summary>
-        /// 
-
         [HttpGet("GetAllServices")]
         public async Task<ActionResult<IEnumerable<ServiceDto>>> GetAllServices()
         {
-            // ... (fetching logic is the same)
             var allServices = await _context.OhServices
                                             .Where(s => s.IsActive == true)
+                                            .Include(s => s.Picture) // Eager load the Picture navigation property
                                             .AsNoTracking()
                                             .ToListAsync();
+
             var allOpeningHours = await _context.OhOpeningHours
                                                 .AsNoTracking()
                                                 .ToListAsync();
+
             if (!allServices.Any())
             {
                 return NotFound("No active services found.");
@@ -50,7 +47,6 @@ namespace Migdalor.Controllers
                     CloseTime = oh.CloseTime.ToString(@"hh\:mm")
                 }).ToList());
 
-            // Create the DTO map with null checks
             var serviceDtoMap = allServices.ToDictionary(
                 s => s.ServiceId,
                 s => new ServiceDto
@@ -64,11 +60,11 @@ namespace Migdalor.Controllers
                     HebrewAddendum = s.HebrewAddendum ?? "",
                     EnglishAddendum = s.EnglishAddendum ?? "",
                     PictureID = s.PictureId,
+                    PicturePath = s.Picture?.PicPath, // This line includes the picture path
                     IsActive = s.IsActive ?? false,
                     OpeningHours = hoursByServiceId.GetValueOrDefault(s.ServiceId, new List<OpeningHourDto>())
                 });
 
-            // The rest of the hierarchy-building logic remains the same...
             var rootServices = new List<ServiceDto>();
             foreach (var dto in serviceDtoMap.Values)
             {
@@ -91,10 +87,6 @@ namespace Migdalor.Controllers
             return await _context.OhServices.AsNoTracking().ToListAsync();
         }
 
-        // POST: api/services
-        /// <summary>
-        /// Creates a new service.
-        /// </summary>
         [HttpPost]
         public async Task<ActionResult<OhService>> CreateService([FromBody] ServiceDto serviceDto)
         {
@@ -126,10 +118,6 @@ namespace Migdalor.Controllers
             );
         }
 
-        // PUT: api/services/5
-        /// <summary>
-        /// Updates an existing service's details.
-        /// </summary>
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateService(int id, [FromBody] ServiceDto serviceDto)
         {
@@ -150,7 +138,6 @@ namespace Migdalor.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Map all fields from DTO to the entity
             serviceToUpdate.HebrewName = serviceDto.HebrewName;
             serviceToUpdate.EnglishName = serviceDto.EnglishName;
             serviceToUpdate.HebrewDescription = serviceDto.HebrewDescription;

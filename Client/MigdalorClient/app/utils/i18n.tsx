@@ -150,6 +150,7 @@ const resources = {
       MainMenuScreen_MapButton: "Map",
       MainMenuScreen_NoticeBoardButton: "Notice Board",
       MainMenuScreen_ResidentListButton: "Resident List",
+      MainMenuScreen_InfoSheetButton: "Info Sheet",
       MainMenuScreen_Timetable: "Time Table",
 
       InstructorMainMenu_EventsButton: "Events",
@@ -795,7 +796,8 @@ const resources = {
       MainMenuScreen_MapButton: "מפה",
       MainMenuScreen_NoticeBoardButton: "לוח מודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
-      MainMenuScreen_Timetable: "מידעון",
+      MainMenuScreen_InfoSheetButton: "מידעון",
+      MainMenuScreen_Timetable: "תוכניה",
 
       InstructorMainMenu_EventsButton: "אירועים",
 

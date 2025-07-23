@@ -6,18 +6,14 @@ import RRuleGenerator from "./RRuleGenerator";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import SpouseCommand from "../../components/common/SpouseCommand";
-import ImageUpload from "../../components/common/ImageUpload"; // Import the new component
+import ImageUpload from "../../components/common/ImageUpload";
 
 // Helper function to convert UTC date strings to the format needed by <input type="datetime-local">
 const convertToInputFormat = (dateString) => {
   if (!dateString) return "";
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  // Directly format the date string by slicing. This assumes the server provides a string
+  // that is already correctly formatted up to the minute (e.g., "YYYY-MM-DDTHH:mm:ss").
+  return dateString.slice(0, 16);
 };
 
 const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
@@ -59,10 +55,13 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
           StartDate: convertToInputFormat(eventDetails.startDate),
           EndDate: convertToInputFormat(eventDetails.endDate),
           HostId: eventDetails.host?.hostId || null,
-          PictureId: eventDetails.pictureId || null, // Add PictureId to form data
+          PictureId: eventDetails.pictureId || null,
         });
+        // The ImageUpload component expects an object with a serverPath property
         if (eventDetails.picturePath) {
-          setExistingImage(eventDetails.picturePath);
+          setExistingImage({ serverPath: eventDetails.picturePath });
+        } else {
+          setExistingImage(null);
         }
       } catch (error) {
         console.error("Failed to fetch event details", error);
@@ -83,7 +82,7 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
         StartDate: "",
         EndDate: "",
         HostId: user.id,
-        PictureId: null, // Initialize PictureId
+        PictureId: null,
       });
       setExistingImage(null);
     };
@@ -95,30 +94,30 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
         initializeNewEventForm();
       }
     }
-  }, [isOpen, eventId, eventType, user.id, token, onClose]);
+  }, [isOpen, eventId, eventType, user.id, token, onClose, isEditMode]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
 
     if (name === "StartDate") {
       const startDate = new Date(value);
-      const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+      if (!isNaN(startDate.getTime())) {
+        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Add one hour
+        const year = endDate.getFullYear();
+        const month = String(endDate.getMonth() + 1).padStart(2, "0");
+        const day = String(endDate.getDate()).padStart(2, "0");
+        const hours = String(endDate.getHours()).padStart(2, "0");
+        const minutes = String(endDate.getMinutes()).padStart(2, "0");
+        const formattedEndDate = `${year}-${month}-${day}T${hours}:${minutes}`;
 
-      const formatForInput = (date) => {
-        if (!date || isNaN(date.getTime())) return "";
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        const hours = String(date.getHours()).padStart(2, "0");
-        const minutes = String(date.getMinutes()).padStart(2, "0");
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-      };
-
-      setFormData((prev) => ({
-        ...prev,
-        StartDate: value,
-        EndDate: formatForInput(endDate),
-      }));
+        setFormData((prev) => ({
+          ...prev,
+          StartDate: value,
+          EndDate: formattedEndDate,
+        }));
+      } else {
+        setFormData((prev) => ({ ...prev, StartDate: value, EndDate: "" }));
+      }
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -135,7 +134,6 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
     setFormData((prev) => ({ ...prev, RecurrenceRule: newRrule }));
   }, []);
 
-  // Callback for when an image is successfully uploaded
   const handleImageUploadSuccess = (picId) => {
     setFormData((prev) => ({ ...prev, PictureId: picId }));
   };
@@ -151,7 +149,7 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
       await onSave(finalFormData, eventId);
       handleClose();
     } catch (error) {
-      // The parent component will show an error toast.
+      // Parent component handles toast
     } finally {
       setIsSubmitting(false);
     }
@@ -245,13 +243,15 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
               />
             </div>
 
-            {/* --- Image Upload Component Integration --- */}
             <ImageUpload
               token={token}
-              eventName={formData.EventName}
-              eventDescription={formData.Description}
+              uploaderId={user?.id}
               onImageUploadSuccess={handleImageUploadSuccess}
               existingImage={existingImage}
+              picRole="activity"
+              picAlt={`Image for ${formData.EventName || "event"}`}
+              eventName={formData.EventName}
+              eventDescription={formData.Description}
             />
 
             <div className="p-4 border rounded-md bg-gray-50 space-y-4">
