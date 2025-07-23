@@ -73,7 +73,7 @@ namespace MigdalorServer.Controllers
 
         // PUT: api/AdminListings/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutListing(int id, ListingUpdate listingUpdate)
+        public async Task<IActionResult> PutListing(int id, ListingUpdateDto listingUpdate)
         {
             var listing = await _context.OhListings.FindAsync(id);
 

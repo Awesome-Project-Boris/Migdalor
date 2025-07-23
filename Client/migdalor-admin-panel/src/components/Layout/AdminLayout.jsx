@@ -1,4 +1,4 @@
-// src/pages/AdminLayout.jsx
+// src/components/Layout/AdminLayout.jsx
 import React, { useState } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import SidebarButton from "./SidebarButton";
@@ -9,14 +9,16 @@ import {
   LogOut,
   MessageSquare,
   CalendarDays,
-  Clock, // <-- Import the Clock icon
+  Clock,
+  ShoppingCart, // <-- Import the new icon
 } from "lucide-react";
 import UserManagement from "../../features/userManagement/UserManagement";
 import NoticeManagement from "../../features/noticeManagement/NoticeManagement";
 import Dashboard from "../../pages/Dashboard";
 import Reports from "../../features/reports/Reports";
 import EventManagement from "../../features/eventManagement/EventManagement";
-import OpeningHoursManagement from "../../features/openingHoursManagement/OpeningHoursManagement"; // <-- Import the new component
+import OpeningHoursManagement from "../../features/openingHoursManagement/OpeningHoursManagement";
+import ListingManagement from "../../features/listingManagement/ListingManagement"; // <-- Import the new component
 
 const AdminLayout = () => {
   const [activePage, setActivePage] = useState("dashboard");
@@ -28,12 +30,13 @@ const AdminLayout = () => {
         return <UserManagement />;
       case "notices":
         return <NoticeManagement />;
+      case "listings": // <-- Add this case
+        return <ListingManagement />;
       case "reports":
         return <Reports />;
       case "events":
         return <EventManagement />;
-      // Add the new case for opening hours
-      case "openingHours": // <-- Add this case
+      case "openingHours":
         return <OpeningHoursManagement />;
       case "dashboard":
       default:
@@ -63,9 +66,16 @@ const AdminLayout = () => {
           />
           <SidebarButton
             icon={<MessageSquare size={20} />}
-            label="ניהול מודעות"
+            label="ניהול הודעות"
             isActive={activePage === "notices"}
             onClick={() => setActivePage("notices")}
+          />
+          {/* Add the new button for Listings */}
+          <SidebarButton
+            icon={<ShoppingCart size={20} />}
+            label="ניהול לוח מוצרים"
+            isActive={activePage === "listings"}
+            onClick={() => setActivePage("listings")}
           />
           <SidebarButton
             icon={<CalendarDays size={20} />}
@@ -73,9 +83,8 @@ const AdminLayout = () => {
             isActive={activePage === "events"}
             onClick={() => setActivePage("events")}
           />
-          {/* Add the new button for Opening Hours */}
           <SidebarButton
-            icon={<Clock size={20} />} // <-- Add this button
+            icon={<Clock size={20} />}
             label="ניהול שעות פתיחה"
             isActive={activePage === "openingHours"}
             onClick={() => setActivePage("openingHours")}
