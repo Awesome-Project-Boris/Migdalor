@@ -11,11 +11,9 @@ import ImageUpload from "../../components/common/ImageUpload";
 // Helper function to convert UTC date strings to the format needed by <input type="datetime-local">
 const convertToInputFormat = (dateString) => {
   if (!dateString) return "";
-  const date = new Date(dateString);
-  // Adjust for timezone offset to display local time correctly in the input
-  const timezoneOffset = date.getTimezoneOffset() * 60000;
-  const localDate = new Date(date.getTime() - timezoneOffset);
-  return localDate.toISOString().slice(0, 16);
+  // Directly format the date string by slicing. This assumes the server provides a string
+  // that is already correctly formatted up to the minute (e.g., "YYYY-MM-DDTHH:mm:ss").
+  return dateString.slice(0, 16);
 };
 
 const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
@@ -105,10 +103,17 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
       const startDate = new Date(value);
       if (!isNaN(startDate.getTime())) {
         const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // Add one hour
+        const year = endDate.getFullYear();
+        const month = String(endDate.getMonth() + 1).padStart(2, "0");
+        const day = String(endDate.getDate()).padStart(2, "0");
+        const hours = String(endDate.getHours()).padStart(2, "0");
+        const minutes = String(endDate.getMinutes()).padStart(2, "0");
+        const formattedEndDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
         setFormData((prev) => ({
           ...prev,
           StartDate: value,
-          EndDate: convertToInputFormat(endDate.toISOString()),
+          EndDate: formattedEndDate,
         }));
       } else {
         setFormData((prev) => ({ ...prev, StartDate: value, EndDate: "" }));
