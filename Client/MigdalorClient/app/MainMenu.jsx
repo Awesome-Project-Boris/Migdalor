@@ -132,6 +132,11 @@ export default function Index() {
       name: t("MainMenuScreen_ResidentListButton"),
       destination: "ResidentList",
     },
+    {
+      key: "menu11",
+      name: t("MainMenuScreen_InfoSheetButton"),
+      destination: "InfoSheet",
+    },
   ];
 
   useEffect(() => {

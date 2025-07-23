@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import InputField from "../../components/common/InputField";
+import ImageUpload from "../../components/common/ImageUpload";
 import { api } from "../../api/apiService";
 import { useAuth } from "../../auth/AuthContext";
 
@@ -9,16 +10,14 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
   const [formData, setFormData] = useState({});
   const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingImage, setExistingImage] = useState(null);
 
-  // Determine if the modal is in "edit" mode
   const isEditMode = !!notice;
 
-  // Fetch categories from the server when the modal opens
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const data = await api.get("/Categories", token);
-        // The existing controller returns objects with 'categoryHebName'
         const categoryNames = data.map((cat) => cat.categoryHebName);
         setCategories(Array.isArray(categoryNames) ? categoryNames : []);
       } catch (error) {
@@ -31,23 +30,29 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
     }
   }, [isOpen, token, showToast]);
 
-  // Populate form when 'notice' prop changes (for editing)
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode && notice) {
       setFormData({
         Title: notice.noticeTitle || "",
         Content: notice.noticeMessage || "",
         Category: notice.noticeCategory || "",
         SubCategory: notice.noticeSubCategory || "",
+        PictureId: notice.pictureId || null,
       });
+      if (notice.picturePath) {
+        setExistingImage({ serverPath: notice.picturePath });
+      } else {
+        setExistingImage(null);
+      }
     } else {
-      // Reset form for "create" mode
       setFormData({
         Title: "",
         Content: "",
         Category: "",
         SubCategory: "",
+        PictureId: null,
       });
+      setExistingImage(null);
     }
   }, [notice, isEditMode]);
 
@@ -56,25 +61,23 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleImageUploadSuccess = (picId) => {
+    setFormData((prev) => ({ ...prev, PictureId: picId }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // if (!user || !user.id) {
-    //   showToast("error", "לא ניתן לזהות את המשתמש השולח.");
-    //   return;
-    // }
-
     setIsSubmitting(true);
     const noticeData = {
       ...formData,
-      SenderId: isEditMode ? notice.senderId : user.id, // Use existing senderId in edit mode
+      SenderId: isEditMode ? notice.senderId : user.id,
     };
 
     try {
-      // Call the onSave function passed from the parent, which handles both create and edit
       await onSave(noticeData, isEditMode ? notice.noticeId : null);
-      handleClose(); // Close modal on success
+      handleClose();
     } catch (error) {
-      // The parent component will show the error toast
+      // Parent component shows the error
     } finally {
       setIsSubmitting(false);
     }
@@ -86,7 +89,9 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
       Content: "",
       Category: "",
       SubCategory: "",
+      PictureId: null,
     });
+    setExistingImage(null);
     onClose();
   };
 
@@ -99,7 +104,7 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
       className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
       dir="rtl"
     >
-      <div className="relative bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl">
+      <div className="relative bg-white p-6 rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center pb-4 border-b">
           <h3 className="text-xl font-semibold">
             {isEditMode ? "עריכת הודעה" : "יצירת הודעה חדשה"}
@@ -115,7 +120,7 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
           <InputField
             label="כותרת"
             name="Title"
-            value={formData.Title}
+            value={formData.Title || ""}
             onChange={handleChange}
             required
           />
@@ -125,7 +130,7 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
             </label>
             <textarea
               name="Content"
-              value={formData.Content}
+              value={formData.Content || ""}
               onChange={handleChange}
               rows="5"
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
@@ -142,7 +147,7 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
             <select
               id="Category"
               name="Category"
-              value={formData.Category}
+              value={formData.Category || ""}
               onChange={handleChange}
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
               required
@@ -160,9 +165,21 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
           <InputField
             label="תת-קטגוריה"
             name="SubCategory"
-            value={formData.SubCategory}
+            value={formData.SubCategory || ""}
             onChange={handleChange}
           />
+
+          <ImageUpload
+            token={token}
+            uploaderId={user?.id}
+            onImageUploadSuccess={handleImageUploadSuccess}
+            existingImage={existingImage}
+            picRole="unassigned" // Using a valid role from the constraint
+            picAlt={`Image for notice: ${formData.Title || "Notice"}`}
+            eventName={formData.Title}
+            eventDescription={formData.Content}
+          />
+
           <div className="flex justify-end space-x-4 pt-4 border-t">
             <button
               type="button"
