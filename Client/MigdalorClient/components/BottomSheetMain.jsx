@@ -8,9 +8,11 @@ import { Ionicons } from "@expo/vector-icons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import FlipButtonSizeless from "./FlipButtonSizeless";
 import { useMainMenuEdit } from "@/context/MainMenuEditProvider";
-import { Link, usePathname, useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthProvider";
+import { Globals } from "@/app/constants/Globals";
+
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -26,14 +28,13 @@ export const useBottomSheet = () => {
 
 export const BottomSheetProvider = ({ children }) => {
   const { t } = useTranslation();
+  const isRTL = Globals.userSelectedDirection === "rtl"; 
+
   const bottomSheetRef = useRef(null);
   const { editing, setEditing } = useMainMenuEdit();
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuth();
-
-  // This log will show the exact path in your console for debugging
-  console.log("This is our complete path: ", pathname);
 
   const snapPoints = useMemo(() => ["50%"], []);
 
@@ -72,9 +73,8 @@ export const BottomSheetProvider = ({ children }) => {
         )}
       >
         <BottomSheetView style={styles.sheetContent}>
-          {/* Row 1 */}
-          <View style={styles.row}>
-            {/* --- MODIFIED: This button is now hidden on the MainMenu page --- */}
+          {/* Row 1: Apply dynamic flexDirection */}
+          <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             {pathname !== "/MainMenu" && user?.personRole !== "Instructor" && (
               <FlipButtonSizeless
                 style={styles.button}
@@ -121,8 +121,8 @@ export const BottomSheetProvider = ({ children }) => {
             </FlipButtonSizeless>
           </View>
 
-          {/* Row 2 */}
-          <View style={styles.row}>
+          {/* Row 2: Apply dynamic flexDirection */}
+          <View style={[styles.row, { flexDirection: isRTL ? "row-reverse" : "row" }]}>
             <FlipButtonSizeless
               style={styles.button}
               onPress={handleProfileNavigation}
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   row: {
-    flexDirection: "row",
+    // The base direction is now set dynamically inline
     justifyContent: "space-evenly",
     alignItems: "center",
     marginBottom: 16,
