@@ -142,7 +142,7 @@ namespace MigdalorServer.Database
                 entity.HasKey(e => e.RegistrationId)
                     .HasName("PK__Event_Re__6EF588300181CCBB");
 
-                entity.Property(e => e.RegistrationDate).HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.RegistrationDate).HasDefaultValueSql("(getutcdate())");
 
                 entity.Property(e => e.Status).HasDefaultValueSql("('Active')");
 
@@ -160,7 +160,7 @@ namespace MigdalorServer.Database
 
             modelBuilder.Entity<OhListing>(entity =>
             {
-                entity.Property(e => e.Date).HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.Date).HasDefaultValueSql("(getutcdate())");
 
                 entity.Property(e => e.IsActive).HasDefaultValueSql("((1))");
 
@@ -184,7 +184,7 @@ namespace MigdalorServer.Database
                 entity.HasKey(e => e.NoticeId)
                     .HasName("PK__OH_Notic__4ED12E4E7A8618DF");
 
-                entity.Property(e => e.CreationDate).HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.CreationDate).HasDefaultValueSql("(getutcdate())");
 
                 entity.HasOne(d => d.NoticeCategoryNavigation)
                     .WithMany(p => p.OhNotices)
@@ -412,7 +412,7 @@ namespace MigdalorServer.Database
 
             modelBuilder.Entity<OhTimeTableAddition>(entity =>
             {
-                entity.Property(e => e.DateAdded).HasDefaultValueSql("(getdate())");
+                entity.Property(e => e.DateAdded).HasDefaultValueSql("(getutcdate())");
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
             });
