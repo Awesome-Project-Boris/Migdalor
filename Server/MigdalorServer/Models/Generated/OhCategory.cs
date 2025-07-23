@@ -13,6 +13,7 @@ namespace MigdalorServer.Models
         public OhCategory()
         {
             OhNotices = new HashSet<OhNotice>();
+            OhResidentCategorySubscriptions = new HashSet<OhResidentCategorySubscription>();
         }
 
         [Key]
@@ -26,5 +27,7 @@ namespace MigdalorServer.Models
 
         [InverseProperty("NoticeCategoryNavigation")]
         public virtual ICollection<OhNotice> OhNotices { get; set; }
+        [InverseProperty("CategoryHebNameNavigation")]
+        public virtual ICollection<OhResidentCategorySubscription> OhResidentCategorySubscriptions { get; set; }
     }
 }

@@ -33,6 +33,7 @@ namespace MigdalorServer.Database
         public virtual DbSet<OhPicture> OhPictures { get; set; } = null!;
         public virtual DbSet<OhPrivacySetting> OhPrivacySettings { get; set; } = null!;
         public virtual DbSet<OhResident> OhResidents { get; set; } = null!;
+        public virtual DbSet<OhResidentCategorySubscription> OhResidentCategorySubscriptions { get; set; } = null!;
         public virtual DbSet<OhScheduleOverride> OhScheduleOverrides { get; set; } = null!;
         public virtual DbSet<OhService> OhServices { get; set; } = null!;
         public virtual DbSet<OhTimeTableAddition> OhTimeTableAdditions { get; set; } = null!;
@@ -385,6 +386,24 @@ namespace MigdalorServer.Database
 
                             j.IndexerProperty<string>("InterestName").HasMaxLength(50).HasColumnName("interestName");
                         });
+            });
+
+            modelBuilder.Entity<OhResidentCategorySubscription>(entity =>
+            {
+                entity.HasKey(e => new { e.ResidentId, e.CategoryHebName })
+                    .HasName("PK_ResidentCategorySubscriptions");
+
+                entity.Property(e => e.IsSubscribed).HasDefaultValueSql("((1))");
+
+                entity.HasOne(d => d.CategoryHebNameNavigation)
+                    .WithMany(p => p.OhResidentCategorySubscriptions)
+                    .HasForeignKey(d => d.CategoryHebName)
+                    .HasConstraintName("FK_Subscriptions_Categories");
+
+                entity.HasOne(d => d.Resident)
+                    .WithMany(p => p.OhResidentCategorySubscriptions)
+                    .HasForeignKey(d => d.ResidentId)
+                    .HasConstraintName("FK_Subscriptions_Residents");
             });
 
             modelBuilder.Entity<OhScheduleOverride>(entity =>
