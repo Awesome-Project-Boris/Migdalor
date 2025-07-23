@@ -21,6 +21,9 @@ const ImageUpload = ({
   eventDescription,
   onImageUploadSuccess,
   existingImage,
+  picRole, // Added prop
+  picAlt, // Added prop
+  uploaderId, // Added prop
 }) => {
   const [prompt, setPrompt] = useState("");
   const [generatedImage, setGeneratedImage] = useState(null); // Will hold the base64 string
@@ -29,12 +32,15 @@ const ImageUpload = ({
   const [preview, setPreview] = useState(null);
 
   useEffect(() => {
-    // Set the initial preview if an existing image is provided
-    if (existingImage) {
-      // FIX: Prepend the API_BASE_URL to the existing image path
-      setPreview(`${api.API_BASE_URL.substring(0, api.API_BASE_URL.length - 4)}${existingImage}`);
+    if (existingImage?.serverPath) {
+      setPreview(
+        `${api.API_BASE_URL.substring(0, api.API_BASE_URL.length - 4)}${
+          existingImage.serverPath
+        }`
+      );
+    } else {
+      setPreview(null);
     }
-    // Update the prompt whenever the event name or description changes
     const defaultPrompt = `${eventName || ""}: ${
       eventDescription || ""
     }`.trim();
@@ -44,7 +50,7 @@ const ImageUpload = ({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setGeneratedImage(null); // Clear any generated image
+      setGeneratedImage(null);
       setPreview(URL.createObjectURL(file));
       handleUpload(file);
     }
@@ -55,7 +61,6 @@ const ImageUpload = ({
     setError(null);
     setGeneratedImage(null);
     try {
-      // FIX: Add "without any text" to the prompt
       const finalPrompt = `${prompt}, without any text`;
       const response = await api.post(
         "/gemini/generate-image",
@@ -81,36 +86,48 @@ const ImageUpload = ({
       const uniqueFilename = `${crypto.randomUUID()}-${Date.now()}.png`;
       const file = base64ToFile(generatedImage, uniqueFilename);
       handleUpload(file);
-      setGeneratedImage(null); // Clear the generated image state after accepting
+      setGeneratedImage(null);
     }
   };
 
   const handleUpload = async (fileToUpload) => {
+    if (!uploaderId || !picRole || !picAlt) {
+      setError("שגיאה: פרטי העלאה חסרים (מזהה משתמש, תפקיד או טקסט חלופי).");
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("file", fileToUpload);
+    // The public endpoint expects lists. We must append each item individually
+    // to the same key for the model binder to correctly create a list.
+    formData.append("files", fileToUpload);
+    formData.append("picRoles", picRole);
+    formData.append("picAlts", picAlt);
+    formData.append("uploaderId", uploaderId);
 
     try {
-      const picId = await api.postFormData(
-        "/picture/UploadAdmin",
-        formData,
-        token
-      );
-      onImageUploadSuccess(picId);
+      const results = await api.postFormData("/picture", formData);
+
+      if (results && results.length > 0 && results[0].success) {
+        // Pass the picId to the parent component's success handler
+        onImageUploadSuccess(results[0].picId);
+      } else {
+        const errorMessage =
+          results && results.length > 0
+            ? results[0].errorMessage
+            : "Unknown upload error";
+        setError(`שגיאה בהעלאת התמונה: ${errorMessage}`);
+      }
     } catch (err) {
+      console.error("Full upload error:", err);
       setError(`שגיאה בהעלאת התמונה: ${err.message}`);
     }
   };
 
   return (
     <div className="p-4 border rounded-md bg-gray-50 space-y-4" dir="rtl">
-      <label className="block text-sm font-medium text-gray-700 text-right">
-        תמונת אירוע
-      </label>
-
       {/* Image Preview */}
       {preview && (
         <div className="relative w-full h-48 bg-gray-200 rounded-md overflow-hidden">
-          {/* FIX: Change object-cover to object-contain to show the full image */}
           <img
             src={preview}
             alt="תצוגה מקדימה"
@@ -145,13 +162,13 @@ const ImageUpload = ({
         <div className="relative">
           <input
             type="file"
-            id="file-upload"
+            id={`file-upload-${picRole}`} // Use unique ID to avoid conflicts
             className="absolute w-full h-full opacity-0 cursor-pointer"
             onChange={handleFileChange}
             accept="image/*"
           />
           <label
-            htmlFor="file-upload"
+            htmlFor={`file-upload-${picRole}`}
             className="flex items-center justify-center w-full px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-md hover:bg-blue-50 cursor-pointer"
           >
             <UploadCloud size={20} className="ml-2" />
