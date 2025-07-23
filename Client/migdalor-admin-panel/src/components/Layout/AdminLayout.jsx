@@ -10,7 +10,8 @@ import {
   MessageSquare,
   CalendarDays,
   Clock,
-  ShoppingCart, // <-- Import the new icon
+  ShoppingCart,
+  Info, // <-- Import the new icon
 } from "lucide-react";
 import UserManagement from "../../features/userManagement/UserManagement";
 import NoticeManagement from "../../features/noticeManagement/NoticeManagement";
@@ -18,7 +19,8 @@ import Dashboard from "../../pages/Dashboard";
 import Reports from "../../features/reports/Reports";
 import EventManagement from "../../features/eventManagement/EventManagement";
 import OpeningHoursManagement from "../../features/openingHoursManagement/OpeningHoursManagement";
-import ListingManagement from "../../features/listingManagement/ListingManagement"; // <-- Import the new component
+import ListingManagement from "../../features/listingManagement/ListingManagement";
+import InfoSheetManagement from "../../features/infoSheetManagement/InfoSheetManagement"; // <-- Import the new component
 
 const AdminLayout = () => {
   const [activePage, setActivePage] = useState("dashboard");
@@ -30,8 +32,10 @@ const AdminLayout = () => {
         return <UserManagement />;
       case "notices":
         return <NoticeManagement />;
-      case "listings": // <-- Add this case
+      case "listings":
         return <ListingManagement />;
+      case "infoSheet": // <-- Add this case
+        return <InfoSheetManagement />;
       case "reports":
         return <Reports />;
       case "events":
@@ -70,7 +74,6 @@ const AdminLayout = () => {
             isActive={activePage === "notices"}
             onClick={() => setActivePage("notices")}
           />
-          {/* Add the new button for Listings */}
           <SidebarButton
             icon={<ShoppingCart size={20} />}
             label="ניהול לוח מוצרים"
@@ -88,6 +91,12 @@ const AdminLayout = () => {
             label="ניהול שעות פתיחה"
             isActive={activePage === "openingHours"}
             onClick={() => setActivePage("openingHours")}
+          />
+          <SidebarButton
+            icon={<Info size={20} />}
+            label="ניהול דף מידע"
+            isActive={activePage === "infoSheet"}
+            onClick={() => setActivePage("infoSheet")}
           />
           <SidebarButton
             icon={<FileText size={20} />}

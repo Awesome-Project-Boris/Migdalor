@@ -6,7 +6,8 @@ import {
   MessageSquare,
   CalendarDays,
   Clock,
-  ShoppingCart, // <-- Import the new icon
+  ShoppingCart,
+  Info, // <-- Import the new icon
 } from "lucide-react";
 
 const DashboardCard = ({ title, description, icon, onClick, colorClass }) => (
@@ -39,7 +40,6 @@ const Dashboard = ({ setActivePage }) => {
           colorClass="bg-green-500"
           onClick={() => setActivePage("notices")}
         />
-        {/* Add the new card for Listings */}
         <DashboardCard
           title="ניהול לוח מוצרים"
           description="יצירה ועריכה של מודעות בלוח המוצרים."
@@ -60,6 +60,13 @@ const Dashboard = ({ setActivePage }) => {
           icon={<Clock className="h-10 w-10 text-white" />}
           colorClass="bg-yellow-500"
           onClick={() => setActivePage("openingHours")}
+        />
+        <DashboardCard
+          title="ניהול דף מידע"
+          description="עריכת דף המידע הכללי באפליקציה."
+          icon={<Info className="h-10 w-10 text-white" />}
+          colorClass="bg-teal-500"
+          onClick={() => setActivePage("infoSheet")}
         />
         <DashboardCard
           title="דוחות"

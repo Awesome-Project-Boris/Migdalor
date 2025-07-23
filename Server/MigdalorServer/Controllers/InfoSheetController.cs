@@ -1,55 +1,93 @@
-// In your Controllers folder, create a new file InfoSheetController.cs
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
-[Route("api/[controller]")]
-[ApiController]
-public class InfoSheetController : ControllerBase
+namespace MigdalorServer.Controllers
 {
-    private readonly MigdalorDBContext _context;
-
-    public InfoSheetController(MigdalorDBContext context)
+    [Route("api/[controller]")]
+    [ApiController]
+    public class InfoSheetController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly MigdalorDBContext _context;
 
-    // GET: api/InfoSheet/{language}
-    [HttpGet("{language}")]
-    public async Task<ActionResult<string>> GetInfoSheet(string language)
-    {
-        var infoKey = $"info_sheet_{language}";
-        var infoSheet = await _context.OhInfoSheets.FindAsync(infoKey);
-
-        if (infoSheet == null)
+        public InfoSheetController(MigdalorDBContext context)
         {
-            return NotFound();
+            _context = context;
         }
 
-        return infoSheet.InfoValue;
-    }
-
-    // PUT: api/InfoSheet/{language}
-    [HttpPut("{language}")]
-    public async Task<IActionResult> PutInfoSheet(string language, [FromBody] string content)
-    {
-        var infoKey = $"info_sheet_{language}";
-        var infoSheet = await _context.OhInfoSheets.FindAsync(infoKey);
-
-        if (infoSheet == null)
+        /// <summary>
+        /// Gets the info sheet content for a specific language.
+        /// </summary>
+        /// <param name="language">The language code (e.g., "he" or "en").</param>
+        /// <returns>The info sheet content as a string.</returns>
+        [HttpGet("{language}")]
+        public async Task<ActionResult<string>> GetInfoSheet(string language)
         {
-            // Optionally create it if it doesn't exist
-            _context.OhInfoSheets.Add(new OhInfoSheet { InfoKey = infoKey, InfoValue = content });
+            if (string.IsNullOrWhiteSpace(language))
+            {
+                return BadRequest("Language cannot be empty.");
+            }
+
+            var infoKey = $"info_sheet_{language.ToLower()}";
+            var infoSheet = await _context.OhInfoSheets.FindAsync(infoKey);
+
+            if (infoSheet == null)
+            {
+                // Return an empty string instead of NotFound to prevent client-side errors
+                return Ok("");
+            }
+
+            return Ok(infoSheet.InfoValue);
         }
-        else
+
+        /// <summary>
+        /// Updates (or creates) the info sheet content for a specific language.
+        /// </summary>
+        /// <param name="language">The language code (e.g., "he" or "en").</param>
+        /// <param name="content">The new HTML content for the info sheet.</param>
+        [HttpPut("{language}")]
+        [Authorize(Roles = "admin")] // Only admins can edit the info sheet
+        public async Task<IActionResult> PutInfoSheet(string language, [FromBody] string content)
         {
-            infoSheet.InfoValue = content;
+            if (string.IsNullOrWhiteSpace(language))
+            {
+                return BadRequest("Language cannot be empty.");
+            }
+
+            var infoKey = $"info_sheet_{language.ToLower()}";
+            var infoSheet = await _context.OhInfoSheets.FindAsync(infoKey);
+
+            if (infoSheet == null)
+            {
+                // If the entry doesn't exist, create it.
+                var newInfoSheet = new OhInfoSheet
+                {
+                    InfoKey = infoKey,
+                    InfoValue = content
+                };
+                _context.OhInfoSheets.Add(newInfoSheet);
+            }
+            else
+            {
+                // If it exists, update it.
+                infoSheet.InfoValue = content;
+                _context.Entry(infoSheet).State = EntityState.Modified;
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Handle potential concurrency issues if necessary
+                return Conflict("The data was modified by another user. Please refresh and try again.");
+            }
+
+            return NoContent(); // Standard successful PUT response
         }
-
-        await _context.SaveChangesAsync();
-
-        return NoContent();
     }
 }
