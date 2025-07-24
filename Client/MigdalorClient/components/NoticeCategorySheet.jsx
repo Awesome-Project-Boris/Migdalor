@@ -1,10 +1,14 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetView,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
 import { useTranslation } from "react-i18next";
 import StyledText from "./StyledText";
 import { Ionicons } from "@expo/vector-icons";
 import FlipButton from "./FlipButton";
+import { useSettings } from "@/context/SettingsContext";
 
 // A single selectable item in the sheet
 const CategorySelectItem = ({ category, isSelected, onToggle }) => {
@@ -28,6 +32,8 @@ const NoticeCategorySheet = React.forwardRef(
     ref
   ) => {
     const { t } = useTranslation();
+    const { settings } = useSettings();
+    const useColumnLayout = settings.fontSizeMultiplier >= 2;
     const snapPoints = React.useMemo(() => ["50%", "85%"], []);
 
     const handleToggle = (categoryName) => {
@@ -63,7 +69,12 @@ const NoticeCategorySheet = React.forwardRef(
           <StyledText type="title" style={styles.sheetTitle}>
             {t("Notices_FilterTitle", "סינון לפי קטגוריה")}
           </StyledText>
-          <View style={styles.toggleAllContainer}>
+          <View
+            style={[
+              styles.toggleAllContainer,
+              useColumnLayout && styles.toggleAllContainerColumn,
+            ]}
+          >
             <FlipButton onPress={handleSelectAll} style={{ flex: 1 }}>
               {t("Notices_SelectAll", "בחר הכל")}
             </FlipButton>
@@ -75,14 +86,21 @@ const NoticeCategorySheet = React.forwardRef(
               {t("Notices_DeselectAll", "נקה הכל")}
             </FlipButton>
           </View>
-          {subscribedCategories.map((cat) => (
-            <CategorySelectItem
-              key={cat.categoryHebName}
-              category={cat}
-              isSelected={selectedCategories.has(cat.categoryHebName)}
-              onToggle={() => handleToggle(cat.categoryHebName)}
-            />
-          ))}
+
+          {/* The category list is now wrapped in a scroll view */}
+          <BottomSheetScrollView
+            contentContainerStyle={styles.scrollContentContainer}
+          >
+            {subscribedCategories.map((cat) => (
+              <CategorySelectItem
+                key={cat.categoryHebName}
+                category={cat}
+                isSelected={selectedCategories.has(cat.categoryHebName)}
+                onToggle={() => handleToggle(cat.categoryHebName)}
+              />
+            ))}
+          </BottomSheetScrollView>
+
           <FlipButton onPress={onApply} style={styles.applyButton}>
             {t("Notices_ApplyFilters", "הצג תוצאות")}
           </FlipButton>
@@ -107,6 +125,12 @@ const styles = StyleSheet.create({
   },
   categoryName: { fontSize: 20 },
   applyButton: { marginTop: 30 },
+  toggleAllContainerColumn: {
+    flexDirection: "column",
+  },
+  scrollContentContainer: {
+    paddingBottom: 50,
+  },
 });
 
 export default NoticeCategorySheet;

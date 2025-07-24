@@ -9,17 +9,17 @@ import {
   TouchableOpacity, // ✅ Import TouchableOpacity
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image as ExpoImage } from "expo-image"; // ✅ Import ExpoImage
+import { Image as ExpoImage } from "expo-image";
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
-import { ReadNoticeTracker } from "../utils/ReadNoticeTracker";
 
-// --- Custom Component and Utility Imports ---
 import Header from "@/components/Header";
 import { useTranslation } from "react-i18next";
 import { Globals } from "./constants/Globals";
 import StyledText from "@/components/StyledText";
-import { useSettings } from "@/context/SettingsContext"; // Import useSettings
+import { useSettings } from "@/context/SettingsContext";
+
+import { ReadNoticeTracker } from "@/utils/ReadNoticeTracker";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
@@ -59,60 +59,37 @@ export default function NoticeFocus() {
   const { noticeId } = useLocalSearchParams();
   const router = useRouter();
 
-  const { notice: noticeString } = useLocalSearchParams();
-  const notice = JSON.parse(noticeString);
+  const params = useLocalSearchParams();
+  const notice = params.notice ? JSON.parse(params.notice) : null;
 
-  const fetchNoticeDetails = useCallback(async () => {
-    if (!noticeId) {
-      setError(t("NoticeDetailsScreen_errorNoId"));
-      setIsLoading(false);
-      return;
-    }
-    setError(null);
-    try {
-      const apiUrl = `${Globals.API_BASE_URL}/api/Notices/${noticeId}`;
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        const status = response.status;
-        let errorPayload = `HTTP Error ${status}`;
-        try {
-          const errorText = await response.text();
-          errorPayload += `: ${errorText}`;
-        } catch (e) {}
-        if (status === 404) {
-          throw new Error(
-            t("NoticeDetailsScreen_errorNotFound", { id: noticeId })
-          );
-        } else {
-          throw new Error(
-            t("NoticeDetailsScreen_errorGenericFetch", { status: status })
-          );
+  useEffect(() => {
+    // Get the stringified notice object from navigation params
+    const noticeJSON = params.notice;
+
+    if (noticeJSON) {
+      try {
+        // Parse the object from the string
+        const parsedNotice = JSON.parse(noticeJSON);
+
+        // 1. We have the data, set it to our component's state
+        setNoticeData(parsedNotice);
+
+        // 2. Mark the notice as read
+        if (parsedNotice.noticeId) {
+          ReadNoticeTracker.markAsRead(parsedNotice.noticeId);
         }
+      } catch (e) {
+        console.error("Failed to parse notice JSON from params:", e);
+        setError("Failed to load notice data.");
       }
-      const data = await response.json();
-      setNoticeData(data);
-    } catch (err) {
-      setError(err.message || t("NoticeDetailsScreen_errorDefault"));
-      setNoticeData(null);
-    } finally {
-      setIsLoading(false);
+    } else {
+      // If for some reason no notice object was passed, set an error
+      setError(t("NoticeDetailsScreen_errorNoId"));
     }
-  }, [noticeId, t]);
 
-  useEffect(() => {
-    if (notice?.noticeID) {
-      ReadNoticeTracker.markAsRead(notice.noticeID);
-    }
-  }, [notice?.noticeID]);
-
-  useEffect(() => {
-    if (noticeId) {
-      setIsLoading(true);
-      setNoticeData(null);
-      setError(null);
-      fetchNoticeDetails();
-    }
-  }, [noticeId, fetchNoticeDetails]);
+    // Whether we succeeded or failed, the setup is done. Stop loading.
+    setIsLoading(false);
+  }, [params.notice, t]);
 
   // ✅ Handler to navigate to the image view screen
   const handleImagePress = (imageUri, altText) => {

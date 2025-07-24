@@ -668,6 +668,29 @@ const resources = {
       CategorySettings_ErrorUpdating:
         "Could not save your change. Please try again.",
       CategorySettings_ErrorUpdating_AlertTitle: "Update Failed",
+
+      // For: LanguageSettings.tsx
+      LanguageSettingsPage_LanguageHeader: "Application Language",
+      SettingsPage_NoticePreferences: "Notice Preferences",
+      SettingsPage_ManageCategories: "Manage Categories",
+
+      // For: Notices.jsx
+      Notices_FilterButton: "Filter by Category",
+      Notices_SortNewest: "Newest to Oldest",
+      Notices_SortOldest: "Oldest to Newest",
+      Notices_ApplyingFilters: "Applying filters...",
+      Notices_ChipsHeaderTitle: "Categories shown (Number of unread messages)",
+      Notices_NoCategoriesSelected:
+        "No categories selected, select categories by using the button above to show messages.",
+      Notices_ListHeaderTitle: "Notices",
+      Notices_MarkAllRead: "Mark All as Read",
+      Notices_MarkAllReadSuccess: "All visible notices marked as read",
+
+      // For: CategorySettingsModal.jsx (on the Settings page)
+      CategorySettings_UpdateSuccess: "Preference Saved",
+
+      // For: NoticesCategoryFilterModal.jsx (the new filter modal)
+      Common_Done: "Done",
     },
   },
   he: {
@@ -806,7 +829,7 @@ const resources = {
       MainMenuScreen_ResidentsCommitteeButton: "וועד דיירים",
       MainMenuScreen_ActivityHoursButton: "שעות פעילות",
       MainMenuScreen_MapButton: "מפה",
-      MainMenuScreen_NoticeBoardButton: "לוח מודעות",
+      MainMenuScreen_NoticeBoardButton: "לוח הודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
       MainMenuScreen_InfoSheetButton: "מידעון",
       MainMenuScreen_Timetable: "תוכניה",
@@ -980,7 +1003,7 @@ const resources = {
       NoticeDetailsScreen_dateLabel: "תאריך:",
       NoticeDetailsScreen_messageTitle: "כותרת ההודעה: ",
       Common_backButton: "חזרה לאחור",
-      NoticeBoardScreen_boardTitle: "לוח המודעות",
+      NoticeBoardScreen_boardTitle: "לוח ההודעות",
       NoticeBoardScreen_filterButton: "סינון",
       NoticeBoardScreen_all: "הכל",
       NoticeBoardScreen_filterLabel: "סינון:",
@@ -1082,7 +1105,7 @@ const resources = {
       services_overrides_intro:
         "שימו לב! במהלך השבוע הקרוב צפויים שינויים בלוח הזמנים של השירותים הבאים:",
       services_overrides_footer:
-        "לפרטים נוספים, אנא עיינו בלוח המודעות או בדף השירות.",
+        "לפרטים נוספים, אנא עיינו בלוח ההודעות או בדף השירות.",
       service_override_unavailable_date:
         "בתאריך {{date}}, השירות לא יהיה זמין.",
       service_override_unavailable_datetime:
@@ -1304,6 +1327,29 @@ const resources = {
       CategorySettings_ErrorLoading_AlertTitle: "שגיאה",
       CategorySettings_ErrorUpdating: "לא ניתן היה לשמור את השינוי. נסה שוב.",
       CategorySettings_ErrorUpdating_AlertTitle: "שגיאת עדכון",
+
+      // For: LanguageSettings.tsx
+      LanguageSettingsPage_LanguageHeader: "שפת האפליקציה",
+      SettingsPage_NoticePreferences: "העדפות הודעות",
+      SettingsPage_ManageCategories: "ניהול קטגוריות",
+
+      // For: Notices.jsx
+      Notices_FilterButton: "סינון לפי קטגוריה",
+      Notices_SortNewest: "מהחדש לישן",
+      Notices_SortOldest: "מהישן לחדש",
+      Notices_ApplyingFilters: "מחיל מסננים...",
+      Notices_ChipsHeaderTitle: "קטגוריות מוצגות (ומספר ההודעות שלא נקראו)",
+      Notices_NoCategoriesSelected:
+        " לא נבחרה קטגוריה, יש לבחור קטגוריות מהכפתור למעלה על מנת להציג הודעות.",
+      Notices_ListHeaderTitle: "הודעות",
+      Notices_MarkAllRead: "סמן הכל כנקרא",
+      Notices_MarkAllReadSuccess: "כל ההודעות הנראות סומנו כנקראו",
+
+      // For: CategorySettingsModal.jsx (on the Settings page)
+      CategorySettings_UpdateSuccess: "העדפה נשמרה",
+
+      // For: NoticesCategoryFilterModal.jsx (the new filter modal)
+      Common_Done: "סיום",
     },
   },
 };

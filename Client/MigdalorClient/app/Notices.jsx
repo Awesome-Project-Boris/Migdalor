@@ -11,11 +11,13 @@ import {
   ActivityIndicator,
   Dimensions,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
+import { Toast } from "toastify-react-native";
 
 // --- All Original and New Component Imports ---
 import Header from "@/components/Header";
@@ -23,11 +25,13 @@ import NoticeCard from "../components/NoticeCard";
 import FlipButton from "../components/FlipButton";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import StyledText from "@/components/StyledText";
-import InterestChip from "@/components/InterestChip"; // ✅ Using your InterestChip component
-import NoticeCategorySheet from "@/components/NoticeCategorySheet"; // ✅ The new BottomSheet
+import InterestChip from "@/components/InterestChip";
+import NoticeCategorySheet from "@/components/NoticeCategorySheet";
+import NoticesCategoryFilterModal from "@/components/NoticesCategoryFilterModal";
+
 import { useSettings } from "@/context/SettingsContext";
 import { useNotifications } from "@/context/NotificationsContext";
-import { ReadNoticeTracker } from "@/utils/ReadNoticeTracker"; // ✅ Using the correct path
+import { ReadNoticeTracker } from "@/utils/ReadNoticeTracker";
 import { Globals } from "../app/constants/Globals";
 
 const ITEMS_PER_PAGE = 10;
@@ -36,8 +40,11 @@ export default function NoticesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const flatListRef = useRef(null);
-  const bottomSheetRef = useRef(null); // ✅ Ref for the new BottomSheet
+  const bottomSheetRef = useRef(null);
   const { settings } = useSettings();
+
+  const hasSetInitialCategories = useRef(false);
+
   const useColumnLayout = settings.fontSizeMultiplier >= 2;
   const { updateLastVisited, isItemNew } = useNotifications();
 
@@ -50,19 +57,17 @@ export default function NoticesScreen() {
   const [isAdminLoading, setIsAdminLoading] = useState(true);
 
   // --- New state for our new features ---
+  const [isFilterModalVisible, setFilterModalVisible] = useState(false);
   const [subscribedCategories, setSubscribedCategories] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState(new Set());
-  const [sortOrder, setSortOrder] = useState("recent"); // ✅ Changed to match your "recent" / "oldest" convention
+  const [sortOrder, setSortOrder] = useState("recent");
   const [readNoticeIds, setReadNoticeIds] = useState(new Set());
+  const [unreadCounts, setUnreadCounts] = useState(new Map());
 
-  // ✅ This new, unified fetchData function replaces your separate fetch functions.
-  // It's designed to be called whenever filters change or the screen comes into focus.
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      // ✅ START: THE FIX IS HERE
-      // We now get the residentId directly, just like in your original isAdmin check.
       const residentId = await AsyncStorage.getItem("userID");
       if (!residentId) {
         throw new Error("User not found for fetching subscriptions.");
@@ -74,33 +79,31 @@ export default function NoticesScreen() {
         ),
         ReadNoticeTracker.getReadNoticeIds(),
       ]);
+
       if (!categoriesRes.ok)
         throw new Error("Failed to fetch user subscriptions.");
       const categoriesData = await categoriesRes.json();
       const userSubscribed = categoriesData.filter((c) => c.isSubscribed);
 
-      console.log("This is residents categories: ", categoriesData);
-      console.log(
-        "This is the residents categories after the filter: ",
-        userSubscribed
-      );
+      let categoriesToFetch = Array.from(selectedCategories);
 
-      setSubscribedCategories(userSubscribed);
-      setReadNoticeIds(readIds);
-
-      let currentSelection = selectedCategories;
-      if (selectedCategories.size === 0 && userSubscribed.length > 0) {
-        const initialSelected = new Set(
+      // ✅ THE FIX: This block now uses the ref to ensure it only runs ONCE.
+      if (
+        !hasSetInitialCategories.current &&
+        selectedCategories.size === 0 &&
+        userSubscribed.length > 0
+      ) {
+        const initialSelection = new Set(
           userSubscribed.map((c) => c.categoryHebName)
         );
-        setSelectedCategories(initialSelected);
-        currentSelection = initialSelected;
+        setSelectedCategories(initialSelection);
+        categoriesToFetch = Array.from(initialSelection); // Use the new selection for the current fetch
+        hasSetInitialCategories.current = true; // Set the flag so this never runs again
       }
 
-      const categoriesToFetch = Array.from(currentSelection);
-
+      let noticesData = [];
       if (categoriesToFetch.length > 0) {
-        const response = await fetch(
+        const noticesResponse = await fetch(
           `${Globals.API_BASE_URL}/api/Notices/filtered`,
           {
             method: "POST",
@@ -111,20 +114,38 @@ export default function NoticesScreen() {
             }),
           }
         );
-        if (!response.ok) throw new Error("Failed to fetch notices");
-        const noticesData = await response.json();
-
-        console.log("Filtered notices: ", noticesData);
-
-        setAllNotices(noticesData || []);
-      } else {
-        setAllNotices([]);
+        if (!noticesResponse.ok) throw new Error("Failed to fetch notices");
+        noticesData = await noticesResponse.json();
       }
+
+      const newUnreadCounts = new Map();
+      for (const notice of noticesData) {
+        if (!readIds.has(notice.noticeId)) {
+          const currentCount = newUnreadCounts.get(notice.noticeCategory) || 0;
+          newUnreadCounts.set(notice.noticeCategory, currentCount + 1);
+        }
+      }
+
+      setSubscribedCategories(userSubscribed);
+      setAllNotices(noticesData || []);
+      setReadNoticeIds(readIds);
+      setUnreadCounts(newUnreadCounts);
     } catch (err) {
       console.error("Failed to fetch data:", err);
       setError(err.message || "An unknown error occurred");
     } finally {
       setIsLoading(false);
+    }
+  }, [selectedCategories, sortOrder]); // ✅ The dependency array is correct now
+
+  const isInitialMount = useRef(true);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      // Any subsequent change to filters will trigger a refetch
+      fetchData();
     }
   }, [selectedCategories, sortOrder]);
 
@@ -183,10 +204,198 @@ export default function NoticesScreen() {
     }, [updateLastVisited])
   );
 
-  // ✅ This complex client-side filtering logic is now obsolete and has been removed.
-  // The server handles all filtering and sorting, making the app much more efficient.
+  const handleMarkAllRead = async () => {
+    // Get the IDs of all notices currently being displayed
+    const idsToMark = allNotices.map((n) => n.noticeId);
+    if (idsToMark.length === 0) return;
 
-  // ✅ Your original pagination logic is preserved and now works on the server-filtered data.
+    // Call the function in the tracker to save the data
+    await ReadNoticeTracker.markMultipleAsRead(idsToMark);
+
+    // --- Start UI Refresh Logic ---
+
+    // 1. Create the new, complete set of read IDs for immediate use
+    const newReadIds = new Set([...readNoticeIds, ...idsToMark]);
+    setReadNoticeIds(newReadIds);
+
+    // 2. Recalculate the unread counts using the fresh data
+    const newUnreadCounts = new Map();
+    for (const notice of allNotices) {
+      // We check against the NEW set of read IDs. Since we just marked all
+      // visible notices as read, this check will always be false for them.
+      if (!newReadIds.has(notice.noticeId)) {
+        const currentCount = newUnreadCounts.get(notice.noticeCategory) || 0;
+        newUnreadCounts.set(notice.noticeCategory, currentCount + 1);
+      }
+    }
+    setUnreadCounts(newUnreadCounts);
+
+    Toast.show({
+      type: "success",
+      text1: t(
+        "Notices_MarkAllReadSuccess",
+        "All visible notices marked as read"
+      ),
+      position: "bottom",
+    });
+  };
+
+  const ListHeader = useMemo(() => {
+    return (
+      <>
+        <View style={styles.contentPlaque}>
+          <StyledText style={styles.pageTitle}>
+            {t("NoticeBoardScreen_boardTitle")}
+          </StyledText>
+        </View>
+
+        {!isAdminLoading && isAdmin && (
+          <View style={styles.newNoticeButtonContainer}>
+            <FlipButton
+              onPress={() => router.push("/NewNotice")}
+              style={styles.newNoticeButton}
+              bgColor="#007bff"
+              textColor="#ffffff"
+            >
+              <Ionicons
+                name="add-circle-outline"
+                size={22}
+                color="white"
+                style={styles.buttonIcon}
+              />
+              <StyledText style={styles.newNoticeButtonText}>
+                {t("NoticesScreen_NewNoticeButton")}
+              </StyledText>
+            </FlipButton>
+          </View>
+        )}
+
+        <View style={styles.controlsContainer}>
+          <FlipButton
+            style={styles.fullWidthButton}
+            onPress={handleMarkAllRead}
+            bgColor="#3d3d3d" // A neutral secondary color
+            textColor="#fdfdfd"
+          >
+            <Ionicons
+              name="checkmark-done"
+              size={22}
+              color="#FFFFFF"
+              style={styles.buttonIcon}
+            />
+            <StyledText style={styles.filterButtonText}>
+              {t("Notices_MarkAllRead", "Mark All as Read")}
+            </StyledText>
+          </FlipButton>
+
+          <FlipButton
+            style={styles.fullWidthButton}
+            onPress={() => setFilterModalVisible(true)}
+          >
+            <Ionicons
+              name="filter"
+              size={22}
+              color="#FFFFFF"
+              style={styles.buttonIcon}
+            />
+            <StyledText style={styles.filterButtonText}>
+              {t("Notices_FilterButton", "סינון לפי קטגוריה")}
+            </StyledText>
+          </FlipButton>
+          <View
+            style={[
+              styles.sortContainer,
+              useColumnLayout && styles.sortContainerColumn,
+            ]}
+          >
+            <FlipButton
+              style={styles.sortButton}
+              bgColor={sortOrder === "recent" ? "#007AFF" : "#e5e5ea"}
+              onPress={() => {
+                setSortOrder("recent");
+                setCurrentPage(1);
+              }}
+            >
+              <StyledText
+                style={{
+                  color: sortOrder === "recent" ? "#FFFFFF" : "#000000",
+                  fontWeight: "600",
+                }}
+              >
+                {t("Notices_SortNewest", "מהחדש לישן")}
+              </StyledText>
+            </FlipButton>
+            <FlipButton
+              style={styles.sortButton}
+              bgColor={sortOrder === "oldest" ? "#007AFF" : "#e5e5ea"}
+              onPress={() => {
+                setSortOrder("oldest");
+                setCurrentPage(1);
+              }}
+            >
+              <StyledText
+                style={{
+                  color: sortOrder === "oldest" ? "#FFFFFF" : "#000000",
+                  fontWeight: "600",
+                }}
+              >
+                {t("Notices_SortOldest", "מהישן לחדש")}
+              </StyledText>
+            </FlipButton>
+          </View>
+
+          <View style={styles.subHeaderPlaque}>
+            <StyledText style={styles.chipsHeaderTitle}>
+              {t(
+                "Notices_ChipsHeaderTitle",
+                "Categories shown (unread messages)"
+              )}
+            </StyledText>
+          </View>
+
+          <View style={styles.chipsOuterContainer}>
+            {/* ✅ Conditional Rendering */}
+            {selectedCategories.size > 0 ? (
+              <View style={styles.chipsInnerContainer}>
+                {[...selectedCategories].map((categoryName) => (
+                  <InterestChip
+                    key={categoryName}
+                    label={`${categoryName} (${
+                      unreadCounts.get(categoryName) || 0
+                    })`}
+                    mode="display"
+                  />
+                ))}
+              </View>
+            ) : (
+              <StyledText style={styles.noSelectionText}>
+                {t(
+                  "Notices_NoCategoriesSelected",
+                  "Select categories from the button above to show messages."
+                )}
+              </StyledText>
+            )}
+          </View>
+
+          <View style={styles.subHeaderPlaque}>
+            <StyledText style={styles.listHeaderTitle}>
+              {t("Notices_ListHeaderTitle", "Notices")}
+            </StyledText>
+          </View>
+        </View>
+      </>
+    );
+  }, [
+    isAdmin,
+    isAdminLoading,
+    sortOrder,
+    t,
+    router,
+    useColumnLayout,
+    selectedCategories,
+    unreadCounts,
+  ]);
+
   const itemsForCurrentPage = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     return allNotices.slice(start, start + ITEMS_PER_PAGE);
@@ -215,15 +424,6 @@ export default function NoticesScreen() {
     },
     [allNotices.length]
   );
-
-  // ✅ New helper function to get unread counts for the chips.
-  const getUnreadCountForCategory = (categoryName) => {
-    // This still runs on the client, but on a much smaller, pre-filtered list of notices.
-    return allNotices.filter(
-      (n) =>
-        n.categoryHebName === categoryName && !readNoticeIds.has(n.noticeId)
-    ).length;
-  };
 
   // ✅ Your original renderItem is preserved and enhanced with the `isRead` prop.
   const renderNoticeItem = useCallback(
@@ -268,115 +468,10 @@ export default function NoticesScreen() {
     return null;
   }, [isLoading, error, allNotices, t]);
 
-  // --- JSX Structure ---
-  // The JSX below preserves your original layout (`pageWrapper`, `contentPlaque`, etc.)
-  // while integrating the new UI controls (Filter/Sort buttons and Chips).
   return (
     <>
       <Header />
       <View style={styles.pageWrapper}>
-        <View style={styles.contentPlaque}>
-          <StyledText style={styles.pageTitle}>
-            {t("NoticeBoardScreen_boardTitle")}
-          </StyledText>
-        </View>
-
-        {!isAdminLoading && isAdmin && (
-          <View style={styles.newNoticeButtonContainer}>
-            <FlipButton
-              onPress={() => router.push("/NewNotice")}
-              style={styles.newNoticeButton}
-              bgColor="#007bff"
-              textColor="#ffffff"
-            >
-              <Ionicons
-                name="add-circle-outline"
-                size={22}
-                color="white"
-                style={styles.buttonIcon}
-              />
-              <StyledText style={styles.newNoticeButtonText}>
-                {t("NoticesScreen_NewNoticeButton")}
-              </StyledText>
-            </FlipButton>
-          </View>
-        )}
-
-        {/* ✅ START: New Controls Section */}
-        <View style={styles.controlsContainer}>
-          <FlipButton
-            style={styles.fullWidthButton}
-            onPress={() => bottomSheetRef.current?.expand()}
-          >
-            <Ionicons
-              name="filter"
-              size={22}
-              color="#FFFFFF"
-              style={styles.buttonIcon}
-            />
-            <StyledText style={styles.filterButtonText}>
-              {t("Notices_FilterButton", "סינון לפי קטגוריה")}
-            </StyledText>
-          </FlipButton>
-          <View style={styles.sortContainer}>
-            <FlipButton
-              style={styles.sortButton}
-              bgColor={sortOrder === "recent" ? "#007AFF" : "#e5e5ea"}
-              onPress={() => {
-                setSortOrder("recent");
-                setCurrentPage(1);
-              }}
-            >
-              <StyledText
-                style={{
-                  color: sortOrder === "recent" ? "#FFFFFF" : "#000000",
-                  fontWeight: "600",
-                }}
-              >
-                {t("Notices_SortNewest", "מהחדש לישן")}
-              </StyledText>
-            </FlipButton>
-            <FlipButton
-              style={styles.sortButton}
-              bgColor={sortOrder === "oldest" ? "#007AFF" : "#e5e5ea"}
-              onPress={() => {
-                setSortOrder("oldest");
-                setCurrentPage(1);
-              }}
-            >
-              <StyledText
-                style={{
-                  color: sortOrder === "oldest" ? "#FFFFFF" : "#000000",
-                  fontWeight: "600",
-                }}
-              >
-                {t("Notices_SortOldest", "מהישן לחדש")}
-              </StyledText>
-            </FlipButton>
-          </View>
-        </View>
-        {/* ✅ END: New Controls Section */}
-
-        {/* ✅ START: New Dynamic Chips Section */}
-        <View style={styles.chipsOuterContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chipsScrollContainer}
-          >
-            {[...selectedCategories].map((categoryName) => (
-              <InterestChip
-                key={categoryName}
-                label={`${categoryName} (${getUnreadCountForCategory(
-                  categoryName
-                )})`}
-                mode="display" // Using the display mode of your chip
-              />
-            ))}
-          </ScrollView>
-        </View>
-        {/* ✅ END: New Dynamic Chips Section */}
-
         <PaginatedListDisplay
           items={itemsForCurrentPage}
           renderItem={renderNoticeItem}
@@ -388,25 +483,31 @@ export default function NoticesScreen() {
           onPageChange={handlePageChange}
           flatListRef={flatListRef}
           listContainerStyle={styles.listContainerStyle}
+          // 👇 This is the crucial step that adds your new header
+          ListHeaderComponent={ListHeader}
         />
       </View>
-
-      {/* ✅ The new BottomSheet is added here, replacing your old FilterModal */}
       <NoticeCategorySheet
         ref={bottomSheetRef}
         subscribedCategories={subscribedCategories}
         selectedCategories={selectedCategories}
         onSelectionChange={setSelectedCategories}
         onApply={() => {
-          setCurrentPage(1); // Reset page when applying filters
+          setCurrentPage(1);
           bottomSheetRef.current?.close();
         }}
+      />
+      <NoticesCategoryFilterModal
+        visible={isFilterModalVisible}
+        onClose={() => setFilterModalVisible(false)}
+        subscribedCategories={subscribedCategories}
+        selectedCategories={selectedCategories}
+        onSelectionChange={setSelectedCategories}
       />
     </>
   );
 }
 
-// ✅ I have merged the new styles with your existing stylesheet.
 const styles = StyleSheet.create({
   pageWrapper: {
     flex: 1,
@@ -421,6 +522,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     marginTop: 15,
     alignItems: "center",
+    marginTop: 80,
   },
   pageTitle: {
     fontSize: 26,
@@ -472,14 +574,16 @@ const styles = StyleSheet.create({
   },
   chipsOuterContainer: {
     paddingVertical: 12,
+    paddingHorizontal: 15, // Padding is moved to the outer container
     backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: "#e5e5ea",
   },
-  chipsScrollContainer: {
-    paddingHorizontal: 15,
-    gap: 8,
+  chipsInnerContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    // Reduced from 8 to make them tighter
   },
   listContainerStyle: {
     paddingHorizontal: 10,
@@ -507,5 +611,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+  },
+  sortContainerColumn: {
+    flexDirection: "column",
+  },
+  noSelectionText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#666",
+    fontStyle: "italic",
+    padding: 10,
+  },
+  // In Notices.jsx styles
+
+  subHeaderPlaque: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: "#dee2e6",
+    padding: 15, // Slightly less padding than the main title
+    marginHorizontal: 15,
+    marginTop: 15,
+    alignItems: "center",
+  },
+  chipsHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    textAlign: "center", // ✅ Center the text
+  },
+  listHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    textAlign: "center", // ✅ Center the text
   },
 });

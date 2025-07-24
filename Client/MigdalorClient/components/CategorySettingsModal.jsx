@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Switch,
@@ -10,15 +10,17 @@ import {
   Modal,
   TouchableOpacity,
 } from "react-native";
-// 🔽 Core project imports
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from "react-i18next";
+import { Toast } from "toastify-react-native";
+
 import { useSettings } from "@/context/SettingsContext";
 import { Ionicons } from "@expo/vector-icons";
-import Globals from "@/app/constants/Globals";
+import { Globals } from "@/app/constants/Globals";
 import StyledText from "./StyledText";
 import FlipButton from "./FlipButton";
 
-// A single item in our list, now fully accessible
+// CategoryItem component remains the same
 const CategoryItem = ({ item, onToggle }) => {
   return (
     <View style={styles.itemContainer}>
@@ -36,31 +38,65 @@ const CategoryItem = ({ item, onToggle }) => {
   );
 };
 
-const CategorySettingsModal = ({ visible, onClose, residentId }) => {
+// The main component no longer accepts residentId as a prop
+const CategorySettingsModal = ({ visible, onClose }) => {
   const { t } = useTranslation();
   const { settings } = useSettings();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [residentId, setResidentId] = useState(null);
 
   const controllerName = "Resident";
-  const getSubscriptionsAction = `subscriptions/${residentId}`;
   const updateSubscriptionAction = "subscriptions";
 
-  // Fetch subscriptions when the modal becomes visible
+  useEffect(() => {
+    const loadResidentId = async () => {
+      if (visible) {
+        // Fetches the ID directly from storage using the "userID" key
+        const userIdFromStorage = await AsyncStorage.getItem("userID");
+        console.log("Loaded userID from storage in modal:", userIdFromStorage);
+        setResidentId(userIdFromStorage);
+      } else {
+        // Reset ID when the modal closes
+        setResidentId(null);
+      }
+    };
+    loadResidentId();
+  }, [visible]); // Dependency is 'visible'
+
+  // This useEffect fetches subscription data once we have the residentId
   useEffect(() => {
     const fetchSubscriptions = async () => {
-      if (!residentId) return;
       try {
-        setLoading(true);
+        // --- Debugging Logs ---
+        console.log("Attempting to fetch. Current residentId:", residentId);
+        const controllerName = "Resident"; // Ensure this is defined
+        console.log("Using controller name:", controllerName);
+        // ---
+
+        const getSubscriptionsAction = `subscriptions/${residentId}`;
         const apiUrl = `${Globals.API_BASE_URL}/api/${controllerName}/${getSubscriptionsAction}`;
+        console.log("Constructed API URL:", apiUrl);
+
         const response = await fetch(apiUrl);
-        if (!response.ok) throw new Error("Network response was not ok");
+
+        if (!response.ok) {
+          // If the server returned an error, log the details
+          const errorBody = await response.text();
+          console.error(
+            "Network response not OK. Status:",
+            response.status,
+            "Body:",
+            errorBody
+          );
+          throw new Error(`Server error: ${response.status}`);
+        }
         const data = await response.json();
-
-        console.log("Subscriptions for user: ", data);
-
         setCategories(data);
       } catch (e) {
+        // THIS IS THE MOST IMPORTANT CHANGE: Log the actual error object
+        console.error("An error occurred in fetchSubscriptions:", e);
+
         Alert.alert(
           t("CategorySettings_ErrorLoading_AlertTitle"),
           t("CategorySettings_ErrorLoading")
@@ -71,13 +107,18 @@ const CategorySettingsModal = ({ visible, onClose, residentId }) => {
     };
 
     if (visible) {
-      fetchSubscriptions();
+      setLoading(true);
+      if (residentId) {
+        fetchSubscriptions();
+      }
     }
   }, [visible, residentId, t]);
 
-  // Handle the toggle action with optimistic update
   const handleToggle = useCallback(
     async (categoryHebName, newStatus) => {
+      // Guard against toggling before ID is loaded
+      if (!residentId) return;
+
       setCategories((prev) =>
         prev.map((cat) =>
           cat.categoryHebName === categoryHebName
@@ -87,7 +128,7 @@ const CategorySettingsModal = ({ visible, onClose, residentId }) => {
       );
       try {
         const apiUrl = `${Globals.API_BASE_URL}/api/${controllerName}/${updateSubscriptionAction}`;
-        const response = await fetch(apiUrl, {
+        await fetch(apiUrl, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -96,12 +137,21 @@ const CategorySettingsModal = ({ visible, onClose, residentId }) => {
             isSubscribed: newStatus,
           }),
         });
-        if (!response.ok) throw new Error("Update failed on server");
+
+        Toast.show({
+          type: "success",
+          text1: t("CategorySettings_UpdateSuccess", "Preference Saved"),
+        });
       } catch (e) {
-        Alert.alert(
-          t("CategorySettings_ErrorUpdating_AlertTitle"),
-          t("CategorySettings_ErrorUpdating")
-        );
+        Toast.show({
+          type: "error",
+          text1: t(
+            "CategorySettings_ErrorUpdating_AlertTitle",
+            "Update Failed"
+          ),
+          text2: t("CategorySettings_ErrorUpdating", "Please try again."),
+        });
+
         // Revert on failure
         setCategories((prev) =>
           prev.map((cat) =>
@@ -185,18 +235,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E5E5EA",
   },
-  title: {
-    // Uses StyledText for global font scaling
-  },
+  title: {},
   subtitle: {
-    fontSize: 18, // Slightly larger for readability
+    fontSize: 18,
     textAlign: "center",
-    color: "#6c6c70", // Softer color
+    color: "#6c6c70",
     padding: 20,
   },
   closeButton: {
     position: "absolute",
-    // Position adapts to RTL/LTR via the parent's direction style
     right: 15,
   },
   listContainer: {
@@ -209,12 +256,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 18, // More vertical space for easier tapping
+    paddingVertical: 18,
     paddingHorizontal: 20,
     backgroundColor: "#FFFFFF",
   },
   categoryName: {
-    fontSize: 20, // Larger font for category names
+    fontSize: 20,
   },
   separator: { height: 1, backgroundColor: "#E5E5EA", marginLeft: 20 },
   footer: { padding: 20, backgroundColor: "#F2F2F7" },

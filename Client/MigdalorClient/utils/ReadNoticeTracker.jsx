@@ -1,44 +1,63 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// A unique key to store the list of read notice IDs
-const READ_NOTICES_KEY = '@read_notices_list';
+// Using a unique key for this specific data
+const READ_NOTICES_KEY = "@read_notice_ids";
 
 /**
  * Retrieves the set of read notice IDs from storage.
- * Using a Set is very efficient for checking if an item has been read.
+ * If storage is empty or an error occurs, it correctly returns an empty Set.
  * @returns {Promise<Set<string>>} A promise that resolves to a Set of read notice IDs.
  */
 const getReadNoticeIds = async () => {
   try {
     const jsonValue = await AsyncStorage.getItem(READ_NOTICES_KEY);
+    // If jsonValue is null (meaning nothing is stored), we default to an empty array.
     const items = jsonValue != null ? JSON.parse(jsonValue) : [];
     return new Set(items);
   } catch (e) {
     console.error("Failed to fetch read notices from storage", e);
-    return new Set(); // Return an empty set on error
+    // On any error, return a new empty Set to prevent crashes.
+    return new Set();
   }
 };
 
 /**
- * Marks a single notice as read by adding its ID to the stored list.
+ * Marks a single notice as read and saves it to storage.
  * @param {string} noticeId The ID of the notice to mark as read.
  */
 const markAsRead = async (noticeId) => {
+  // Defensive check: do nothing if noticeId is invalid.
   if (!noticeId) return;
+
   try {
     const readIdsSet = await getReadNoticeIds();
-    // Only update storage if the ID is not already in the set
+
     if (!readIdsSet.has(noticeId)) {
-        readIdsSet.add(noticeId);
-        const jsonValue = JSON.stringify(Array.from(readIdsSet));
-        await AsyncStorage.setItem(READ_NOTICES_KEY, jsonValue);
-    }
-  } catch (e) {
+  readIdsSet.add(noticeId); // Add the number directly
+  const jsonValue = JSON.stringify(Array.from(readIdsSet));
+  await AsyncStorage.setItem(READ_NOTICES_KEY, jsonValue);
+}
+  } catch (e)
+  {
     console.error("Failed to mark notice as read in storage", e);
+  }
+};
+
+const markMultipleAsRead = async (noticeIds) => {
+  if (!noticeIds || noticeIds.length === 0) return;
+  try {
+    const readIdsSet = await getReadNoticeIds();
+    // Add all new IDs to the existing set
+    noticeIds.forEach(id => readIdsSet.add(id));
+    const jsonValue = JSON.stringify(Array.from(readIdsSet));
+    await AsyncStorage.setItem(READ_NOTICES_KEY, jsonValue);
+  } catch (e) {
+    console.error("Failed to mark multiple notices as read in storage", e);
   }
 };
 
 export const ReadNoticeTracker = {
   getReadNoticeIds,
   markAsRead,
+  markMultipleAsRead, // ✅ Export the new function
 };

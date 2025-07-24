@@ -123,13 +123,10 @@ export default function LanguageSettingsPage(): JSX.Element {
         </View>
       </ScrollView>
 
-      {residentId && (
-        <CategorySettingsModal
-          visible={isCategoryModalVisible}
-          onClose={() => setCategoryModalVisible(false)}
-          residentId={residentId}
-        />
-      )}
+      <CategorySettingsModal
+        visible={isCategoryModalVisible}
+        onClose={() => setCategoryModalVisible(false)}
+      />
     </View>
   );
 }
