@@ -49,29 +49,25 @@ export const AuthProvider = ({ children }) => {
       const decoded = decodeJwt(token);
       // Check if the token is valid and not expired
       if (decoded && decoded.exp * 1000 > Date.now()) {
-        const isAdmin =
+        const userRole =
           decoded[
             "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-          ] === "admin";
-        if (isAdmin) {
-          setUser({
-            id: decoded[
-              "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+          ];
+
+        setUser({
+          id: decoded[
+            "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+          ],
+          hebFirstName:
+            decoded[
+              "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
             ],
-            hebFirstName:
-              decoded[
-                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname"
-              ],
-            hebLastName:
-              decoded[
-                "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
-              ],
-            role: "admin",
-          });
-        } else {
-          // If the user is not an admin, log them out
-          logout();
-        }
+          hebLastName:
+            decoded[
+              "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname"
+            ],
+          role: userRole,
+        });
       } else {
         // If token is expired or invalid, log out
         logout();
@@ -112,7 +108,14 @@ export const AuthProvider = ({ children }) => {
 
   // The value provided to consuming components.
   // isAdmin is now derived directly from the user object.
-  const value = { token, isAdmin: !!user, user, isLoading, login, logout };
+  const value = {
+    token,
+    isAuthenticated: !!user,
+    user,
+    isLoading,
+    login,
+    logout,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

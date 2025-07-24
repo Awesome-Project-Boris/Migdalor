@@ -56,6 +56,7 @@ const TooltipContent = ({ children, ...props }) => (
 const NoticeManagement = () => {
   const { user, token } = useAuth();
   const [notices, setNotices] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeNotice, setActiveNotice] = useState(null);
@@ -70,6 +71,9 @@ const NoticeManagement = () => {
     variant: "info",
   });
 
+  const userRoles = useMemo(() => (user?.role?.split(",") || []).map(role => role.trim()), [user]);
+  const isAdmin = useMemo(() => userRoles.includes("admin"), [userRoles]);
+
   const showToast = (variant, message) => {
     setToastState({ show: true, variant, message });
   };
@@ -78,23 +82,44 @@ const NoticeManagement = () => {
     setToastState({ ...toastState, show: false });
   };
 
-  const fetchNotices = useCallback(async () => {
+  const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await api.get("/Notices", token);
-      setNotices(Array.isArray(data) ? data : []);
+      const [noticesData, categoriesData] = await Promise.all([
+        api.get("/Notices", token),
+        api.get("/Categories", token)
+      ]);
+
+      setAllCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      
+      const categoriesMap = new Map(categoriesData.map(cat => [cat.categoryHebName, cat.categoryEngName]));
+
+      const userCategoryPermissions = new Set(userRoles);
+
+      const filteredNotices = (Array.isArray(noticesData) ? noticesData : []).filter(notice => {
+        if (isAdmin) {
+          return true;
+        }
+        const noticeEngCategory = categoriesMap.get(notice.noticeCategory);
+        return noticeEngCategory && userCategoryPermissions.has(noticeEngCategory);
+      });
+
+      setNotices(filteredNotices);
+
     } catch (err) {
-      setError("Failed to load notices.");
-      showToast("error", "Failed to load notices.");
+      const errorMessage = "Failed to load page data.";
+      setError(errorMessage);
+      showToast("error", errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, isAdmin, userRoles]);
+
 
   useEffect(() => {
-    fetchNotices();
-  }, [fetchNotices]);
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   const handleOpenModal = (notice = null) => {
     setActiveNotice(notice);
@@ -159,7 +184,7 @@ const NoticeManagement = () => {
       await api.post("/Notifications/broadcast", pushMessage, token);
 
       showToast("success", "ההודעה וההתראה נשלחו בהצלחה!");
-      fetchNotices(); // Refresh the table
+      fetchInitialData(); // Refresh the table
     } catch (err) {
       const action = isEditMode ? "עדכון" : "יצירת";
       showToast("error", `שגיאה ב${action} ההודעה: ${err.message}`);
@@ -176,7 +201,7 @@ const NoticeManagement = () => {
         `ההודעה "${deletingNotice.noticeTitle}" נמחקה בהצלחה.`
       );
       setDeletingNotice(null);
-      fetchNotices();
+      fetchInitialData();
     } catch (err) {
       showToast("error", `שגיאה במחיקת ההודעה: ${err.message}`);
       setDeletingNotice(null);
@@ -282,6 +307,9 @@ const NoticeManagement = () => {
           onSave={handleSaveNotice}
           showToast={showToast}
           notice={activeNotice}
+          allCategories={allCategories}
+          userRoles={userRoles}
+          isAdmin={isAdmin}
         />
 
         {deletingNotice && (
