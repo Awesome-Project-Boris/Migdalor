@@ -6,13 +6,21 @@ import { useBottomSheet } from "./BottomSheetMain";
 import { useNotifications } from "@/context/NotificationsContext";
 import { useTranslation } from "react-i18next";
 import StyledText from "@/components/StyledText";
+import { useAuth } from "@/context/AuthProvider";
+
+// 1. Define the expected structure of the user object for this file
+interface User {
+  personRole: string;
+}
 
 const Header: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { openSheet } = useBottomSheet();
   const { t } = useTranslation();
-  const { notificationStatus, updateLastVisited } = useNotifications();
+  const { notificationStatus } = useNotifications();
+  // 2. Tell TypeScript to treat the 'user' from useAuth as our defined User type
+  const { user } = useAuth() as { user: User | null };
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -24,19 +32,16 @@ const Header: React.FC = () => {
   const showBackButton =
     router.canGoBack() && !settingsPaths.includes(pathname);
 
-  // --- MODIFIED: This function now ONLY toggles the drawer ---
   const handleBellPress = () => {
     setIsDrawerOpen(!isDrawerOpen);
   };
 
-  // This function correctly handles dismissing a single category on navigation
   const handleNavigation = (
     key: "listings" | "notices" | "events",
     path: Href
   ) => {
     router.push(path);
-    // updateLastVisited(key); // This is now handled in page
-    setIsDrawerOpen(false); // Closes the drawer
+    setIsDrawerOpen(false);
   };
 
   return (
@@ -60,20 +65,23 @@ const Header: React.FC = () => {
         </View>
 
         <View style={styles.rightContainer}>
-          <TouchableOpacity onPress={handleBellPress} style={styles.border}>
-            <Ionicons
-              name={
-                notificationStatus.total > 0
-                  ? "notifications"
-                  : "notifications-outline"
-              }
-              size={32}
-              color="#000"
-            />
-            {notificationStatus.total > 0 && (
-              <View style={styles.notificationBadge} />
-            )}
-          </TouchableOpacity>
+          {/* 3. This check now works without error */}
+          {user && user.personRole !== 'Instructor' && (
+            <TouchableOpacity onPress={handleBellPress} style={styles.border}>
+              <Ionicons
+                name={
+                  notificationStatus.total > 0
+                    ? "notifications"
+                    : "notifications-outline"
+                }
+                size={32}
+                color="#000"
+              />
+              {notificationStatus.total > 0 && (
+                <View style={styles.notificationBadge} />
+              )}
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             onPress={openSheet}
             style={[styles.border, styles.menuButton]}
@@ -120,7 +128,6 @@ const Header: React.FC = () => {
             </>
           ) : (
             <View style={[styles.notificationItem, styles.noNotificationItem]}>
-              {/* --- MODIFIED --- */}
               <StyledText style={styles.notificationText}>
                 {t("Notifications_NoNew")}
               </StyledText>

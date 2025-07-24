@@ -465,7 +465,7 @@ const Map = () => {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Loading Map...</Text>
+        <Text>{t("MapScreen_Loading")}</Text>
       </View>
     );
   }
@@ -643,6 +643,11 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+  },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   statusOverlay: {
     position: "absolute",

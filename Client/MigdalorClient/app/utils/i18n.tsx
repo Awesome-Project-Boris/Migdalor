@@ -282,6 +282,7 @@ const resources = {
       LoginScreen_passwordLabel: "Password",
       LoginScreen_loginButton: "Login",
 
+      MapScreen_Loading: "Loading Map...",
       MapScreen_building1Name: "Building One",
       MapScreen_building1Info:
         "This is the first building we defined – the entrance building",
@@ -912,6 +913,7 @@ const resources = {
       LoginScreen_loginButton: "כניסה",
 
       MapScreen_Apartment: "דירה מספר ",
+      MapScreen_Loading: "טוען מפה...",
       MapScreen_building1Name: "בניין מספר אחת",
       MapScreen_building1Info: "זהו הבניין הראשון שהגדרנו - בניין הכניסה",
       Permissions_locationPermissionMessage: "נדרשת הרשאת מיקום להצגת המיקום.",

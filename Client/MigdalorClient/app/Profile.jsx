@@ -207,12 +207,12 @@ export default function Profile() {
             residentApartmentNumber: apartmentDisplayNumber || "",
 
             name:
-              (Globals.userSelectedLanguage === "he"
+              (settings.language === "he"
                 ? userData.hebName
                 : userData.engName) || "",
 
             partner:
-              (Globals.userSelectedLanguage === "he"
+              (settings.language === "he"
                 ? userData.spouseHebName
                 : userData.spouseEngName) || "",
           }));
@@ -261,20 +261,6 @@ export default function Profile() {
               showAdditionalPictures: true,
             }
           );
-
-          if (Globals.userSelectedLanguage === "he") {
-            setForm((prev) => ({
-              ...prev,
-              name: userData.hebName || "",
-              partner: userData.spouseHebName || "",
-            }));
-          } else if (Globals.userSelectedLanguage === "en") {
-            setForm((prev) => ({
-              ...prev,
-              name: userData.engName || "",
-              partner: userData.spouseEngName || "",
-            }));
-          }
         } catch (error) {
           console.error("Error loading user data:", error);
         } finally {
@@ -288,7 +274,7 @@ export default function Profile() {
       return () => {
         isActive = false;
       };
-    }, [localSearchParams.userId])
+    }, [localSearchParams.userId, settings.language])
   );
   const isOwnProfile =
     loggedInUserId && viewingUserId && loggedInUserId === viewingUserId;
