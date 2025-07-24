@@ -656,6 +656,18 @@ const resources = {
       Notifications_NewNotice: "New notice published - click to read",
       Notifications_NewEvent: "New activity or class added - click to see",
       Notifications_NoNew: "No new notifications",
+
+      // Category choice
+
+      CategorySettings_Title: "Manage Notice Categories",
+      CategorySettings_Subtitle:
+        "Choose which types of notices you want to receive.",
+      CategorySettings_Done: "Done",
+      CategorySettings_ErrorLoading: "Could not load category settings.",
+      CategorySettings_ErrorLoading_AlertTitle: "Error",
+      CategorySettings_ErrorUpdating:
+        "Could not save your change. Please try again.",
+      CategorySettings_ErrorUpdating_AlertTitle: "Update Failed",
     },
   },
   he: {
@@ -1282,6 +1294,16 @@ const resources = {
       Notifications_NoNew: "אין התראות חדשות",
 
       // Residents Committee
+
+      // Category choice
+
+      CategorySettings_Title: "ניהול קטגוריות",
+      CategorySettings_Subtitle: "בחר אילו סוגי הודעות ברצונך לקבל.",
+      CategorySettings_Done: "סיום",
+      CategorySettings_ErrorLoading: "לא ניתן היה לטעון את הגדרות הקטגוריה.",
+      CategorySettings_ErrorLoading_AlertTitle: "שגיאה",
+      CategorySettings_ErrorUpdating: "לא ניתן היה לשמור את השינוי. נסה שוב.",
+      CategorySettings_ErrorUpdating_AlertTitle: "שגיאת עדכון",
     },
   },
 };

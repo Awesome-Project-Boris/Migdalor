@@ -1,110 +1,169 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
-  StyleSheet as RNStyleSheet,
-  Dimensions as RNDimensions,
-  ScrollView as RNScrollView,
-  View as RNView,
+  StyleSheet,
+  Dimensions,
+  ScrollView,
+  View, // ✅ Using standard View
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "@/components/Header";
 import { Divider } from "react-native-paper";
 import { useAuth } from "@/context/AuthProvider";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
-import { YStack as TamaguiYStack } from "tamagui";
-import { useSettings } from "@/context/SettingsContext.jsx";
+import { useSettings } from "@/context/SettingsContext";
 import FlipButton from "@/components/FlipButton";
-import StyledText from "@/components/StyledText.jsx";
+import StyledText from "@/components/StyledText";
+import CategorySettingsModal from "@/components/CategorySettingsModal";
 
-const SCREEN_WIDTH = RNDimensions.get("window").width;
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
-export default function LanguageSettingsPage() {
+type LanguageOption = {
+  label: string;
+  value: string;
+};
+
+export default function LanguageSettingsPage(): JSX.Element {
   const { t } = useTranslation();
   const { logout } = useAuth();
   const router = useRouter();
   const { settings, updateSetting } = useSettings();
 
-  const options: { label: string; value: string }[] = [
+  const [isCategoryModalVisible, setCategoryModalVisible] =
+    useState<boolean>(false);
+  const [residentId, setResidentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadResidentId = async () => {
+      const userString = await AsyncStorage.getItem("user");
+      if (userString) {
+        const userData = JSON.parse(userString);
+        setResidentId(userData?.residentID);
+      }
+    };
+    loadResidentId();
+  }, []);
+
+  const languageOptions: LanguageOption[] = [
     { label: t("LanguageSettingsPage_he"), value: "he" },
     { label: t("LanguageSettingsPage_en"), value: "en" },
   ];
 
+  const handleLogout = async (): Promise<void> => {
+    await logout();
+    router.replace("/LoginScreen");
+  };
+
   return (
-    <RNView style={{ flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <Header />
-      <RNScrollView
+      <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={languageStyles.scrollContent}
+        contentContainerStyle={styles.scrollContent}
       >
-        <TamaguiYStack width="100%" alignItems="center" gap="$5">
-          <StyledText
-            style={languageStyles.headerText}
-            writingDirection={settings.language === "he" ? "rtl" : "ltr"}
-          >
-            {t("LanguageSettingsPage_header")}
+        {/* ✅ Replaced TamaguiYStack with a standard View and style */}
+        <View style={styles.contentContainer}>
+          <StyledText style={styles.headerText}>
+            {t("LanguageSettingsPage_LanguageHeader", "שפת האפליקציה")}
           </StyledText>
 
-          {options.map(({ label, value }) => (
-            <FlipButton
-              key={value}
-              style={languageStyles.button}
-              bgColor={settings.language === value ? "#00007a" : "#ffffff"}
-              textColor={settings.language === value ? "#ffffff" : "#0b0908"}
-              onPress={() => updateSetting("language", value)}
-            >
-              <StyledText style={languageStyles.buttonText}>{label}</StyledText>
-            </FlipButton>
-          ))}
+          {languageOptions.map(({ label, value }) => {
+            const isActive = settings.language === value;
+            return (
+              <FlipButton
+                key={value}
+                style={styles.button}
+                onPress={() => updateSetting("language", value)}
+                bgColor={isActive ? "#007AFF" : "#FFFFFF"}
+                textColor={isActive ? "#FFFFFF" : "#0b0908"}
+              >
+                {/* We apply the color style directly here to ensure it overrides */}
+                <StyledText
+                  style={[
+                    styles.buttonText,
+                    { color: isActive ? "#FFFFFF" : "#0b0908" },
+                  ]}
+                >
+                  {label}
+                </StyledText>
+              </FlipButton>
+            );
+          })}
 
-          <Divider style={{ width: SCREEN_WIDTH * 0.8, marginVertical: 20 }} />
+          <Divider style={styles.divider} />
 
-          <StyledText
-            style={languageStyles.headerText}
-            writingDirection={settings.language === "he" ? "rtl" : "ltr"}
+          <StyledText style={styles.headerText}>
+            {t("SettingsPage_NoticePreferences", "העדפות הודעות")}
+          </StyledText>
+          <FlipButton
+            style={styles.button}
+            onPress={() => setCategoryModalVisible(true)}
           >
+            <StyledText style={styles.buttonText}>
+              {t("SettingsPage_ManageCategories", "ניהול קטגוריות")}
+            </StyledText>
+          </FlipButton>
+
+          <Divider style={styles.divider} />
+
+          <StyledText style={styles.headerText}>
             {t("LanguageSettingsPage_LogoutHeader")}
           </StyledText>
 
           <FlipButton
-            style={languageStyles.button}
+            style={styles.button}
             bgColor="#ffffff"
             textColor="#0b0908"
-            onPress={async () => {
-              await logout();
-              router.replace("/LoginScreen");
-            }}
+            onPress={handleLogout}
           >
-            <StyledText style={languageStyles.buttonText}>
+            <StyledText style={styles.buttonText}>
               {t("LanguageSettingsPage_Logout")}
             </StyledText>
           </FlipButton>
-        </TamaguiYStack>
-      </RNScrollView>
-    </RNView>
+        </View>
+      </ScrollView>
+
+      {residentId && (
+        <CategorySettingsModal
+          visible={isCategoryModalVisible}
+          onClose={() => setCategoryModalVisible(false)}
+          residentId={residentId}
+        />
+      )}
+    </View>
   );
 }
 
-const languageStyles = RNStyleSheet.create({
+const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
-    paddingTop: 60,
-    paddingBottom: 160,
     alignItems: "center",
+    paddingBottom: 40,
+  },
+  // ✅ New container style to replace YStack
+  contentContainer: {
+    width: "100%",
+    alignItems: "center",
+    paddingTop: 60,
   },
   headerText: {
     fontSize: 30,
     fontWeight: "800",
     textAlign: "center",
     lineHeight: 50,
+    marginBottom: 10, // Spacing between header and buttons
   },
   button: {
-    width: SCREEN_WIDTH * 0.7,
-    minHeight: 100,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignSelf: "center",
+    width: SCREEN_WIDTH * 0.8,
+    maxWidth: 400,
+    marginTop: 10, // Spacing between buttons in a list
   },
   buttonText: {
+    fontWeight: "600",
     fontSize: 18,
-    textAlign: "center",
+  },
+  divider: {
+    width: SCREEN_WIDTH * 0.8,
+    marginVertical: 30, // Spacing around dividers
   },
 });

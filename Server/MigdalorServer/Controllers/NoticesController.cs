@@ -261,5 +261,66 @@ namespace MigdalorServer.Controllers
                     );
             }
         }
+
+        // Add this method to your NoticesController.cs
+
+        [HttpPost("filtered")]
+        public async Task<IActionResult> GetFilteredNotices([FromBody] NoticeFilterDto filters)
+        {
+            if (filters == null || filters.Categories == null || !filters.Categories.Any())
+            {
+                // If no categories are provided, return an empty list instead of all notices.
+                return Ok(new List<NoticeDto>());
+            }
+
+            try
+            {
+                // Start with the base query
+                var query = (from n in _context.OhNotices
+                             join s in _context.OhPeople on n.SenderId equals s.PersonId
+                             join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
+                             join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
+                             from pg in picGroup.DefaultIfEmpty()
+                             select new { n, s, cat, pg });
+
+                // Apply the category filter
+                query = query.Where(x => filters.Categories.Contains(x.n.NoticeCategory));
+
+                // Apply the sorting
+                if (filters.SortOrder == "oldest")
+                {
+                    query = query.OrderBy(x => x.n.CreationDate);
+                }
+                else
+                {
+                    // Default to newest if sortOrder is null, "newest", or any other value
+                    query = query.OrderByDescending(x => x.n.CreationDate);
+                }
+
+                // Project the final results into our DTO
+                var notices = await query.Select(x => new NoticeDto
+                {
+                    NoticeId = x.n.NoticeId,
+                    SenderId = x.n.SenderId,
+                    EngSenderName = x.s.EngFirstName + " " + x.s.EngLastName,
+                    HebSenderName = x.s.HebFirstName + " " + x.s.HebLastName,
+                    CreationDate = x.n.CreationDate.HasValue ? DateTime.SpecifyKind(x.n.CreationDate.Value, DateTimeKind.Utc) : null,
+                    NoticeTitle = x.n.NoticeTitle,
+                    NoticeMessage = x.n.NoticeMessage,
+                    NoticeCategory = x.n.NoticeCategory,
+                    NoticeSubCategory = x.n.NoticeSubCategory,
+                    PictureId = x.n.PictureId,
+                    PicturePath = x.pg.PicPath,
+                    CategoryColor = x.cat.CategoryColor
+                }).ToListAsync();
+
+                return Ok(notices);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to retrieve filtered notices.");
+                return StatusCode(500, "An internal server error occurred.");
+            }
+        }
     }
 }

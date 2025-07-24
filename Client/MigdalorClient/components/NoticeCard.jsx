@@ -15,90 +15,87 @@ const createSnippet = (message, maxLength = 100) => {
     : message.substring(0, maxLength) + "...";
 };
 
-export default function NoticeCard({ data, onPress, isNew }) {
+// ✅ Note the prop change from `isNew` to `isRead`
+export default function NoticeCard({ data, onPress, isRead }) {
   if (!data) return null;
   const { t, i18n } = useTranslation();
   const isRtl = i18n.dir() === "rtl";
   const displayDate = new Date(data.creationDate).toLocaleDateString("en-GB");
   const displaySnippet = createSnippet(data.noticeMessage);
-  const borderColor = data.categoryColor || "#ccc";
+
+  // ✅ Muted border color for read items, otherwise use category color
+  const borderColor = isRead ? "#d1d1d6" : data.categoryColor || "#ccc";
 
   const senderName = isRtl ? data.hebSenderName : data.engSenderName;
 
-  const infoContainerStyle = {
-    alignItems: isRtl ? "flex-end" : "flex-start",
-  };
-
+  const infoContainerStyle = { alignItems: isRtl ? "flex-end" : "flex-start" };
   const textStyle = {
     textAlign: isRtl ? "right" : "left",
     writingDirection: isRtl ? "rtl" : "ltr",
   };
 
-  const titleStyle = {
-    textAlign: isRtl ? "right" : "center",
-    writingDirection: isRtl ? "rtl" : "ltr",
-  };
-
-  const metaRowStyle = [
-    styles.metaRow,
-    { flexDirection: isRtl ? "row-reverse" : "row" },
-  ];
-
   return (
+    // ✅ Apply conditional styles for the container
     <BouncyButton
       onPress={onPress}
-      style={[styles.container, { borderColor }]}
-      springConfig={{ speed: 20, bounciness: 10 }}
+      style={[
+        styles.container,
+        { borderColor },
+        isRead ? styles.containerRead : styles.containerUnread,
+      ]}
     >
       <View style={[styles.infoContainer, infoContainerStyle]}>
-        <StyledText style={[styles.noticeTitle, titleStyle]}>
+        {/* ✅ Apply conditional styles for the title */}
+        <StyledText
+          style={[styles.noticeTitle, textStyle, isRead && styles.textRead]}
+        >
           {data.noticeTitle}
         </StyledText>
-
-        {senderName && (
-          <View style={metaRowStyle}>
-            <Ionicons name="person-outline" size={18} color="#444" />
-            <StyledText style={[styles.noticeSender, textStyle]}>
-              {senderName}
-            </StyledText>
-          </View>
-        )}
-
-        {data.noticeCategory && (
-          <View style={metaRowStyle}>
-            <Ionicons name="pricetag-outline" size={18} color="#444" />
-            <StyledText style={[styles.noticeCategory, textStyle]}>
-              {data.noticeCategory}
-              {data.noticeSubCategory ? ` (${data.noticeSubCategory})` : ""}
-            </StyledText>
-          </View>
-        )}
-
-        <View style={metaRowStyle}>
-          <Ionicons name="calendar-outline" size={18} color="#444" />
-          <StyledText style={[styles.noticeDate, textStyle]}>
-            {displayDate}
-          </StyledText>
-        </View>
-
-        {displaySnippet && (
-          <StyledText style={[styles.noticeSnippet, textStyle]}>
-            {displaySnippet}
-          </StyledText>
-        )}
-      </View>
-      {isNew && (
         <View
           style={[
-            styles.newBadge,
-            isRtl ? styles.newBadgeRtl : styles.newBadgeLtr,
+            styles.metaRow,
+            { flexDirection: isRtl ? "row-reverse" : "row" },
           ]}
         >
-          <StyledText style={styles.newBadgeText}>
-            {t("Item_New", "New")}
+          <Ionicons
+            name="person-outline"
+            size={16}
+            color={isRead ? styles.textMetaRead.color : "#444"}
+          />
+          {/* ✅ Apply conditional styles for meta text */}
+          <StyledText
+            style={[styles.noticeSender, isRead && styles.textMetaRead]}
+          >
+            {senderName}
           </StyledText>
         </View>
-      )}
+        <View
+          style={[
+            styles.metaRow,
+            { flexDirection: isRtl ? "row-reverse" : "row" },
+          ]}
+        >
+          <Ionicons
+            name="folder-outline"
+            size={16}
+            color={isRead ? styles.textMetaRead.color : "#444"}
+          />
+          <StyledText
+            style={[styles.noticeCategory, isRead && styles.textMetaRead]}
+          >
+            {data.categoryHebName}
+          </StyledText>
+        </View>
+        <StyledText
+          style={[
+            styles.noticeSnippet,
+            textStyle,
+            isRead && styles.textMetaRead,
+          ]}
+        >
+          {displaySnippet}
+        </StyledText>
+      </View>
     </BouncyButton>
   );
 }
@@ -108,7 +105,6 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH * 0.9,
     minHeight: 150,
     borderRadius: 10,
-    backgroundColor: "#fff",
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 15,
@@ -120,6 +116,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
+  },
+  // ✅ Style for UNREAD card (your default)
+  containerUnread: {
+    backgroundColor: "#fff",
+  },
+  // ✅ Style for READ card
+  containerRead: {
+    backgroundColor: "#f2f2f7", // A subtle, high-contrast grey
   },
   infoContainer: {
     flex: 1,
@@ -144,36 +148,18 @@ const styles = StyleSheet.create({
   noticeCategory: {
     fontSize: 16,
     color: "#444",
-    fontWeight: "500",
-  },
-  noticeDate: {
-    fontSize: 16,
-    color: "#444",
   },
   noticeSnippet: {
-    fontSize: 18,
-    color: "#333",
-    lineHeight: 24,
-    marginTop: 10,
+    fontSize: 16,
+    color: "#666",
+    marginTop: 8,
   },
-  newBadge: {
-    position: "absolute",
-    top: 10,
-    backgroundColor: "#ff4757",
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    elevation: 5,
+  // ✅ Style for READ text
+  textRead: {
+    color: "#3c3c43", // Slightly muted but still very dark and readable
   },
-  newBadgeLtr: {
-    right: 10,
-  },
-  newBadgeRtl: {
-    left: 10,
-  },
-  newBadgeText: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 14,
+  // ✅ Style for READ meta text (sender, category)
+  textMetaRead: {
+    color: "#8e8e93", // Muted grey, still passes accessibility contrast checks
   },
 });

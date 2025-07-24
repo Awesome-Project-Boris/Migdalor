@@ -12,6 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Image as ExpoImage } from "expo-image"; // ✅ Import ExpoImage
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
+import { ReadNoticeTracker } from "../utils/ReadNoticeTracker";
 
 // --- Custom Component and Utility Imports ---
 import Header from "@/components/Header";
@@ -58,6 +59,9 @@ export default function NoticeFocus() {
   const { noticeId } = useLocalSearchParams();
   const router = useRouter();
 
+  const { notice: noticeString } = useLocalSearchParams();
+  const notice = JSON.parse(noticeString);
+
   const fetchNoticeDetails = useCallback(async () => {
     if (!noticeId) {
       setError(t("NoticeDetailsScreen_errorNoId"));
@@ -94,6 +98,12 @@ export default function NoticeFocus() {
       setIsLoading(false);
     }
   }, [noticeId, t]);
+
+  useEffect(() => {
+    if (notice?.noticeID) {
+      ReadNoticeTracker.markAsRead(notice.noticeID);
+    }
+  }, [notice?.noticeID]);
 
   useEffect(() => {
     if (noticeId) {
