@@ -38,38 +38,33 @@ function AppInitializer({ children }) {
   const [isLanguageApplied, setLanguageApplied] = useState(false);
 
   useEffect(() => {
-    // This effect runs when settings are loaded or change.
     if (!areSettingsLoading && settings.language) {
-      // If the language in i18n is different from settings, change it.
+
+      Globals.userSelectedLanguage = settings.language;
+      Globals.userSelectedDirection =
+        settings.language === "he" ? "rtl" : "ltr";
+
       if (i18n.language !== settings.language) {
         i18n.changeLanguage(settings.language).then(() => {
-          // After the language is changed, update globals and mark it as applied.
-          Globals.userSelectedLanguage = settings.language;
-          Globals.userSelectedDirection =
-            settings.language === "he" ? "rtl" : "ltr";
           setLanguageApplied(true);
         });
       } else {
-        // If the language is already correct, just mark it as applied.
         setLanguageApplied(true);
       }
     }
   }, [areSettingsLoading, settings.language, i18n]);
 
   useEffect(() => {
-    // Hide the splash screen only when settings are loaded AND language is applied.
     if (!areSettingsLoading && isLanguageApplied) {
       SplashScreen.hideAsync();
     }
   }, [areSettingsLoading, isLanguageApplied]);
 
-  // Do not render the rest of the app until everything is ready.
-  // This keeps the native splash screen visible and prevents flickering.
   if (areSettingsLoading || !isLanguageApplied) {
     return null;
   }
 
-  return children; // Render the main app content once ready.
+  return children;
 }
 
 
@@ -264,9 +259,7 @@ function AppContent() {
   );
 }
 
-/**
- * This is the main export component. It handles initialization and provider setup.
- */
+
 export default function Layout() {
   const [isI18nReady, setI18nReady] = useState(false);
 

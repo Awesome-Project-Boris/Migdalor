@@ -25,7 +25,7 @@ import { Globals } from "./constants/Globals";
 import Header from "../components/Header";
 import FlipButton from "../components/FlipButton";
 
-// --- Locale Configuration ---
+// --- Locale Configuration (No Changes) ---
 LocaleConfig.locales["he"] = {
   monthNames: [
     "ינואר",
@@ -61,7 +61,7 @@ LocaleConfig.locales["he"] = {
 };
 LocaleConfig.defaultLocale = "he";
 
-// --- Helper Functions ---
+// --- Helper Functions (No Changes) ---
 const formatTime = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -75,7 +75,7 @@ const formatTime = (dateString) => {
 const getWeekDays = (date) => {
   const startOfWeek = new Date(date);
   const day = startOfWeek.getDay();
-  const diff = startOfWeek.getDate() - day; // Sunday is 0
+  const diff = startOfWeek.getDate() - day;
   startOfWeek.setDate(diff);
 
   const week = [];
@@ -87,7 +87,7 @@ const getWeekDays = (date) => {
   return week;
 };
 
-// --- Layout Algorithm for Daily View ---
+// --- Layout Algorithm (No Changes) ---
 const layoutEvents = (events) => {
   if (!events || events.length === 0) return [];
 
@@ -149,8 +149,8 @@ const layoutEvents = (events) => {
   return layouted;
 };
 
-// --- Child Components ---
 
+// --- Child Components (No Changes) ---
 const ViewSwitcher = ({ viewMode, setViewMode, onGoToToday, t }) => (
   <View style={styles.viewSwitcherContainer}>
     <TouchableOpacity style={styles.todayButton} onPress={onGoToToday}>
@@ -389,7 +389,7 @@ const ManualAdditionModal = ({ visible, onClose, item, isRtl, t }) => (
                 <DetailRow
                   icon="information-circle-outline"
                   label={t("Type", "סוג")}
-                  value={t(item.type, item.type)} // Translate the value
+                  value={t(item.type, item.type)}
                   isRtl={isRtl}
                 />
               )}
@@ -397,7 +397,7 @@ const ManualAdditionModal = ({ visible, onClose, item, isRtl, t }) => (
                 <DetailRow
                   icon="alert-circle-outline"
                   label={t("TimeTable_Status")}
-                  value={t(`Timetable_${item.status}`, item.status)} // Use the correct prefixed key
+                  value={t(`Timetable_${item.status}`, item.status)}
                   isRtl={isRtl}
                 />
               )}
@@ -439,6 +439,7 @@ const DetailRow = ({ icon, label, value, isRtl, isLast = false }) => (
   </View>
 );
 
+
 // --- Main Component ---
 const TimetableScreen = () => {
   const { t, i18n } = useTranslation();
@@ -453,20 +454,23 @@ const TimetableScreen = () => {
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0]
   );
-  const [calendarKey, setCalendarKey] = useState(Date.now());
-  const loadedMonths = useMemo(() => new Set(), []);
+  const loadedMonths = useRef(new Set());
   const [currentMonth, setCurrentMonth] = useState(
     new Date().toISOString().split("T")[0]
   );
 
   const loadItemsForMonth = useCallback(
-    async (dateObj) => {
-      const month = dateObj.dateString.substring(0, 7);
-      if (loadedMonths.has(month)) return;
+    async (dateString) => {
+      const month = dateString.substring(0, 7);
+      if (loadedMonths.current.has(month)) return;
+
       setLoading(true);
-      loadedMonths.add(month);
-      const startDate = new Date(dateObj.year, dateObj.month - 1, 1);
-      const endDate = new Date(dateObj.year, dateObj.month, 0);
+      loadedMonths.current.add(month);
+
+      const dateObj = new Date(dateString);
+      const startDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+      const endDate = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0);
+
       try {
         const response = await fetch(
           `${
@@ -475,19 +479,28 @@ const TimetableScreen = () => {
         );
         if (!response.ok) throw new Error("Failed to fetch timetable data.");
         const data = await response.json();
+
+        // --- FIX: This new logic prevents duplicate events ---
         setItems((prevItems) => {
-          const newItems = { ...prevItems };
+          const newItemsForMonth = {};
           data.forEach((event) => {
             const eventDate = event.startTime.split("T")[0];
-            if (!newItems[eventDate]) newItems[eventDate] = [];
-            newItems[eventDate].push(event);
+            if (!newItemsForMonth[eventDate]) {
+              newItemsForMonth[eventDate] = [];
+            }
+            newItemsForMonth[eventDate].push(event);
           });
-          for (const date in newItems) {
-            newItems[date].sort(
+
+          // Sort the newly fetched items
+          for (const date in newItemsForMonth) {
+            newItemsForMonth[date].sort(
               (a, b) => new Date(a.startTime) - new Date(b.startTime)
             );
           }
-          return newItems;
+
+          // Merge with previous state, overwriting any dates from the new fetch
+          // This makes the update idempotent and safe from race conditions.
+          return { ...prevItems, ...newItemsForMonth };
         });
       } catch (error) {
         console.error(error);
@@ -495,36 +508,29 @@ const TimetableScreen = () => {
         setLoading(false);
       }
     },
-    [loadedMonths]
+    []
   );
+  
+  useEffect(() => {
+    if(currentMonth) {
+        loadItemsForMonth(currentMonth);
+    }
+  }, [currentMonth, loadItemsForMonth]);
 
   useFocusEffect(
-    React.useCallback(() => {
-      // This function runs when the screen comes into focus
-      const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
-
-      // 1. Clear all previous data to prevent duplicates
+    useCallback(() => {
+      const todayStr = new Date().toISOString().split("T")[0];
+      
       setItems({});
-      loadedMonths.clear();
-
-      // 2. Reset view to today's date and fetch fresh data
+      loadedMonths.current.clear();
       setSelectedDate(todayStr);
-      setCurrentMonth(todayStr); // Reset the calendar view as well
+      setCurrentMonth(todayStr);
 
-      loadItemsForMonth({
-        dateString: todayStr,
-        year: today.getFullYear(),
-        month: today.getMonth() + 1,
-        day: today.getDate(),
-      });
-
-      // 3. Return a cleanup function to run when the user navigates away
       return () => {
         setItems({});
-        loadedMonths.clear();
+        loadedMonths.current.clear();
       };
-    }, [loadItemsForMonth]) // Dependency ensures the effect has the latest fetch function
+    }, [])
   );
 
   const handleItemPress = (item) => {
@@ -545,7 +551,6 @@ const TimetableScreen = () => {
     const todayStr = new Date().toISOString().split("T")[0];
     setSelectedDate(todayStr);
     setCurrentMonth(todayStr);
-    setCalendarKey(Date.now());
   };
 
   const getCurrentTitle = () => {
@@ -601,7 +606,7 @@ const TimetableScreen = () => {
       styles.itemContainer,
       isCancelled && styles.cancelledItemContainer,
       isRescheduled && styles.rescheduledItemContainer,
-      { flexDirection: isRtl ? "row-reverse" : "row" }, // Add this line
+      { flexDirection: isRtl ? "row-reverse" : "row" },
     ];
 
     return (
@@ -628,7 +633,7 @@ const TimetableScreen = () => {
               style={[
                 styles.statusBadge,
                 isCancelled ? styles.cancelledBadge : styles.rescheduledBadge,
-                { alignSelf: isRtl ? "flex-end" : "flex-start" }, // This line fixes the alignment
+                { alignSelf: isRtl ? "flex-end" : "flex-start" },
               ]}
             >
               <Text style={styles.statusBadgeText}>
@@ -662,96 +667,42 @@ const TimetableScreen = () => {
       };
     return marked;
   }, [items, selectedDate]);
-
-  const ListHeader = () => (
-    <>
-      <View style={styles.headerPlaque}>
-        <Text style={styles.pageTitle}>{t("Timetable_Title")}</Text>
-        <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle")}</Text>
-        <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {loading && (
-            <ActivityIndicator style={{ marginLeft: 10 }} color="#005D8F" />
-          )}
-        </View>
+  
+  const HeaderPlaque = () => (
+    <View style={styles.headerPlaque}>
+      <Text style={styles.pageTitle}>{t("Timetable_Title")}</Text>
+      <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle")}</Text>
+      <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {loading && (
+          <ActivityIndicator style={{ marginLeft: 10 }} color="#005D8F" />
+        )}
       </View>
-      <ViewSwitcher
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        t={t}
-        onGoToToday={goToToday}
-      />
-      {viewMode === "monthly" && (
-        <Calendar
-          onDayPress={(day) => {
-            // Update the onDayPress logic
-            setSelectedDate(day.dateString);
-            setCurrentMonth(day.dateString); // Also set the visible month
-          }}
-          onMonthChange={(month) => {
-            // Update the onMonthChange logic
-            setCurrentMonth(month.dateString);
-            loadItemsForMonth(month);
-          }}
-          markedDates={markedDates}
-          current={currentMonth}
-          style={styles.calendar}
-          theme={{
-            calendarBackground: "#ffffff",
-            textSectionTitleColor: "#3D2B1F",
-            selectedDayBackgroundColor: "#005D8F",
-            selectedDayTextColor: "#ffffff",
-            todayTextColor: "#005D8F",
-            dayTextColor: "#3D2B1F",
-            arrowColor: "#005D8F",
-            monthTextColor: "#3D2B1F",
-            textDayFontWeight: "500",
-            textMonthFontWeight: "bold",
-            textDayHeaderFontWeight: "300",
-          }}
-        />
-      )}
-      {viewMode === "weekly" && (
-        <WeeklySelector
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          items={items}
-        />
-      )}
-    </>
+    </View>
   );
 
   return (
     <View style={styles.container}>
       <Header />
-      {viewMode === "daily" ? (
+      
+      {viewMode === 'daily' ? (
         <ScrollView
-          style={{ flex: 1 }}
-          stickyHeaderIndices={[1]} // This tells the ScrollView to "stick" the second child (index 1) to the top.
-          showsVerticalScrollIndicator={false} // Optional: for a cleaner look
+          stickyHeaderIndices={[1]}
+          showsVerticalScrollIndicator={false}
         >
-          {/* Child 0: The part that scrolls away */}
-          <View style={styles.headerPlaque}>
-            <Text style={styles.pageTitle}>{t("Timetable_Title")}</Text>
-            <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle")}</Text>
-            <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
-          </View>
-
-          {/* Child 1: The View Switcher that will become sticky */}
+          <HeaderPlaque />
           <ViewSwitcher
             viewMode={viewMode}
             setViewMode={setViewMode}
             t={t}
             onGoToToday={goToToday}
           />
-
-          {/* Child 2: The main content */}
           <DailyView
             events={items[selectedDate] || []}
             handleItemPress={handleItemPress}
@@ -766,7 +717,51 @@ const TimetableScreen = () => {
           keyExtractor={(item, index) =>
             `${item.id}-${item.sourceTable}-${index}`
           }
-          ListHeaderComponent={ListHeader}
+          ListHeaderComponent={() => (
+            <>
+              <HeaderPlaque />
+              <ViewSwitcher
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                t={t}
+                onGoToToday={goToToday}
+              />
+              {viewMode === 'monthly' && (
+                <Calendar
+                  onDayPress={(day) => {
+                      setSelectedDate(day.dateString);
+                      setCurrentMonth(day.dateString);
+                  }}
+                  onMonthChange={(month) => {
+                      setCurrentMonth(month.dateString);
+                  }}
+                  markedDates={markedDates}
+                  current={currentMonth}
+                  style={styles.calendar}
+                  theme={{
+                      calendarBackground: "#ffffff",
+                      textSectionTitleColor: "#3D2B1F",
+                      selectedDayBackgroundColor: "#005D8F",
+                      selectedDayTextColor: "#ffffff",
+                      todayTextColor: "#005D8F",
+                      dayTextColor: "#3D2B1F",
+                      arrowColor: "#005D8F",
+                      monthTextColor: "#3D2B1F",
+                      textDayFontWeight: "500",
+                      textMonthFontWeight: "bold",
+                      textDayHeaderFontWeight: "300",
+                  }}
+                />
+              )}
+              {viewMode === 'weekly' && (
+                <WeeklySelector
+                    selectedDate={selectedDate}
+                    setSelectedDate={setSelectedDate}
+                    items={items}
+                />
+              )}
+            </>
+          )}
           ListEmptyComponent={() => (
             <View style={styles.emptyDateContainer}>
               <Text style={styles.emptyDateText}>
@@ -777,6 +772,7 @@ const TimetableScreen = () => {
           contentContainerStyle={styles.listContainer}
         />
       )}
+      
       <ManualAdditionModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -788,7 +784,7 @@ const TimetableScreen = () => {
   );
 };
 
-// --- Styles ---
+// --- Styles (No Changes) ---
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fef1e6", paddingTop: 60 },
   pageTitle: {
@@ -833,7 +829,7 @@ const styles = StyleSheet.create({
     borderBottomColor: "#e0c4a2",
     borderBottomWidth: 1,
     marginBottom: 10,
-    gap: 10, // Optional: adds space between wrapped items
+    gap: 10,
   },
   modeButtonsContainer: { flexDirection: "row" },
   viewSwitcherButton: {
@@ -865,12 +861,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 3,
   },
-  listContainer: { paddingHorizontal: 10, paddingBottom: 20, flexGrow: 1 },
+  listContainer: { paddingBottom: 20, flexGrow: 1 },
   itemContainer: {
     backgroundColor: "white",
     borderRadius: 8,
     padding: 15,
     marginTop: 12,
+    marginHorizontal: 10,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
