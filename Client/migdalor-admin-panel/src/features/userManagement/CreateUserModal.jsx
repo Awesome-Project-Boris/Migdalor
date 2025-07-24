@@ -3,6 +3,7 @@ import { X, RefreshCw, Printer, Copy } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
 import InputField from "../../components/common/InputField";
+import RoleSelection from "./RoleSelection"; // <-- Import the new component
 
 // --- Mock shadcn/ui Dialog Components ---
 const Dialog = ({ open, onOpenChange, children }) => {
@@ -59,20 +60,22 @@ const DialogDescription = React.forwardRef((props, ref) => (
   <p ref={ref} className="text-md text-gray-500" {...props} />
 ));
 
-// --- Main CreateUserModal Component ---
-
 const CreateUserModal = ({
   isOpen,
   onClose,
   userType,
   onUserCreated,
   showToast,
+  allCategories,
 }) => {
   const { token } = useAuth();
   const [formData, setFormData] = useState({});
-  const [showPasswordView, setShowPasswordView] = useState(false);
-  const [createdUserDetails, setCreatedUserDetails] = useState(null);
+  const [selectedRoles, setSelectedRoles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [staffRoleType, setStaffRoleType] = useState("categories");
+
+  const [view, setView] = useState("form");
+  const [createdUserDetails, setCreatedUserDetails] = useState(null);
 
   const generatePassword = useCallback(() => {
     const lower = "abcdefghijklmnopqrstuvwxyz";
@@ -97,19 +100,20 @@ const CreateUserModal = ({
   useEffect(() => {
     if (isOpen) {
       setFormData({
-        phoneNumber: "",
         hebFirstName: "",
         hebLastName: "",
         engFirstName: "",
         engLastName: "",
+        phoneNumber: "",
+        password: generatePassword(),
         gender: "זכר",
-        password: generatePassword(), // Always generate a password on open
-        role: userType === "admin" ? "Instructor" : "Resident",
       });
-      setShowPasswordView(false);
+      setSelectedRoles([]);
+      setStaffRoleType("categories");
+      setView("form");
       setCreatedUserDetails(null);
     }
-  }, [isOpen, userType, generatePassword]);
+  }, [isOpen, generatePassword]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -123,43 +127,87 @@ const CreateUserModal = ({
     }
   };
 
+  const handleRoleTypeChange = (e) => {
+    setStaffRoleType(e.target.value);
+    setSelectedRoles([]);
+  };
+
+  const handleCategoryRoleChange = (roleEngName) => {
+    setSelectedRoles((prev) =>
+      prev.includes(roleEngName)
+        ? prev.filter((r) => r !== roleEngName)
+        : [...prev, roleEngName]
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const endpoint =
-      userType === "resident" ? "/People/Register" : "/People/RegisterAdmin";
+    let roleString;
+    let endpoint;
+
+    if (userType === "resident") {
+      roleString = "Resident";
+      endpoint = "/People/Register";
+    } else {
+      switch (staffRoleType) {
+        case "admin":
+          roleString = "admin";
+          break;
+        case "instructor":
+          roleString = "Instructor";
+          break;
+        case "categories":
+          if (selectedRoles.length === 0) {
+            showToast(
+              "error",
+              "יש לבחור לפחות הרשאת קטגוריה אחת עבור משתמש צוות."
+            );
+            setIsSubmitting(false);
+            return;
+          }
+          roleString = selectedRoles.join(",");
+          break;
+        default:
+          showToast("error", "סוג תפקיד לא תקין.");
+          setIsSubmitting(false);
+          return;
+      }
+      endpoint = "/People/RegisterAdmin";
+    }
+
     const payload = {
-      ...formData,
-      gender: formData.gender === "זכר" ? "M" : "F",
+      HebFirstName: formData.hebFirstName,
+      HebLastName: formData.hebLastName,
+      EngFirstName: formData.engFirstName,
+      EngLastName: formData.engLastName,
+      PhoneNumber: formData.phoneNumber,
+      Password: formData.password,
+      Gender: formData.gender === "זכר" ? "M" : "F",
+      Role: roleString,
     };
 
     try {
       await api.post(endpoint, payload, token);
+      showToast("success", "המשתמש נוצר בהצלחה!");
+
       if (userType === "resident") {
-        showToast("success", "הדייר נוצר בהצלחה!");
         setCreatedUserDetails(payload);
-        setShowPasswordView(true);
+        setView("password");
       } else {
-        showToast("success", "איש צוות נוצר בהצלחה!");
         onUserCreated();
         onClose();
       }
     } catch (error) {
-      console.error("Error creating user:", error);
-      showToast(
-        "error",
-        `שגיאה ביצירת משתמש: ${error.message || "An unknown error occurred."}`
-      );
+      showToast("error", `שגיאה ביצירת משתמש: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleFinalClose = () => {
-    if (onUserCreated) {
-      onUserCreated();
-    }
+    onUserCreated();
     onClose();
   };
 
@@ -168,16 +216,12 @@ const CreateUserModal = ({
       "password-print-area"
     ).innerHTML;
     const printWindow = window.open("", "_blank", "height=500,width=500");
-
-    printWindow.document.write("<html><head><title>פרטי משתמש</title>");
     printWindow.document.write(
-      "<style>body { direction: rtl; text-align: right; font-family: Arial, sans-serif; padding: 20px; }</style>"
+      "<html><head><title>פרטי משתמש</title><style>body { direction: rtl; text-align: right; font-family: Arial, sans-serif; padding: 20px; }</style></head><body>"
     );
-    printWindow.document.write("</head><body>");
     printWindow.document.write(printContent);
     printWindow.document.write("</body></html>");
     printWindow.document.close();
-
     setTimeout(() => {
       printWindow.focus();
       printWindow.print();
@@ -188,23 +232,24 @@ const CreateUserModal = ({
   const handleCopyToClipboard = () => {
     if (createdUserDetails) {
       navigator.clipboard.writeText(
-        `שם משתמש: ${createdUserDetails.phoneNumber}\nסיסמה: ${createdUserDetails.password}`
+        `שם משתמש: ${createdUserDetails.PhoneNumber}\nסיסמה: ${createdUserDetails.Password}`
       );
       showToast("info", "פרטי המשתמש הועתקו.");
     }
   };
 
-  const title =
-    userType === "resident" ? "יצירת דייר חדש" : "יצירת איש צוות חדש";
-  const description =
-    userType === "resident"
-      ? "מלא את הפרטים ליצירת פרופיל דייר חדש."
-      : "מלא את הפרטים ליצירת פרופיל איש צוות.";
+  if (!isOpen) return null;
+
+  const isStaffCreation = userType === "admin";
+  const title = isStaffCreation ? "יצירת איש צוות חדש" : "יצירת דייר חדש";
+  const description = isStaffCreation
+    ? "מלא את הפרטים ליצירת פרופיל איש צוות."
+    : "מלא את הפרטים ליצירת פרופיל דייר חדש.";
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
-        {!showPasswordView ? (
+        {view === "form" ? (
           <>
             <DialogHeader>
               <DialogTitle>{title}</DialogTitle>
@@ -215,33 +260,33 @@ const CreateUserModal = ({
                 <InputField
                   label="שם פרטי (עברית)"
                   name="hebFirstName"
-                  value={formData.hebFirstName}
+                  value={formData.hebFirstName || ""}
                   onChange={handleChange}
                   required
                 />
                 <InputField
                   label="שם משפחה (עברית)"
                   name="hebLastName"
-                  value={formData.hebLastName}
+                  value={formData.hebLastName || ""}
                   onChange={handleChange}
                   required
                 />
                 <InputField
                   label="שם פרטי (אנגלית)"
                   name="engFirstName"
-                  value={formData.engFirstName}
+                  value={formData.engFirstName || ""}
                   onChange={handleChange}
                 />
                 <InputField
                   label="שם משפחה (אנגלית)"
                   name="engLastName"
-                  value={formData.engLastName}
+                  value={formData.engLastName || ""}
                   onChange={handleChange}
                 />
                 <InputField
                   label="מספר טלפון (שם משתמש)"
                   name="phoneNumber"
-                  value={formData.phoneNumber}
+                  value={formData.phoneNumber || ""}
                   onChange={handleChange}
                   required
                   maxLength={10}
@@ -268,7 +313,7 @@ const CreateUserModal = ({
                     label="סיסמה"
                     name="password"
                     type="text"
-                    value={formData.password}
+                    value={formData.password || ""}
                     onChange={handleChange}
                     required
                   />
@@ -281,21 +326,14 @@ const CreateUserModal = ({
                   </button>
                 </div>
 
-                {userType === "admin" && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      תפקיד
-                    </label>
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleChange}
-                      className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
-                    >
-                      <option value="Instructor">מדריך</option>
-                      <option value="admin">מנהל</option>
-                    </select>
-                  </div>
+                {isStaffCreation && (
+                  <RoleSelection
+                    allCategories={allCategories}
+                    staffRoleType={staffRoleType}
+                    onRoleTypeChange={handleRoleTypeChange}
+                    selectedRoles={selectedRoles}
+                    onCategoryRoleChange={handleCategoryRoleChange}
+                  />
                 )}
               </div>
               <DialogFooter>
@@ -312,7 +350,7 @@ const CreateUserModal = ({
                   className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-blue-300"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "יוצר משתמש..." : "צור משתמש"}
+                  {isSubmitting ? "יוצר..." : "צור משתמש"}
                 </button>
               </DialogFooter>
             </form>
@@ -330,16 +368,16 @@ const CreateUserModal = ({
               className="p-4 bg-gray-100 rounded-lg text-right space-y-2"
             >
               <p>
-                <strong>שם:</strong> {createdUserDetails.hebFirstName}{" "}
-                {createdUserDetails.hebLastName}
+                <strong>שם:</strong> {createdUserDetails.HebFirstName}{" "}
+                {createdUserDetails.HebLastName}
               </p>
               <p>
-                <strong>שם משתמש:</strong> {createdUserDetails.phoneNumber}
+                <strong>שם משתמש:</strong> {createdUserDetails.PhoneNumber}
               </p>
               <p>
                 <strong>סיסמה:</strong>{" "}
                 <span className="font-mono bg-gray-200 p-1 rounded">
-                  {createdUserDetails.password}
+                  {createdUserDetails.Password}
                 </span>
               </p>
             </div>
