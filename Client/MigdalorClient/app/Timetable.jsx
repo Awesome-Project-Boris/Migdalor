@@ -480,7 +480,6 @@ const TimetableScreen = () => {
         if (!response.ok) throw new Error("Failed to fetch timetable data.");
         const data = await response.json();
 
-        // --- FIX: This new logic prevents duplicate events ---
         setItems((prevItems) => {
           const newItemsForMonth = {};
           data.forEach((event) => {
@@ -491,15 +490,12 @@ const TimetableScreen = () => {
             newItemsForMonth[eventDate].push(event);
           });
 
-          // Sort the newly fetched items
           for (const date in newItemsForMonth) {
             newItemsForMonth[date].sort(
               (a, b) => new Date(a.startTime) - new Date(b.startTime)
             );
           }
 
-          // Merge with previous state, overwriting any dates from the new fetch
-          // This makes the update idempotent and safe from race conditions.
           return { ...prevItems, ...newItemsForMonth };
         });
       } catch (error) {
@@ -517,20 +513,24 @@ const TimetableScreen = () => {
     }
   }, [currentMonth, loadItemsForMonth]);
 
+  // --- FIX: This effect now handles both initial load and refreshing on focus ---
   useFocusEffect(
     useCallback(() => {
       const todayStr = new Date().toISOString().split("T")[0];
       
-      setItems({});
-      loadedMonths.current.clear();
-      setSelectedDate(todayStr);
-      setCurrentMonth(todayStr);
-
-      return () => {
+      // On initial focus, reset to today. On subsequent focuses, this will refresh the data.
+      if (!loadedMonths.current.has(todayStr.substring(0, 7))) {
         setItems({});
         loadedMonths.current.clear();
-      };
-    }, [])
+        setSelectedDate(todayStr);
+        setCurrentMonth(todayStr);
+      } else {
+        // If we have data, just refresh the current month silently
+        const monthToRefresh = currentMonth.substring(0, 7);
+        loadedMonths.current.delete(monthToRefresh);
+        loadItemsForMonth(currentMonth);
+      }
+    }, [currentMonth, loadItemsForMonth])
   );
 
   const handleItemPress = (item) => {
