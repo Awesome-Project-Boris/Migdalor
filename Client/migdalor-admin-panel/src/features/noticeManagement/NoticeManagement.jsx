@@ -6,6 +6,7 @@ import SharedTable from "../../components/common/SharedTable";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import NoticeModal from "./NoticeModal";
 import { Edit, Trash2, MessageSquarePlus } from "lucide-react";
+import LoadingIndicator from "../../components/common/LoadingIndicator"; // <-- Import the new component
 
 // --- Mock shadcn/ui Component ---
 const Button = React.forwardRef(
@@ -71,7 +72,10 @@ const NoticeManagement = () => {
     variant: "info",
   });
 
-  const userRoles = useMemo(() => (user?.role?.split(",") || []).map(role => role.trim()), [user]);
+  const userRoles = useMemo(
+    () => (user?.role?.split(",") || []).map((role) => role.trim()),
+    [user]
+  );
   const isAdmin = useMemo(() => userRoles.includes("admin"), [userRoles]);
 
   const showToast = (variant, message) => {
@@ -88,25 +92,30 @@ const NoticeManagement = () => {
     try {
       const [noticesData, categoriesData] = await Promise.all([
         api.get("/Notices", token),
-        api.get("/Categories", token)
+        api.get("/Categories", token),
       ]);
 
       setAllCategories(Array.isArray(categoriesData) ? categoriesData : []);
-      
-      const categoriesMap = new Map(categoriesData.map(cat => [cat.categoryHebName, cat.categoryEngName]));
+
+      const categoriesMap = new Map(
+        categoriesData.map((cat) => [cat.categoryHebName, cat.categoryEngName])
+      );
 
       const userCategoryPermissions = new Set(userRoles);
 
-      const filteredNotices = (Array.isArray(noticesData) ? noticesData : []).filter(notice => {
+      const filteredNotices = (
+        Array.isArray(noticesData) ? noticesData : []
+      ).filter((notice) => {
         if (isAdmin) {
           return true;
         }
         const noticeEngCategory = categoriesMap.get(notice.noticeCategory);
-        return noticeEngCategory && userCategoryPermissions.has(noticeEngCategory);
+        return (
+          noticeEngCategory && userCategoryPermissions.has(noticeEngCategory)
+        );
       });
 
       setNotices(filteredNotices);
-
     } catch (err) {
       const errorMessage = "Failed to load page data.";
       setError(errorMessage);
@@ -115,7 +124,6 @@ const NoticeManagement = () => {
       setIsLoading(false);
     }
   }, [token, isAdmin, userRoles]);
-
 
   useEffect(() => {
     fetchInitialData();
@@ -144,7 +152,7 @@ const NoticeManagement = () => {
       SenderId: user.id, // Always use the ID of the logged-in admin
     };
 
-    if (isEditMode && !noticePayload.Title.startsWith('עדכון:')) {
+    if (isEditMode && !noticePayload.Title.startsWith("עדכון:")) {
       noticePayload.Title = `עדכון: ${noticePayload.Title}`;
     }
 
@@ -269,7 +277,7 @@ const NoticeManagement = () => {
     []
   );
 
-  if (isLoading) return <div className="text-center p-4">טוען הודעות...</div>;
+  if (isLoading) return <LoadingIndicator text="טוען הודעות..." />; // <-- Use the new component
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (

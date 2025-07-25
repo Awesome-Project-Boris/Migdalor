@@ -20,6 +20,7 @@ import ChangeRoleModal from "./ChangeRoleModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import Toast from "../../components/common/Toast";
 import SharedTable from "../../components/common/SharedTable";
+import LoadingIndicator from "../../components/common/LoadingIndicator"; // <-- Import the new component
 
 // --- Mock shadcn/ui Components ---
 const Button = React.forwardRef(
@@ -126,8 +127,7 @@ const UserManagement = () => {
         setAdmins(Array.isArray(normalizedAdmins) ? normalizedAdmins : []);
       }
     } catch (err) {
-      const message =
-        "Failed to load data. " + (err.message || "");
+      const message = "Failed to load data. " + (err.message || "");
       setError(message);
       showToast("error", message);
     } finally {
@@ -385,7 +385,7 @@ const UserManagement = () => {
   const data = view === "residents" ? users : admins;
   const columns = view === "residents" ? residentColumns : adminColumns;
 
-  if (isLoading) return <div className="text-center p-4">טוען נתונים...</div>;
+  if (isLoading) return <LoadingIndicator text="טוען נתונים..." />; // <-- Use the new component
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (
