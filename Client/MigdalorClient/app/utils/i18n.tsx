@@ -306,6 +306,9 @@ const resources = {
       MapScreen_HaRakefet: "HaRakefet",
       MapScreen_HaHadarim: "HaHadarim",
       MapScreen_HaNarkis: "HaNarkis",
+      MapScreen_DataLoadingError: "Data Loading Error",
+      MapScreen_NoApartmentsListed: "No apartments found for this building.",
+      MapScreen_NoResidentsListed: "No residents listed",
 
       ImagePicker_selectSourceTitle: "Select Image Source",
       ImagePicker_selectSourceMessage: "Choose how to select the image",
@@ -422,6 +425,8 @@ const resources = {
       PaginatedList_NextButton: "Next",
 
       LoginScreen_rememberMe: "Remember Me",
+
+      OurServices: "Our Services",
 
       MainMenuScreen_GoodMorningButton: "Good Morning Procedure",
       GoodMorning_title: "Good Morning!",
@@ -989,6 +994,9 @@ const resources = {
       MapScreen_HaRakefet: "הרקפת",
       MapScreen_HaHadarim: "האלון",
       MapScreen_HaNarkis: "הנרקיס",
+      MapScreen_DataLoadingError: "שגיאה בטעינת הנתונים",
+      MapScreen_NoApartmentsListed: "לא נמצאו דירות עבור בניין זה.",
+      MapScreen_NoResidentsListed: "לא נמצאו דיירים",
 
       ImagePicker_selectSourceTitle: "בחר מקור תמונה",
       ImagePicker_selectSourceMessage: "בחר כיצד לבחור את התמונה",
@@ -1100,6 +1108,8 @@ const resources = {
       PaginatedList_NextButton: "הבא",
 
       LoginScreen_rememberMe: "זכור אותי",
+
+      OurServices: "השירותים שלנו",
 
       MainMenuScreen_GoodMorningButton: "נוהל בוקר טוב",
       GoodMorning_title: "בוקר טוב!",
