@@ -20,7 +20,7 @@ import ChangeRoleModal from "./ChangeRoleModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import Toast from "../../components/common/Toast";
 import SharedTable from "../../components/common/SharedTable";
-import LoadingIndicator from "../../components/common/LoadingIndicator"; // <-- Import the new component
+import LoadingIndicator from "../../components/common/LoadingIndicator";
 
 // --- Mock shadcn/ui Components ---
 const Button = React.forwardRef(
@@ -74,7 +74,8 @@ const UserManagement = () => {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
   const [admins, setAdmins] = useState([]);
-  const [allCategories, setAllCategories] = useState([]); // <-- State for categories
+  const [allCategories, setAllCategories] = useState([]);
+  const [allApartments, setAllApartments] = useState([]);
   const [view, setView] = useState("residents");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -109,9 +110,14 @@ const UserManagement = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Fetch categories once, and then fetch the relevant user list
       const categoriesData = await api.get("/Categories", token);
       setAllCategories(Array.isArray(categoriesData) ? categoriesData : []);
+
+      const apartmentsData = await api.get(
+        "/apartments/existing-numbers",
+        token
+      );
+      setAllApartments(Array.isArray(apartmentsData) ? apartmentsData : []);
 
       if (view === "residents") {
         const data = await api.get("/Resident/residents", token);
@@ -174,8 +180,9 @@ const UserManagement = () => {
       if (updatedUserData.gender) {
         updatedUserData.gender = updatedUserData.gender === "זכר" ? "M" : "F";
       }
+
       await api.put(
-        `/Resident/UpdateProfile/${userId}`,
+        `/Resident/UpdateProfileByAdmin/${userId}`,
         updatedUserData,
         token
       );
@@ -183,7 +190,12 @@ const UserManagement = () => {
       handleCloseModals();
       fetchUsersAndCategories();
     } catch (err) {
-      showToast("error", `שגיאה בעדכון משתמש: ${err.message}`);
+      const errorMessage =
+        err.response?.data?.title ||
+        err.response?.data ||
+        err.message ||
+        "שגיאה בעדכון משתמש";
+      showToast("error", errorMessage);
       throw err;
     }
   };
@@ -385,7 +397,7 @@ const UserManagement = () => {
   const data = view === "residents" ? users : admins;
   const columns = view === "residents" ? residentColumns : adminColumns;
 
-  if (isLoading) return <LoadingIndicator text="טוען נתונים..." />; // <-- Use the new component
+  if (isLoading) return <LoadingIndicator text="טוען נתונים..." />;
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (
@@ -458,6 +470,7 @@ const UserManagement = () => {
           isOpen={isEditModalOpen}
           user={editingUser}
           allUsers={users}
+          allApartments={allApartments}
           onClose={handleCloseModals}
           onSave={handleSave}
         />

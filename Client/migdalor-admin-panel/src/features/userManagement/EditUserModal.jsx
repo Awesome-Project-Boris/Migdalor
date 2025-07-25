@@ -3,6 +3,48 @@ import { X } from "lucide-react";
 import InputField from "../../components/common/InputField";
 import CheckboxField from "../../components/common/CheckboxField";
 import SpouseCommand from "../../components/common/SpouseCommand";
+import ApartmentCommand from "./ApartmentCommand";
+import { api } from "../../api/apiService";
+import { useAuth } from "../../auth/AuthContext";
+
+// --- Error Modal Component ---
+const ErrorModal = ({ isOpen, onClose, title, message }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4"
+      onClick={onClose}
+      dir="rtl"
+    >
+      <div
+        className="relative z-50 w-full max-w-md bg-white p-6 rounded-2xl shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-red-600">{title}</h2>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <p className="text-gray-700">{message}</p>
+          <div className="flex justify-end mt-6">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+            >
+              הבנתי
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- Mock shadcn/ui Dialog Components ---
 const Dialog = ({ open, onOpenChange, children }) => {
@@ -73,7 +115,15 @@ DialogDescription.displayName = "DialogDescription";
 
 // --- Main EditUserModal Component ---
 
-const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
+const EditUserModal = ({
+  user,
+  allUsers,
+  allApartments,
+  isOpen,
+  onClose,
+  onSave,
+}) => {
+  const { token } = useAuth();
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
     const date = new Date(
@@ -84,10 +134,11 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
 
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
 
   useEffect(() => {
     if (user) {
-      setFormData({
+      const initialFormData = {
         hebFirstName: user.hebFirstName || "",
         hebLastName: user.hebLastName || "",
         engFirstName: user.engFirstName || "",
@@ -106,8 +157,10 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
         profession: user.profession || "",
         residentDescription: user.residentDescription || "",
         residentApartmentNumber: user.roomNumber || "",
-      });
+      };
+      setFormData(initialFormData);
       setIsSubmitting(false);
+      setErrorModal({ isOpen: false, message: "" });
     }
   }, [user]);
 
@@ -123,24 +176,69 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
     setFormData((prev) => ({ ...prev, spouseId }));
   };
 
+  const handleApartmentSelect = (apartmentNumber) => {
+    setFormData((prev) => ({
+      ...prev,
+      residentApartmentNumber: apartmentNumber,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const payload = { ...formData };
-    payload.spouseId = payload.spouseId || null;
+
+    if (
+      !formData.residentApartmentNumber ||
+      isNaN(parseInt(formData.residentApartmentNumber, 10))
+    ) {
+      setErrorModal({ isOpen: true, message: "יש להזין מספר דירה תקין." });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      // The onSave function from the parent handles the API call,
-      // success toast, and closing the modal.
+      const apartmentResponse = await api.post(
+        "/apartments/find-or-create",
+        { apartmentNumber: parseInt(formData.residentApartmentNumber, 10) },
+        token
+      );
+
+      const payload = {
+        ...formData,
+        residentApartmentNumber: apartmentResponse.apartmentNumber,
+      };
+      payload.spouseId = payload.spouseId || null;
+
       await onSave(user.id, payload);
     } catch (error) {
-      // The parent's onSave function will show an error toast.
-      // We just need to catch the error to stop the process here.
-      console.error("Failed to save user:", error);
+      console.error("Error during save process:", error);
+      let errorMessage = "אירעה שגיאה בלתי צפויה. אנא נסה שוב.";
+
+      if (error.response) {
+        if (error.response.status === 400) {
+          const errorData = error.response.data;
+          if (typeof errorData === "string" && errorData.length > 0) {
+            errorMessage = errorData;
+          } else if (typeof errorData === "object" && errorData !== null) {
+            errorMessage =
+              errorData.title ||
+              errorData.detail ||
+              Object.values(errorData.errors || {})
+                .flat()
+                .join(" ") ||
+              "מספר דירה לא תקין.";
+          }
+        } else {
+          errorMessage = `שגיאת שרת (${error.response.status}). אנא פנה לתמיכה.`;
+        }
+      } else if (error.request) {
+        errorMessage = "אין תגובה מהשרת. אנא בדוק את חיבור האינטרנט שלך.";
+      } else {
+        errorMessage = error.message;
+      }
+
+      setErrorModal({ isOpen: true, message: errorMessage });
     } finally {
-      // We don't set submitting to false here because the modal
-      // will be closed by the parent on success. If it fails,
-      // we want the user to be able to try again.
       setIsSubmitting(false);
     }
   };
@@ -152,6 +250,12 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
+        <ErrorModal
+          isOpen={errorModal.isOpen}
+          onClose={() => setErrorModal({ isOpen: false, message: "" })}
+          title="שגיאת קלט"
+          message={errorModal.message}
+        />
         <DialogHeader>
           <DialogTitle>עריכת פרטי דייר: {user.fullName}</DialogTitle>
           <DialogDescription>
@@ -232,11 +336,10 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
               value={formData.branchName}
               onChange={handleChange}
             />
-            <InputField
-              label="מספר דירה"
-              name="residentApartmentNumber"
-              value={formData.residentApartmentNumber}
-              onChange={handleChange}
+            <ApartmentCommand
+              apartments={allApartments}
+              selectedApartment={formData.residentApartmentNumber}
+              onSelectApartment={handleApartmentSelect}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
