@@ -135,10 +135,30 @@ const EditUserModal = ({
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
+  const [initialApartmentGuid, setInitialApartmentGuid] = useState(null);
 
   useEffect(() => {
+    const fetchInitialApartment = async (roomNumber) => {
+      try {
+        const apartmentDetails = await api.get(
+          `/apartments/${roomNumber}`,
+          token
+        );
+        setInitialApartmentGuid(apartmentDetails.apartmentNumber);
+      } catch (error) {
+        console.error(
+          `Could not fetch initial apartment details for room ${roomNumber}`,
+          error
+        );
+        setInitialApartmentGuid(null);
+      }
+    };
+
     if (user) {
-      const initialFormData = {
+      const roomNum = user.residentApartmentNumber
+        ? String(parseInt(user.residentApartmentNumber.split("a")[1]))
+        : "";
+      setFormData({
         hebFirstName: user.hebFirstName || "",
         hebLastName: user.hebLastName || "",
         engFirstName: user.engFirstName || "",
@@ -156,13 +176,19 @@ const EditUserModal = ({
         homePlace: user.homePlace || "",
         profession: user.profession || "",
         residentDescription: user.residentDescription || "",
-        residentApartmentNumber: user.roomNumber || "",
-      };
-      setFormData(initialFormData);
+        residentApartmentNumber: roomNum,
+      });
+
+      if (roomNum) {
+        fetchInitialApartment(roomNum);
+      } else {
+        setInitialApartmentGuid(null);
+      }
+
       setIsSubmitting(false);
       setErrorModal({ isOpen: false, message: "" });
     }
-  }, [user]);
+  }, [user, token]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -186,6 +212,7 @@ const EditUserModal = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    let finalApartmentGuid = null;
 
     if (
       !formData.residentApartmentNumber ||
@@ -197,15 +224,23 @@ const EditUserModal = ({
     }
 
     try {
-      const apartmentResponse = await api.post(
-        "/apartments/find-or-create",
-        { apartmentNumber: parseInt(formData.residentApartmentNumber, 10) },
-        token
-      );
+      if (
+        formData.residentApartmentNumber === String(user.roomNumber) &&
+        initialApartmentGuid
+      ) {
+        finalApartmentGuid = initialApartmentGuid;
+      } else {
+        const apartmentResponse = await api.post(
+          "/apartments/find-or-create",
+          { apartmentNumber: parseInt(formData.residentApartmentNumber, 10) },
+          token
+        );
+        finalApartmentGuid = apartmentResponse.apartmentNumber;
+      }
 
       const payload = {
         ...formData,
-        residentApartmentNumber: apartmentResponse.apartmentNumber,
+        residentApartmentNumber: finalApartmentGuid,
       };
       payload.spouseId = payload.spouseId || null;
 
@@ -254,7 +289,7 @@ const EditUserModal = ({
           isOpen={errorModal.isOpen}
           onClose={() => setErrorModal({ isOpen: false, message: "" })}
           title="שגיאת קלט"
-          message={errorModal.message}
+          message="מספר דירה לא תקין. אנא נסה שוב"
         />
         <DialogHeader>
           <DialogTitle>עריכת פרטי דייר: {user.fullName}</DialogTitle>
