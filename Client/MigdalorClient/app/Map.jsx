@@ -332,7 +332,7 @@ const Map = () => {
         setError("Failed to load map data.");
         Toast.show({
           type: "error",
-          text1: "Data Loading Error",
+          text1: t("MapScreen_DataLoadingError"),
           text2: err.message,
         });
       } finally {

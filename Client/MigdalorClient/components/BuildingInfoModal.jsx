@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import FlipButtonSizeless from "@/components/FlipButtonSizeless";
+import { Globals } from "../app/constants/Globals";
 
 const ResidentItem = ({ resident, onNavigateToApartment }) => {
   const { t, i18n } = useTranslation();
@@ -89,7 +90,9 @@ const ApartmentAccordion = ({ apartment, building, onNavigate }) => {
               />
             ))
           ) : (
-            <Text style={styles.noResidentsText}>No residents listed</Text>
+            <Text style={[styles.noResidentsText, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+              {t("MapScreen_NoResidentsListed")}
+            </Text>
           )}
         </View>
       )}
@@ -138,7 +141,7 @@ const BuildingInfoModal = ({ visible, building, onClose, onNavigate }) => {
               ))
             ) : (
               <Text style={styles.noApartmentsText}>
-                No apartments listed for this building.
+                {t("MapScreen_NoApartmentsListed")}
               </Text>
             )}
           </ScrollView>

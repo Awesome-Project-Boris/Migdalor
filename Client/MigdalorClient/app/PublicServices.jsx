@@ -212,7 +212,7 @@ export default function PublicServices() {
     <>
       <View style={styles.headerPlaque}>
         <StyledText style={styles.mainTitle}>
-          {t("Our Services", "השירותים שלנו")}
+          {t("OurServices", "השירותים שלנו")}
         </StyledText>
       </View>
       <UpcomingOverridesDisplay overrides={upcomingOverrides} />
