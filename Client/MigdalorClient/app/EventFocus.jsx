@@ -21,7 +21,6 @@ import { useSettings } from "@/context/SettingsContext.jsx";
 
 const placeholderImage = require("../assets/images/EventsPlaceholder.png");
 
-// ✅ 1. Helper function to parse and translate recurrence days
 const formatRecurrenceDays = (rule, t) => {
   if (!rule) return null;
 
@@ -42,15 +41,48 @@ const formatRecurrenceDays = (rule, t) => {
   return dayCodes.map((code) => dayMap[code] || code).join(", ");
 };
 
+// --- FIX START ---
+// The formatTime and formatDate functions have been updated to use string manipulation.
+// This prevents the `new Date()` constructor from incorrectly converting the UTC time
+// from the server into the local device time.
+
+/**
+ * Formats an ISO date-time string to show only the time (HH:mm).
+ * @param {string} dateString - The ISO date string (e.g., "2025-07-25T15:15:00Z").
+ * @returns {string} The formatted time (e.g., "15:15").
+ */
 const formatTime = (dateString) => {
   if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  try {
+    // Extracts the time part (e.g., "15:15") from the string.
+    const timePart = dateString.split("T")[1];
+    const timeParts = timePart.split(":");
+    return `${timeParts[0]}:${timeParts[1]}`;
+  } catch (e) {
+    console.error("Error formatting time string:", e);
+    return ""; // Fallback to an empty string on error.
+  }
 };
+
+/**
+ * Formats an ISO date-time string to show only the date (dd/MM/yyyy).
+ * @param {string} dateString - The ISO date string (e.g., "2025-07-25T15:15:00Z").
+ * @returns {string} The formatted date (e.g., "25/07/2025").
+ */
+const formatDate = (dateString) => {
+    if (!dateString) return "";
+    try {
+        // Extracts the date part and reformats it from yyyy-MM-dd to dd/MM/yyyy.
+        const datePart = dateString.split("T")[0];
+        const dateParts = datePart.split("-");
+        return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+    } catch (e) {
+        console.error("Error formatting date string:", e);
+        return "";
+    }
+}
+// --- FIX END ---
+
 
 export default function EventFocusScreen() {
   const { eventId: eventIdFromParams } = useLocalSearchParams();
@@ -214,6 +246,7 @@ export default function EventFocusScreen() {
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
   const startTime = formatTime(event.startDate);
   const endTime = formatTime(event.endDate);
+  const displayDate = formatDate(event.startDate);
   const remainingSpots =
     event.capacity !== null ? event.capacity - participants.length : Infinity;
   const imageUrl = event.picturePath
@@ -311,7 +344,6 @@ export default function EventFocusScreen() {
         </StyledText>
 
         <View style={styles.detailsContainer}>
-          {/* ✅ 3. Conditionally render the new DetailRow for recurrence */}
           {event.isRecurring && recurrenceDayString && (
             <DetailRow
               icon="repeat-outline"
@@ -324,7 +356,7 @@ export default function EventFocusScreen() {
             <DetailRow
               icon="calendar-outline"
               label={t("EventFocus_Date", "Date")}
-              value={new Date(event.startDate).toLocaleDateString("en-GB")}
+              value={displayDate}
             />
           )}
           <DetailRow

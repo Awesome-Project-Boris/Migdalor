@@ -65,11 +65,10 @@ LocaleConfig.defaultLocale = "he";
 const formatTime = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
-  return date.toLocaleTimeString("he-IL", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  // Use getUTCHours() and getUTCMinutes() to avoid local timezone conversion
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${hours}:${minutes}`;
 };
 
 const getWeekDays = (date) => {

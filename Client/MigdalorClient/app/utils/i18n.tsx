@@ -24,7 +24,7 @@ const resources = {
       NotificationSettingsPage_silent: "Silent",
 
       LanguageSettingsPage_header: "Language Settings:",
-      LanguageSettingsPage_LogoutHeader: "Account Settings:",
+      LanguageSettingsPage_LogoutHeader: "Account Settings",
       LanguageSettingsPage_Logout: "Logout",
       LanguageSettingsPage_LogoutToast: "Logged out successfully!",
       LanguageSettingsPage_he: "Hebrew",
@@ -717,7 +717,7 @@ const resources = {
       NotificationSettingsPage_silent: "מושתק",
 
       LanguageSettingsPage_header: "הגדרות שפה:",
-      LanguageSettingsPage_LogoutHeader: "הגדרות חשבון:",
+      LanguageSettingsPage_LogoutHeader: "הגדרות חשבון",
       LanguageSettingsPage_Logout: "התנתקות",
       LanguageSettingsPage_LogoutToast: "התנתקת בהצלחה!",
       LanguageSettingsPage_he: "עברית",
