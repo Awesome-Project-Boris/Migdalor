@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    paddingTop: 50,
+    // paddingTop: 50,
     backgroundColor: "#fef1e6",
   },
   loadingText: {

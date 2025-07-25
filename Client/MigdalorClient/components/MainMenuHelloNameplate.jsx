@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     // backgroundColor: "#cdb876",
     backgroundColor: "goldenrod",
     borderRadius: 20,
-    marginTop: 20,
+    marginTop: 80,
     marginBottom: 30,
     paddingHorizontal: 15, // Add padding for text
     paddingVertical: 10,

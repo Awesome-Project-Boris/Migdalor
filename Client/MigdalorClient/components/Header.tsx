@@ -46,105 +46,105 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <View style={styles.header}>
-        <View style={styles.leftContainer}>
-          {showBackButton && (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.leftContainer}>
+            {showBackButton && (
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={[styles.backButton, styles.border]}
+              >
+                <Ionicons name="arrow-back" size={32} color="#000" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
-              onPress={() => router.back()}
-              style={[styles.backButton, styles.border]}
+              onPress={() => router.navigate("/MainMenu")}
+              style={styles.border}
             >
-              <Ionicons name="arrow-back" size={32} color="#000" />
+              <Ionicons name="home" size={32} color="#000" />
             </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            onPress={() => router.navigate("/MainMenu")}
-            style={styles.border}
-          >
-            <Ionicons name="home" size={32} color="#000" />
-          </TouchableOpacity>
+          </View>
+
+          <View style={styles.rightContainer}>
+            {/* 3. This check now works without error */}
+            {user && user.personRole !== "Instructor" && (
+              <TouchableOpacity onPress={handleBellPress} style={styles.border}>
+                <Ionicons
+                  name={
+                    notificationStatus.total > 0
+                      ? "notifications"
+                      : "notifications-outline"
+                  }
+                  size={32}
+                  color="#000"
+                />
+                {notificationStatus.total > 0 && (
+                  <View style={styles.notificationBadge} />
+                )}
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={openSheet}
+              style={[styles.border, styles.menuButton]}
+            >
+              <Ionicons name="menu" size={32} color="#000" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <View style={styles.rightContainer}>
-          {/* 3. This check now works without error */}
-          {user && user.personRole !== 'Instructor' && (
-            <TouchableOpacity onPress={handleBellPress} style={styles.border}>
-              <Ionicons
-                name={
-                  notificationStatus.total > 0
-                    ? "notifications"
-                    : "notifications-outline"
-                }
-                size={32}
-                color="#000"
-              />
-              {notificationStatus.total > 0 && (
-                <View style={styles.notificationBadge} />
-              )}
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            onPress={openSheet}
-            style={[styles.border, styles.menuButton]}
-          >
-            <Ionicons name="menu" size={32} color="#000" />
-          </TouchableOpacity>
-        </View>
+        {isDrawerOpen && (
+          <View style={styles.drawer}>
+            {notificationStatus.total > 0 ? (
+              <>
+                {notificationStatus.listings && (
+                  <TouchableOpacity
+                    style={styles.notificationItem}
+                    onPress={() => handleNavigation("listings", "/Marketplace")}
+                  >
+                    <StyledText style={styles.notificationText}>
+                      {t("Notifications_NewListing")}
+                    </StyledText>
+                  </TouchableOpacity>
+                )}
+                {notificationStatus.notices && (
+                  <TouchableOpacity
+                    style={styles.notificationItem}
+                    onPress={() => handleNavigation("notices", "/Notices")}
+                  >
+                    <StyledText style={styles.notificationText}>
+                      {t("Notifications_NewNotice")}
+                    </StyledText>
+                  </TouchableOpacity>
+                )}
+                {notificationStatus.events && (
+                  <TouchableOpacity
+                    style={styles.notificationItem}
+                    onPress={() => handleNavigation("events", "/Activities")}
+                  >
+                    <StyledText style={styles.notificationText}>
+                      {t("Notifications_NewEvent")}
+                    </StyledText>
+                  </TouchableOpacity>
+                )}
+              </>
+            ) : (
+              <View
+                style={[styles.notificationItem, styles.noNotificationItem]}
+              >
+                <StyledText style={styles.notificationText}>
+                  {t("Notifications_NoNew")}
+                </StyledText>
+              </View>
+            )}
+          </View>
+        )}
       </View>
-
-      {isDrawerOpen && (
-        <View style={styles.drawer}>
-          {notificationStatus.total > 0 ? (
-            <>
-              {notificationStatus.listings && (
-                <TouchableOpacity
-                  style={styles.notificationItem}
-                  onPress={() => handleNavigation("listings", "/Marketplace")}
-                >
-                  <StyledText style={styles.notificationText}>
-                    {t("Notifications_NewListing")}
-                  </StyledText>
-                </TouchableOpacity>
-              )}
-              {notificationStatus.notices && (
-                <TouchableOpacity
-                  style={styles.notificationItem}
-                  onPress={() => handleNavigation("notices", "/Notices")}
-                >
-                  <StyledText style={styles.notificationText}>
-                    {t("Notifications_NewNotice")}
-                  </StyledText>
-                </TouchableOpacity>
-              )}
-              {notificationStatus.events && (
-                <TouchableOpacity
-                  style={styles.notificationItem}
-                  onPress={() => handleNavigation("events", "/Activities")}
-                >
-                  <StyledText style={styles.notificationText}>
-                    {t("Notifications_NewEvent")}
-                  </StyledText>
-                </TouchableOpacity>
-              )}
-            </>
-          ) : (
-            <View style={[styles.notificationItem, styles.noNotificationItem]}>
-              <StyledText style={styles.notificationText}>
-                {t("Notifications_NoNew")}
-              </StyledText>
-            </View>
-          )}
-        </View>
-      )}
     </>
   );
 };
 
 const styles = StyleSheet.create({
   header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
     height: 60,
     backgroundColor: "#fff",
     flexDirection: "row",
@@ -156,7 +156,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
-    zIndex: 9001,
   },
   leftContainer: {
     flexDirection: "row",
@@ -190,14 +189,12 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
   drawer: {
-    position: "absolute",
-    top: 60,
+    // top: 60 is no longer needed, it will appear below the header naturally
     left: 0,
     right: 0,
     backgroundColor: "#f8f8f8",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    zIndex: 9000,
     padding: 5,
   },
   notificationItem: {
@@ -212,6 +209,14 @@ const styles = StyleSheet.create({
   },
   notificationText: {
     fontSize: 16,
+  },
+  container: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999, // A very high zIndex for the whole container
+    elevation: 10,
   },
 });
 
