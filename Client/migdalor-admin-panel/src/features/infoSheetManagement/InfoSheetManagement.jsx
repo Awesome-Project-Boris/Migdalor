@@ -3,11 +3,11 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css"; // Import Quill styles
 import { useAuth } from "../../auth/AuthContext";
 import { api } from "../../api/apiService";
-import TabsGroup from "../../components/common/TabsGroup";
 import Toast from "../../components/common/Toast";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import { Button } from "../../components/ui/button";
 import { Save, RotateCcw, Languages, Info } from "lucide-react";
+import LoadingIndicator from "../../components/common/LoadingIndicator";
 
 // This component will handle the logic for leaving the page with unsaved changes.
 const useUnsavedChangesWarning = (isDirty) => {
@@ -35,6 +35,7 @@ const InfoSheetManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDirty, setIsDirty] = useState({ he: false, en: false });
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("hebrew"); // State for active tab
 
   const [toastState, setToastState] = useState({
     show: false,
@@ -57,14 +58,12 @@ const InfoSheetManagement = () => {
         api.get("/InfoSheet/en", token),
       ]);
 
-      // **FIX:** Extract the 'content' property from the JSON response
       const heContent = heResponse?.content || "";
       const enContent = enResponse?.content || "";
 
       setHebrewContent(heContent);
       setEnglishContent(enContent);
 
-      // Store initial content in local storage for the revert functionality
       localStorage.setItem("info_sheet_he_backup", heContent);
       localStorage.setItem("info_sheet_en_backup", enContent);
     } catch (error) {
@@ -92,15 +91,11 @@ const InfoSheetManagement = () => {
     setIsDirty((prev) => ({ ...prev, [language]: true }));
   };
 
-  // Handles saving content for a specific language
   const handleSave = async (language) => {
     const content = language === "he" ? hebrewContent : englishContent;
     try {
-      // The body should be the raw string, as expected by the [FromBody] attribute in the controller.
-      // The apiService's put method will correctly stringify this.
       await api.put(`/InfoSheet/${language}`, content, token);
       showToast("success", "התוכן נשמר בהצלחה!");
-      // Update the backup in local storage
       localStorage.setItem(`info_sheet_${language}_backup`, content);
       setIsDirty((prev) => ({ ...prev, [language]: false }));
     } catch (error) {
@@ -108,7 +103,6 @@ const InfoSheetManagement = () => {
     }
   };
 
-  // Reverts content for a specific language from local storage
   const handleRevert = (language) => {
     const backupContent = localStorage.getItem(`info_sheet_${language}_backup`);
     if (language === "he") {
@@ -120,33 +114,18 @@ const InfoSheetManagement = () => {
     showToast("info", "השינויים שוחזרו.");
   };
 
-  const handleTabChange = (nextTab) => {
-    // This is a proxy for the actual tab change logic within TabsGroup
-    // We check for dirtiness and decide whether to show a modal.
+  const handleTabChange = (tab) => {
     if (isDirty.he || isDirty.en) {
       setShowConfirmModal(true);
-      // Store the function that will actually change the tab
-      pendingTabChange.current = () => {
-        // This is where you would integrate with your TabsGroup's state management
-        // For now, we'll just log it.
-        console.log(`Proceeding to tab: ${nextTab}`);
-        setShowConfirmModal(false);
-        pendingTabChange.current = null;
-      };
-      return false; // Prevent immediate tab change
+      pendingTabChange.current = tab;
+    } else {
+      setActiveTab(tab);
     }
-    return true; // Allow tab change
   };
 
   const handleConfirmNavigation = () => {
-    // User confirmed to proceed, reset dirty states and execute the pending action
     setIsDirty({ he: false, en: false });
-    if (pendingTabChange.current) {
-      // Here you would call the function to change the tab.
-      // Since TabsGroup doesn't expose a way to control its state from outside,
-      // this part is illustrative. A real implementation might require lifting state up.
-      alert("שינויים שלא נשמרו יאבדו. המשך בכל זאת.");
-    }
+    setActiveTab(pendingTabChange.current);
     setShowConfirmModal(false);
     pendingTabChange.current = null;
   };
@@ -167,71 +146,8 @@ const InfoSheetManagement = () => {
     ],
   };
 
-  const tabs = [
-    {
-      value: "hebrew",
-      label: "עברית",
-      icon: Languages,
-      content: (
-        <div className="py-4">
-          <ReactQuill
-            theme="snow"
-            value={hebrewContent}
-            onChange={(content) => handleContentChange("he", content)}
-            modules={editorModules}
-            style={{ direction: "rtl", height: "300px", marginBottom: "50px" }}
-          />
-          <div className="flex justify-end items-center mt-4 space-x-2 space-x-reverse">
-            <Button
-              onClick={() => handleRevert("he")}
-              disabled={!isDirty.he}
-              variant="outline"
-            >
-              <RotateCcw size={16} className="ml-2" />
-              שחזר שינויים
-            </Button>
-            <Button onClick={() => handleSave("he")} disabled={!isDirty.he}>
-              <Save size={16} className="ml-2" />
-              שמור שינויים
-            </Button>
-          </div>
-        </div>
-      ),
-    },
-    {
-      value: "english",
-      label: "English",
-      icon: Languages,
-      content: (
-        <div className="py-4">
-          <ReactQuill
-            theme="snow"
-            value={englishContent}
-            onChange={(content) => handleContentChange("en", content)}
-            modules={editorModules}
-            style={{ height: "300px", marginBottom: "50px" }}
-          />
-          <div className="flex justify-end items-center mt-4 space-x-2">
-            <Button
-              onClick={() => handleRevert("en")}
-              disabled={!isDirty.en}
-              variant="outline"
-            >
-              <RotateCcw size={16} className="mr-2" />
-              Revert Changes
-            </Button>
-            <Button onClick={() => handleSave("en")} disabled={!isDirty.en}>
-              <Save size={16} className="mr-2" />
-              Save Changes
-            </Button>
-          </div>
-        </div>
-      ),
-    },
-  ];
-
   if (isLoading) {
-    return <div className="text-center p-4">טוען תוכן...</div>;
+    return <LoadingIndicator text="טוען תוכן..." />;
   }
 
   return (
@@ -255,13 +171,98 @@ const InfoSheetManagement = () => {
           <Info className="ml-3" />
           ניהול דף מידע
         </h2>
+        {/* Styled Tab Switcher */}
+        <div className="flex items-center bg-gray-200 rounded-full p-1">
+          <button
+            onClick={() => handleTabChange("hebrew")}
+            className={`px-4 py-1.5 text-sm font-semibold rounded-full flex items-center transition-colors ${
+              activeTab === "hebrew"
+                ? "bg-white text-blue-600 shadow"
+                : "bg-transparent text-gray-600"
+            }`}
+          >
+            <Languages className="ml-2 h-4 w-4" />
+            עברית
+          </button>
+          <button
+            onClick={() => handleTabChange("english")}
+            className={`px-4 py-1.5 text-sm font-semibold rounded-full flex items-center transition-colors ${
+              activeTab === "english"
+                ? "bg-white text-blue-600 shadow"
+                : "bg-transparent text-gray-600"
+            }`}
+          >
+            <Languages className="ml-2 h-4 w-4" />
+            English
+          </button>
+        </div>
       </div>
-      {/* NOTE: The onValueChange prop for Tabs is conceptual.
-        You might need to modify your TabsGroup component to accept such a prop
-        to properly implement the unsaved changes warning when switching tabs.
-        For now, the browser's "beforeunload" event will catch leaving the page.
-      */}
-      <TabsGroup tabs={tabs} onTabChange={handleTabChange} />
+
+      {/* Conditional Rendering of Editors */}
+      <div className="py-4">
+        {activeTab === "hebrew" && (
+          <>
+            <ReactQuill
+              theme="snow"
+              value={hebrewContent}
+              onChange={(content) => handleContentChange("he", content)}
+              modules={editorModules}
+              style={{
+                direction: "rtl",
+                height: "300px",
+                marginBottom: "50px",
+              }}
+            />
+            <div className="flex justify-end items-center mt-4 space-x-2 space-x-reverse">
+              <Button
+                onClick={() => handleRevert("he")}
+                disabled={!isDirty.he}
+                className="bg-blue-600 hover:bg-blue-700 mx-1"
+              >
+                <RotateCcw size={16} className="ml-2" />
+                שחזר שינויים
+              </Button>
+              <Button
+                onClick={() => handleSave("he")}
+                disabled={!isDirty.he}
+                className="bg-blue-600 hover:bg-blue-700 mx-1"
+              >
+                <Save size={16} className="ml-2" />
+                שמור שינויים
+              </Button>
+            </div>
+          </>
+        )}
+        {activeTab === "english" && (
+          <>
+            <ReactQuill
+              theme="snow"
+              value={englishContent}
+              onChange={(content) => handleContentChange("en", content)}
+              modules={editorModules}
+              style={{ height: "300px", marginBottom: "50px" }}
+            />
+            <div className="flex justify-end items-center mt-4 space-x-2">
+              <Button
+                onClick={() => handleRevert("en")}
+                disabled={!isDirty.en}
+                className="bg-blue-600 hover:bg-blue-700 mx-1"
+              >
+                <RotateCcw size={16} className="mr-2" />
+                Revert Changes
+              </Button>
+              <Button
+                onClick={() => handleSave("en")}
+                disabled={!isDirty.en}
+                className="bg-blue-600 hover:bg-blue-700 mx-1"
+              >
+                <Save size={16} className="mr-2" />
+                Save Changes
+              </Button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };
