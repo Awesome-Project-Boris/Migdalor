@@ -222,9 +222,19 @@ export default function Events() {
             <View style={styles.pickerContainer}>
               <Picker selectedValue={selectedInstance} onValueChange={(itemValue) => setSelectedInstance(itemValue)} enabled={instances.length > 0}>
                 <Picker.Item label={instances.length > 0 ? t("Events_ChooseDate") : t("Events_NoMeetings")} value={null} />
-                {instances.map((instance) => (
-                  <Picker.Item key={instance.instanceId} label={new Date(instance.startTime).toLocaleString()} value={instance.instanceId} />
-                ))}
+                {instances.map((instance) => {
+                  const date = new Date(instance.startTime);
+                  const formattedDate = date.toLocaleDateString('en-GB');
+                  const formattedTime = date.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false,
+                  });
+                  const formattedLabel = `${formattedDate}, ${formattedTime}`;
+                  return (
+                    <Picker.Item key={instance.instanceId} label={formattedLabel} value={instance.instanceId} />
+                  );
+                })}
               </Picker>
             </View>
           </>

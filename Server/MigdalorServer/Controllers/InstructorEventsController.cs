@@ -87,7 +87,7 @@ namespace MigdalorServer.Controllers
                     NoticeTitle = $"Meeting Cancelled: {instance.Event.EventName}",
                     NoticeMessage = $"The meeting for '{instance.Event.EventName}' on {localStartTime:yyyy-MM-dd @ h:mm tt} has been cancelled. Reason: {dto.Notes}",
                     CreationDate = DateTime.UtcNow,
-                    NoticeCategory = "פנאי ותרבות"
+                    NoticeCategory = "תרבות ופנאי"
                 };
                 _context.OhNotices.Add(notice);
             }
@@ -150,7 +150,7 @@ namespace MigdalorServer.Controllers
                     NoticeTitle = $"Meeting Rescheduled: {originalInstance.Event.EventName}",
                     NoticeMessage = $"The meeting for '{originalInstance.Event.EventName}' on {originalStartTimeLocal:yyyy-MM-dd @ h:mm tt} has been moved to {newStartTimeLocal:yyyy-MM-dd @ h:mm tt}. Reason: {dto.Notes}",
                     CreationDate = DateTime.UtcNow,
-                    NoticeCategory = "פנאי ותרבות"
+                    NoticeCategory = "תרבות ופנאי"
                 };
                 _context.OhNotices.Add(notice);
             }
