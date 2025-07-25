@@ -25,6 +25,7 @@ namespace MigdalorServer.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
+            var israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
             try
             {
                 var notices = await (from n in _context.OhNotices
@@ -39,7 +40,9 @@ namespace MigdalorServer.Controllers
                                          SenderId = n.SenderId,
                                          EngSenderName = s.EngFirstName + " " + s.EngLastName,
                                          HebSenderName = s.HebFirstName + " " + s.HebLastName,
-                                         CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
+                                         CreationDate = n.CreationDate.HasValue
+                                             ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc), israelTimeZone)
+                                             : (DateTime?)null,
                                          NoticeTitle = n.NoticeTitle,
                                          NoticeMessage = n.NoticeMessage,
                                          NoticeCategory = n.NoticeCategory,
@@ -96,7 +99,7 @@ namespace MigdalorServer.Controllers
             {
                 return BadRequest("Invalid Notice ID provided.");
             }
-
+            var israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
             try
             {
                 var notice = await (from n in _context.OhNotices
@@ -111,7 +114,9 @@ namespace MigdalorServer.Controllers
                                         SenderId = n.SenderId,
                                         EngSenderName = s.EngFirstName + " " + s.EngLastName,
                                         HebSenderName = s.HebFirstName + " " + s.HebLastName,
-                                        CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
+                                        CreationDate = n.CreationDate.HasValue
+                                             ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc), israelTimeZone)
+                                             : (DateTime?)null,
                                         NoticeTitle = n.NoticeTitle,
                                         NoticeMessage = n.NoticeMessage,
                                         NoticeCategory = n.NoticeCategory,
@@ -162,6 +167,9 @@ namespace MigdalorServer.Controllers
 
             try
             {
+                // TimeZoneInfo israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
+                // DateTime israelNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, israelTimeZone);
+
                 var newNotice = new OhNotice
                 {
                     NoticeTitle = noticeDto.Title,
@@ -169,8 +177,8 @@ namespace MigdalorServer.Controllers
                     SenderId = noticeDto.SenderId,
                     NoticeCategory = noticeDto.Category,
                     NoticeSubCategory = noticeDto.SubCategory,
-                    PictureId = noticeDto.PictureId, // Map the new field
-                    CreationDate = DateTime.UtcNow // Set creation date
+                    PictureId = noticeDto.PictureId,
+                    CreationDate = DateTime.UtcNow 
                 };
 
                 _context.OhNotices.Add(newNotice);
@@ -178,7 +186,6 @@ namespace MigdalorServer.Controllers
 
                 _logger.LogInformation("Notice created successfully with ID: {NoticeId}", newNotice.NoticeId);
 
-                // Return the created object
                 return CreatedAtAction(nameof(GetNoticeById), new { id = newNotice.NoticeId }, newNotice);
             }
             catch (Exception e)

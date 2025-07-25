@@ -25,24 +25,24 @@ const SCREEN_WIDTH = Dimensions.get("window").width;
 const formatDate = (dateTimeString) => {
   if (!dateTimeString) return "N/A";
   try {
-    const dateObj = new Date(dateTimeString);
+    const parts = dateTimeString.split("T");
+    if (parts.length < 2) return dateTimeString;
 
-    if (isNaN(dateObj.getTime())) {
-      console.warn("Invalid date format received:", dateTimeString);
-      return "Invalid Date";
-    }
+    const datePart = parts[0];
+    const timePart = parts[1];
 
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const year = dateObj.getFullYear();
+    const dateParts = datePart.split("-");
+    if (dateParts.length < 3) return dateTimeString;
+    const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
 
-    const hours = String(dateObj.getHours()).padStart(2, "0");
-    const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+    const timeParts = timePart.split(":");
+    if (timeParts.length < 2) return dateTimeString;
+    const formattedTime = `${timeParts[0]}:${timeParts[1]}`;
 
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return `${formattedDate} ${formattedTime}`;
   } catch (e) {
-    console.error("Error formatting date:", e);
-    return dateTimeString;
+    console.error("Error formatting date string:", e);
+    return dateTimeString; // Fallback to original string on error
   }
 };
 
