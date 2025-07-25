@@ -22,6 +22,16 @@ namespace MigdalorServer.Controllers
         // GET: api/<NoticeController>
         // In NoticesController.cs
 
+        private readonly MigdalorDBContext _context;
+        private readonly ILogger<NoticesController> _logger;
+
+        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -38,11 +48,16 @@ namespace MigdalorServer.Controllers
                                      {
                                          NoticeId = n.NoticeId,
                                          SenderId = n.SenderId,
-                                         EngSenderName = s.EngFirstName + " " + s.EngLastName,
-                                         HebSenderName = s.HebFirstName + " " + s.HebLastName,
-                                         CreationDate = n.CreationDate.HasValue
-                                             ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc), israelTimeZone)
-                                             : (DateTime?)null,
+
+                                         EngSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "Administration"
+                                             : s.EngFirstName + " " + s.EngLastName,
+
+                                         HebSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "הנהלה"
+                                             : s.HebFirstName + " " + s.HebLastName,
+
+                                         CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
                                          NoticeTitle = n.NoticeTitle,
                                          NoticeMessage = n.NoticeMessage,
                                          NoticeCategory = n.NoticeCategory,
@@ -61,14 +76,7 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        private readonly MigdalorDBContext _context;
-        private readonly ILogger<NoticesController> _logger;
 
-        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
 
         // GET api/<NoticeController>/5
         [HttpGet("{category}")]
@@ -112,11 +120,14 @@ namespace MigdalorServer.Controllers
                                     {
                                         NoticeId = n.NoticeId,
                                         SenderId = n.SenderId,
-                                        EngSenderName = s.EngFirstName + " " + s.EngLastName,
-                                        HebSenderName = s.HebFirstName + " " + s.HebLastName,
-                                        CreationDate = n.CreationDate.HasValue
-                                             ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc), israelTimeZone)
-                                             : (DateTime?)null,
+                                        EngSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "Administration"
+                                             : s.EngFirstName + " " + s.EngLastName,
+
+                                        HebSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "הנהלה"
+                                             : s.HebFirstName + " " + s.HebLastName,
+                                        CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
                                         NoticeTitle = n.NoticeTitle,
                                         NoticeMessage = n.NoticeMessage,
                                         NoticeCategory = n.NoticeCategory,
@@ -266,6 +277,67 @@ namespace MigdalorServer.Controllers
                         StatusCodes.Status500InternalServerError,
                         e.InnerException?.Message ?? e.Message
                     );
+            }
+        }
+
+
+        [HttpPost("filtered")]
+        public async Task<IActionResult> GetFilteredNotices([FromBody] NoticeFilterDto filters)
+        {
+            if (filters == null || filters.Categories == null || !filters.Categories.Any())
+            {
+                return Ok(new List<NoticeDto>());
+            }
+
+            try
+            {
+                var query = (from n in _context.OhNotices
+                             join s in _context.OhPeople on n.SenderId equals s.PersonId
+                             join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
+                             join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
+                             from pg in picGroup.DefaultIfEmpty()
+                             select new { n, s, cat, pg });
+
+                query = query.Where(x => filters.Categories.Contains(x.n.NoticeCategory));
+
+                if (filters.SortOrder == "oldest")
+                {
+                    query = query.OrderBy(x => x.n.CreationDate);
+                }
+                else
+                {
+                    query = query.OrderByDescending(x => x.n.CreationDate);
+                }
+
+                var notices = await query.Select(x => new NoticeDto
+                {
+                    NoticeId = x.n.NoticeId,
+                    SenderId = x.n.SenderId,
+
+                    EngSenderName = x.s.PersonRole != null && x.s.PersonRole.ToLower() == "admin"
+                        ? "Administraion"
+                        : x.s.EngFirstName + " " + x.s.EngLastName,
+
+                    HebSenderName = x.s.PersonRole != null && x.s.PersonRole.ToLower() == "admin"
+                        ? "הנהלה"
+                        : x.s.HebFirstName + " " + x.s.HebLastName,
+
+                    CreationDate = x.n.CreationDate.HasValue ? DateTime.SpecifyKind(x.n.CreationDate.Value, DateTimeKind.Utc) : null,
+                    NoticeTitle = x.n.NoticeTitle,
+                    NoticeMessage = x.n.NoticeMessage,
+                    NoticeCategory = x.n.NoticeCategory,
+                    NoticeSubCategory = x.n.NoticeSubCategory,
+                    PictureId = x.n.PictureId,
+                    PicturePath = x.pg.PicPath,
+                    CategoryColor = x.cat.CategoryColor
+                }).ToListAsync();
+
+                return Ok(notices);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to retrieve filtered notices.");
+                return StatusCode(500, "An internal server error occurred.");
             }
         }
     }

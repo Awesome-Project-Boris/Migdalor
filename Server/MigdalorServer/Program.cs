@@ -60,6 +60,8 @@ builder
 
 builder.Services.AddHostedService<DailyTasksService>();
 
+builder.Services.AddHostedService<MarketplaceCleanupService>();
+
 // ---- Gemini Setup ----
 builder.Services.Configure<Migdalor.BL.GeminiSettings>(builder.Configuration.GetSection("Gemini"));
 

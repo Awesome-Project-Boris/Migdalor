@@ -97,6 +97,7 @@ const layoutEvents = (events) => {
     if (isNaN(end.getTime()) || end <= start) {
       end = new Date(start.getTime() + 60 * 60 * 1000);
     }
+    // Return original event data alongside processed times for layout
     return { ...e, startTime: start, endTime: end };
   });
 
@@ -149,7 +150,6 @@ const layoutEvents = (events) => {
   return layouted;
 };
 
-
 // --- Child Components (No Changes) ---
 const ViewSwitcher = ({ viewMode, setViewMode, onGoToToday, t }) => (
   <View style={styles.viewSwitcherContainer}>
@@ -183,10 +183,44 @@ const ViewSwitcher = ({ viewMode, setViewMode, onGoToToday, t }) => (
   </View>
 );
 
-const DailyView = ({ events, handleItemPress, t, isRtl }) => {
+const DailyView = ({ events, handleItemPress, t, isRtl, selectedDate }) => {
   const hourHeight = 80;
   const hours = Array.from({ length: 19 }, (_, i) => i + 5);
-  const laidOutEvents = useMemo(() => layoutEvents(events), [events]);
+  const viewStartHour = 5;
+
+  // FIX: Process events to filter and cap them according to the view window (05:00-24:00)
+  const laidOutEvents = useMemo(() => {
+    if (!events || !selectedDate) return [];
+
+    const viewStartDate = new Date(selectedDate);
+    viewStartDate.setUTCHours(viewStartHour, 0, 0, 0);
+
+    const viewEndDate = new Date(selectedDate);
+    viewEndDate.setUTCHours(24, 0, 0, 0);
+
+    const processedEvents = events
+      .filter((e) => {
+        const start = new Date(e.startTime);
+        const end = new Date(e.endTime);
+        return start < viewEndDate && end > viewStartDate;
+      })
+      .map((e) => {
+        const originalStartTime = new Date(e.startTime);
+        // Cap the start time for any event that begins before the view window
+        const startTimeForLayout = new Date(
+          Math.max(originalStartTime.getTime(), viewStartDate.getTime())
+        );
+
+        return {
+          ...e,
+          startTime: startTimeForLayout, // For layout calculation
+          originalStartTime: originalStartTime, // For display
+          endTime: new Date(e.endTime),
+        };
+      });
+
+    return layoutEvents(processedEvents);
+  }, [events, selectedDate]);
 
   return (
     <View style={styles.timelineContainer}>
@@ -206,17 +240,21 @@ const DailyView = ({ events, handleItemPress, t, isRtl }) => {
           />
         ))}
         {laidOutEvents.map((event, index) => {
-          const start = event.startTime;
+          const start = event.startTime; // This is now the capped start time
           const end = event.endTime;
           const timelineEnd = new Date(start);
           timelineEnd.setHours(23, 59, 59, 999);
           const cappedEnd = new Date(
             Math.min(end.getTime(), timelineEnd.getTime())
           );
-          const cappedDurationMillis = cappedEnd.getTime() - start.getTime();
+
+          // Calculate top based on the capped start time
           const top =
-            (start.getHours() - 5) * hourHeight +
-            (start.getMinutes() / 60) * hourHeight;
+            (start.getUTCHours() - viewStartHour) * hourHeight +
+            (start.getUTCMinutes() / 60) * hourHeight;
+
+          // Calculate height based on the duration from the capped start
+          const cappedDurationMillis = cappedEnd.getTime() - start.getTime();
           const height = Math.max(
             30,
             (cappedDurationMillis / (1000 * 60 * 60)) * hourHeight - 2
@@ -272,7 +310,8 @@ const DailyView = ({ events, handleItemPress, t, isRtl }) => {
                   { textAlign: isRtl ? "right" : "left" },
                 ]}
               >
-                {`${formatTime(event.startTime)} - ${formatTime(
+                {/* FIX: Display the original, non-capped start time */}
+                {`${formatTime(event.originalStartTime)} - ${formatTime(
                   event.endTime
                 )}`}
               </Text>
@@ -439,7 +478,6 @@ const DetailRow = ({ icon, label, value, isRtl, isLast = false }) => (
   </View>
 );
 
-
 // --- Main Component ---
 const TimetableScreen = () => {
   const { t, i18n } = useTranslation();
@@ -459,57 +497,54 @@ const TimetableScreen = () => {
     new Date().toISOString().split("T")[0]
   );
 
-  const loadItemsForMonth = useCallback(
-    async (dateString) => {
-      const month = dateString.substring(0, 7);
-      if (loadedMonths.current.has(month)) return;
+  const loadItemsForMonth = useCallback(async (dateString) => {
+    const month = dateString.substring(0, 7);
+    if (loadedMonths.current.has(month)) return;
 
-      setLoading(true);
-      loadedMonths.current.add(month);
+    setLoading(true);
+    loadedMonths.current.add(month);
 
-      const dateObj = new Date(dateString);
-      const startDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
-      const endDate = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0);
+    const dateObj = new Date(dateString);
+    const startDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+    const endDate = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 0);
 
-      try {
-        const response = await fetch(
-          `${
-            Globals.API_BASE_URL
-          }/api/events/timetable?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
-        );
-        if (!response.ok) throw new Error("Failed to fetch timetable data.");
-        const data = await response.json();
+    try {
+      const response = await fetch(
+        `${
+          Globals.API_BASE_URL
+        }/api/events/timetable?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch timetable data.");
+      const data = await response.json();
 
-        setItems((prevItems) => {
-          const newItemsForMonth = {};
-          data.forEach((event) => {
-            const eventDate = event.startTime.split("T")[0];
-            if (!newItemsForMonth[eventDate]) {
-              newItemsForMonth[eventDate] = [];
-            }
-            newItemsForMonth[eventDate].push(event);
-          });
-
-          for (const date in newItemsForMonth) {
-            newItemsForMonth[date].sort(
-              (a, b) => new Date(a.startTime) - new Date(b.startTime)
-            );
+      setItems((prevItems) => {
+        const newItemsForMonth = {};
+        data.forEach((event) => {
+          const eventDate = event.startTime.split("T")[0];
+          if (!newItemsForMonth[eventDate]) {
+            newItemsForMonth[eventDate] = [];
           }
-
-          return { ...prevItems, ...newItemsForMonth };
+          newItemsForMonth[eventDate].push(event);
         });
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-  
+
+        for (const date in newItemsForMonth) {
+          newItemsForMonth[date].sort(
+            (a, b) => new Date(a.startTime) - new Date(b.startTime)
+          );
+        }
+
+        return { ...prevItems, ...newItemsForMonth };
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if(currentMonth) {
-        loadItemsForMonth(currentMonth);
+    if (currentMonth) {
+      loadItemsForMonth(currentMonth);
     }
   }, [currentMonth, loadItemsForMonth]);
 
@@ -517,7 +552,7 @@ const TimetableScreen = () => {
   useFocusEffect(
     useCallback(() => {
       const todayStr = new Date().toISOString().split("T")[0];
-      
+
       // On initial focus, reset to today. On subsequent focuses, this will refresh the data.
       if (!loadedMonths.current.has(todayStr.substring(0, 7))) {
         setItems({});
@@ -667,7 +702,7 @@ const TimetableScreen = () => {
       };
     return marked;
   }, [items, selectedDate]);
-  
+
   const HeaderPlaque = () => (
     <View style={styles.headerPlaque}>
       <Text style={styles.pageTitle}>{t("Timetable_Title")}</Text>
@@ -684,19 +719,65 @@ const TimetableScreen = () => {
           <ActivityIndicator style={{ marginLeft: 10 }} color="#005D8F" />
         )}
       </View>
+      <ViewSwitcher
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+        t={t}
+        onGoToToday={goToToday}
+      />
+      {viewMode === "monthly" && (
+        <Calendar
+          onDayPress={(day) => {
+            setSelectedDate(day.dateString);
+            setCurrentMonth(day.dateString);
+          }}
+          onMonthChange={(month) => {
+            setCurrentMonth(month.dateString);
+            loadItemsForMonth(month);
+          }}
+          markedDates={markedDates}
+          current={currentMonth}
+          style={styles.calendar}
+          theme={{
+            calendarBackground: "#ffffff",
+            textSectionTitleColor: "#3D2B1F",
+            selectedDayBackgroundColor: "#005D8F",
+            selectedDayTextColor: "#ffffff",
+            todayTextColor: "#005D8F",
+            dayTextColor: "#3D2B1F",
+            arrowColor: "#005D8F",
+            monthTextColor: "#3D2B1F",
+            textDayFontWeight: "500",
+            textMonthFontWeight: "bold",
+            textDayHeaderFontWeight: "300",
+          }}
+        />
+      )}
+      {viewMode === "weekly" && (
+        <WeeklySelector
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+          items={items}
+        />
+      )}
     </View>
   );
 
   return (
     <View style={styles.container}>
       <Header />
-      
-      {viewMode === 'daily' ? (
+
+      {viewMode === "daily" ? (
         <ScrollView
+          style={{ flex: 1 }}
           stickyHeaderIndices={[1]}
           showsVerticalScrollIndicator={false}
         >
-          <HeaderPlaque />
+          <View style={styles.headerPlaque}>
+            <Text style={styles.pageTitle}>{t("Timetable_Title")}</Text>
+            <Text style={styles.pageSubTitle}>{t("Timetable_SubTitle")}</Text>
+            <Text style={styles.mainTitle}>{getCurrentTitle()}</Text>
+          </View>
           <ViewSwitcher
             viewMode={viewMode}
             setViewMode={setViewMode}
@@ -708,6 +789,7 @@ const TimetableScreen = () => {
             handleItemPress={handleItemPress}
             t={t}
             isRtl={isRtl}
+            selectedDate={selectedDate}
           />
         </ScrollView>
       ) : (
@@ -726,38 +808,38 @@ const TimetableScreen = () => {
                 t={t}
                 onGoToToday={goToToday}
               />
-              {viewMode === 'monthly' && (
+              {viewMode === "monthly" && (
                 <Calendar
                   onDayPress={(day) => {
-                      setSelectedDate(day.dateString);
-                      setCurrentMonth(day.dateString);
+                    setSelectedDate(day.dateString);
+                    setCurrentMonth(day.dateString);
                   }}
                   onMonthChange={(month) => {
-                      setCurrentMonth(month.dateString);
+                    setCurrentMonth(month.dateString);
                   }}
                   markedDates={markedDates}
                   current={currentMonth}
                   style={styles.calendar}
                   theme={{
-                      calendarBackground: "#ffffff",
-                      textSectionTitleColor: "#3D2B1F",
-                      selectedDayBackgroundColor: "#005D8F",
-                      selectedDayTextColor: "#ffffff",
-                      todayTextColor: "#005D8F",
-                      dayTextColor: "#3D2B1F",
-                      arrowColor: "#005D8F",
-                      monthTextColor: "#3D2B1F",
-                      textDayFontWeight: "500",
-                      textMonthFontWeight: "bold",
-                      textDayHeaderFontWeight: "300",
+                    calendarBackground: "#ffffff",
+                    textSectionTitleColor: "#3D2B1F",
+                    selectedDayBackgroundColor: "#005D8F",
+                    selectedDayTextColor: "#ffffff",
+                    todayTextColor: "#005D8F",
+                    dayTextColor: "#3D2B1F",
+                    arrowColor: "#005D8F",
+                    monthTextColor: "#3D2B1F",
+                    textDayFontWeight: "500",
+                    textMonthFontWeight: "bold",
+                    textDayHeaderFontWeight: "300",
                   }}
                 />
               )}
-              {viewMode === 'weekly' && (
+              {viewMode === "weekly" && (
                 <WeeklySelector
-                    selectedDate={selectedDate}
-                    setSelectedDate={setSelectedDate}
-                    items={items}
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                  items={items}
                 />
               )}
             </>
@@ -772,7 +854,7 @@ const TimetableScreen = () => {
           contentContainerStyle={styles.listContainer}
         />
       )}
-      
+
       <ManualAdditionModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
@@ -921,7 +1003,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     flexGrow: 1,
-    minHeight: 1440,
+    minHeight: 1600,
   },
   hoursColumn: { width: 60, paddingTop: 10 },
   hourText: { position: "absolute", right: 0, fontSize: 16, color: "#666" },

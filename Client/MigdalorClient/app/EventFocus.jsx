@@ -220,7 +220,8 @@ export default function EventFocusScreen() {
     ? { uri: `${Globals.API_BASE_URL}${event.picturePath}` }
     : placeholderImage;
 
-  // ✅ 2. Get the formatted day string
+  const isEventOver = new Date() > new Date(event.endDate);
+
   const recurrenceDayString = formatRecurrenceDays(event.recurrenceRule, t);
 
   const isLargeFont = settings.fontSizeMultiplier >= 2;
@@ -365,21 +366,26 @@ export default function EventFocusScreen() {
 
         {!event.isRecurring && (
           <View style={styles.actionContainer}>
-            {isCreator && (
+            {isCreator ? (
               <AttendanceDrawer
                 eventId={eventId}
                 participants={participants}
                 canMarkAttendance={canMarkAttendance}
                 isFinalized={event.participationChecked}
               />
-            )}
-            {!isCreator && (
+            ) : (
               <>
-                {remainingSpots > 0 && event.capacity !== null && (
-                  <StyledText style={styles.spotsAvailableText}>
-                    {t("EventFocus_SpacesAvailable", { count: remainingSpots })}
-                  </StyledText>
-                )}
+                {/* ✅ The 'Spots Available' text is now hidden if the event is over */}
+                {!isEventOver &&
+                  remainingSpots > 0 &&
+                  event.capacity !== null && (
+                    <StyledText style={styles.spotsAvailableText}>
+                      {t("EventFocus_SpacesAvailable", {
+                        count: remainingSpots,
+                      })}
+                    </StyledText>
+                  )}
+
                 {isRegistered ? (
                   <View style={styles.statusContainer}>
                     <StyledText style={styles.statusText}>
@@ -397,7 +403,7 @@ export default function EventFocusScreen() {
                       {t("EventFocus_ActivityFull", "This activity is full.")}
                     </StyledText>
                   </View>
-                ) : (
+                ) : !isEventOver ? ( // ✅ The 'Register' button is now hidden if the event is over
                   <FlipButton
                     onPress={handleRegister}
                     style={styles.registerButton}
@@ -408,7 +414,7 @@ export default function EventFocusScreen() {
                       {t("Common_Register", "Register")}
                     </StyledText>
                   </FlipButton>
-                )}
+                ) : null}
               </>
             )}
           </View>

@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import {
   StyleSheet,
   View,
@@ -23,10 +29,11 @@ import MapView, {
 
 import { Toast } from "toastify-react-native";
 
-import { useIsFocused } from "@react-navigation/native";
+import { useIsFocused, useFocusEffect } from "@react-navigation/native";
 import i18next from "i18next";
 import * as Location from "expo-location";
 import pointInPolygon from "point-in-polygon";
+
 import FlipButtonSizeless from "@/components/FlipButtonSizeless";
 import NodeInfoModal from "@/components/NodeInfoModal";
 import BuildingInfoModal from "@/components/BuildingInfoModal";
@@ -153,6 +160,13 @@ const Map = () => {
     longitudeDelta: INITIAL_LONGITUDE_DELTA,
   });
 
+  const INITIAL_REGION = {
+    latitude: 32.310441,
+    longitude: 34.895219,
+    latitudeDelta: 0.0049,
+    longitudeDelta: 0.0024,
+  };
+
   const [loading, setLoading] = useState(true);
   const [mapData, setMapData] = useState({ buildings: [], mapNodes: [] });
   const [error, setError] = useState(null);
@@ -191,6 +205,19 @@ const Map = () => {
   const navigationGraph = useMemo(
     () => createGraph(mapData.mapNodes, polylines),
     [mapData.mapNodes, polylines]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      // This handles returning to the map after navigating away.
+      const timeoutId = setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.animateToRegion(INITIAL_REGION, 500);
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }, [])
   );
 
   const requestLocationPermission = async () => {
@@ -400,43 +427,27 @@ const Map = () => {
 
     const startNode = findClosestWalkableNode(userLoc, walkableNodes);
     let targetNodeId = null;
-    let buildingIDForHighlight = null;
-    let displayNameForModal = "";
 
-    if (target.type === "building") {
+    if (target.type === "building" || target.type === "apartment") {
       targetNodeId = target.entranceNodeIds[0];
-      buildingIDForHighlight = target.buildingID;
-      // --- FIX: Use a fallback to prevent translating an undefined key ---
-      displayNameForModal = t(target.buildingName, {
-        defaultValue: target.buildingName || t("Common_Loading"),
-      });
-    } else if (target.type === "apartment") {
-      targetNodeId = target.entranceNodeIds[0];
-      buildingIDForHighlight = target.physicalBuildingID;
-      // Ensure a valid string is passed ---
-      displayNameForModal = `${t("Common_Apartment")} ${
-        target.displayNumber || ""
-      }`;
     }
 
     if (startNode && targetNodeId) {
       const { prev } = dijkstra(navigationGraph, startNode.nodeID);
       const pathNodeIds = getPath(prev, startNode.nodeID, targetNodeId);
+
       if (pathNodeIds.length > 0) {
         const pathCoords = pathNodeIds.map((id) => {
           const node = mapData.mapNodes.find((n) => n.nodeID == id);
           return { latitude: node.latitude, longitude: node.longitude };
         });
+
         pathCoords.unshift({
           latitude: userLoc.latitude,
           longitude: userLoc.longitude,
         });
-        const finalDestinationObject = {
-          ...target,
-          buildingID: buildingIDForHighlight,
-          displayName: displayNameForModal,
-        };
-        setDestination(finalDestinationObject);
+
+        setDestination(target);
         setNavigationPath(pathCoords);
         setIsNavigating(true);
         setNavigationModalVisible(false);
@@ -485,11 +496,10 @@ const Map = () => {
         ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={styles.map}
-        initialRegion={{
-          latitude: MAP_CENTER_LATITUDE,
-          longitude: MAP_CENTER_LONGITUDE,
-          latitudeDelta: INITIAL_LATITUDE_DELTA,
-          longitudeDelta: INITIAL_LONGITUDE_DELTA,
+        onMapReady={() => {
+          if (mapRef.current) {
+            mapRef.current.animateToRegion(INITIAL_REGION, 50);
+          }
         }}
         showsUserLocation={locationPermissionGranted}
         showsMyLocationButton={locationPermissionGranted}

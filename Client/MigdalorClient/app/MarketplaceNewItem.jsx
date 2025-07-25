@@ -808,6 +808,12 @@ export default function AddNewItem() {
             </Card>
           </View>
 
+          <View style={styles.infoPlaque}>
+            <StyledText style={styles.infoPlaqueText}>
+              {t("MarketplaceNewItemScreen_ExpiryNotice")}
+            </StyledText>
+          </View>
+
           <View
             style={[styles.buttonRow, useColumnLayout && styles.buttonColumn]}
           >
