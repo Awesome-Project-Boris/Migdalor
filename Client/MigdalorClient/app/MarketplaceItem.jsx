@@ -181,10 +181,12 @@ export default function MarketplaceItemScreen() {
     );
   };
 
-  const handleContactPress = (type) => {
+  const handleContactPress = async (type) => {
     if (!listingDetails || !listingDetails.sellerId) return;
+
     let url = "";
     let contactValue = null;
+
     if (type === "email" && listingDetails.sellerEmail) {
       contactValue = listingDetails.sellerEmail;
       url = `mailto:${contactValue}`;
@@ -203,31 +205,24 @@ export default function MarketplaceItemScreen() {
         return;
       }
     }
-    if (!url || !contactValue) {
+
+    if (!url) {
       Alert.alert(
         t("MarketplaceItemScreen_ContactNotAvailableTitle"),
         t("MarketplaceItemScreen_ContactNotAvailableMsg")
       );
       return;
     }
-    Linking.canOpenURL(url)
-      .then((supported) => {
-        if (!supported) {
-          Alert.alert(
-            t("MarketplaceItemScreen_CannotHandleContactTitle"),
-            t("MarketplaceItemScreen_CannotHandleContactMsg", { type: type })
-          );
-        } else {
-          return Linking.openURL(url);
-        }
-      })
-      .catch((err) => {
-        Alert.alert(
-          t("Common_Error"),
-          t("MarketplaceItemScreen_ErrorOpeningLink")
-        );
-      });
-  };
+    
+    try {
+      await Linking.openURL(url);
+    } catch (err) {
+      Alert.alert(
+        t("Common_Error"),
+        t("MarketplaceItemScreen_ErrorOpeningLink", { type: type })
+      );
+    }
+};
 
   if (isLoading) {
     return (
