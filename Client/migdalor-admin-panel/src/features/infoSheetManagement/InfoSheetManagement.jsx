@@ -57,13 +57,18 @@ const InfoSheetManagement = () => {
         api.get("/InfoSheet/en", token),
       ]);
 
-      setHebrewContent(heResponse || "");
-      setEnglishContent(enResponse || "");
+      // **FIX:** Extract the 'content' property from the JSON response
+      const heContent = heResponse?.content || "";
+      const enContent = enResponse?.content || "";
+
+      setHebrewContent(heContent);
+      setEnglishContent(enContent);
 
       // Store initial content in local storage for the revert functionality
-      localStorage.setItem("info_sheet_he_backup", heResponse || "");
-      localStorage.setItem("info_sheet_en_backup", enResponse || "");
+      localStorage.setItem("info_sheet_he_backup", heContent);
+      localStorage.setItem("info_sheet_en_backup", enContent);
     } catch (error) {
+      console.error("Error fetching info sheet content:", error);
       showToast("error", `שגיאה בטעינת המידע: ${error.message}`);
     } finally {
       setIsLoading(false);
@@ -91,9 +96,9 @@ const InfoSheetManagement = () => {
   const handleSave = async (language) => {
     const content = language === "he" ? hebrewContent : englishContent;
     try {
-      await api.put(`/InfoSheet/${language}`, content, token, {
-        headers: { "Content-Type": "application/json" },
-      });
+      // The body should be the raw string, as expected by the [FromBody] attribute in the controller.
+      // The apiService's put method will correctly stringify this.
+      await api.put(`/InfoSheet/${language}`, content, token);
       showToast("success", "התוכן נשמר בהצלחה!");
       // Update the backup in local storage
       localStorage.setItem(`info_sheet_${language}_backup`, content);
