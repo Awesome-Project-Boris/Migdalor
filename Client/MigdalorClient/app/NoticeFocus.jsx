@@ -55,6 +55,7 @@ export default function NoticeFocus() {
   const [noticeData, setNoticeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [allCategories, setAllCategories] = useState([]);
 
   const { noticeId } = useLocalSearchParams();
   const router = useRouter();
@@ -63,35 +64,46 @@ export default function NoticeFocus() {
   const notice = params.notice ? JSON.parse(params.notice) : null;
 
   useEffect(() => {
-    // Get the stringified notice object from navigation params
     const noticeJSON = params.notice;
+    const categoriesJSON = params.allCategories; // ✅ Get the new parameter
 
     if (noticeJSON) {
       try {
-        // Parse the object from the string
         const parsedNotice = JSON.parse(noticeJSON);
-
-        // 1. We have the data, set it to our component's state
         setNoticeData(parsedNotice);
 
-        // 2. Mark the notice as read
+        // ✅ Parse and set the categories data
+        if (categoriesJSON) {
+          setAllCategories(JSON.parse(categoriesJSON));
+        }
+
         if (parsedNotice.noticeId) {
           ReadNoticeTracker.markAsRead(parsedNotice.noticeId);
         }
       } catch (e) {
-        console.error("Failed to parse notice JSON from params:", e);
+        console.error("Failed to parse navigation params:", e);
         setError("Failed to load notice data.");
       }
     } else {
-      // If for some reason no notice object was passed, set an error
       setError(t("NoticeDetailsScreen_errorNoId"));
     }
 
-    // Whether we succeeded or failed, the setup is done. Stop loading.
     setIsLoading(false);
-  }, [params.notice, t]);
+  }, [params.notice, params.allCategories, t]);
 
-  // ✅ Handler to navigate to the image view screen
+  const getTranslatedCategoryName = useCallback(
+    (hebName) => {
+      if (!hebName || allCategories.length === 0) return hebName;
+      const category = allCategories.find((c) => c.categoryHebName === hebName);
+      if (!category) return hebName;
+
+      return settings.language === "en"
+        ? category.categoryEngName
+        : category.categoryHebName;
+    },
+    [allCategories, settings.language]
+  );
+
   const handleImagePress = (imageUri, altText) => {
     if (!imageUri) return;
     router.push({
@@ -213,7 +225,7 @@ export default function NoticeFocus() {
                 <Ionicons name="pricetag-outline" size={24} color="#555" />
                 <StyledText style={[styles.metadataText, textAlignStyle]}>
                   {t("NoticeDetailsScreen_categoryLabel", "Category:")}{" "}
-                  {noticeData.noticeCategory}
+                  {getTranslatedCategoryName(noticeData.noticeCategory)}
                   {noticeData.noticeSubCategory
                     ? ` (${noticeData.noticeSubCategory})`
                     : ""}

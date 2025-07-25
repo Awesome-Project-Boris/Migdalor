@@ -55,6 +55,7 @@ export default function NoticesScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(true);
+  const [allCategories, setAllCategories] = useState([]);
 
   // --- New state for our new features ---
   const [isFilterModalVisible, setFilterModalVisible] = useState(false);
@@ -73,10 +74,11 @@ export default function NoticesScreen() {
         throw new Error("User not found for fetching subscriptions.");
       }
 
-      const [categoriesRes, readIds] = await Promise.all([
+      const [categoriesRes, allCategoriesRes, readIds] = await Promise.all([
         fetch(
           `${Globals.API_BASE_URL}/api/Resident/subscriptions/${residentId}`
         ),
+        fetch(`${Globals.API_BASE_URL}/api/Categories`),
         ReadNoticeTracker.getReadNoticeIds(),
       ]);
 
@@ -84,6 +86,11 @@ export default function NoticesScreen() {
         throw new Error("Failed to fetch user subscriptions.");
       const categoriesData = await categoriesRes.json();
       const userSubscribed = categoriesData.filter((c) => c.isSubscribed);
+
+      if (!allCategoriesRes.ok)
+        throw new Error("Failed to fetch categories list.");
+      const allCategoriesData = await allCategoriesRes.json();
+      setAllCategories(allCategoriesData);
 
       let categoriesToFetch = Array.from(selectedCategories);
 
@@ -139,6 +146,20 @@ export default function NoticesScreen() {
   }, [selectedCategories, sortOrder]); // ✅ The dependency array is correct now
 
   const isInitialMount = useRef(true);
+
+  const getTranslatedCategoryName = useCallback(
+    (hebName) => {
+      if (allCategories.length === 0) return hebName;
+      const category = allCategories.find((c) => c.categoryHebName === hebName);
+      if (!category) return hebName;
+
+      // ✅ Use settings.language for the check
+      return settings.language === "en"
+        ? category.categoryEngName
+        : category.categoryHebName;
+    },
+    [allCategories, settings.language] // ✅ Update the dependency array
+  );
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -360,7 +381,7 @@ export default function NoticesScreen() {
                 {[...selectedCategories].map((categoryName) => (
                   <InterestChip
                     key={categoryName}
-                    label={`${categoryName} (${
+                    label={`${getTranslatedCategoryName(categoryName)} (${
                       unreadCounts.get(categoryName) || 0
                     })`}
                     mode="display"
@@ -425,24 +446,36 @@ export default function NoticesScreen() {
     [allNotices.length]
   );
 
-  // ✅ Your original renderItem is preserved and enhanced with the `isRead` prop.
+  // In Notices.jsx, replace the renderNoticeItem function
+
   const renderNoticeItem = useCallback(
-    ({ item }) => (
-      <View style={styles.cardContainer}>
-        <NoticeCard
-          data={item}
-          isNew={isItemNew("notices", item.creationDate)} // Preserved
-          isRead={readNoticeIds.has(item.noticeId)} // New
-          onPress={() =>
-            router.push({
-              pathname: "/NoticeFocus",
-              params: { notice: JSON.stringify(item) }, // Simplified params to pass the whole object
-            })
-          }
-        />
-      </View>
-    ),
-    [router, isItemNew, readNoticeIds]
+    ({ item }) => {
+      // Create a new notice object with the translated category name
+      const itemWithTranslatedCategory = {
+        ...item,
+        noticeCategory: getTranslatedCategoryName(item.noticeCategory),
+      };
+
+      return (
+        <View style={styles.cardContainer}>
+          <NoticeCard
+            data={itemWithTranslatedCategory}
+            isNew={isItemNew("notices", item.creationDate)}
+            isRead={readNoticeIds.has(item.noticeId)}
+            onPress={() =>
+              router.push({
+                pathname: "/NoticeFocus",
+                params: {
+                  notice: JSON.stringify(item),
+                  allCategories: JSON.stringify(allCategories),
+                },
+              })
+            }
+          />
+        </View>
+      );
+    },
+    [router, isItemNew, readNoticeIds, allCategories, getTranslatedCategoryName]
   );
 
   // ✅ Your original empty component logic is preserved.
@@ -503,6 +536,7 @@ export default function NoticesScreen() {
         subscribedCategories={subscribedCategories}
         selectedCategories={selectedCategories}
         onSelectionChange={setSelectedCategories}
+        allCategories={allCategories}
       />
     </>
   );

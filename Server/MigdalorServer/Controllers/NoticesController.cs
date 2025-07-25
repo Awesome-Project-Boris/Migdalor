@@ -22,6 +22,16 @@ namespace MigdalorServer.Controllers
         // GET: api/<NoticeController>
         // In NoticesController.cs
 
+        private readonly MigdalorDBContext _context;
+        private readonly ILogger<NoticesController> _logger;
+
+        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+
         [HttpGet]
         public async Task<IActionResult> Get()
         {
@@ -37,8 +47,15 @@ namespace MigdalorServer.Controllers
                                      {
                                          NoticeId = n.NoticeId,
                                          SenderId = n.SenderId,
-                                         EngSenderName = s.EngFirstName + " " + s.EngLastName,
-                                         HebSenderName = s.HebFirstName + " " + s.HebLastName,
+
+                                         EngSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "Administration"
+                                             : s.EngFirstName + " " + s.EngLastName,
+
+                                         HebSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "הנהלה"
+                                             : s.HebFirstName + " " + s.HebLastName,
+
                                          CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
                                          NoticeTitle = n.NoticeTitle,
                                          NoticeMessage = n.NoticeMessage,
@@ -58,14 +75,7 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        private readonly MigdalorDBContext _context;
-        private readonly ILogger<NoticesController> _logger;
 
-        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
 
         // GET api/<NoticeController>/5
         [HttpGet("{category}")]
@@ -109,8 +119,13 @@ namespace MigdalorServer.Controllers
                                     {
                                         NoticeId = n.NoticeId,
                                         SenderId = n.SenderId,
-                                        EngSenderName = s.EngFirstName + " " + s.EngLastName,
-                                        HebSenderName = s.HebFirstName + " " + s.HebLastName,
+                                        EngSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "Administration"
+                                             : s.EngFirstName + " " + s.EngLastName,
+
+                                        HebSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "הנהלה"
+                                             : s.HebFirstName + " " + s.HebLastName,
                                         CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
                                         NoticeTitle = n.NoticeTitle,
                                         NoticeMessage = n.NoticeMessage,
@@ -262,20 +277,17 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        // Add this method to your NoticesController.cs
 
         [HttpPost("filtered")]
         public async Task<IActionResult> GetFilteredNotices([FromBody] NoticeFilterDto filters)
         {
             if (filters == null || filters.Categories == null || !filters.Categories.Any())
             {
-                // If no categories are provided, return an empty list instead of all notices.
                 return Ok(new List<NoticeDto>());
             }
 
             try
             {
-                // Start with the base query
                 var query = (from n in _context.OhNotices
                              join s in _context.OhPeople on n.SenderId equals s.PersonId
                              join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
@@ -283,27 +295,30 @@ namespace MigdalorServer.Controllers
                              from pg in picGroup.DefaultIfEmpty()
                              select new { n, s, cat, pg });
 
-                // Apply the category filter
                 query = query.Where(x => filters.Categories.Contains(x.n.NoticeCategory));
 
-                // Apply the sorting
                 if (filters.SortOrder == "oldest")
                 {
                     query = query.OrderBy(x => x.n.CreationDate);
                 }
                 else
                 {
-                    // Default to newest if sortOrder is null, "newest", or any other value
                     query = query.OrderByDescending(x => x.n.CreationDate);
                 }
 
-                // Project the final results into our DTO
                 var notices = await query.Select(x => new NoticeDto
                 {
                     NoticeId = x.n.NoticeId,
                     SenderId = x.n.SenderId,
-                    EngSenderName = x.s.EngFirstName + " " + x.s.EngLastName,
-                    HebSenderName = x.s.HebFirstName + " " + x.s.HebLastName,
+
+                    EngSenderName = x.s.PersonRole != null && x.s.PersonRole.ToLower() == "admin"
+                        ? "Administraion"
+                        : x.s.EngFirstName + " " + x.s.EngLastName,
+
+                    HebSenderName = x.s.PersonRole != null && x.s.PersonRole.ToLower() == "admin"
+                        ? "הנהלה"
+                        : x.s.HebFirstName + " " + x.s.HebLastName,
+
                     CreationDate = x.n.CreationDate.HasValue ? DateTime.SpecifyKind(x.n.CreationDate.Value, DateTimeKind.Utc) : null,
                     NoticeTitle = x.n.NoticeTitle,
                     NoticeMessage = x.n.NoticeMessage,

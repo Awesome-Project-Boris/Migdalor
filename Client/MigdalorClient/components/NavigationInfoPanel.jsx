@@ -7,17 +7,39 @@ import { Ionicons } from "@expo/vector-icons";
 const NavigationInfoPanel = ({ navigationPath, destination }) => {
   const { t } = useTranslation();
 
-  let destinationName = "";
-  if (destination) {
+  // ✅ All translation and display name logic is now self-contained here.
+  const destinationName = useMemo(() => {
+    if (!destination) return "";
+
+    // ✅ FIX: If a displayName is already provided, use it immediately.
+    if (destination.displayName) return destination.displayName;
+
+    // --- Fallback logic if no displayName exists ---
+
+    // Handle buildings with 1-2 apartments
     if (destination.type === "building") {
-      destinationName = t(destination.buildingName, {
+      const hasApartments =
+        destination.apartments && destination.apartments.length > 0;
+      if (hasApartments && destination.apartments.length <= 2) {
+        const apartmentNumbers = destination.apartments
+          .map((a) => a.displayNumber)
+          .join(", ");
+        return `${t(
+          destination.apartments[0].apartmentName
+        )} ${apartmentNumbers}`;
+      }
+      return t(destination.buildingName, {
         defaultValue: destination.buildingName,
       });
-    } else if (destination.type === "apartment") {
-      // Use displayNumber for apartments as requested
-      destinationName = `${t("Common_Apartment")} ${destination.displayNumber}`;
     }
-  }
+
+    // Handle apartments
+    if (destination.type === "apartment") {
+      return `${t("Common_Apartment")} ${destination.displayNumber}`;
+    }
+
+    return ""; // Should not be reached
+  }, [destination, t]);
 
   const totalDistance = useMemo(() => {
     if (navigationPath.length < 2) return 0;

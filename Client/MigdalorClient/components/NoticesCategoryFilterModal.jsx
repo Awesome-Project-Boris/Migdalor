@@ -8,27 +8,15 @@ import { Ionicons } from "@expo/vector-icons";
 import FlipButton from "./FlipButton";
 import { useSettings } from "@/context/SettingsContext";
 
-const CategorySelectItem = ({ category, isSelected, onToggle }) => (
-  <TouchableOpacity style={styles.itemContainer} onPress={onToggle}>
-    <StyledText style={styles.categoryName}>
-      {category.categoryHebName}
-    </StyledText>
-    <Ionicons
-      name={isSelected ? "checkbox" : "square-outline"}
-      size={30}
-      color={isSelected ? "#007AFF" : "#8e8e93"}
-    />
-  </TouchableOpacity>
-);
-
 export default function NoticesCategoryFilterModal({
   visible,
   onClose,
   subscribedCategories,
   selectedCategories,
   onSelectionChange,
+  allCategories,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { settings } = useSettings();
   const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
@@ -48,6 +36,31 @@ export default function NoticesCategoryFilterModal({
     );
   };
 
+  const CategorySelectItem = ({ category, isSelected, onToggle }) => {
+    // Find the full category object from the allCategories prop
+    const fullCategory = allCategories.find(
+      (c) => c.categoryHebName === category.categoryHebName
+    );
+
+    // Determine the name to display
+    const displayName = fullCategory
+      ? i18n.language === "en"
+        ? fullCategory.categoryEngName
+        : fullCategory.categoryHebName
+      : category.categoryHebName; // Fallback to the Hebrew name
+
+    return (
+      <TouchableOpacity style={styles.itemContainer} onPress={onToggle}>
+        <StyledText style={styles.categoryName}>{displayName}</StyledText>
+        <Ionicons
+          name={isSelected ? "checkbox" : "square-outline"}
+          size={30}
+          color={isSelected ? "#007AFF" : "#8e8e93"}
+        />
+      </TouchableOpacity>
+    );
+  };
+
   const handleDeselectAll = () => {
     onSelectionChange(new Set());
   };
@@ -62,9 +75,8 @@ export default function NoticesCategoryFilterModal({
     <View style={styles.overlay}>
       <View style={styles.container}>
         <StyledText style={styles.title}>
-          {t("Notices_FilterTitle", "סינון לפי קטגוריה")}
+          {t("NoticeFilterModal_modalTitle")}
         </StyledText>
-
         <View
           style={[
             styles.toggleAllContainer,
@@ -72,17 +84,16 @@ export default function NoticesCategoryFilterModal({
           ]}
         >
           <FlipButton onPress={handleSelectAll} style={{ flex: 1 }}>
-            {t("Notices_SelectAll", "בחר הכל")}
+            {t("NoticeFilterModal_selectAll")}
           </FlipButton>
           <FlipButton
             onPress={handleDeselectAll}
             style={{ flex: 1 }}
             bgColor="#6c6c70"
           >
-            {t("Notices_DeselectAll", "נקה הכל")}
+            {t("NoticeFilterModal_deselectAll")}
           </FlipButton>
         </View>
-
         <ScrollView style={styles.listContainer}>
           {subscribedCategories.map((cat) => (
             <CategorySelectItem
@@ -93,9 +104,8 @@ export default function NoticesCategoryFilterModal({
             />
           ))}
         </ScrollView>
-
         <FlipButton onPress={onClose} style={styles.applyButton}>
-          {t("Common_Done", "סיום")}
+          {t("Common_Done")}
         </FlipButton>
       </View>
     </View>

@@ -263,6 +263,8 @@ const resources = {
       MarketplaceEditItemScreen_UpdateFailedTitle: "Update Failed",
       MarketplaceNewItemScreen_listingCreatedSuccessTitle:
         "Listing Created Successfully",
+      MarketplaceNewItemScreen_ExpiryNotice:
+        "Note: Your listing will be automatically deleted after two weeks.",
 
       MainMenuNameplate_greetingGoodMorning: "Good Morning",
       MainMenuNameplate_greetingGoodAfternoon: "Good Afternoon",
@@ -649,6 +651,9 @@ const resources = {
       MapScreen_LegendText:
         "Red Arrows - Mark the direction of traffic on the road.\nGreen Route - Symbolizes the roads within the compound.\nYellow Paths - Symbolize the pedestrian walkways.\nYellow Pins - Mark points of interest that you can click on to get more information.",
 
+      Modal_Profile: "Profile",
+      Modal_Navigate: "Navigate",
+
       // Notification Drawer and symbols
 
       Item_New: "New",
@@ -942,6 +947,8 @@ const resources = {
       MarketplaceNewItemScreen_errorDescriptionTooLong: "תיאור הפריט ארוך מדי.",
       MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars:
         "התיאור מכיל יותר מדי תווים מיוחדים.",
+      MarketplaceNewItemScreen_ExpiryNotice:
+        "שימו לב: המודעה שלכם תימחק באופן אוטומטי לאחר שבועיים.",
 
       MainMenuNameplate_greetingGoodMorning: "בוקר טוב",
       MainMenuNameplate_greetingGoodAfternoon: "אחר הצהריים טובים",
@@ -1308,6 +1315,8 @@ const resources = {
       MapScreen_LegendText:
         "החיצים האדומים - מסמנים את כיוון התנועה בכביש.\nהמסלול הירוק - מסמל את כבישי המתחם.\nהשבילים הצהובים - מסמלים את המדרכות הרגליות.\nהסיכות הצהובות - מסמנות נקודות עניין שאפשר ללחוץ עליהן על מנת לקבל עוד מידע.",
 
+      Modal_Profile: "לפרופיל",
+      Modal_Navigate: "ניווט",
       // Notification Drawer and symbols
 
       Item_New: "חדש",
