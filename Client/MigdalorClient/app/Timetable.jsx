@@ -719,47 +719,7 @@ const TimetableScreen = () => {
           <ActivityIndicator style={{ marginLeft: 10 }} color="#005D8F" />
         )}
       </View>
-      <ViewSwitcher
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-        t={t}
-        onGoToToday={goToToday}
-      />
-      {viewMode === "monthly" && (
-        <Calendar
-          onDayPress={(day) => {
-            setSelectedDate(day.dateString);
-            setCurrentMonth(day.dateString);
-          }}
-          onMonthChange={(month) => {
-            setCurrentMonth(month.dateString);
-            loadItemsForMonth(month);
-          }}
-          markedDates={markedDates}
-          current={currentMonth}
-          style={styles.calendar}
-          theme={{
-            calendarBackground: "#ffffff",
-            textSectionTitleColor: "#3D2B1F",
-            selectedDayBackgroundColor: "#005D8F",
-            selectedDayTextColor: "#ffffff",
-            todayTextColor: "#005D8F",
-            dayTextColor: "#3D2B1F",
-            arrowColor: "#005D8F",
-            monthTextColor: "#3D2B1F",
-            textDayFontWeight: "500",
-            textMonthFontWeight: "bold",
-            textDayHeaderFontWeight: "300",
-          }}
-        />
-      )}
-      {viewMode === "weekly" && (
-        <WeeklySelector
-          selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
-          items={items}
-        />
-      )}
+      {/* The duplicated components have been removed */}
     </View>
   );
 
