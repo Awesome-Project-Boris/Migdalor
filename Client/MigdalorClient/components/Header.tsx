@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 9999, // A very high zIndex for the whole container
+    zIndex: 9999,
     elevation: 10,
   },
 });
