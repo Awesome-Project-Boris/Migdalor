@@ -4,47 +4,9 @@ import InputField from "../../components/common/InputField";
 import CheckboxField from "../../components/common/CheckboxField";
 import SpouseCommand from "../../components/common/SpouseCommand";
 import ApartmentCommand from "./ApartmentCommand";
+import ErrorModal from "../../components/common/ErrorModal";
 import { api } from "../../api/apiService";
 import { useAuth } from "../../auth/AuthContext";
-
-// --- Error Modal Component ---
-const ErrorModal = ({ isOpen, onClose, title, message }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4"
-      onClick={onClose}
-      dir="rtl"
-    >
-      <div
-        className="relative z-50 w-full max-w-md bg-white p-6 rounded-2xl shadow-lg"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex flex-col">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-red-600">{title}</h2>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <p className="text-gray-700">{message}</p>
-          <div className="flex justify-end mt-6">
-            <button
-              onClick={onClose}
-              className="px-5 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
-            >
-              הבנתי
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // --- Mock shadcn/ui Dialog Components ---
 const Dialog = ({ open, onOpenChange, children }) => {
@@ -134,27 +96,31 @@ const EditUserModal = ({
 
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorModal, setErrorModal] = useState({ isOpen: false, message: "" });
+  const [errorModal, setErrorModal] = useState({
+    isOpen: false,
+    response: null,
+  });
   const [initialApartmentGuid, setInitialApartmentGuid] = useState(null);
+  const [initialSpouseId, setInitialSpouseId] = useState(null);
 
   useEffect(() => {
-    const fetchInitialApartment = async (roomNumber) => {
-      try {
-        const apartmentDetails = await api.get(
-          `/apartments/${roomNumber}`,
-          token
-        );
-        setInitialApartmentGuid(apartmentDetails.apartmentNumber);
-      } catch (error) {
-        console.error(
-          `Could not fetch initial apartment details for room ${roomNumber}`,
-          error
-        );
-        setInitialApartmentGuid(null);
-      }
-    };
-
     if (user) {
+      const fetchInitialApartment = async (roomNumber) => {
+        try {
+          const apartmentDetails = await api.get(
+            `/apartments/${roomNumber}`,
+            token
+          );
+          setInitialApartmentGuid(apartmentDetails.apartmentNumber);
+        } catch (error) {
+          console.error(
+            `Could not fetch initial apartment details for room ${roomNumber}`,
+            error
+          );
+          setInitialApartmentGuid(null);
+        }
+      };
+
       const roomNum = user.residentApartmentNumber
         ? String(parseInt(user.residentApartmentNumber.split("a")[1]))
         : "";
@@ -179,6 +145,8 @@ const EditUserModal = ({
         residentApartmentNumber: roomNum,
       });
 
+      setInitialSpouseId(user.spouseId || null);
+
       if (roomNum) {
         fetchInitialApartment(roomNum);
       } else {
@@ -186,7 +154,7 @@ const EditUserModal = ({
       }
 
       setIsSubmitting(false);
-      setErrorModal({ isOpen: false, message: "" });
+      setErrorModal({ isOpen: false, response: null });
     }
   }, [user, token]);
 
@@ -218,7 +186,11 @@ const EditUserModal = ({
       !formData.residentApartmentNumber ||
       isNaN(parseInt(formData.residentApartmentNumber, 10))
     ) {
-      setErrorModal({ isOpen: true, message: "יש להזין מספר דירה תקין." });
+      setErrorModal({
+        isOpen: true,
+        // Create a response-like object for client-side validation
+        response: { data: "יש להזין מספר דירה תקין." },
+      });
       setIsSubmitting(false);
       return;
     }
@@ -238,41 +210,30 @@ const EditUserModal = ({
         finalApartmentGuid = apartmentResponse.apartmentNumber;
       }
 
+      if (formData.spouseId !== initialSpouseId) {
+        await api.put(
+          `/resident/${user.id}/spouse`,
+          { spouseId: formData.spouseId || null },
+          token
+        );
+      }
+
+      const { spouseId, ...payloadForSave } = formData;
       const payload = {
-        ...formData,
+        ...payloadForSave,
         residentApartmentNumber: finalApartmentGuid,
       };
-      payload.spouseId = payload.spouseId || null;
 
       await onSave(user.id, payload);
     } catch (error) {
       console.error("Error during save process:", error);
-      let errorMessage = "אירעה שגיאה בלתי צפויה. אנא נסה שוב.";
 
-      if (error.response) {
-        if (error.response.status === 400) {
-          const errorData = error.response.data;
-          if (typeof errorData === "string" && errorData.length > 0) {
-            errorMessage = errorData;
-          } else if (typeof errorData === "object" && errorData !== null) {
-            errorMessage =
-              errorData.title ||
-              errorData.detail ||
-              Object.values(errorData.errors || {})
-                .flat()
-                .join(" ") ||
-              "מספר דירה לא תקין.";
-          }
-        } else {
-          errorMessage = `שגיאת שרת (${error.response.status}). אנא פנה לתמיכה.`;
-        }
-      } else if (error.request) {
-        errorMessage = "אין תגובה מהשרת. אנא בדוק את חיבור האינטרנט שלך.";
-      } else {
-        errorMessage = error.message;
-      }
+      // **THE FIX IS HERE**
+      // If error.response exists, use it. Otherwise, create a fallback
+      // response object with the general error message.
+      const errorResponse = error.response || { data: error.message };
 
-      setErrorModal({ isOpen: true, message: errorMessage });
+      setErrorModal({ isOpen: true, response: errorResponse });
     } finally {
       setIsSubmitting(false);
     }
@@ -287,9 +248,9 @@ const EditUserModal = ({
       <DialogContent>
         <ErrorModal
           isOpen={errorModal.isOpen}
-          onClose={() => setErrorModal({ isOpen: false, message: "" })}
-          title="שגיאת קלט"
-          message="מספר דירה לא תקין. אנא נסה שוב"
+          onClose={() => setErrorModal({ isOpen: false, response: null })}
+          title="שגיאת שמירה"
+          response={errorModal.response}
         />
         <DialogHeader>
           <DialogTitle>עריכת פרטי דייר: {user.fullName}</DialogTitle>

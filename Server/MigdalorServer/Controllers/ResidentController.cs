@@ -384,5 +384,110 @@ namespace MigdalorServer.Controllers
                 );
             }
         }
+        [HttpPut("{id}/spouse")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> UpdateSpouse(Guid id, [FromBody] UpdateSpouseDto dto)
+        {
+            if (id == Guid.Empty)
+            {
+                // Return a JSON object for all responses
+                return BadRequest(new { message = "יש לספק מזהה דייר תקין." });
+            }
+
+            using var db = new MigdalorDBContext();
+            using var transaction = await db.Database.BeginTransactionAsync();
+
+            try
+            {
+                var personToUpdate = await db
+                    .OhPeople.Include(p => p.OhResident)
+                    .FirstOrDefaultAsync(p => p.PersonId == id);
+
+                if (personToUpdate == null || personToUpdate.OhResident == null)
+                {
+                    await transaction.RollbackAsync();
+                    return NotFound(new { message = $"דייר עם המזהה '{id}' לא נמצא." });
+                }
+                var residentToUpdate = personToUpdate.OhResident;
+
+                Guid? oldSpouseId = residentToUpdate.SpouseId;
+                Guid? newSpouseId = dto.SpouseId;
+
+                if (oldSpouseId == newSpouseId)
+                {
+                    await transaction.CommitAsync();
+                    return Ok(new { message = "פרטי בן/בת הזוג כבר מעודכנים." });
+                }
+
+                if (oldSpouseId.HasValue)
+                {
+                    var oldSpouse = await db.OhResidents.FirstOrDefaultAsync(r =>
+                        r.ResidentId == oldSpouseId.Value
+                    );
+                    if (oldSpouse != null)
+                    {
+                        oldSpouse.SpouseId = null;
+                        oldSpouse.SpouseHebName = null;
+                        oldSpouse.SpouseEngName = null;
+                        db.OhResidents.Update(oldSpouse);
+                    }
+                }
+
+                if (newSpouseId.HasValue && newSpouseId != Guid.Empty)
+                {
+                    var newSpousePerson = await db
+                        .OhPeople.Include(p => p.OhResident)
+                        .FirstOrDefaultAsync(p => p.PersonId == newSpouseId.Value);
+
+                    if (newSpousePerson == null || newSpousePerson.OhResident == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return NotFound(new { message = $"בן/בת הזוג החדש עם מזהה '{newSpouseId}' לא נמצא." });
+                    }
+                    var newSpouseResident = newSpousePerson.OhResident;
+
+                    if (newSpouseResident.SpouseId.HasValue && newSpouseResident.SpouseId != id)
+                    {
+                        await transaction.RollbackAsync();
+                        return StatusCode(409, new { message = "בן/בת הזוג שנבחר/ה כבר משויך/ת לדייר אחר." });
+                    }
+
+                    residentToUpdate.SpouseId = newSpouseId;
+                    residentToUpdate.SpouseHebName =
+                        $"{newSpousePerson.HebFirstName} {newSpousePerson.HebLastName}";
+                    residentToUpdate.SpouseEngName =
+                        $"{newSpousePerson.EngFirstName} {newSpousePerson.EngLastName}";
+                    db.OhResidents.Update(residentToUpdate);
+
+                    newSpouseResident.SpouseId = id;
+                    newSpouseResident.SpouseHebName =
+                        $"{personToUpdate.HebFirstName} {personToUpdate.HebLastName}";
+                    newSpouseResident.SpouseEngName =
+                        $"{personToUpdate.EngFirstName} {personToUpdate.EngLastName}";
+                    db.OhResidents.Update(newSpouseResident);
+                }
+                else
+                {
+                    residentToUpdate.SpouseId = null;
+                    residentToUpdate.SpouseHebName = null;
+                    residentToUpdate.SpouseEngName = null;
+                    db.OhResidents.Update(residentToUpdate);
+                }
+
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok(new { message = "פרטי בן/בת הזוג עודכנו בהצלחה." });
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine($"Error in UpdateSpouse: {e}");
+                return StatusCode(
+                    500,
+                    new { message = "אירעה שגיאת שרת פנימית בעת עדכון פרטי בן/בת הזוג." }
+                );
+            }
+        }
     }
 }
