@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MigdalorServer.BL;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
@@ -8,6 +9,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using YourApp.PushNotifications.Services;
 
 namespace MigdalorServer.Controllers
 {
@@ -17,11 +19,13 @@ namespace MigdalorServer.Controllers
     public class InstructorEventsController : ControllerBase
     {
         private readonly MigdalorDBContext _context;
+        private readonly ExpoPushService _pushService;
         private static readonly TimeZoneInfo IsraelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
 
-        public InstructorEventsController(MigdalorDBContext context)
+        public InstructorEventsController(MigdalorDBContext context, ExpoPushService pushService)
         {
             _context = context;
+            _pushService = pushService;
         }
 
         [HttpGet("MyEvents")]
@@ -72,28 +76,43 @@ namespace MigdalorServer.Controllers
             instance.Status = "Cancelled";
             instance.Notes = dto.Notes;
 
-            var participantIds = await _context.OhEventRegistrations
-                .Where(r => r.EventId == instance.EventId && r.Status == "Active")
-                .Select(r => r.ParticipantId)
+            var notice = new OhNotice
+            {
+                SenderId = userId,
+                NoticeTitle = $"Meeting Cancelled: {instance.Event.EventName}",
+                NoticeMessage = $"The meeting for '{instance.Event.EventName}' on {instance.StartTime:yyyy-MM-dd @ h:mm tt} has been cancelled. Reason: {dto.Notes}",
+                CreationDate = DateTime.UtcNow,
+                NoticeCategory = "תרבות ופנאי" // "Culture and Leisure"
+            };
+            _context.OhNotices.Add(notice);
+
+            var categoryName = notice.NoticeCategory;
+            var unsubscribedResidentIds = await _context.OhResidentCategorySubscriptions
+                // --- FIX APPLIED HERE ---
+                .Where(s => s.CategoryHebName == categoryName && s.IsSubscribed == false)
+                .Select(s => s.ResidentId)
                 .ToListAsync();
 
-            if (participantIds.Any())
-            {
-                var localStartTime = instance.StartTime;
+            var subscribedUserIds = await _context.OhResidents
+                .Where(r => r.IsActive == true && !unsubscribedResidentIds.Contains(r.ResidentId))
+                .Join(_context.OhPeople, r => r.ResidentId, p => p.PersonId, (r, p) => new { r.ResidentId, p.PushToken })
+                .Where(j => !string.IsNullOrEmpty(j.PushToken))
+                .Select(j => j.ResidentId)
+                .ToArrayAsync();
 
-                var notice = new OhNotice
+            if (subscribedUserIds.Any())
+            {
+                var pushMessage = new ExpoPushMessage
                 {
-                    SenderId = userId,
-                    NoticeTitle = $"Meeting Cancelled: {instance.Event.EventName}",
-                    NoticeMessage = $"The meeting for '{instance.Event.EventName}' on {localStartTime:yyyy-MM-dd @ h:mm tt} has been cancelled. Reason: {dto.Notes}",
-                    CreationDate = DateTime.UtcNow,
-                    NoticeCategory = "תרבות ופנאי"
+                    Title = notice.NoticeTitle,
+                    Body = notice.NoticeMessage,
+                    Data = new { noticeCategory = notice.NoticeCategory }
                 };
-                _context.OhNotices.Add(notice);
+                await _pushService.SendBulkAsync(subscribedUserIds, pushMessage);
             }
 
             await _context.SaveChangesAsync();
-            return Ok("Meeting cancelled and a public notice has been posted.");
+            return Ok("Meeting cancelled, a public notice has been posted, and notifications have been sent.");
         }
 
         [HttpPost("RescheduleInstance")]
@@ -105,10 +124,8 @@ namespace MigdalorServer.Controllers
                 return Unauthorized("Invalid user token.");
             }
 
-            // Convert incoming UTC time to local time for validation
             var newStartTimeLocal = TimeZoneInfo.ConvertTimeFromUtc(dto.NewStartTime, IsraelTimeZone);
 
-            // FIXED: Add server-side check to prevent rescheduling to a past date/time.
             if (newStartTimeLocal < DateTime.Now)
             {
                 return BadRequest("Cannot reschedule a meeting to a time that has already passed.");
@@ -137,26 +154,43 @@ namespace MigdalorServer.Controllers
             };
             _context.OhEventInstances.Add(newInstance);
 
-            var participantIds = await _context.OhEventRegistrations
-                .Where(r => r.EventId == originalInstance.EventId && r.Status == "Active")
-                .Select(r => r.ParticipantId)
+            var notice = new OhNotice
+            {
+                SenderId = userId,
+                NoticeTitle = $"Meeting Rescheduled: {originalInstance.Event.EventName}",
+                NoticeMessage = $"The meeting for '{originalInstance.Event.EventName}' on {originalStartTimeLocal:yyyy-MM-dd @ h:mm tt} has been moved to {newStartTimeLocal:yyyy-MM-dd @ h:mm tt}. Reason: {dto.Notes}",
+                CreationDate = DateTime.UtcNow,
+                NoticeCategory = "תרבות ופנאי" // "Culture and Leisure"
+            };
+            _context.OhNotices.Add(notice);
+
+            var categoryName = notice.NoticeCategory;
+            var unsubscribedResidentIds = await _context.OhResidentCategorySubscriptions
+                // --- FIX APPLIED HERE ---
+                .Where(s => s.CategoryHebName == categoryName && s.IsSubscribed == false)
+                .Select(s => s.ResidentId)
                 .ToListAsync();
 
-            if (participantIds.Any())
+            var subscribedUserIds = await _context.OhResidents
+                .Where(r => r.IsActive == true && !unsubscribedResidentIds.Contains(r.ResidentId))
+                .Join(_context.OhPeople, r => r.ResidentId, p => p.PersonId, (r, p) => new { r.ResidentId, p.PushToken })
+                .Where(j => !string.IsNullOrEmpty(j.PushToken))
+                .Select(j => j.ResidentId)
+                .ToArrayAsync();
+
+            if (subscribedUserIds.Any())
             {
-                var notice = new OhNotice
+                var pushMessage = new ExpoPushMessage
                 {
-                    SenderId = userId,
-                    NoticeTitle = $"Meeting Rescheduled: {originalInstance.Event.EventName}",
-                    NoticeMessage = $"The meeting for '{originalInstance.Event.EventName}' on {originalStartTimeLocal:yyyy-MM-dd @ h:mm tt} has been moved to {newStartTimeLocal:yyyy-MM-dd @ h:mm tt}. Reason: {dto.Notes}",
-                    CreationDate = DateTime.UtcNow,
-                    NoticeCategory = "תרבות ופנאי"
+                    Title = notice.NoticeTitle,
+                    Body = notice.NoticeMessage,
+                    Data = new { noticeCategory = notice.NoticeCategory }
                 };
-                _context.OhNotices.Add(notice);
+                await _pushService.SendBulkAsync(subscribedUserIds, pushMessage);
             }
 
             await _context.SaveChangesAsync();
-            return Ok("Meeting rescheduled and a public notice has been posted.");
+            return Ok("Meeting rescheduled, a public notice has been posted, and notifications have been sent.");
         }
     }
 }

@@ -62,13 +62,32 @@ LocaleConfig.locales["he"] = {
 LocaleConfig.defaultLocale = "he";
 
 // --- Helper Functions (No Changes) ---
-const formatTime = (dateString) => {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  // Use getUTCHours() and getUTCMinutes() to avoid local timezone conversion
-  const hours = String(date.getUTCHours()).padStart(2, "0");
-  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
-  return `${hours}:${minutes}`;
+const formatTime = (dateInput) => {
+  // If the input is null, undefined, or empty, return an empty string.
+  if (!dateInput) return "";
+
+  // If the input is already a Date object
+  if (dateInput instanceof Date) {
+    if (isNaN(dateInput.getTime())) return ""; // Check for invalid date
+    const hours = String(dateInput.getHours()).padStart(2, "0");
+    const minutes = String(dateInput.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  }
+
+  // If the input is a string
+  if (typeof dateInput === 'string') {
+    try {
+      const timePart = dateInput.split("T")[1];
+      if (!timePart) return ""; // Handle cases where the string might not have a 'T'
+      const timeParts = timePart.split(":");
+      return `${timeParts[0]}:${timeParts[1]}`;
+    } catch (e) {
+      console.error("Error formatting time string:", e);
+      return "";
+    }
+  }
+
+  return ""; // Return empty for any other unexpected input type
 };
 
 const getWeekDays = (date) => {
@@ -192,10 +211,10 @@ const DailyView = ({ events, handleItemPress, t, isRtl, selectedDate }) => {
     if (!events || !selectedDate) return [];
 
     const viewStartDate = new Date(selectedDate);
-    viewStartDate.setUTCHours(viewStartHour, 0, 0, 0);
+    viewStartDate.setHours(viewStartHour, 0, 0, 0);
 
     const viewEndDate = new Date(selectedDate);
-    viewEndDate.setUTCHours(24, 0, 0, 0);
+    viewEndDate.setHours(24, 0, 0, 0);
 
     const processedEvents = events
       .filter((e) => {
@@ -249,8 +268,8 @@ const DailyView = ({ events, handleItemPress, t, isRtl, selectedDate }) => {
 
           // Calculate top based on the capped start time
           const top =
-            (start.getUTCHours() - viewStartHour) * hourHeight +
-            (start.getUTCMinutes() / 60) * hourHeight;
+            (start.getHours() - viewStartHour) * hourHeight +
+            (start.getMinutes() / 60) * hourHeight;
 
           // Calculate height based on the duration from the capped start
           const cappedDurationMillis = cappedEnd.getTime() - start.getTime();
@@ -542,29 +561,23 @@ const TimetableScreen = () => {
   }, []);
 
   useEffect(() => {
+    // This effect runs when the user changes the month in the calendar view.
     if (currentMonth) {
       loadItemsForMonth(currentMonth);
     }
   }, [currentMonth, loadItemsForMonth]);
 
-  // --- FIX: This effect now handles both initial load and refreshing on focus ---
   useFocusEffect(
     useCallback(() => {
-      const todayStr = new Date().toISOString().split("T")[0];
-
-      // On initial focus, reset to today. On subsequent focuses, this will refresh the data.
-      if (!loadedMonths.current.has(todayStr.substring(0, 7))) {
-        setItems({});
-        loadedMonths.current.clear();
-        setSelectedDate(todayStr);
-        setCurrentMonth(todayStr);
-      } else {
-        // If we have data, just refresh the current month silently
-        const monthToRefresh = currentMonth.substring(0, 7);
-        loadedMonths.current.delete(monthToRefresh);
-        loadItemsForMonth(currentMonth);
-      }
-    }, [currentMonth, loadItemsForMonth])
+      // This effect runs every time the screen comes into focus.
+      const monthToRefresh = selectedDate.substring(0, 7);
+      
+      // We clear the cache for the currently visible month...
+      loadedMonths.current.delete(monthToRefresh);
+      
+      // ...and then call the load function, which will now fetch fresh data.
+      loadItemsForMonth(selectedDate);
+    }, [selectedDate, loadItemsForMonth])
   );
 
   const handleItemPress = (item) => {

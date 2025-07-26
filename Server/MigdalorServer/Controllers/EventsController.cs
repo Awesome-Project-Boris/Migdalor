@@ -95,11 +95,9 @@ namespace MigdalorServer.Controllers
                         PicturePath = pg.PicPath,
                         IsRecurring = e.IsRecurring,
                         RecurrenceRule = e.RecurrenceRule,
-                        DateCreated = DateTime.SpecifyKind(e.DateCreated, DateTimeKind.Utc),
-                        StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
-                        EndDate = e.EndDate.HasValue
-                            ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc)
-                            : (DateTime?)null,
+                        DateCreated = e.DateCreated,
+                        StartDate = e.StartDate,
+                        EndDate = e.EndDate,
                         Capacity = e.Capacity,
                         ParticipantsCount = e.OhEventRegistrations.Count(),
                         HostName = host != null ? host.HebFirstName + " " + host.HebLastName : "N/A"
@@ -143,8 +141,8 @@ namespace MigdalorServer.Controllers
                                              PicturePath = pg.PicPath,
                                              IsRecurring = e.IsRecurring,
                                              RecurrenceRule = e.RecurrenceRule,
-                                             StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
-                                             EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : null,
+                                             StartDate = e.StartDate,
+                                             EndDate = e.EndDate,
                                              Capacity = e.Capacity,
                                              Host = h == null ? null : new HostDto
                                              {
@@ -391,8 +389,8 @@ namespace MigdalorServer.Controllers
                     Title = e.EventName,
                     Description = e.Description,
                     Location = e.Location,
-                    StartTime = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
-                    EndTime = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                    StartTime = e.StartDate,
+                    EndTime = e.EndDate ?? e.StartDate,
                     SourceTable = "OH_Events",
                     NavigationEventId = e.EventId,
                     Status = "Scheduled" // One-time events are always considered scheduled
