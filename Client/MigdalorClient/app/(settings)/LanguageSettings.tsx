@@ -3,7 +3,7 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
-  View, // ✅ Using standard View
+  View,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Header from "@/components/Header";
@@ -23,9 +23,16 @@ type LanguageOption = {
   value: string;
 };
 
+// Define the expected structure of the context value for this component
+interface AuthContextValue {
+  user: { personRole: string } | null;
+  logout: () => Promise<void>;
+}
+
 export default function LanguageSettingsPage(): JSX.Element {
   const { t } = useTranslation();
-  const { logout } = useAuth();
+  // Apply the type assertion here
+  const { logout, user } = useAuth() as AuthContextValue;
   const router = useRouter();
   const { settings, updateSetting } = useSettings();
 
@@ -61,7 +68,6 @@ export default function LanguageSettingsPage(): JSX.Element {
         style={{ flex: 1 }}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* ✅ Replaced TamaguiYStack with a standard View and style */}
         <View style={styles.contentContainer}>
           <StyledText style={styles.headerText}>
             {t("LanguageSettingsPage_LanguageHeader", "שפת האפליקציה")}
@@ -77,7 +83,6 @@ export default function LanguageSettingsPage(): JSX.Element {
                 bgColor={isActive ? "#007AFF" : "#FFFFFF"}
                 textColor={isActive ? "#FFFFFF" : "#0b0908"}
               >
-                {/* We apply the color style directly here to ensure it overrides */}
                 <StyledText
                   style={[
                     styles.buttonText,
@@ -90,19 +95,22 @@ export default function LanguageSettingsPage(): JSX.Element {
             );
           })}
 
-          <Divider style={styles.divider} />
-
-          <StyledText style={styles.headerText}>
-            {t("SettingsPage_NoticePreferences", "העדפות הודעות")}
-          </StyledText>
-          <FlipButton
-            style={styles.button}
-            onPress={() => setCategoryModalVisible(true)}
-          >
-            <StyledText style={styles.buttonText}>
-              {t("SettingsPage_ManageCategories", "ניהול קטגוריות")}
-            </StyledText>
-          </FlipButton>
+          {user?.personRole !== "Instructor" && (
+            <>
+              <Divider style={styles.divider} />
+              <StyledText style={styles.headerText}>
+                {t("SettingsPage_NoticePreferences", "העדפות הודעות")}
+              </StyledText>
+              <FlipButton
+                style={styles.button}
+                onPress={() => setCategoryModalVisible(true)}
+              >
+                <StyledText style={styles.buttonText}>
+                  {t("SettingsPage_ManageCategories", "ניהול קטגוריות")}
+                </StyledText>
+              </FlipButton>
+            </>
+          )}
 
           <Divider style={styles.divider} />
 
@@ -137,7 +145,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingBottom: 40,
   },
-  // ✅ New container style to replace YStack
   contentContainer: {
     width: "100%",
     alignItems: "center",
@@ -148,12 +155,12 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     textAlign: "center",
     lineHeight: 50,
-    marginBottom: 10, // Spacing between header and buttons
+    marginBottom: 10,
   },
   button: {
     width: SCREEN_WIDTH * 0.8,
     maxWidth: 400,
-    marginTop: 10, // Spacing between buttons in a list
+    marginTop: 10,
   },
   buttonText: {
     fontWeight: "600",
@@ -161,6 +168,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: SCREEN_WIDTH * 0.8,
-    marginVertical: 30, // Spacing around dividers
+    marginVertical: 30,
   },
 });
