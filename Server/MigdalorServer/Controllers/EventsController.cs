@@ -607,5 +607,50 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        [HttpPost("{eventId}/mark-checked")]
+        [Authorize] // Ensures only a logged-in user can call this
+        public async Task<IActionResult> ToggleParticipationChecked(int eventId)
+        {
+            // Step 1: Get the ID of the user making the request from their token.
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var currentUserId))
+            {
+                return Unauthorized("Invalid user token.");
+            }
+
+            try
+            {
+                // Step 2: Find the event in the database.
+                var eventToUpdate = await _context.OhEvents.FindAsync(eventId);
+                if (eventToUpdate == null)
+                {
+                    return NotFound(new { message = "Event not found." });
+                }
+
+                // Step 3: Security check - ensure the current user is the host of the event.
+                if (eventToUpdate.HostId != currentUserId)
+                {
+                    return Forbid("You are not the host of this event.");
+                }
+
+                // Step 4: Toggle the boolean value.
+                eventToUpdate.ParticipationChecked = !eventToUpdate.ParticipationChecked;
+
+                await _context.SaveChangesAsync();
+
+                // Step 5: Return a success message and the new status.
+                return Ok(new
+                {
+                    message = "Participation check status updated successfully.",
+                    isChecked = eventToUpdate.ParticipationChecked
+                });
+            }
+            catch (Exception ex)
+            {
+                // In a real application, you would log this exception.
+                return StatusCode(500, $"An internal server error occurred: {ex.Message}");
+            }
+        }
+
     }
 }

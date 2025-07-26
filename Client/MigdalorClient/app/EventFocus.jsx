@@ -70,19 +70,18 @@ const formatTime = (dateString) => {
  * @returns {string} The formatted date (e.g., "25/07/2025").
  */
 const formatDate = (dateString) => {
-    if (!dateString) return "";
-    try {
-        // Extracts the date part and reformats it from yyyy-MM-dd to dd/MM/yyyy.
-        const datePart = dateString.split("T")[0];
-        const dateParts = datePart.split("-");
-        return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-    } catch (e) {
-        console.error("Error formatting date string:", e);
-        return "";
-    }
-}
+  if (!dateString) return "";
+  try {
+    // Extracts the date part and reformats it from yyyy-MM-dd to dd/MM/yyyy.
+    const datePart = dateString.split("T")[0];
+    const dateParts = datePart.split("-");
+    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+  } catch (e) {
+    console.error("Error formatting date string:", e);
+    return "";
+  }
+};
 // --- FIX END ---
-
 
 export default function EventFocusScreen() {
   const { eventId: eventIdFromParams } = useLocalSearchParams();
@@ -141,6 +140,9 @@ export default function EventFocusScreen() {
         );
 
       const eventData = await eventResponse.json();
+
+      console.log(eventData);
+
       setEvent(eventData);
 
       if (participantsResponse.ok) {
@@ -242,7 +244,9 @@ export default function EventFocusScreen() {
   );
   const isFull =
     event.capacity !== null && participants.length >= event.capacity;
-  const canMarkAttendance = new Date(event.startDate) <= new Date();
+  // ✅ This version removes the 'Z' to parse the time as local
+  const canMarkAttendance =
+    new Date(event.startDate.slice(0, -1)) <= new Date();
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
   const startTime = formatTime(event.startDate);
   const endTime = formatTime(event.endDate);
