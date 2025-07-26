@@ -531,6 +531,7 @@ const resources = {
       Common_Edit: "Edit",
       EventFocus_FinalizeDisclaimer: "Click once you've marked all attendants",
       EventFocus_FinalizeButton: "Finalize Marking",
+      EventFocus_AttendanceMarkedSuccess: "Attendance marked. Thank you.",
 
       EventFocus_RecurrenceDay: "Day(s)",
 
@@ -1211,6 +1212,7 @@ const resources = {
       EventFocus_FinalizeDisclaimer: "יש ללחוץ לאחר סימון כל הנוכחים.",
       EventFocus_FinalizeButton: "סיום סימון",
       EventFocus_RecurrenceDay: "ביום ( ימים )",
+      EventFocus_AttendanceMarkedSuccess: "נוכחות נרשמה. תודה!",
 
       // New Activity
 
