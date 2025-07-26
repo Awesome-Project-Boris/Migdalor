@@ -27,84 +27,95 @@ import StyledText from "@/components/StyledText";
 import { Globals } from "@/app/constants/Globals";
 const ITEMS_PER_PAGE = 10;
 
-const ListHeader = ({
-  t,
-  i18n,
-  handleListYourItem,
-  isLoading,
-  marketplaceQuery,
-  setMarketplaceQuery,
-  handleMarketplaceSearch,
-  searchQuery,
-  handleClearSearch,
-}) => (
-  <View style={styles.headerContainer}>
-    <View style={styles.plaqueContainer}>
-      <StyledText style={styles.mainTitle}>
-        {t("MarketplaceScreen_title")}
-      </StyledText>
-    </View>
+const ListHeader = React.memo(
+  ({
+    t,
+    i18n,
+    handleListYourItem,
+    isLoading,
+    handleMarketplaceSearch, // No longer receives marketplaceQuery or its setter
+    searchQuery,
+    handleClearSearch,
+  }) => {
+    const [localQuery, setLocalQuery] = useState("");
 
-    <FlipButton
-      onPress={handleListYourItem}
-      style={styles.newItemButton}
-      bgColor="#FFFFFF"
-      textColor="#000000"
-      disabled={isLoading}
-    >
-      <StyledText>{t("MarketplaceScreen_NewItemButton")}</StyledText>
-    </FlipButton>
+    const onSearch = () => {
+      handleMarketplaceSearch(localQuery);
+    };
 
-    <View>
-      <SearchAccordion
-        headerOpenTextKey="MarketplaceScreen_accordionClose"
-        headerClosedTextKey="MarketplaceScreen_accordionOpen"
-      >
-        <FloatingLabelInput
-          label={t("MarketplaceSearchItem_Header")}
-          value={marketplaceQuery}
-          onChangeText={setMarketplaceQuery}
-          returnKeyType="search"
-          onSubmitEditing={handleMarketplaceSearch}
-          style={styles.searchInputContainer}
-          inputStyle={styles.searchInput}
-          alignRight={i18n.dir() === "rtl"}
-        />
+    return (
+      <View style={styles.headerContainer}>
+        <View style={styles.plaqueContainer}>
+          <StyledText style={styles.mainTitle}>
+            {t("MarketplaceScreen_title")}
+          </StyledText>
+        </View>
+
         <FlipButton
-          onPress={handleMarketplaceSearch}
-          style={styles.searchSubmitButton}
-          bgColor="#007bff"
-          textColor="#fff"
+          onPress={handleListYourItem}
+          style={styles.newItemButton}
+          bgColor="#FFFFFF"
+          textColor="#000000"
           disabled={isLoading}
         >
-          <View style={styles.buttonContent}>
-            <Ionicons name="search" size={20} color="white" />
-            <StyledText style={styles.searchButtonText}>
-              {t("MarketplaceScreen_SearchButton")}
-            </StyledText>
-          </View>
+          <StyledText>{t("MarketplaceScreen_NewItemButton")}</StyledText>
         </FlipButton>
-      </SearchAccordion>
-    </View>
 
-    {searchQuery !== "" && !isLoading && (
-      <View style={styles.inSearch}>
-        <StyledText
-          style={styles.searchFocus}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {t("MarketplaceScreen_ShowingResultsFor")} "{searchQuery}"
-        </StyledText>
-        <TouchableOpacity
-          style={styles.clearSearchButton}
-          onPress={handleClearSearch}
-        >
-          <Ionicons name="close-circle" size={24} color="#6c757d" />
-        </TouchableOpacity>
+        <View>
+          <SearchAccordion
+            headerOpenTextKey="MarketplaceScreen_accordionClose"
+            headerClosedTextKey="MarketplaceScreen_accordionOpen"
+          >
+            <FloatingLabelInput
+              label={t("MarketplaceSearchItem_Header")}
+              value={localQuery} // Use localQuery
+              onChangeText={setLocalQuery} // Use setLocalQuery
+              returnKeyType="search"
+              onSubmitEditing={onSearch} // Use the new local search handler
+              style={styles.searchInputContainer}
+              inputStyle={styles.searchInput}
+              alignRight={i18n.dir() === "rtl"}
+            />
+            <FlipButton
+              onPress={onSearch} // Use the new local search handler
+              style={styles.searchSubmitButton}
+              bgColor="#007bff"
+              textColor="#fff"
+              disabled={isLoading}
+            >
+              <View style={styles.buttonContent}>
+                <Ionicons name="search" size={20} color="white" />
+                <StyledText style={styles.searchButtonText}>
+                  {t("MarketplaceScreen_SearchButton")}
+                </StyledText>
+              </View>
+            </FlipButton>
+          </SearchAccordion>
+        </View>
+
+        {searchQuery !== "" && !isLoading && (
+          <View style={styles.inSearch}>
+            <StyledText
+              style={styles.searchFocus}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {t("MarketplaceScreen_ShowingResultsFor")} "{searchQuery}"
+            </StyledText>
+            <TouchableOpacity
+              style={styles.clearSearchButton}
+              onPress={() => {
+                setLocalQuery(""); // Also clear the local input
+                handleClearSearch();
+              }}
+            >
+              <Ionicons name="close-circle" size={24} color="#6c757d" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
-    )}
-  </View>
+    );
+  }
 );
 
 export default function MarketplaceScreen() {
@@ -114,7 +125,6 @@ export default function MarketplaceScreen() {
 
   // --- FIX: Manage search state locally instead of using context ---
   const [searchQuery, setSearchQuery] = useState("");
-  const [marketplaceQuery, setMarketplaceQuery] = useState("");
 
   const [listings, setListings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,17 +169,20 @@ export default function MarketplaceScreen() {
     }, [fetchListings])
   );
 
-  const handleMarketplaceSearch = () => {
+  const handleMarketplaceSearch = useCallback((query) => {
     Keyboard.dismiss();
     setCurrentPage(1);
-    setSearchQuery(marketplaceQuery);
-  };
+    setSearchQuery(query);
+  }, []);
 
-  const handleClearSearch = () => {
+  const handleClearSearch = useCallback(() => {
     setCurrentPage(1);
     setSearchQuery("");
-    setMarketplaceQuery("");
-  };
+  }, []);
+
+  const handleListYourItem = useCallback(() => {
+    router.push("/MarketplaceNewItem");
+  }, [router]);
 
   const filteredListings = useMemo(() => {
     let filtered = listings;
@@ -227,10 +240,6 @@ export default function MarketplaceScreen() {
 
   const keyExtractor = useCallback((item) => item.listingId.toString(), []);
 
-  const handleListYourItem = () => {
-    router.push("/MarketplaceNewItem");
-  };
-
   const CustomEmptyComponent = useMemo(() => {
     if (isLoading) return <ActivityIndicator size="large" color="#007bff" />;
     if (error)
@@ -262,9 +271,7 @@ export default function MarketplaceScreen() {
             i18n={i18n}
             handleListYourItem={handleListYourItem}
             isLoading={isLoading}
-            marketplaceQuery={marketplaceQuery}
-            setMarketplaceQuery={setMarketplaceQuery}
-            handleMarketplaceSearch={handleMarketplaceSearch}
+            handleMarketplaceSearch={handleMarketplaceSearch} // This is the updated function
             searchQuery={searchQuery}
             handleClearSearch={handleClearSearch}
           />

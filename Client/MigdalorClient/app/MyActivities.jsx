@@ -15,11 +15,10 @@ import EventCard from "@/components/EventCard";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import Header from "@/components/Header";
 import StyledText from "@/components/StyledText";
-import { useSettings } from "../context/SettingsContext"; // Import useSettings
+import { useSettings } from "../context/SettingsContext";
 
 const ITEMS_PER_PAGE = 5;
 
-// Define filter types
 const FILTER_TYPES = {
   ALL: "all",
   CHECKED: "checked",
@@ -30,7 +29,7 @@ export default function MyActivitiesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const flatListRef = useRef(null);
-  const { settings } = useSettings(); // Get settings from context
+  const { settings } = useSettings();
 
   const [allActivities, setAllActivities] = useState([]);
   const [filteredActivities, setFilteredActivities] = useState([]);
@@ -39,7 +38,8 @@ export default function MyActivitiesScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.ALL);
 
-  // Fetch data on screen focus
+  // ✅ THIS IS THE CORRECTED PART
+  // We have restored useCallback to prevent an infinite loop.
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
@@ -65,7 +65,7 @@ export default function MyActivitiesScreen() {
         }
       };
       fetchInitialData();
-    }, [])
+    }, []) // The empty dependency array is crucial and correct here.
   );
 
   // Apply filters when activities or filter type change
@@ -100,54 +100,73 @@ export default function MyActivitiesScreen() {
     }
   };
 
-  // Responsive button container style
-  const buttonContainerStyle = {
-    flexDirection: settings.textSizeMultiplier >= 2 ? "column" : "row",
-    gap: settings.textSizeMultiplier >= 2 ? 10 : 0,
-    justifyContent: "space-around",
-    width: "100%",
-    marginBottom: 20,
-  };
+  const buttonContainerStyle = useMemo(
+    () => ({
+      flexDirection: settings.textSizeMultiplier >= 2 ? "column" : "row",
+      gap: settings.textSizeMultiplier >= 2 ? 10 : 0,
+      justifyContent: "space-around",
+      width: "100%",
+      marginBottom: 20,
+    }),
+    [settings.textSizeMultiplier]
+  );
 
-  const ListHeader = () => (
-    <View style={styles.plaqueContainer}>
-      <StyledText style={styles.mainTitle}>
-        {t("Activities_MyCreatedActivities")}
-      </StyledText>
+  const handleCardPress = useCallback(
+    (eventId) => {
+      router.push({
+        pathname: "/EventFocus",
+        params: { eventId },
+      });
+    },
+    [router]
+  );
 
-      {/* Filter Buttons */}
-      <View style={buttonContainerStyle}>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            activeFilter === FILTER_TYPES.CHECKED && styles.activeButton,
-          ]}
-          onPress={() => setActiveFilter(FILTER_TYPES.CHECKED)}
-        >
-          <Text style={styles.buttonText}>
-            {t("MyActivities_ParticipationChecked")}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            activeFilter === FILTER_TYPES.NOT_CHECKED && styles.activeButton,
-          ]}
-          onPress={() => setActiveFilter(FILTER_TYPES.NOT_CHECKED)}
-        >
-          <Text style={styles.buttonText}>
-            {t("MyActivities_ParticipationNotChecked")}
-          </Text>
-        </TouchableOpacity>
+  const handleFilterChange = useCallback((filterType) => {
+    setActiveFilter(filterType);
+  }, []);
+
+  const ListHeaderComponent = useCallback(
+    () => (
+      <View style={styles.plaqueContainer}>
+        <StyledText style={styles.mainTitle}>
+          {t("Activities_MyCreatedActivities")}
+        </StyledText>
+        <View style={buttonContainerStyle}>
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              activeFilter === FILTER_TYPES.CHECKED && styles.activeButton,
+            ]}
+            onPress={() => handleFilterChange(FILTER_TYPES.CHECKED)}
+          >
+            <Text style={styles.buttonText}>
+              {t("MyActivities_ParticipationChecked")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              activeFilter === FILTER_TYPES.NOT_CHECKED && styles.activeButton,
+            ]}
+            onPress={() => handleFilterChange(FILTER_TYPES.NOT_CHECKED)}
+          >
+            <Text style={styles.buttonText}>
+              {t("MyActivities_ParticipationNotChecked")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        {activeFilter !== FILTER_TYPES.ALL && (
+          <TouchableOpacity
+            onPress={() => handleFilterChange(FILTER_TYPES.ALL)}
+          >
+            <Text style={styles.clearFilterText}>
+              {t("MyActivities_ClearFilter")}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
-      {activeFilter !== FILTER_TYPES.ALL && (
-        <TouchableOpacity onPress={() => setActiveFilter(FILTER_TYPES.ALL)}>
-          <Text style={styles.clearFilterText}>
-            {t("MyActivities_ClearFilter")}
-          </Text>
-        </TouchableOpacity>
-      )}
-    </View>
+    ),
+    [activeFilter, buttonContainerStyle, t, handleFilterChange]
   );
 
   return (
@@ -156,17 +175,13 @@ export default function MyActivitiesScreen() {
       <PaginatedListDisplay
         flatListRef={flatListRef}
         items={itemsForCurrentPage}
-        ListHeaderComponent={ListHeader}
+        // ✅ CHANGE: Pass the memoized component here
+        ListHeaderComponent={ListHeaderComponent}
         listContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
           <EventCard
             event={item}
-            onPress={() =>
-              router.push({
-                pathname: "/EventFocus",
-                params: { eventId: item.eventId },
-              })
-            }
+            onPress={() => handleCardPress(item.eventId)}
           />
         )}
         itemKeyExtractor={(item) => item.eventId.toString()}
@@ -183,6 +198,7 @@ export default function MyActivitiesScreen() {
   );
 }
 
+// Your existing styles remain the same
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fef1e6" },
   listContainer: {
