@@ -193,7 +193,7 @@ const OpeningHoursManagement = () => {
           Title: noticeTitle,
           Content: noticeContent,
           SenderId: user.id,
-          Category: "עדכוני מערכת",
+          Category: "ספקי שירות",
           IsGlobal: true,
           IsPinned: false,
         };

@@ -285,7 +285,7 @@ namespace MigdalorServer.Controllers
                     return NotFound("Notice not found");
                 }
                     var category = await _context.OhCategories.FirstOrDefaultAsync(c => c.CategoryHebName == noticeToDelete.NoticeCategory);
-                    if (category == null || !userRoles.Contains(category.CategoryEngName))
+                    if (category == null)
                     {
                         return Forbid();
                     }
