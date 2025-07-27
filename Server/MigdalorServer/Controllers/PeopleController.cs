@@ -168,6 +168,18 @@ namespace MigdalorServer.Controllers
             try
             {
                 OhPerson user = OhPerson.AuthenticateUser(userLogin);
+
+                // Check for inactive status ONLY if the user is a resident.
+                if (user.PersonRole == "Resident" || user.PersonRole == null)
+                {
+                    var resident = _context.OhResidents.AsNoTracking().FirstOrDefault(r => r.ResidentId == user.PersonId);
+                    // If a resident record exists and it's marked as inactive, deny access.
+                    if (resident != null && resident.IsActive == false)
+                    {
+                        return Unauthorized("This user account has been deactivated.");
+                    }
+                }
+
                 var token = GenerateJwtToken(user);
                 return Ok(token); // Return the token string directly
             }
@@ -210,6 +222,17 @@ namespace MigdalorServer.Controllers
                 {
                     // This case handles if the user was deleted after the token was issued.
                     return Unauthorized("User not found.");
+                }
+
+                // Check for inactive status ONLY if the user is a resident.
+                if (user.PersonRole == "Resident" || user.PersonRole == null)
+                {
+                    var resident = _context.OhResidents.AsNoTracking().FirstOrDefault(r => r.ResidentId == user.PersonId);
+                    // If a resident record exists and it's marked as inactive, deny access.
+                    if (resident != null && resident.IsActive == false)
+                    {
+                        return Unauthorized("This user account has been deactivated.");
+                    }
                 }
 
                 // Generate a new token with a new expiration date
@@ -275,6 +298,25 @@ namespace MigdalorServer.Controllers
                 {
                     return NotFound("User record associated with this token was not found.");
                 }
+
+                // Check for inactive status ONLY if the user is a resident.
+                if (person.PersonRole == "Resident" || person.PersonRole == null)
+                {
+                    var resident = await _context.OhResidents
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(r => r.ResidentId == person.PersonId);
+
+                    // If a resident record exists and it's marked as inactive, deny access.
+                    if (resident != null && resident.IsActive == false)
+                    {
+                        return Unauthorized("This user account has been deactivated.");
+                    }
+                }
+                if (person.PersonRole != null)
+                    if (!person.PersonRole.Contains("Resident") && !person.PersonRole.Contains("Instructor"))
+                        return Unauthorized("Admins and Suppliers can't connect to the app.");
+                    
+                
 
                 // Manually construct the response object directly from the OH_People table.
                 // This works for ALL roles.

@@ -214,7 +214,11 @@ const OpeningHoursManagement = () => {
           },
         };
 
-        await api.post("/notifications/broadcast", pushMessage, token);
+        await api.post(
+          "/notifications/broadcastToCategory",
+          pushMessage,
+          token
+        );
         showToast("success", "Notification sent to all users.");
       } catch (notificationError) {
         showToast(

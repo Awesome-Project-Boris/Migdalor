@@ -189,7 +189,7 @@ const NoticeManagement = () => {
         },
       };
 
-      await api.post("/Notifications/broadcast", pushMessage, token);
+      await api.post("/Notifications/broadcastToCategory", pushMessage, token);
 
       showToast("success", "ההודעה וההתראה נשלחו בהצלחה!");
       fetchInitialData(); // Refresh the table
