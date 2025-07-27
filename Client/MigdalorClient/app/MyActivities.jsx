@@ -15,6 +15,8 @@ import EventCard from "@/components/EventCard";
 import PaginatedListDisplay from "@/components/PaginatedListDisplay";
 import Header from "@/components/Header";
 import StyledText from "@/components/StyledText";
+import FlipButton from "@/components/FlipButton";
+
 import { useSettings } from "../context/SettingsContext";
 
 const ITEMS_PER_PAGE = 5;
@@ -23,6 +25,7 @@ const FILTER_TYPES = {
   ALL: "all",
   CHECKED: "checked",
   NOT_CHECKED: "not_checked",
+  NO_PARTICIPATION: "no_participation",
 };
 
 export default function MyActivitiesScreen() {
@@ -38,8 +41,6 @@ export default function MyActivitiesScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState(FILTER_TYPES.ALL);
 
-  // ✅ THIS IS THE CORRECTED PART
-  // We have restored useCallback to prevent an infinite loop.
   useFocusEffect(
     useCallback(() => {
       const fetchInitialData = async () => {
@@ -68,18 +69,29 @@ export default function MyActivitiesScreen() {
     }, []) // The empty dependency array is crucial and correct here.
   );
 
-  // Apply filters when activities or filter type change
   useEffect(() => {
+    console.log(
+      "Filtering activities. Data:",
+      JSON.stringify(allActivities, null, 2)
+    );
+
     let newFilteredList = [];
     if (activeFilter === FILTER_TYPES.CHECKED) {
+      // Only show events explicitly marked as checked
       newFilteredList = allActivities.filter(
         (event) => event.participationChecked
       );
     } else if (activeFilter === FILTER_TYPES.NOT_CHECKED) {
+      // Only show events not checked AND that had potential participants
       newFilteredList = allActivities.filter(
-        (event) => !event.participationChecked
+        (event) => !event.participationChecked && event.participantsCount > 0
+      );
+    } else if (activeFilter === FILTER_TYPES.NO_PARTICIPATION) {
+      newFilteredList = allActivities.filter(
+        (event) => Number(event.participantsCount) === 0
       );
     } else {
+      // Default case: show all activities
       newFilteredList = allActivities;
     }
     setFilteredActivities(newFilteredList);
@@ -102,8 +114,8 @@ export default function MyActivitiesScreen() {
 
   const buttonContainerStyle = useMemo(
     () => ({
-      flexDirection: settings.textSizeMultiplier >= 2 ? "column" : "row",
-      gap: settings.textSizeMultiplier >= 2 ? 10 : 0,
+      flexDirection: "column",
+      gap: settings.textSizeMultiplier >= 2 ? 15 : 20,
       justifyContent: "space-around",
       width: "100%",
       marginBottom: 20,
@@ -125,49 +137,76 @@ export default function MyActivitiesScreen() {
     setActiveFilter(filterType);
   }, []);
 
-  const ListHeaderComponent = useCallback(
-    () => (
+  // In MyActivities.jsx
+
+  // In MyActivities.jsx, inside the MyActivitiesScreen component
+
+  const ListHeaderComponent = useCallback(() => {
+    const isCheckedActive = activeFilter === FILTER_TYPES.CHECKED;
+    const isNotCheckedActive = activeFilter === FILTER_TYPES.NOT_CHECKED;
+    const isNoParticipationActive =
+      activeFilter === FILTER_TYPES.NO_PARTICIPATION;
+
+    return (
       <View style={styles.plaqueContainer}>
         <StyledText style={styles.mainTitle}>
           {t("Activities_MyCreatedActivities")}
         </StyledText>
+
         <View style={buttonContainerStyle}>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              activeFilter === FILTER_TYPES.CHECKED && styles.activeButton,
-            ]}
+          {/* Button 1: Checked */}
+          <FlipButton
+            style={styles.filterButton}
             onPress={() => handleFilterChange(FILTER_TYPES.CHECKED)}
+            bgColor={isCheckedActive ? "#007bff" : "#e9ecef"}
+            textColor={isCheckedActive ? "#fff" : "#495057"}
           >
-            <Text style={styles.buttonText}>
+            <Text style={{ fontWeight: "600", textAlign: "center" }}>
               {t("MyActivities_ParticipationChecked")}
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              activeFilter === FILTER_TYPES.NOT_CHECKED && styles.activeButton,
-            ]}
+          </FlipButton>
+
+          {/* Button 2: Not Checked */}
+          <FlipButton
+            style={styles.filterButton}
             onPress={() => handleFilterChange(FILTER_TYPES.NOT_CHECKED)}
+            bgColor={isNotCheckedActive ? "#007bff" : "#e9ecef"}
+            textColor={isNotCheckedActive ? "#fff" : "#495057"}
           >
-            <Text style={styles.buttonText}>
+            <Text style={{ fontWeight: "600", textAlign: "center" }}>
               {t("MyActivities_ParticipationNotChecked")}
             </Text>
-          </TouchableOpacity>
-        </View>
-        {activeFilter !== FILTER_TYPES.ALL && (
-          <TouchableOpacity
-            onPress={() => handleFilterChange(FILTER_TYPES.ALL)}
+          </FlipButton>
+
+          {/* ✅ Button 3: No Participation (New) */}
+          <FlipButton
+            style={styles.filterButton}
+            onPress={() => handleFilterChange(FILTER_TYPES.NO_PARTICIPATION)}
+            bgColor={isNoParticipationActive ? "#007bff" : "#e9ecef"}
+            textColor={isNoParticipationActive ? "#fff" : "#495057"}
           >
-            <Text style={styles.clearFilterText}>
+            <Text style={{ fontWeight: "600", textAlign: "center" }}>
+              {t("MyActivities_NoParticipation", "No Participation")}
+            </Text>
+          </FlipButton>
+        </View>
+
+        {activeFilter !== FILTER_TYPES.ALL && (
+          <FlipButton
+            onPress={() => handleFilterChange(FILTER_TYPES.ALL)}
+            style={styles.clearFilterButton} // Uses new style below
+            bgColor="#f8f9fa"
+            textColor="#dc3545"
+            // We now want the border to be visible and flip
+          >
+            <Text style={{ fontWeight: "bold", textAlign: "center" }}>
               {t("MyActivities_ClearFilter")}
             </Text>
-          </TouchableOpacity>
+          </FlipButton>
         )}
       </View>
-    ),
-    [activeFilter, buttonContainerStyle, t, handleFilterChange]
-  );
+    );
+  }, [activeFilter, buttonContainerStyle, t, handleFilterChange]);
 
   return (
     <View style={styles.container}>
@@ -238,12 +277,8 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flex: 1,
-    paddingVertical: 10,
     marginHorizontal: 5,
     borderRadius: 20,
-    backgroundColor: "#e9ecef",
-    borderWidth: 1,
-    borderColor: "#ced4da",
   },
   activeButton: {
     backgroundColor: "#007bff",
@@ -258,5 +293,14 @@ const styles = StyleSheet.create({
     color: "#dc3545",
     marginTop: 10,
     fontWeight: "bold",
+  },
+  clearFilterButton: {
+    marginTop: 15,
+    paddingVertical: 10, // Increased padding
+    paddingHorizontal: 20, // Increased padding
+    borderWidth: 2, // Add a clear border
+    borderColor: "#dc3545", // Use the text color for the border
+    borderRadius: 20,
+    width: "90%", // Make it wider
   },
 });

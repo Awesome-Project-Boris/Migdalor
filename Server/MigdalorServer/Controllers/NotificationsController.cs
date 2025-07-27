@@ -84,6 +84,7 @@ namespace MigdalorServer.Controllers
         /// <param name="message">The Expo push message template. The 'data' object must contain a 'category' property.</param>
         /// <returns>An IActionResult indicating the result of the broadcast operation.</returns>
         /// 
+
         [HttpPost("broadcastToCategory")]
         public async Task<IActionResult> BroadcastToCategory([FromBody] ExpoPushMessage message)
         {

@@ -124,6 +124,13 @@ export default function EventFocusScreen() {
     getUserIdFromStorage();
   }, [t]);
 
+  const handleFinalizeToggle = (participationChecked) => {
+    setEvent((prevEvent) => ({
+      ...prevEvent,
+      participationChecked: participationChecked,
+    }));
+  };
+
   const fetchData = useCallback(async () => {
     if (!eventId || !currentUserId) return;
 
@@ -244,7 +251,7 @@ export default function EventFocusScreen() {
   );
   const isFull =
     event.capacity !== null && participants.length >= event.capacity;
-  // ✅ This version removes the 'Z' to parse the time as local
+
   const canMarkAttendance =
     new Date(event.startDate.slice(0, -1)) <= new Date();
   const hostName = isRtl ? event.host?.hebrewName : event.host?.englishName;
@@ -408,6 +415,7 @@ export default function EventFocusScreen() {
                 participants={participants}
                 canMarkAttendance={canMarkAttendance}
                 isFinalized={event.participationChecked}
+                onStateChange={handleFinalizeToggle}
               />
             ) : (
               <>
