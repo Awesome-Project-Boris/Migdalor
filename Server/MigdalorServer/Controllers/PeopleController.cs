@@ -312,11 +312,11 @@ namespace MigdalorServer.Controllers
                         return Unauthorized("This user account has been deactivated.");
                     }
                 }
-
-                if (person.PersonRole != "Resident" || person.PersonRole != "Instructor" || person.PersonRole != null)
-                {
-                    return Unauthorized("Admins can't connect to the app.");
-                }
+                if (person.PersonRole != null)
+                    if (!person.PersonRole.Contains("Resident") && !person.PersonRole.Contains("Instructor"))
+                        return Unauthorized("Admins and Suppliers can't connect to the app.");
+                    
+                
 
                 // Manually construct the response object directly from the OH_People table.
                 // This works for ALL roles.
