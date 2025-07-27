@@ -9,6 +9,7 @@ import Toast from "../../components/common/Toast";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import TabsGroup from "../../components/common/TabsGroup";
 import { Button } from "../../components/ui/button";
+import LoadingIndicator from "../../components/common/LoadingIndicator"; // <-- Import the new component
 
 // Page-specific Modals
 import ScheduleOverrideModal from "./ScheduleOverrideModal";
@@ -104,21 +105,17 @@ const OpeningHoursManagement = () => {
     }
   };
 
-  // FIX: Correctly handle serviceId property casing
   const handleSaveService = async (serviceData) => {
     const { mode, data } = serviceModal;
-
-    // The DTO sent to the server expects PascalCase keys.
-    // The `data` object from the server has camelCase keys.
     const dto = {
-      ServiceID: data?.serviceId || 0, // Use camelCase `serviceId` from the original data
+      ServiceID: data?.serviceId || 0,
       HebrewName: serviceData.hebrewName,
       EnglishName: serviceData.englishName,
       HebrewDescription: serviceData.hebrewDescription,
       EnglishDescription: serviceData.englishDescription,
       HebrewAddendum: serviceData.hebrewAddendum,
       EnglishAddendum: serviceData.englishAddendum,
-      ParentService: serviceData.parentService, // Correctly named from the modal form
+      ParentService: serviceData.parentService,
       PictureID: serviceData.pictureId,
       IsActive: serviceData.isActive,
     };
@@ -128,7 +125,6 @@ const OpeningHoursManagement = () => {
         await api.post("/services", dto, token);
         showToast("success", "Service created successfully.");
       } else {
-        // Use the correct camelCase `serviceId` for the URL parameter
         await api.put(`/services/${data.serviceId}`, dto, token);
         showToast("success", "Service updated successfully.");
       }
@@ -442,6 +438,10 @@ const OpeningHoursManagement = () => {
       ),
     },
   ];
+
+  if (isLoading) {
+    return <LoadingIndicator text="טוען נתוני שעות פתיחה..." />;
+  }
 
   return (
     <TooltipProvider>

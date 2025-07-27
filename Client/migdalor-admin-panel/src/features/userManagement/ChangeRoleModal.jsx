@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { X, UserCog } from "lucide-react";
+import { X } from "lucide-react";
+import { api } from "../../api/apiService";
+import { useAuth } from "../../auth/AuthContext";
+import RoleSelection from "./RoleSelection"; // <-- Import the new component
 
 // --- Mock shadcn/ui Dialog Components ---
 const Dialog = ({ open, onOpenChange, children }) => {
@@ -7,7 +10,6 @@ const Dialog = ({ open, onOpenChange, children }) => {
   return (
     <div
       className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-      onClick={() => onOpenChange(false)}
       dir="rtl"
     >
       {React.Children.map(children, (child) =>
@@ -21,7 +23,7 @@ const DialogContent = React.forwardRef(
   ({ className, children, onClose, ...props }, ref) => (
     <div
       ref={ref}
-      className={`relative z-50 grid w-full max-w-md gap-4 border bg-white p-6 shadow-lg rounded-2xl ${className}`}
+      className={`relative z-50 grid w-full max-w-lg gap-4 border bg-white p-6 shadow-lg rounded-2xl ${className}`} // <-- Increased width
       onClick={(e) => e.stopPropagation()}
       {...props}
     >
@@ -57,36 +59,89 @@ const DialogDescription = React.forwardRef((props, ref) => (
   <p ref={ref} className="text-md text-gray-500" {...props} />
 ));
 
-// --- Main ChangeRoleModal Component ---
-
 const ChangeRoleModal = ({
   isOpen,
   onClose,
+  onRoleChanged,
   user,
-  onRoleChange,
   showToast,
+  allCategories,
 }) => {
-  const [newRole, setNewRole] = useState("");
+  const { token } = useAuth();
+  const [selectedRoles, setSelectedRoles] = useState([]);
+  const [staffRoleType, setStaffRoleType] = useState("categories");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isUserAdmin = user?.personRole === "admin";
 
   useEffect(() => {
-    if (user) {
-      setNewRole(user.personRole || "");
+    if (user && user.personRole) {
+      const roles = user.personRole.split(",").filter(Boolean);
+      if (roles.includes("admin")) {
+        setStaffRoleType("admin");
+        setSelectedRoles(["admin"]);
+      } else if (roles.includes("Instructor")) {
+        setStaffRoleType("instructor");
+        setSelectedRoles(["Instructor"]);
+      } else {
+        setStaffRoleType("categories");
+        setSelectedRoles(roles);
+      }
+    } else {
+      setSelectedRoles([]);
+      setStaffRoleType("categories");
     }
   }, [user]);
 
+  const handleRoleTypeChange = (e) => {
+    setStaffRoleType(e.target.value);
+    setSelectedRoles([]);
+  };
+
+  const handleCategoryRoleChange = (roleEngName) => {
+    setSelectedRoles((prev) =>
+      prev.includes(roleEngName)
+        ? prev.filter((r) => r !== roleEngName)
+        : [...prev, roleEngName]
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newRole) {
-      showToast("warning", "יש לבחור תפקיד.");
-      return;
-    }
     setIsSubmitting(true);
+
+    let roleString;
+    switch (staffRoleType) {
+      case "admin":
+        roleString = "admin";
+        break;
+      case "instructor":
+        roleString = "Instructor";
+        break;
+      case "categories":
+        if (selectedRoles.length === 0) {
+          showToast("error", "יש לבחור לפחות הרשאת קטגוריה אחת.");
+          setIsSubmitting(false);
+          return;
+        }
+        roleString = selectedRoles.join(",");
+        break;
+      default:
+        showToast("error", "סוג תפקיד לא תקין.");
+        setIsSubmitting(false);
+        return;
+    }
+
     try {
-      await onRoleChange(user.id, newRole);
-      onClose(); // The parent will show the success toast
+      const rolePayload = { Role: roleString };
+      await api.put(`/People/UpdateRole/${user.personId}`, rolePayload, token);
+      showToast(
+        "success",
+        `הרשאות המשתמש ${user.hebFirstName} ${user.hebLastName} עודכנו בהצלחה.`
+      );
+      onRoleChanged();
+      onClose();
     } catch (error) {
-      // The parent will show the error toast
+      showToast("error", `שגיאה בעדכון הרשאות: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -98,49 +153,44 @@ const ChangeRoleModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>שינוי תפקיד עבור {user.fullName}</DialogTitle>
+          <DialogTitle>
+            שינוי הרשאה עבור {user?.hebFirstName} {user?.hebLastName}
+          </DialogTitle>
           <DialogDescription>בחר את התפקיד החדש עבור המשתמש.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} noValidate>
-          <div className="py-4">
-            <label
-              htmlFor="role-select"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              תפקיד
-            </label>
-            <select
-              id="role-select"
-              name="role"
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value)}
-              className="mt-1 block w-full p-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            >
-              <option value="" disabled>
-                בחר תפקיד...
-              </option>
-              <option value="admin">מנהל</option>
-              <option value="Instructor">מדריך</option>
-              {/* Add other roles as needed */}
-            </select>
-          </div>
-          <DialogFooter>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2 mx-1 bg-gray-300 text-gray-800 rounded-full hover:bg-gray-400"
-              disabled={isSubmitting}
-            >
-              ביטול
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 mx-1 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:bg-blue-300"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "שומר..." : "שמור שינויים"}
-            </button>
-          </DialogFooter>
+        <form onSubmit={handleSubmit} className="py-4 space-y-4">
+          {isUserAdmin ? (
+            <p className="text-gray-600 p-2 border rounded-md bg-gray-50">
+              לא ניתן לשנות הרשאות של מנהל מערכת ראשי (admin).
+            </p>
+          ) : (
+            <RoleSelection
+              allCategories={allCategories}
+              staffRoleType={staffRoleType}
+              onRoleTypeChange={handleRoleTypeChange}
+              selectedRoles={selectedRoles}
+              onCategoryRoleChange={handleCategoryRoleChange}
+            />
+          )}
+
+          {!isUserAdmin && (
+            <DialogFooter>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 mx-1 bg-gray-200 rounded-md hover:bg-gray-300"
+              >
+                ביטול
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 mx-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+              >
+                {isSubmitting ? "מעדכן..." : "שמור שינויים"}
+              </button>
+            </DialogFooter>
+          )}
         </form>
       </DialogContent>
     </Dialog>

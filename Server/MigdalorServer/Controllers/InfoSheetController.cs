@@ -22,9 +22,10 @@ namespace MigdalorServer.Controllers
         /// Gets the info sheet content for a specific language.
         /// </summary>
         /// <param name="language">The language code (e.g., "he" or "en").</param>
-        /// <returns>The info sheet content as a string.</returns>
+        /// <returns>A JSON object containing the info sheet content.</returns>
         [HttpGet("{language}")]
-        public async Task<ActionResult<string>> GetInfoSheet(string language)
+        [AllowAnonymous] // This content is public for all app users
+        public async Task<ActionResult<object>> GetInfoSheet(string language)
         {
             if (string.IsNullOrWhiteSpace(language))
             {
@@ -36,11 +37,12 @@ namespace MigdalorServer.Controllers
 
             if (infoSheet == null)
             {
-                // Return an empty string instead of NotFound to prevent client-side errors
-                return Ok("");
+                // **FIX:** Return a JSON object with an empty string
+                return Ok(new { content = "" });
             }
 
-            return Ok(infoSheet.InfoValue);
+            // **FIX:** Return a JSON object with the content
+            return Ok(new { content = infoSheet.InfoValue });
         }
 
         /// <summary>
@@ -66,14 +68,14 @@ namespace MigdalorServer.Controllers
                 var newInfoSheet = new OhInfoSheet
                 {
                     InfoKey = infoKey,
-                    InfoValue = content
+                    InfoValue = content ?? "" // Ensure content is not null
                 };
                 _context.OhInfoSheets.Add(newInfoSheet);
             }
             else
             {
                 // If it exists, update it.
-                infoSheet.InfoValue = content;
+                infoSheet.InfoValue = content ?? ""; // Ensure content is not null
                 _context.Entry(infoSheet).State = EntityState.Modified;
             }
 

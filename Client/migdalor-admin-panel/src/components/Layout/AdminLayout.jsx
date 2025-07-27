@@ -1,5 +1,5 @@
 // src/components/Layout/AdminLayout.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../auth/AuthContext";
 import SidebarButton from "./SidebarButton";
 import {
@@ -11,7 +11,7 @@ import {
   CalendarDays,
   Clock,
   ShoppingCart,
-  Info, // <-- Import the new icon
+  Info,
 } from "lucide-react";
 import UserManagement from "../../features/userManagement/UserManagement";
 import NoticeManagement from "../../features/noticeManagement/NoticeManagement";
@@ -20,13 +20,24 @@ import Reports from "../../features/reports/Reports";
 import EventManagement from "../../features/eventManagement/EventManagement";
 import OpeningHoursManagement from "../../features/openingHoursManagement/OpeningHoursManagement";
 import ListingManagement from "../../features/listingManagement/ListingManagement";
-import InfoSheetManagement from "../../features/infoSheetManagement/InfoSheetManagement"; // <-- Import the new component
+import InfoSheetManagement from "../../features/infoSheetManagement/InfoSheetManagement";
 
 const AdminLayout = () => {
+  const { user, logout } = useAuth();
   const [activePage, setActivePage] = useState("dashboard");
-  const { logout } = useAuth();
+  const isAdmin = user && user.role === "admin";
+
+  useEffect(() => {
+    if (!isAdmin) {
+      setActivePage("notices");
+    }
+  }, [isAdmin]);
 
   const renderContent = () => {
+    if (!isAdmin) {
+      return <NoticeManagement />;
+    }
+
     switch (activePage) {
       case "users":
         return <UserManagement />;
@@ -34,7 +45,7 @@ const AdminLayout = () => {
         return <NoticeManagement />;
       case "listings":
         return <ListingManagement />;
-      case "infoSheet": // <-- Add this case
+      case "infoSheet":
         return <InfoSheetManagement />;
       case "reports":
         return <Reports />;
@@ -56,54 +67,65 @@ const AdminLayout = () => {
           <span>מגדלור</span>
         </div>
         <nav className="flex-1 px-2 py-4 space-y-1">
-          <SidebarButton
-            icon={<LayoutDashboard size={20} />}
-            label="לוח בקרה"
-            isActive={activePage === "dashboard"}
-            onClick={() => setActivePage("dashboard")}
-          />
-          <SidebarButton
-            icon={<Users size={20} />}
-            label="ניהול משתמשים"
-            isActive={activePage === "users"}
-            onClick={() => setActivePage("users")}
-          />
-          <SidebarButton
-            icon={<MessageSquare size={20} />}
-            label="ניהול הודעות"
-            isActive={activePage === "notices"}
-            onClick={() => setActivePage("notices")}
-          />
-          <SidebarButton
-            icon={<ShoppingCart size={20} />}
-            label="ניהול לוח מוצרים"
-            isActive={activePage === "listings"}
-            onClick={() => setActivePage("listings")}
-          />
-          <SidebarButton
-            icon={<CalendarDays size={20} />}
-            label="ניהול אירועים"
-            isActive={activePage === "events"}
-            onClick={() => setActivePage("events")}
-          />
-          <SidebarButton
-            icon={<Clock size={20} />}
-            label="ניהול שעות פתיחה"
-            isActive={activePage === "openingHours"}
-            onClick={() => setActivePage("openingHours")}
-          />
-          <SidebarButton
-            icon={<Info size={20} />}
-            label="ניהול דף מידע"
-            isActive={activePage === "infoSheet"}
-            onClick={() => setActivePage("infoSheet")}
-          />
-          <SidebarButton
-            icon={<FileText size={20} />}
-            label="דוחות"
-            isActive={activePage === "reports"}
-            onClick={() => setActivePage("reports")}
-          />
+          {isAdmin ? (
+            <>
+              <SidebarButton
+                icon={<LayoutDashboard size={20} />}
+                label="לוח בקרה"
+                isActive={activePage === "dashboard"}
+                onClick={() => setActivePage("dashboard")}
+              />
+              <SidebarButton
+                icon={<Users size={20} />}
+                label="ניהול משתמשים"
+                isActive={activePage === "users"}
+                onClick={() => setActivePage("users")}
+              />
+              <SidebarButton
+                icon={<MessageSquare size={20} />}
+                label="ניהול הודעות"
+                isActive={activePage === "notices"}
+                onClick={() => setActivePage("notices")}
+              />
+              <SidebarButton
+                icon={<ShoppingCart size={20} />}
+                label="ניהול לוח מוצרים"
+                isActive={activePage === "listings"}
+                onClick={() => setActivePage("listings")}
+              />
+              <SidebarButton
+                icon={<CalendarDays size={20} />}
+                label="ניהול אירועים"
+                isActive={activePage === "events"}
+                onClick={() => setActivePage("events")}
+              />
+              <SidebarButton
+                icon={<Clock size={20} />}
+                label="ניהול שעות פתיחה"
+                isActive={activePage === "openingHours"}
+                onClick={() => setActivePage("openingHours")}
+              />
+              <SidebarButton
+                icon={<Info size={20} />}
+                label="ניהול דף מידע"
+                isActive={activePage === "infoSheet"}
+                onClick={() => setActivePage("infoSheet")}
+              />
+              <SidebarButton
+                icon={<FileText size={20} />}
+                label="דוחות"
+                isActive={activePage === "reports"}
+                onClick={() => setActivePage("reports")}
+              />
+            </>
+          ) : (
+            <SidebarButton
+              icon={<MessageSquare size={20} />}
+              label="ניהול הודעות"
+              isActive={activePage === "notices"}
+              onClick={() => setActivePage("notices")}
+            />
+          )}
         </nav>
         <div className="p-2 border-t border-gray-700">
           <SidebarButton

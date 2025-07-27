@@ -1,41 +1,46 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X } from "lucide-react";
 import InputField from "../../components/common/InputField";
 import ImageUpload from "../../components/common/ImageUpload";
 import { api } from "../../api/apiService";
 import { useAuth } from "../../auth/AuthContext";
 
-const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
+const NoticeModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  showToast,
+  notice,
+  allCategories,
+  userRoles,
+  isAdmin,
+}) => {
   const { user, token } = useAuth();
   const [formData, setFormData] = useState({});
-  const [categories, setCategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [existingImage, setExistingImage] = useState(null);
 
   const isEditMode = !!notice;
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const data = await api.get("/Categories", token);
-        const categoryNames = data.map((cat) => cat.categoryHebName);
-        setCategories(Array.isArray(categoryNames) ? categoryNames : []);
-      } catch (error) {
-        showToast("error", "שגיאה בטעינת הקטגוריות.");
-      }
-    };
-
-    if (isOpen) {
-      fetchCategories();
+  const availableCategories = useMemo(() => {
+    if (isAdmin) {
+      return allCategories;
     }
-  }, [isOpen, token, showToast]);
+    const userEngRoles = new Set(userRoles);
+    return allCategories.filter((cat) => userEngRoles.has(cat.categoryEngName));
+  }, [allCategories, userRoles, isAdmin]);
 
   useEffect(() => {
+    const defaultCategory =
+      availableCategories.length === 1
+        ? availableCategories[0].categoryHebName
+        : "";
+
     if (isEditMode && notice) {
       setFormData({
         Title: notice.noticeTitle || "",
         Content: notice.noticeMessage || "",
-        Category: notice.noticeCategory || "",
+        Category: notice.noticeCategory || defaultCategory,
         SubCategory: notice.noticeSubCategory || "",
         PictureId: notice.pictureId || null,
       });
@@ -48,13 +53,13 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
       setFormData({
         Title: "",
         Content: "",
-        Category: "",
+        Category: defaultCategory,
         SubCategory: "",
         PictureId: null,
       });
       setExistingImage(null);
     }
-  }, [notice, isEditMode]);
+  }, [notice, isEditMode, availableCategories]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -151,13 +156,14 @@ const NoticeModal = ({ isOpen, onClose, onSave, showToast, notice }) => {
               onChange={handleChange}
               className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm"
               required
+              disabled={availableCategories.length === 1}
             >
               <option value="" disabled>
                 בחר קטגוריה
               </option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+              {availableCategories.map((cat) => (
+                <option key={cat.categoryId} value={cat.categoryHebName}>
+                  {cat.categoryHebName}
                 </option>
               ))}
             </select>

@@ -12,7 +12,7 @@ import LoadingScreen from "./components/common/LoadingScreen";
  * the user's authentication status.
  */
 function App() {
-  const { isAdmin, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   // Set document language and direction for RTL support.
   // This effect runs once when the component mounts.
@@ -27,8 +27,8 @@ function App() {
     return <LoadingScreen />;
   }
 
-  // Render the AdminLayout if the user is an admin, otherwise show the LoginScreen.
-  return isAdmin ? <AdminLayout /> : <LoginScreen />;
+  // Render the AdminLayout if the user is authenticated, otherwise show the LoginScreen.
+  return isAuthenticated ? <AdminLayout /> : <LoginScreen />;
 }
 
 export default App;

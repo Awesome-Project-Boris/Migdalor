@@ -6,6 +6,7 @@ import Toast from "../../components/common/Toast";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import EventModal from "./EventModal";
 import { Edit, Trash2, PlusCircle, Calendar, Users } from "lucide-react";
+import LoadingIndicator from "../../components/common/LoadingIndicator";
 
 const EventManagement = () => {
   const { token } = useAuth();
@@ -60,7 +61,6 @@ const EventManagement = () => {
     const isEditMode = !!eventId;
     const typeText = eventData.IsRecurring ? "חוג" : "אירוע";
 
-    // FIX: Map the client-side formData to the server-side DTO, including the PictureId
     const serverEventData = {
       eventName: eventData.EventName,
       description: eventData.Description,
@@ -71,7 +71,7 @@ const EventManagement = () => {
       startDate: eventData.StartDate,
       endDate: eventData.EndDate || null,
       hostId: eventData.HostId,
-      pictureId: eventData.PictureId, // Add this line to send the PictureId to the server
+      pictureId: eventData.PictureId,
     };
 
     try {
@@ -187,7 +187,7 @@ const EventManagement = () => {
         </button>
       </div>
       {isLoading ? (
-        <div className="text-center p-4">טוען נתונים...</div>
+        <LoadingIndicator text="טוען אירועים וחוגים..." />
       ) : (
         <SharedTable
           data={dataToDisplay}

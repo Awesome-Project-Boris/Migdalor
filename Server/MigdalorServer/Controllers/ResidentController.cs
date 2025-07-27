@@ -1,13 +1,13 @@
-﻿using DocumentFormat.OpenXml.InkML;
+﻿using System;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using DocumentFormat.OpenXml.InkML;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
-using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace MigdalorServer.Controllers
 {
@@ -15,7 +15,6 @@ namespace MigdalorServer.Controllers
     [ApiController]
     public class ResidentController : ControllerBase
     {
-
         // GET: api/<ResidentController>/residents
         [HttpGet("residents")]
         [Authorize]
@@ -29,7 +28,10 @@ namespace MigdalorServer.Controllers
             catch (Exception e)
             {
                 Console.WriteLine($"Error in GetAllResidents: {e}");
-                return StatusCode(500, "An internal server error occurred while fetching residents.");
+                return StatusCode(
+                    500,
+                    "An internal server error occurred while fetching residents."
+                );
             }
         }
 
@@ -42,9 +44,7 @@ namespace MigdalorServer.Controllers
 
         // POST api/<ResidentController>
         [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
+        public void Post([FromBody] string value) { }
 
         /// <summary>
         /// Updates an existing resident's profile information across OH_People and OH_Residents tables.
@@ -69,9 +69,9 @@ namespace MigdalorServer.Controllers
             {
                 // Find the person and their corresponding resident record.
                 // Include both to ensure they are tracked by Entity Framework.
-                var person = await db.OhPeople
-                                           .Include(p => p.OhResident)
-                                           .FirstOrDefaultAsync(p => p.PersonId == id);
+                var person = await db
+                    .OhPeople.Include(p => p.OhResident)
+                    .FirstOrDefaultAsync(p => p.PersonId == id);
 
                 if (person == null)
                 {
@@ -81,7 +81,9 @@ namespace MigdalorServer.Controllers
                 var resident = person.OhResident;
                 if (resident == null)
                 {
-                    return NotFound($"A resident record for the person with ID '{id}' was not found.");
+                    return NotFound(
+                        $"A resident record for the person with ID '{id}' was not found."
+                    );
                 }
 
                 // === Update OH_People table fields ===
@@ -96,7 +98,6 @@ namespace MigdalorServer.Controllers
                 person.PersonRole = dto.PersonRole ?? person.PersonRole;
                 person.ProfilePicId = dto.ProfilePicId ?? person.ProfilePicId;
 
-
                 // === Update OH_Residents table fields ===
                 resident.BranchName = dto.BranchName ?? resident.BranchName;
                 resident.IsBokerTov = dto.IsBokerTov ?? resident.IsBokerTov;
@@ -104,18 +105,17 @@ namespace MigdalorServer.Controllers
                 resident.DateOfArrival = dto.DateOfArrival ?? resident.DateOfArrival;
                 resident.HomePlace = dto.HomePlace ?? resident.HomePlace;
                 resident.Profession = dto.Profession ?? resident.Profession;
-                resident.ResidentDescription = dto.ResidentDescription ?? resident.ResidentDescription;
+                resident.ResidentDescription =
+                    dto.ResidentDescription ?? resident.ResidentDescription;
                 resident.IsCommittee = dto.IsCommittee ?? resident.IsCommittee;
                 resident.HebCommitteeName = dto.HebCommitteeName ?? resident.HebCommitteeName;
                 resident.EngCommitteeName = dto.EngCommitteeName ?? resident.EngCommitteeName;
-
 
                 // Handle nullable Guid for SpouseId
                 if (dto.SpouseId.HasValue)
                 {
                     resident.SpouseId = dto.SpouseId.Value == Guid.Empty ? null : dto.SpouseId;
                 }
-
 
                 // Mark the entities as modified and save changes
                 db.OhPeople.Update(person);
@@ -131,10 +131,97 @@ namespace MigdalorServer.Controllers
             {
                 // If any error occurs, the transaction will be rolled back automatically when 'using' block is exited.
                 Console.WriteLine($"Error in UpdateResident: {e}");
-                return StatusCode(500, "An internal server error occurred while updating the resident profile.");
+                return StatusCode(
+                    500,
+                    "An internal server error occurred while updating the resident profile."
+                );
             }
         }
 
+        [HttpPut("UpdateProfileByAdmin/{id}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> UpdateResidentProfileByAdmin(
+            Guid id,
+            [FromBody] UpdateResidentAdminDto dto
+        )
+        {
+            if (id == Guid.Empty)
+            {
+                return BadRequest("A valid resident ID must be provided.");
+            }
+
+            using MigdalorDBContext db = new MigdalorDBContext();
+            using var transaction = await db.Database.BeginTransactionAsync();
+
+            try
+            {
+                var person = await db
+                    .OhPeople.Include(p => p.OhResident)
+                    .FirstOrDefaultAsync(p => p.PersonId == id);
+
+                if (person == null)
+                {
+                    return NotFound($"A person with the ID '{id}' was not found.");
+                }
+
+                var resident = person.OhResident;
+                if (resident == null)
+                {
+                    return NotFound(
+                        $"A resident record for the person with ID '{id}' was not found."
+                    );
+                }
+
+                // === Update OH_People table fields ===
+                person.HebFirstName = dto.HebFirstName ?? person.HebFirstName;
+                person.HebLastName = dto.HebLastName ?? person.HebLastName;
+                person.EngFirstName = dto.EngFirstName ?? person.EngFirstName;
+                person.EngLastName = dto.EngLastName ?? person.EngLastName;
+                person.Email = dto.Email ?? person.Email;
+                person.PhoneNumber = dto.PhoneNumber ?? person.PhoneNumber;
+                person.DateOfBirth = dto.DateOfBirth ?? person.DateOfBirth;
+                person.Gender = dto.Gender ?? person.Gender;
+                person.PersonRole = dto.PersonRole ?? person.PersonRole;
+                person.ProfilePicId = dto.ProfilePicId ?? person.ProfilePicId;
+
+                // === Update OH_Residents table fields ===
+                resident.BranchName = dto.BranchName ?? resident.BranchName;
+                resident.IsBokerTov = dto.IsBokerTov ?? resident.IsBokerTov;
+                resident.CanInitActivity = dto.CanInitActivity ?? resident.CanInitActivity;
+                resident.DateOfArrival = dto.DateOfArrival ?? resident.DateOfArrival;
+                resident.HomePlace = dto.HomePlace ?? resident.HomePlace;
+                resident.Profession = dto.Profession ?? resident.Profession;
+                resident.ResidentDescription =
+                    dto.ResidentDescription ?? resident.ResidentDescription;
+                resident.IsCommittee = dto.IsCommittee ?? resident.IsCommittee;
+                resident.HebCommitteeName = dto.HebCommitteeName ?? resident.HebCommitteeName;
+                resident.EngCommitteeName = dto.EngCommitteeName ?? resident.EngCommitteeName;
+                resident.ResidentApartmentNumber =
+                    dto.ResidentApartmentNumber ?? resident.ResidentApartmentNumber;
+
+                // Handle nullable Guid for SpouseId
+                if (dto.SpouseId.HasValue)
+                {
+                    resident.SpouseId = dto.SpouseId.Value == Guid.Empty ? null : dto.SpouseId;
+                }
+
+                db.OhPeople.Update(person);
+                db.OhResidents.Update(resident);
+                await db.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return Ok(new { message = "Resident profile updated successfully by admin." });
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error in UpdateResidentProfileByAdmin: {e}");
+                return StatusCode(
+                    500,
+                    "An internal server error occurred while updating the resident profile."
+                );
+            }
+        }
 
         /// <summary>
         /// Marks a resident as inactive (soft delete).
@@ -157,12 +244,15 @@ namespace MigdalorServer.Controllers
                 {
                     return NotFound($"A resident with the ID '{id}' was not found.");
                 }
-                return Ok($"Resident with ID '{id}' was successfully marked as inactive.");
+                return Ok(new {message = $"Resident with ID '{id}' was successfully marked as inactive."});
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Error in DeleteResident: {e}");
-                return StatusCode(500, "An internal server error occurred while deactivating the resident.");
+                return StatusCode(
+                    500,
+                    "An internal server error occurred while deactivating the resident."
+                );
             }
         }
 
@@ -183,11 +273,11 @@ namespace MigdalorServer.Controllers
                 // Use a new DbContext instance, matching the pattern in this controller.
                 using MigdalorDBContext db = new MigdalorDBContext();
 
-                var resident = await db.OhResidents
-                                         .AsNoTracking()
-                                         .Where(r => r.ResidentId == id)
-                                         .Select(r => new { r.CanInitActivity }) // Select only the needed field
-                                         .FirstOrDefaultAsync();
+                var resident = await db
+                    .OhResidents.AsNoTracking()
+                    .Where(r => r.ResidentId == id)
+                    .Select(r => new { r.CanInitActivity }) // Select only the needed field
+                    .FirstOrDefaultAsync();
 
                 if (resident == null)
                 {
@@ -206,7 +296,6 @@ namespace MigdalorServer.Controllers
                 return StatusCode(500, "An internal server error occurred.");
             }
         }
-
 
         /// <summary>
         /// Marks a resident as active.
@@ -228,12 +317,15 @@ namespace MigdalorServer.Controllers
                 {
                     return NotFound($"A resident with the ID '{id}' was not found.");
                 }
-                return Ok($"Resident with ID '{id}' was successfully marked as active.");
+                return Ok(new {message = $"Resident with ID '{id}' was successfully marked as active." });
             }
             catch (Exception e)
             {
                 Console.WriteLine($"Error in RestoreUser: {e}");
-                return StatusCode(500, "An internal server error occurred while activating the resident.");
+                return StatusCode(
+                    500,
+                    "An internal server error occurred while activating the resident."
+                );
             }
         }
 
@@ -246,27 +338,39 @@ namespace MigdalorServer.Controllers
             {
                 using MigdalorDBContext db = new MigdalorDBContext();
 
-                var committeeMembers = await db.OhResidents
-                    .Where(r => r.IsCommittee == true && r.IsActive == true)
-                    .Join(db.OhPeople, // Join with OhPeople to get names
+                var committeeMembers = await db
+                    .OhResidents.Where(r => r.IsCommittee == true && r.IsActive == true)
+                    .Join(
+                        db.OhPeople, // Join with OhPeople to get names
                         resident => resident.ResidentId,
                         person => person.PersonId,
-                        (resident, person) => new { resident, person })
-                    .GroupJoin(db.OhPictures, // Left Join with OhPictures for the photo
+                        (resident, person) => new { resident, person }
+                    )
+                    .GroupJoin(
+                        db.OhPictures, // Left Join with OhPictures for the photo
                         combined => combined.person.ProfilePicId,
                         picture => picture.PicId,
-                        (combined, pictures) => new { combined.resident, combined.person, pictures })
+                        (combined, pictures) =>
+                            new
+                            {
+                                combined.resident,
+                                combined.person,
+                                pictures,
+                            }
+                    )
                     .SelectMany(
                         x => x.pictures.DefaultIfEmpty(),
-                        (x, picture) => new CommitteeMemberDto
-                        {
-                            UserId = x.person.PersonId,
-                            HebName = x.person.HebFirstName + " " + x.person.HebLastName,
-                            EngName = x.person.EngFirstName + " " + x.person.EngLastName,
-                            HebCommitteeTitle = x.resident.HebCommitteeName,
-                            EngCommitteeTitle = x.resident.EngCommitteeName,
-                            PhotoUrl = picture != null ? picture.PicPath : null
-                        })
+                        (x, picture) =>
+                            new CommitteeMemberDto
+                            {
+                                UserId = x.person.PersonId,
+                                HebName = x.person.HebFirstName + " " + x.person.HebLastName,
+                                EngName = x.person.EngFirstName + " " + x.person.EngLastName,
+                                HebCommitteeTitle = x.resident.HebCommitteeName,
+                                EngCommitteeTitle = x.resident.EngCommitteeName,
+                                PhotoUrl = picture != null ? picture.PicPath : null,
+                            }
+                    )
                     .ToListAsync();
 
                 return Ok(committeeMembers);
@@ -274,7 +378,115 @@ namespace MigdalorServer.Controllers
             catch (Exception e)
             {
                 Console.WriteLine($"Error in GetCommitteeMembers: {e}");
-                return StatusCode(500, "An internal server error occurred while fetching committee members.");
+                return StatusCode(
+                    500,
+                    "An internal server error occurred while fetching committee members."
+                );
+            }
+        }
+        [HttpPut("{id}/spouse")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> UpdateSpouse(Guid id, [FromBody] UpdateSpouseDto dto)
+        {
+            if (id == Guid.Empty)
+            {
+                // Return a JSON object for all responses
+                return BadRequest(new { message = "יש לספק מזהה דייר תקין." });
+            }
+
+            using var db = new MigdalorDBContext();
+            using var transaction = await db.Database.BeginTransactionAsync();
+
+            try
+            {
+                var personToUpdate = await db
+                    .OhPeople.Include(p => p.OhResident)
+                    .FirstOrDefaultAsync(p => p.PersonId == id);
+
+                if (personToUpdate == null || personToUpdate.OhResident == null)
+                {
+                    await transaction.RollbackAsync();
+                    return NotFound(new { message = $"דייר עם המזהה '{id}' לא נמצא." });
+                }
+                var residentToUpdate = personToUpdate.OhResident;
+
+                Guid? oldSpouseId = residentToUpdate.SpouseId;
+                Guid? newSpouseId = dto.SpouseId;
+
+                if (oldSpouseId == newSpouseId)
+                {
+                    await transaction.CommitAsync();
+                    return Ok(new { message = "פרטי בן/בת הזוג כבר מעודכנים." });
+                }
+
+                if (oldSpouseId.HasValue)
+                {
+                    var oldSpouse = await db.OhResidents.FirstOrDefaultAsync(r =>
+                        r.ResidentId == oldSpouseId.Value
+                    );
+                    if (oldSpouse != null)
+                    {
+                        oldSpouse.SpouseId = null;
+                        oldSpouse.SpouseHebName = null;
+                        oldSpouse.SpouseEngName = null;
+                        db.OhResidents.Update(oldSpouse);
+                    }
+                }
+
+                if (newSpouseId.HasValue && newSpouseId != Guid.Empty)
+                {
+                    var newSpousePerson = await db
+                        .OhPeople.Include(p => p.OhResident)
+                        .FirstOrDefaultAsync(p => p.PersonId == newSpouseId.Value);
+
+                    if (newSpousePerson == null || newSpousePerson.OhResident == null)
+                    {
+                        await transaction.RollbackAsync();
+                        return NotFound(new { message = $"בן/בת הזוג החדש עם מזהה '{newSpouseId}' לא נמצא." });
+                    }
+                    var newSpouseResident = newSpousePerson.OhResident;
+
+                    if (newSpouseResident.SpouseId.HasValue && newSpouseResident.SpouseId != id)
+                    {
+                        await transaction.RollbackAsync();
+                        return StatusCode(409, new { message = "בן/בת הזוג שנבחר/ה כבר משויך/ת לדייר אחר." });
+                    }
+
+                    residentToUpdate.SpouseId = newSpouseId;
+                    residentToUpdate.SpouseHebName =
+                        $"{newSpousePerson.HebFirstName} {newSpousePerson.HebLastName}";
+                    residentToUpdate.SpouseEngName =
+                        $"{newSpousePerson.EngFirstName} {newSpousePerson.EngLastName}";
+                    db.OhResidents.Update(residentToUpdate);
+
+                    newSpouseResident.SpouseId = id;
+                    newSpouseResident.SpouseHebName =
+                        $"{personToUpdate.HebFirstName} {personToUpdate.HebLastName}";
+                    newSpouseResident.SpouseEngName =
+                        $"{personToUpdate.EngFirstName} {personToUpdate.EngLastName}";
+                    db.OhResidents.Update(newSpouseResident);
+                }
+                else
+                {
+                    residentToUpdate.SpouseId = null;
+                    residentToUpdate.SpouseHebName = null;
+                    residentToUpdate.SpouseEngName = null;
+                    db.OhResidents.Update(residentToUpdate);
+                }
+
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok(new { message = "פרטי בן/בת הזוג עודכנו בהצלחה." });
+            }
+            catch (Exception e)
+            {
+                await transaction.RollbackAsync();
+                Console.WriteLine($"Error in UpdateSpouse: {e}");
+                return StatusCode(
+                    500,
+                    new { message = "אירעה שגיאת שרת פנימית בעת עדכון פרטי בן/בת הזוג." }
+                );
             }
         }
     }

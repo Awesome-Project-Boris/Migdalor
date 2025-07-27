@@ -8,45 +8,70 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace MigdalorServer.Controllers
 {
-
-
-
     [Route("api/[controller]")]
     [ApiController]
     public class NoticesController : ControllerBase
     {
-        // GET: api/<NoticeController>
-        // In NoticesController.cs
+        private readonly MigdalorDBContext _context;
+        private readonly ILogger<NoticesController> _logger;
 
+        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger)
+        {
+            _context = context;
+            _logger = logger;
+        }
+
+        // GET: api/<NoticesController>
+        // This endpoint is now public, but will filter notices if a valid token is provided.
         [HttpGet]
         public async Task<IActionResult> Get()
         {
             try
             {
-                var notices = await (from n in _context.OhNotices
-                                     join s in _context.OhPeople on n.SenderId equals s.PersonId
-                                     join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
-                                     join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
-                                     from pg in picGroup.DefaultIfEmpty()
-                                     orderby n.CreationDate descending
-                                     select new NoticeDto
+                var noticesQuery = from n in _context.OhNotices
+                                   join s in _context.OhPeople on n.SenderId equals s.PersonId
+                                   join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
+                                   join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
+                                   from pg in picGroup.DefaultIfEmpty()
+                                   select new
+                                   {
+                                       Notice = n,
+                                       Sender = s,
+                                       Category = cat,
+                                       Picture = pg
+                                   };
+
+                // Check if the user is authenticated. If so, apply role-based filtering.
+                if (User.Identity.IsAuthenticated)
+                {
+                    var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+                    var isAdmin = userRoles.Contains("admin");
+
+                    if (!isAdmin)
+                    {
+                        var allowedEngCategories = new HashSet<string>(userRoles);
+                        noticesQuery = noticesQuery.Where(x => allowedEngCategories.Contains(x.Category.CategoryEngName));
+                    }
+                }
+
+                var notices = await noticesQuery
+                                     .OrderByDescending(x => x.Notice.CreationDate)
+                                     .Select(x => new NoticeDto
                                      {
-                                         NoticeId = n.NoticeId,
-                                         SenderId = n.SenderId,
-                                         EngSenderName = s.EngFirstName + " " + s.EngLastName,
-                                         HebSenderName = s.HebFirstName + " " + s.HebLastName,
-                                         CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
-                                         NoticeTitle = n.NoticeTitle,
-                                         NoticeMessage = n.NoticeMessage,
-                                         NoticeCategory = n.NoticeCategory,
-                                         NoticeSubCategory = n.NoticeSubCategory,
-                                         PictureId = n.PictureId,
-                                         PicturePath = pg.PicPath,
-                                         CategoryColor = cat.CategoryColor
+                                         NoticeId = x.Notice.NoticeId,
+                                         SenderId = x.Notice.SenderId,
+                                         EngSenderName = x.Sender.EngFirstName + " " + x.Sender.EngLastName,
+                                         HebSenderName = x.Sender.HebFirstName + " " + x.Sender.HebLastName,
+                                         CreationDate = x.Notice.CreationDate.HasValue ? DateTime.SpecifyKind(x.Notice.CreationDate.Value, DateTimeKind.Utc) : null,
+                                         NoticeTitle = x.Notice.NoticeTitle,
+                                         NoticeMessage = x.Notice.NoticeMessage,
+                                         NoticeCategory = x.Notice.NoticeCategory,
+                                         NoticeSubCategory = x.Notice.NoticeSubCategory,
+                                         PictureId = x.Notice.PictureId,
+                                         PicturePath = x.Picture.PicPath,
+                                         CategoryColor = x.Category.CategoryColor
                                      }).ToListAsync();
 
                 return Ok(notices);
@@ -58,21 +83,11 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        private readonly MigdalorDBContext _context;
-        private readonly ILogger<NoticesController> _logger;
 
-        public NoticesController(MigdalorDBContext context, ILogger<NoticesController> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
-
-        // GET api/<NoticeController>/5
+        // This endpoint remains public as it was originally.
         [HttpGet("{category}")]
         public IActionResult Get(string category)
         {
-            // This method uses a static call. If you need the timezone fix here as well,
-            // it would need to be rewritten similar to the main Get() method above.
             try
             {
                 return Ok(OhNotice.GetOhNoticesByCategory(category));
@@ -89,6 +104,7 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        // This endpoint remains public as it was originally.
         [HttpGet("{id:int}")]
         public async Task<ActionResult<NoticeDto>> GetNoticeById(int id)
         {
@@ -117,7 +133,7 @@ namespace MigdalorServer.Controllers
                                         NoticeCategory = n.NoticeCategory,
                                         NoticeSubCategory = n.NoticeSubCategory,
                                         PictureId = n.PictureId,
-                                        PicturePath = pg.PicPath, // Include the picture path
+                                        PicturePath = pg.PicPath,
                                         CategoryColor = cat.CategoryColor
                                     }).FirstOrDefaultAsync();
 
@@ -134,16 +150,8 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        // POST api/<NoticeController>
-        // In NoticesController.cs
-
-        // In NoticesController.cs
-        // Make sure to add these using statements at the top of your file:
-        // using Microsoft.AspNetCore.Authorization;
-        // using System.Security.Claims;
-
         [HttpPost]
-        [Authorize(Roles = "admin")]
+        [Authorize] // Authorization is required
         public async Task<IActionResult> Post([FromBody] NewNotice noticeDto)
         {
             if (!ModelState.IsValid)
@@ -152,13 +160,26 @@ namespace MigdalorServer.Controllers
             }
 
             var senderIdFromToken = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            var isAdmin = userRoles.Contains("admin");
+
             if (string.IsNullOrEmpty(senderIdFromToken) || noticeDto.SenderId.ToString() != senderIdFromToken)
             {
                 _logger.LogWarning("Forbidden Action: User {TokenUserId} attempted to post a notice with a mismatched SenderId {BodySenderId}.", senderIdFromToken, noticeDto.SenderId);
                 return Forbid();
             }
 
-            _logger.LogInformation("POST /api/Notices called by admin {AdminId} with title: {NoticeTitle}", senderIdFromToken, noticeDto?.Title);
+            if (!isAdmin)
+            {
+                var category = await _context.OhCategories.FirstOrDefaultAsync(c => c.CategoryHebName == noticeDto.Category);
+                if (category == null || !userRoles.Contains(category.CategoryEngName))
+                {
+                    _logger.LogWarning("Forbidden Action: User {TokenUserId} attempted to post a notice to an unauthorized category {CategoryName}.", senderIdFromToken, noticeDto.Category);
+                    return Forbid();
+                }
+            }
+
+            _logger.LogInformation("POST /api/Notices called by user {UserId} with title: {NoticeTitle}", senderIdFromToken, noticeDto?.Title);
 
             try
             {
@@ -169,16 +190,13 @@ namespace MigdalorServer.Controllers
                     SenderId = noticeDto.SenderId,
                     NoticeCategory = noticeDto.Category,
                     NoticeSubCategory = noticeDto.SubCategory,
-                    PictureId = noticeDto.PictureId, // Map the new field
-                    CreationDate = DateTime.UtcNow // Set creation date
+                    PictureId = noticeDto.PictureId,
+                    CreationDate = DateTime.UtcNow
                 };
 
                 _context.OhNotices.Add(newNotice);
                 await _context.SaveChangesAsync();
-
                 _logger.LogInformation("Notice created successfully with ID: {NoticeId}", newNotice.NoticeId);
-
-                // Return the created object
                 return CreatedAtAction(nameof(GetNoticeById), new { id = newNotice.NoticeId }, newNotice);
             }
             catch (Exception e)
@@ -188,29 +206,49 @@ namespace MigdalorServer.Controllers
             }
         }
 
-
-
-        // PUT api/<NoticeController>/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "admin")]
-        public IActionResult Put(int id, [FromBody] NewNotice notice)
+        [Authorize] // Authorization is required
+        public async Task<IActionResult> Put(int id, [FromBody] NewNotice noticeDto)
         {
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            var isAdmin = userRoles.Contains("admin");
+
             try
             {
-                return Ok(OhNotice.UpdateNotice(id, notice));
+                var noticeToUpdate = await _context.OhNotices.FindAsync(id);
+                if (noticeToUpdate == null)
+                {
+                    return NotFound("Notice not found");
+                }
+
+                if (!isAdmin)
+                {
+                    var category = await _context.OhCategories.FirstOrDefaultAsync(c => c.CategoryHebName == noticeToUpdate.NoticeCategory);
+                    if (category == null || !userRoles.Contains(category.CategoryEngName))
+                    {
+                        return Forbid();
+                    }
+                }
+
+                noticeToUpdate.NoticeTitle = noticeDto.Title;
+                noticeToUpdate.NoticeMessage = noticeDto.Content;
+                noticeToUpdate.NoticeCategory = noticeDto.Category;
+                noticeToUpdate.NoticeSubCategory = noticeDto.SubCategory;
+                noticeToUpdate.PictureId = noticeDto.PictureId;
+
+                await _context.SaveChangesAsync();
+                return Ok(noticeToUpdate);
             }
             catch (Exception e)
             {
-                if (e.Message == "Notice not found")
-                    return NotFound(e.Message);
-                else
-                    return StatusCode(
-                        StatusCodes.Status500InternalServerError,
-                        e.InnerException?.Message ?? e.Message
-                    );
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    e.InnerException?.Message ?? e.Message
+                );
             }
         }
 
+        // This endpoint remains public as it was originally.
         [HttpGet("latest-timestamp")]
         public async Task<ActionResult<DateTime>> GetLatestNoticeTimestamp()
         {
@@ -219,7 +257,7 @@ namespace MigdalorServer.Controllers
                 var latestNoticeDate = await _context.OhNotices
                     .Where(n => n.CreationDate.HasValue)
                     .OrderByDescending(n => n.CreationDate)
-                    .Select(n => n.CreationDate.Value) // Use .Value since we filtered for non-null
+                    .Select(n => n.CreationDate.Value)
                     .FirstOrDefaultAsync();
 
                 if (latestNoticeDate == default)
@@ -227,9 +265,7 @@ namespace MigdalorServer.Controllers
                     return NotFound("No notices with a creation date found.");
                 }
 
-                // --- FIX: Specify that the DateTime from the DB should be treated as UTC ---
                 var utcDate = DateTime.SpecifyKind(latestNoticeDate, DateTimeKind.Utc);
-
                 return Ok(utcDate);
             }
             catch (Exception ex)
@@ -239,26 +275,37 @@ namespace MigdalorServer.Controllers
             }
         }
 
-
-        // DELETE api/<NoticeController>/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "admin")]
-        public IActionResult Delete(int id)
+        [Authorize] // Authorization is required
+        public async Task<IActionResult> Delete(int id)
         {
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            var isAdmin = userRoles.Contains("admin");
             try
             {
-                OhNotice.DeleteNotice(id);
+                var noticeToDelete = await _context.OhNotices.FindAsync(id);
+                if (noticeToDelete == null)
+                {
+                    return NotFound("Notice not found");
+                }
+                if (!isAdmin)
+                {
+                    var category = await _context.OhCategories.FirstOrDefaultAsync(c => c.CategoryHebName == noticeToDelete.NoticeCategory);
+                    if (category == null || !userRoles.Contains(category.CategoryEngName))
+                    {
+                        return Forbid();
+                    }
+                }
+                _context.OhNotices.Remove(noticeToDelete);
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             catch (Exception e)
             {
-                if (e.Message == "Notice not found")
-                    return NotFound(e.Message);
-                else
-                    return StatusCode(
-                        StatusCodes.Status500InternalServerError,
-                        e.InnerException?.Message ?? e.Message
-                    );
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    e.InnerException?.Message ?? e.Message
+                );
             }
         }
     }
