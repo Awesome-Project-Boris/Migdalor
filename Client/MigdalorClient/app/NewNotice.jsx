@@ -172,7 +172,7 @@ export default function NewNotice() {
             data: JSON.stringify({ noticeId: noticeCreationResult.noticeId }),
             to: "string"
          };
-         const broadcastApiUrl = `${Globals.API_BASE_URL}/api/Notifications/broadcast`;
+         const broadcastApiUrl = `${Globals.API_BASE_URL}/api/Notifications/broadcastToCategory`;
          try {
              const broadcastResponse = await fetch(broadcastApiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(broadcastPayload) });
              if (!broadcastResponse.ok) {

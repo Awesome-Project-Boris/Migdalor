@@ -1,168 +1,104 @@
 import { API_BASE_URL } from "../config";
 
-/**
- * A centralized handler for processing standard API responses (JSON or files).
- * It should be used for all API calls except for login.
- * @param {Response} response - The raw response from the fetch call.
- * @returns {Promise<Blob|any>} A promise that resolves to a file blob or parsed JSON.
- */
-const handleResponse = async (response) => {
-    if (!response.ok) {
-        // Attempt to parse error response as JSON for a more detailed message
-        const errorData = await response.json().catch(() => null);
-        const errorMessage = errorData?.message || `Request failed with status: ${response.status}`;
-        throw new Error(errorMessage);
-    }
-
-    if (response.status === 204) {
-        return null; // Handle No Content responses
-    }
-
-    const contentType = response.headers.get("content-type");
-
-    // If the response is an Excel file, return it as a blob for download
-    if (contentType && contentType.includes("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
-        return response.blob();
-    }
-
-    // Otherwise, handle as JSON for all other standard API calls
-    return response.json();
-};
-
-/**
- * A specific handler for the login response, which is expected to be plain text (the JWT).
- * @param {Response} response - The raw response from the login fetch call.
- * @returns {Promise<string>} A promise that resolves to the token string.
- */
-const handleLoginResponse = async (response) => {
-    if (!response.ok) {
-        // For login, the error message might be plain text
-        const errorText = await response.text();
-        throw new Error(errorText || `Login failed with status: ${response.status}`);
-    }
-    // The successful login response is the raw token string
-    return response.text();
-};
-
-
-/**
- * A centralized API service for making requests to the backend.
- */
-export const api = {
+const Globals = {
     API_BASE_URL,
+};
 
-    /**
-     * NEW: Performs a login request and returns the raw token.
-     * This function is specifically for user authentication.
-     * @param {string} phoneNumber
-     * @param {string} password
-     * @returns {Promise<string>} The JWT token string.
-     */
-    async postLogin(phoneNumber, password) {
-        const response = await fetch(`${API_BASE_URL}/People/login`, {
+/**
+ * A specific function to handle user login.
+ * It does not use the generic 'request' function to have more control over the response.
+ * @param {string} phoneNumber - The user's phone number.
+ * @param {string} password - The user's password.
+ * @returns {Promise<string>} - A promise that resolves with the JWT token as a string.
+ * @throws {Error} - Throws an error for network issues or non-successful responses.
+ */
+async function handleLogin(phoneNumber, password) {
+    const url = `${Globals.API_BASE_URL}/People/login`;
+    try {
+        const response = await fetch(url, {
             method: "POST",
             headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ PhoneNumber: phoneNumber, Password: password }),
+            body: JSON.stringify({ phoneNumber, password }),
         });
-        // Use the new, specific handler for the login response
-        return handleLoginResponse(response);
-    },
 
-    /**
-     * Performs a GET request.
-     * @param {string} endpoint - The API endpoint to call.
-     * @param {string} token - The user's authentication token.
-     * @returns {Promise<any>} The response data (JSON or blob).
-     */
-    async get(endpoint, token) {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        return handleResponse(response);
-    },
+        const responseText = await response.text();
 
-    /**
-     * Performs a POST request with a JSON body.
-     * @param {string} endpoint - The API endpoint to call.
-     * @param {object} body - The request payload.
-     * @param {string} [token] - The user's authentication token (optional).
-     * @returns {Promise<any>} The response data.
-     */
-    async post(endpoint, body, token) {
-        const headers = {
-            'Content-Type': 'application/json',
-        };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
+        if (!response.ok) {
+            // Use the text from the response as the error message, or provide a fallback.
+            throw new Error(responseText || `Login failed with status ${response.status}`);
         }
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(body),
-        });
-        return handleResponse(response);
-    },
 
-    /**
-     * FIX: Added a new method specifically for file uploads using FormData.
-     * This method correctly sends multipart/form-data requests.
-     * @param {string} endpoint - The API endpoint to call.
-     * @param {FormData} formData - The FormData object containing the file(s).
-     * @param {string} [token] - The user's authentication token (optional).
-     * @returns {Promise<any>} The response data.
-     */
-    async postFormData(endpoint, formData, token) {
-        const headers = {};
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-        // Note: We do NOT set 'Content-Type'. The browser automatically sets it
-        // to 'multipart/form-data' with the correct boundary when the body is a FormData object.
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: "POST",
-            headers,
-            body: formData,
-        });
-        return handleResponse(response);
-    },
+        // On success, the body is the token string itself.
+        return responseText;
 
-    /**
-   * Performs a PUT request.
-   * @param {string} endpoint - The API endpoint to call.
-   * @param {object} body - The request payload.
-   * @param {string} token - The user's authentication token.
-   * @returns {Promise<any>} The response data.
-   */
-    async put(endpoint, body, token) {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body)
-        });
-        return handleResponse(response);
-    },
+    } catch (error) {
+        console.error("Login API Error:", error.message);
+        throw error;
+    }
+}
 
-    /**
-   * Performs a DELETE request.
-   * @param {string} endpoint - The API endpoint to call.
-   * @param {string} token - The user's authentication token.
-   * @returns {Promise<any>} The response data.
-   */
-    async delete(endpoint, token) {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
+
+/**
+ * A generic request function to handle API calls.
+ *
+ * @param {string} method - The HTTP method (e.g., 'GET', 'POST').
+ * @param {string} endpoint - The API endpoint to call.
+ * @param {object|null} body - The request body for methods like POST or PUT.
+ * @param {string|null} token - The JWT for authorization.
+ * @returns {Promise<any>} - A promise that resolves with the JSON response or null.
+ * @throws {Error} - Throws an error for network issues or non-successful responses.
+ */
+async function request(method, endpoint, body = null, token = null) {
+    const url = `${Globals.API_BASE_URL}${endpoint}`;
+    const headers = {
+        "Content-Type": "application/json",
+    };
+
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const options = {
+        method,
+        headers,
+    };
+
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+
+    try {
+        const response = await fetch(url, options);
+        const responseText = await response.text();
+
+        if (!response.ok) {
+            let errorData;
+            try {
+                // Try to parse the error response as JSON, as it might contain structured error details.
+                errorData = JSON.parse(responseText);
+            } catch (e) {
+                // If parsing fails, use the raw text. Fallback to a generic status message.
+                errorData = { message: responseText || `Request failed with status ${response.status}` };
             }
-        });
-        return handleResponse(response);
-    },
+            throw new Error(errorData.message || 'An unknown API error occurred.');
+        }
+
+        // If the successful response has content, parse it as JSON.
+        // Otherwise (e.g., for a DELETE request), return null.
+        return responseText ? JSON.parse(responseText) : null;
+
+    } catch (error) {
+        console.error("API Service Error:", error.message);
+        throw error; // Re-throw the error so the calling component can handle it.
+    }
+}
+
+export const api = {
+    login: handleLogin,
+    get: (endpoint, token) => request('GET', endpoint, null, token),
+    post: (endpoint, body, token) => request('POST', endpoint, body, token),
+    put: (endpoint, body, token) => request('PUT', endpoint, body, token),
+    delete: (endpoint, token) => request('DELETE', endpoint, null, token),
 };

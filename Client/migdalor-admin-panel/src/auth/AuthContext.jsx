@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setIsLoading(true);
       // UPDATED: Use the new, dedicated postLogin function from the api service
-      const newToken = await api.postLogin(phoneNumber, password);
+      const newToken = await api.login(phoneNumber, password);
       localStorage.setItem("migdalor_admin_token", newToken);
       setToken(newToken);
       // Verification and user state update will be triggered by the useEffect hook.

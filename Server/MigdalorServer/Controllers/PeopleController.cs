@@ -313,6 +313,11 @@ namespace MigdalorServer.Controllers
                     }
                 }
 
+                if (person.PersonRole != "Resident" || person.PersonRole != "Instructor" || person.PersonRole != null)
+                {
+                    return Unauthorized("Admins can't connect to the app.");
+                }
+
                 // Manually construct the response object directly from the OH_People table.
                 // This works for ALL roles.
                 var responseData = new

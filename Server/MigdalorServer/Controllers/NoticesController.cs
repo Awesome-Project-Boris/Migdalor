@@ -277,7 +277,6 @@ namespace MigdalorServer.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-            var isAdmin = userRoles.Contains("admin");
             try
             {
                 var noticeToDelete = await _context.OhNotices.FindAsync(id);
@@ -285,14 +284,11 @@ namespace MigdalorServer.Controllers
                 {
                     return NotFound("Notice not found");
                 }
-                if (!isAdmin)
-                {
                     var category = await _context.OhCategories.FirstOrDefaultAsync(c => c.CategoryHebName == noticeToDelete.NoticeCategory);
                     if (category == null || !userRoles.Contains(category.CategoryEngName))
                     {
                         return Forbid();
                     }
-                }
                 _context.OhNotices.Remove(noticeToDelete);
                 await _context.SaveChangesAsync();
                 return Ok();
