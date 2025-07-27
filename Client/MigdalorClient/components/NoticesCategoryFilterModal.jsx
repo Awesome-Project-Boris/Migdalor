@@ -65,36 +65,37 @@ export default function NoticesCategoryFilterModal({
     onSelectionChange(new Set());
   };
 
-  // ✅ If not visible, render nothing.
   if (!visible) {
     return null;
   }
 
-  // ✅ When visible, render our custom overlay View instead of a Modal.
   return (
     <View style={styles.overlay}>
       <View style={styles.container}>
-        <StyledText style={styles.title}>
-          {t("NoticeFilterModal_modalTitle")}
-        </StyledText>
-        <View
-          style={[
-            styles.toggleAllContainer,
-            useColumnLayout && styles.toggleAllContainerColumn,
-          ]}
-        >
-          <FlipButton onPress={handleSelectAll} style={{ flex: 1 }}>
-            {t("NoticeFilterModal_selectAll")}
-          </FlipButton>
-          <FlipButton
-            onPress={handleDeselectAll}
-            style={{ flex: 1 }}
-            bgColor="#6c6c70"
-          >
-            {t("NoticeFilterModal_deselectAll")}
-          </FlipButton>
-        </View>
         <ScrollView style={styles.listContainer}>
+          <StyledText style={styles.title}>
+            {t("NoticeFilterModal_modalTitle")}
+          </StyledText>
+          <StyledText style={styles.subtitle}>
+            {t("NoticeFilterModal_modalSubtitle")}
+          </StyledText>
+          <View
+            style={[
+              styles.toggleAllContainer,
+              useColumnLayout && styles.toggleAllContainerColumn,
+            ]}
+          >
+            <FlipButton onPress={handleSelectAll} style={{ flex: 1 }}>
+              {t("NoticeFilterModal_selectAll")}
+            </FlipButton>
+            <FlipButton
+              onPress={handleDeselectAll}
+              style={{ flex: 1 }}
+              bgColor="#6c6c70"
+            >
+              {t("NoticeFilterModal_deselectAll")}
+            </FlipButton>
+          </View>
           {subscribedCategories.map((cat) => (
             <CategorySelectItem
               key={cat.categoryHebName}
@@ -113,7 +114,6 @@ export default function NoticesCategoryFilterModal({
 }
 
 const styles = StyleSheet.create({
-  // ✅ This style makes the View cover the whole screen like a modal backdrop
   overlay: {
     position: "absolute",
     top: 0,
@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  // ✅ This is the white "card" that holds the content
   container: {
     width: "90%",
     height: "80%",
@@ -137,6 +136,12 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#6c6c70",
+    textAlign: "center",
     marginBottom: 20,
   },
   toggleAllContainer: {
@@ -148,14 +153,10 @@ const styles = StyleSheet.create({
     flexDirection: "column",
   },
   listContainer: {
-    flex: 1, // This will now work correctly within the fixed-size container
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#e5e5ea",
+    flex: 1,
   },
   itemContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: "column",
     alignItems: "center",
     paddingVertical: 18,
     borderBottomWidth: 1,
@@ -163,6 +164,7 @@ const styles = StyleSheet.create({
   },
   categoryName: {
     fontSize: 20,
+    marginBottom: 10,
   },
   applyButton: {
     marginTop: 20,

@@ -1,102 +1,101 @@
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
-  Switch,
-  FlatList,
   StyleSheet,
   ActivityIndicator,
   Alert,
-  SafeAreaView,
-  Modal,
+  ScrollView,
   TouchableOpacity,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTranslation } from "react-i18next";
 import { Toast } from "toastify-react-native";
-
-import { useSettings } from "@/context/SettingsContext";
 import { Ionicons } from "@expo/vector-icons";
+
 import { Globals } from "@/app/constants/Globals";
 import StyledText from "./StyledText";
 import FlipButton from "./FlipButton";
 
-// CategoryItem component remains the same
-const CategoryItem = ({ item, onToggle }) => {
+// A simpler, column-based layout for each category item.
+const CategoryItem = ({ item, onToggle, isRTL }) => {
+  const isSelected = item.isSubscribed;
+
+  const displayName =
+    !isRTL && item.categoryEngName
+      ? item.categoryEngName
+      : item.categoryHebName;
+
   return (
-    <View style={styles.itemContainer}>
-      <StyledText style={styles.categoryName}>
-        {item.categoryHebName}
+    <TouchableOpacity
+      style={styles.itemContainer}
+      onPress={() => onToggle(item.categoryHebName, !isSelected)}
+    >
+      <StyledText style={styles.categoryName} isRTL={isRTL}>
+        {displayName}
       </StyledText>
-      <Switch
-        trackColor={{ false: "#cccccc", true: "#81b0ff" }}
-        thumbColor={item.isSubscribed ? "#007AFF" : "#f4f3f4"}
-        ios_backgroundColor="#cccccc"
-        onValueChange={() => onToggle(item.categoryHebName, !item.isSubscribed)}
-        value={item.isSubscribed}
+      <Ionicons
+        name={isSelected ? "checkbox" : "square-outline"}
+        size={30}
+        color={isSelected ? "#007AFF" : "#8e8e93"}
       />
-    </View>
+    </TouchableOpacity>
   );
 };
 
-// The main component no longer accepts residentId as a prop
 const CategorySettingsModal = ({ visible, onClose }) => {
-  const { t } = useTranslation();
-  const { settings } = useSettings();
+  const { t, i18n } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [residentId, setResidentId] = useState(null);
 
+  const isRTL = i18n.dir() === "rtl";
   const controllerName = "Resident";
   const updateSubscriptionAction = "subscriptions";
 
   useEffect(() => {
     const loadResidentId = async () => {
-      if (visible) {
-        // Fetches the ID directly from storage using the "userID" key
-        const userIdFromStorage = await AsyncStorage.getItem("userID");
-        console.log("Loaded userID from storage in modal:", userIdFromStorage);
-        setResidentId(userIdFromStorage);
-      } else {
-        // Reset ID when the modal closes
-        setResidentId(null);
-      }
+      const userIdFromStorage = visible
+        ? await AsyncStorage.getItem("userID")
+        : null;
+      setResidentId(userIdFromStorage);
     };
     loadResidentId();
-  }, [visible]); // Dependency is 'visible'
+  }, [visible]);
 
-  // This useEffect fetches subscription data once we have the residentId
   useEffect(() => {
-    const fetchSubscriptions = async () => {
+    const fetchCategoryData = async () => {
+      if (!residentId) return;
+      setLoading(true);
       try {
-        // --- Debugging Logs ---
-        console.log("Attempting to fetch. Current residentId:", residentId);
-        const controllerName = "Resident"; // Ensure this is defined
-        console.log("Using controller name:", controllerName);
-        // ---
+        const allCategoriesUrl = `${Globals.API_BASE_URL}/api/Categories`;
+        const userSubscriptionsUrl = `${Globals.API_BASE_URL}/api/${controllerName}/subscriptions/${residentId}`;
 
-        const getSubscriptionsAction = `subscriptions/${residentId}`;
-        const apiUrl = `${Globals.API_BASE_URL}/api/${controllerName}/${getSubscriptionsAction}`;
-        console.log("Constructed API URL:", apiUrl);
+        const [allCategoriesResponse, userSubscriptionsResponse] =
+          await Promise.all([
+            fetch(allCategoriesUrl),
+            fetch(userSubscriptionsUrl),
+          ]);
 
-        const response = await fetch(apiUrl);
-
-        if (!response.ok) {
-          // If the server returned an error, log the details
-          const errorBody = await response.text();
-          console.error(
-            "Network response not OK. Status:",
-            response.status,
-            "Body:",
-            errorBody
-          );
-          throw new Error(`Server error: ${response.status}`);
+        if (!allCategoriesResponse.ok || !userSubscriptionsResponse.ok) {
+          throw new Error("Server error fetching category data.");
         }
-        const data = await response.json();
-        setCategories(data);
-      } catch (e) {
-        // THIS IS THE MOST IMPORTANT CHANGE: Log the actual error object
-        console.error("An error occurred in fetchSubscriptions:", e);
 
+        const allCategories = await allCategoriesResponse.json();
+        const userSubscriptions = await userSubscriptionsResponse.json();
+        const subscriptionMap = new Map(
+          userSubscriptions.map((sub) => [
+            sub.categoryHebName,
+            sub.isSubscribed,
+          ])
+        );
+
+        const mergedCategories = allCategories.map((category) => ({
+          ...category,
+          isSubscribed: subscriptionMap.get(category.categoryHebName) || false,
+        }));
+        setCategories(mergedCategories);
+      } catch (e) {
+        console.error("Error fetching category data:", e);
         Alert.alert(
           t("CategorySettings_ErrorLoading_AlertTitle"),
           t("CategorySettings_ErrorLoading")
@@ -105,20 +104,15 @@ const CategorySettingsModal = ({ visible, onClose }) => {
         setLoading(false);
       }
     };
-
     if (visible) {
-      setLoading(true);
-      if (residentId) {
-        fetchSubscriptions();
-      }
+      fetchCategoryData();
     }
   }, [visible, residentId, t]);
 
   const handleToggle = useCallback(
     async (categoryHebName, newStatus) => {
-      // Guard against toggling before ID is loaded
       if (!residentId) return;
-
+      // Optimistic UI update
       setCategories((prev) =>
         prev.map((cat) =>
           cat.categoryHebName === categoryHebName
@@ -126,6 +120,7 @@ const CategorySettingsModal = ({ visible, onClose }) => {
             : cat
         )
       );
+
       try {
         const apiUrl = `${Globals.API_BASE_URL}/api/${controllerName}/${updateSubscriptionAction}`;
         await fetch(apiUrl, {
@@ -137,22 +132,17 @@ const CategorySettingsModal = ({ visible, onClose }) => {
             isSubscribed: newStatus,
           }),
         });
-
         Toast.show({
           type: "success",
-          text1: t("CategorySettings_UpdateSuccess", "Preference Saved"),
+          text1: t("CategorySettings_UpdateSuccess"),
         });
       } catch (e) {
+        // Revert on failure
         Toast.show({
           type: "error",
-          text1: t(
-            "CategorySettings_ErrorUpdating_AlertTitle",
-            "Update Failed"
-          ),
-          text2: t("CategorySettings_ErrorUpdating", "Please try again."),
+          text1: t("CategorySettings_ErrorUpdating_AlertTitle"),
+          text2: t("CategorySettings_ErrorUpdating"),
         });
-
-        // Revert on failure
         setCategories((prev) =>
           prev.map((cat) =>
             cat.categoryHebName === categoryHebName
@@ -174,101 +164,91 @@ const CategorySettingsModal = ({ visible, onClose }) => {
       );
     }
     return (
-      <FlatList
-        data={categories}
-        renderItem={({ item }) => (
-          <CategoryItem item={item} onToggle={handleToggle} />
-        )}
-        keyExtractor={(item) => item.categoryHebName}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
+      <ScrollView style={styles.listContainer}>
+        <StyledText style={styles.title} isRTL={isRTL}>
+          {t("CategorySettings_Title")}
+        </StyledText>
+        <StyledText style={styles.subtitle} isRTL={isRTL}>
+          {t("CategorySettings_Subtitle")}
+        </StyledText>
+        {categories.map((item) => (
+          <CategoryItem
+            key={item.categoryHebName}
+            item={item}
+            onToggle={handleToggle}
+            isRTL={isRTL}
+          />
+        ))}
+      </ScrollView>
     );
   };
 
+  if (!visible) return null;
+
   return (
-    <Modal
-      animationType="slide"
-      transparent={false}
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <SafeAreaView
-        style={[
-          styles.modalContainer,
-          { direction: settings.language === "he" ? "rtl" : "ltr" },
-        ]}
-      >
-        <View style={styles.header}>
-          <StyledText type="title" style={styles.title}>
-            {t("CategorySettings_Title")}
-          </StyledText>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close-circle" size={34} color="#007AFF" />
-          </TouchableOpacity>
-        </View>
-        <StyledText style={styles.subtitle}>
-          {t("CategorySettings_Subtitle")}
-        </StyledText>
-        <View style={styles.listContainer}>{renderContent()}</View>
-        <View style={styles.footer}>
-          <FlipButton onPress={onClose}>
-            <StyledText style={styles.buttonText}>
-              {t("CategorySettings_Done")}
-            </StyledText>
-          </FlipButton>
-        </View>
-      </SafeAreaView>
-    </Modal>
+    <View style={styles.overlay}>
+      <View style={[styles.container, { direction: isRTL ? "rtl" : "ltr" }]}>
+        {renderContent()}
+        <FlipButton onPress={onClose} style={styles.applyButton}>
+          {t("Common_Done")}
+        </FlipButton>
+      </View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: { flex: 1, backgroundColor: "#F2F2F7" },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: {
-    flexDirection: "row",
+  overlay: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E5EA",
   },
-  title: {},
-  subtitle: {
-    fontSize: 18,
-    textAlign: "center",
-    color: "#6c6c70",
+  container: {
+    width: "90%",
+    height: "80%",
+    backgroundColor: "#f2f2f7",
+    borderRadius: 20,
     padding: 20,
+    flexDirection: "column",
   },
-  closeButton: {
-    position: "absolute",
-    right: 15,
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#6c6c70",
+    marginBottom: 20,
+    textAlign: "center",
   },
   listContainer: {
     flex: 1,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#E5E5EA",
   },
   itemContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: "column",
     alignItems: "center",
     paddingVertical: 18,
-    paddingHorizontal: 20,
-    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderColor: "#e5e5ea",
   },
   categoryName: {
     fontSize: 20,
+    marginBottom: 10,
   },
-  separator: { height: 1, backgroundColor: "#E5E5EA", marginLeft: 20 },
-  footer: { padding: 20, backgroundColor: "#F2F2F7" },
-  buttonText: {
-    fontWeight: "bold",
-    fontSize: 18,
-    color: "#FFFFFF",
+  applyButton: {
+    marginTop: 20,
   },
 });
 

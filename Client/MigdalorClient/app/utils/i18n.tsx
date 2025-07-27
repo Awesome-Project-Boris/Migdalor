@@ -355,6 +355,8 @@ const resources = {
       NoticeFilterModal_deselectAll: "Deselect All",
       NoticeFilterModal_cancelButton: "Cancel",
       NoticeFilterModal_applyFilter: "Apply Filter",
+      NoticeFilterModal_modalSubtitle:
+        "Here you can choose which types of messages to see on this screen. Note: This will only hide messages here. To choose which topics you get notifications for, please go to your user settings and find the 'Manage Categories' button.",
       NoticeCard_dateLabel: "Notice date: ",
       NoticeCard_categoryLabel: "Category: ",
 
@@ -482,6 +484,7 @@ const resources = {
       MyActivities_ParticipationNotChecked:
         "Events with unchecked participation",
       MyActivities_ClearFilter: "Clear button choice",
+      MyActivities_NoParticipation: "Events with no participants",
 
       Events_ClassesTitle: "Classes",
       Events_ActivitiesTitle: "Activities",
@@ -674,7 +677,7 @@ const resources = {
 
       CategorySettings_Title: "Manage Notice Categories",
       CategorySettings_Subtitle:
-        "Choose which types of notices you want to receive.",
+        "Choose which types of notices you want to receive. Note - messages from unmarked categories will not be sent to you at all!",
       CategorySettings_Done: "Done",
       CategorySettings_ErrorLoading: "Could not load category settings.",
       CategorySettings_ErrorLoading_AlertTitle: "Error",
@@ -1041,6 +1044,8 @@ const resources = {
       NoticeFilterModal_deselectAll: "בטל את כל הבחירות",
       NoticeFilterModal_cancelButton: "ביטול",
       NoticeFilterModal_applyFilter: "בצע סינון",
+      NoticeFilterModal_modalSubtitle:
+        "כאן ניתן לסנן מאילו קטגוריות הודעות יראו. שימו לב! על מנת לבחור עבור אילו קטגוריות לקבל הודעות מלכתחילה - יש לבחור בהגדרות המשתמש בכפתור ניהול קטגוריות.",
 
       NewNoticeScreen_errorAllFieldsRequired: "אנא מלא כותרת, הודעה וקטגוריה.",
       NewNoticeScreen_errorUserInfoMissing:
@@ -1181,6 +1186,7 @@ const resources = {
       MyActivities_ParticipationChecked: "פעילויות שנוכחותן נבדקו",
       MyActivities_ParticipationNotChecked: "פעילויות שנוכחותן לא נבדקו",
       MyActivities_ClearFilter: "ניקוי בחירת כפתורים",
+      MyActivities_NoParticipation: "ללא משתתפים",
       Activities_SortByClosest: "סינון לפי הקרובים ביותר",
       Activities_SortByNewest: "סינון לפי החדשים ביותר",
       Activities_NoActivitiesFound: "לא נמצאו פעילויות",
@@ -1346,7 +1352,8 @@ const resources = {
       // Category choice
 
       CategorySettings_Title: "ניהול קטגוריות",
-      CategorySettings_Subtitle: "בחר אילו סוגי הודעות ברצונך לקבל.",
+      CategorySettings_Subtitle:
+        "בחרו אילו סוגי הודעות לקבל. שימו לב - הודעות מקטגוריות שלא יסומנו לא יישלחו אליכם כלל!",
       CategorySettings_Done: "סיום",
       CategorySettings_ErrorLoading: "לא ניתן היה לטעון את הגדרות הקטגוריה.",
       CategorySettings_ErrorLoading_AlertTitle: "שגיאה",
