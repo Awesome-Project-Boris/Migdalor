@@ -6,6 +6,7 @@ import Toast from "../../components/common/Toast";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import ListingModal from "./ListingModal";
 import { Edit, Trash2, PlusCircle } from "lucide-react";
+import LoadingIndicator from "../../components/common/LoadingIndicator"; // <-- Import the new component
 
 // --- Mock Tooltip Components for styling consistency ---
 const TooltipProvider = ({ children }) => <>{children}</>;
@@ -164,6 +165,10 @@ const ListingManagement = () => {
     []
   );
 
+  if (isLoading) {
+    return <LoadingIndicator text="טוען מודעות..." />;
+  }
+
   return (
     <TooltipProvider>
       <div className="p-6 bg-white min-h-screen rounded-lg shadow-md" dir="rtl">
@@ -185,18 +190,16 @@ const ListingManagement = () => {
             צור מודעה חדשה
           </button>
         </div>
-        {isLoading ? (
-          <div className="text-center p-4">טוען נתונים...</div>
-        ) : (
-          <SharedTable
-            data={listings}
-            columns={columns}
-            globalFilter={globalFilter}
-            setGlobalFilter={setGlobalFilter}
-            sorting={sorting}
-            setSorting={setSorting}
-          />
-        )}
+
+        <SharedTable
+          data={listings}
+          columns={columns}
+          globalFilter={globalFilter}
+          setGlobalFilter={setGlobalFilter}
+          sorting={sorting}
+          setSorting={setSorting}
+        />
+
         <ListingModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}

@@ -8,20 +8,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace MigdalorServer.Controllers
 {
-
-
-
     [Route("api/[controller]")]
     [ApiController]
     public class NoticesController : ControllerBase
     {
-        // GET: api/<NoticeController>
-        // In NoticesController.cs
-
         private readonly MigdalorDBContext _context;
         private readonly ILogger<NoticesController> _logger;
 
@@ -31,6 +23,8 @@ namespace MigdalorServer.Controllers
             _logger = logger;
         }
 
+        // GET: api/<NoticesController>
+        // This endpoint is now public, but will filter notices if a valid token is provided.
 
         [HttpGet]
         public async Task<IActionResult> Get()
@@ -77,13 +71,12 @@ namespace MigdalorServer.Controllers
         }
 
 
+        // This endpoint remains public as it was originally.
 
         // GET api/<NoticeController>/5
         [HttpGet("{category}")]
         public IActionResult Get(string category)
         {
-            // This method uses a static call. If you need the timezone fix here as well,
-            // it would need to be rewritten similar to the main Get() method above.
             try
             {
                 return Ok(OhNotice.GetOhNoticesByCategory(category));
@@ -100,6 +93,7 @@ namespace MigdalorServer.Controllers
             }
         }
 
+        // This endpoint remains public as it was originally.
         [HttpGet("{id:int}")]
         public async Task<ActionResult<NoticeDto>> GetNoticeById(int id)
         {
@@ -133,7 +127,7 @@ namespace MigdalorServer.Controllers
                                         NoticeCategory = n.NoticeCategory,
                                         NoticeSubCategory = n.NoticeSubCategory,
                                         PictureId = n.PictureId,
-                                        PicturePath = pg.PicPath, // Include the picture path
+                                        PicturePath = pg.PicPath,
                                         CategoryColor = cat.CategoryColor
                                     }).FirstOrDefaultAsync();
 
@@ -150,16 +144,8 @@ namespace MigdalorServer.Controllers
             }
         }
 
-        // POST api/<NoticeController>
-        // In NoticesController.cs
-
-        // In NoticesController.cs
-        // Make sure to add these using statements at the top of your file:
-        // using Microsoft.AspNetCore.Authorization;
-        // using System.Security.Claims;
-
         [HttpPost]
-        [Authorize(Roles = "admin")]
+        [Authorize] // Authorization is required
         public async Task<IActionResult> Post([FromBody] NewNotice noticeDto)
         {
             if (!ModelState.IsValid)
@@ -168,13 +154,26 @@ namespace MigdalorServer.Controllers
             }
 
             var senderIdFromToken = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            var isAdmin = userRoles.Contains("admin");
+
             if (string.IsNullOrEmpty(senderIdFromToken) || noticeDto.SenderId.ToString() != senderIdFromToken)
             {
                 _logger.LogWarning("Forbidden Action: User {TokenUserId} attempted to post a notice with a mismatched SenderId {BodySenderId}.", senderIdFromToken, noticeDto.SenderId);
                 return Forbid();
             }
 
-            _logger.LogInformation("POST /api/Notices called by admin {AdminId} with title: {NoticeTitle}", senderIdFromToken, noticeDto?.Title);
+            if (!isAdmin)
+            {
+                var category = await _context.OhCategories.FirstOrDefaultAsync(c => c.CategoryHebName == noticeDto.Category);
+                if (category == null || !userRoles.Contains(category.CategoryEngName))
+                {
+                    _logger.LogWarning("Forbidden Action: User {TokenUserId} attempted to post a notice to an unauthorized category {CategoryName}.", senderIdFromToken, noticeDto.Category);
+                    return Forbid();
+                }
+            }
+
+            _logger.LogInformation("POST /api/Notices called by user {UserId} with title: {NoticeTitle}", senderIdFromToken, noticeDto?.Title);
 
             try
             {
@@ -189,14 +188,12 @@ namespace MigdalorServer.Controllers
                     NoticeCategory = noticeDto.Category,
                     NoticeSubCategory = noticeDto.SubCategory,
                     PictureId = noticeDto.PictureId,
-                    CreationDate = DateTime.UtcNow 
+                    CreationDate = DateTime.UtcNow
                 };
 
                 _context.OhNotices.Add(newNotice);
                 await _context.SaveChangesAsync();
-
                 _logger.LogInformation("Notice created successfully with ID: {NoticeId}", newNotice.NoticeId);
-
                 return CreatedAtAction(nameof(GetNoticeById), new { id = newNotice.NoticeId }, newNotice);
             }
             catch (Exception e)
@@ -206,29 +203,49 @@ namespace MigdalorServer.Controllers
             }
         }
 
-
-
-        // PUT api/<NoticeController>/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "admin")]
-        public IActionResult Put(int id, [FromBody] NewNotice notice)
+        [Authorize] // Authorization is required
+        public async Task<IActionResult> Put(int id, [FromBody] NewNotice noticeDto)
         {
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            var isAdmin = userRoles.Contains("admin");
+
             try
             {
-                return Ok(OhNotice.UpdateNotice(id, notice));
+                var noticeToUpdate = await _context.OhNotices.FindAsync(id);
+                if (noticeToUpdate == null)
+                {
+                    return NotFound("Notice not found");
+                }
+
+                if (!isAdmin)
+                {
+                    var category = await _context.OhCategories.FirstOrDefaultAsync(c => c.CategoryHebName == noticeToUpdate.NoticeCategory);
+                    if (category == null || !userRoles.Contains(category.CategoryEngName))
+                    {
+                        return Forbid();
+                    }
+                }
+
+                noticeToUpdate.NoticeTitle = noticeDto.Title;
+                noticeToUpdate.NoticeMessage = noticeDto.Content;
+                noticeToUpdate.NoticeCategory = noticeDto.Category;
+                noticeToUpdate.NoticeSubCategory = noticeDto.SubCategory;
+                noticeToUpdate.PictureId = noticeDto.PictureId;
+
+                await _context.SaveChangesAsync();
+                return Ok(noticeToUpdate);
             }
             catch (Exception e)
             {
-                if (e.Message == "Notice not found")
-                    return NotFound(e.Message);
-                else
-                    return StatusCode(
-                        StatusCodes.Status500InternalServerError,
-                        e.InnerException?.Message ?? e.Message
-                    );
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    e.InnerException?.Message ?? e.Message
+                );
             }
         }
 
+        // This endpoint remains public as it was originally.
         [HttpGet("latest-timestamp")]
         public async Task<ActionResult<DateTime>> GetLatestNoticeTimestamp()
         {
@@ -237,7 +254,7 @@ namespace MigdalorServer.Controllers
                 var latestNoticeDate = await _context.OhNotices
                     .Where(n => n.CreationDate.HasValue)
                     .OrderByDescending(n => n.CreationDate)
-                    .Select(n => n.CreationDate.Value) // Use .Value since we filtered for non-null
+                    .Select(n => n.CreationDate.Value)
                     .FirstOrDefaultAsync();
 
                 if (latestNoticeDate == default)
@@ -245,9 +262,7 @@ namespace MigdalorServer.Controllers
                     return NotFound("No notices with a creation date found.");
                 }
 
-                // --- FIX: Specify that the DateTime from the DB should be treated as UTC ---
                 var utcDate = DateTime.SpecifyKind(latestNoticeDate, DateTimeKind.Utc);
-
                 return Ok(utcDate);
             }
             catch (Exception ex)
@@ -257,26 +272,37 @@ namespace MigdalorServer.Controllers
             }
         }
 
-
-        // DELETE api/<NoticeController>/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "admin")]
-        public IActionResult Delete(int id)
+        [Authorize] // Authorization is required
+        public async Task<IActionResult> Delete(int id)
         {
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            var isAdmin = userRoles.Contains("admin");
             try
             {
-                OhNotice.DeleteNotice(id);
+                var noticeToDelete = await _context.OhNotices.FindAsync(id);
+                if (noticeToDelete == null)
+                {
+                    return NotFound("Notice not found");
+                }
+                if (!isAdmin)
+                {
+                    var category = await _context.OhCategories.FirstOrDefaultAsync(c => c.CategoryHebName == noticeToDelete.NoticeCategory);
+                    if (category == null || !userRoles.Contains(category.CategoryEngName))
+                    {
+                        return Forbid();
+                    }
+                }
+                _context.OhNotices.Remove(noticeToDelete);
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             catch (Exception e)
             {
-                if (e.Message == "Notice not found")
-                    return NotFound(e.Message);
-                else
-                    return StatusCode(
-                        StatusCodes.Status500InternalServerError,
-                        e.InnerException?.Message ?? e.Message
-                    );
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    e.InnerException?.Message ?? e.Message
+                );
             }
         }
 

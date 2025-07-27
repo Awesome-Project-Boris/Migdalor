@@ -20,6 +20,7 @@ import ChangeRoleModal from "./ChangeRoleModal";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import Toast from "../../components/common/Toast";
 import SharedTable from "../../components/common/SharedTable";
+import LoadingIndicator from "../../components/common/LoadingIndicator";
 
 // --- Mock shadcn/ui Components ---
 const Button = React.forwardRef(
@@ -73,6 +74,8 @@ const UserManagement = () => {
   const { token } = useAuth();
   const [users, setUsers] = useState([]);
   const [admins, setAdmins] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
+  const [allApartments, setAllApartments] = useState([]);
   const [view, setView] = useState("residents");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -103,10 +106,19 @@ const UserManagement = () => {
     setToastState({ ...toastState, show: false });
   };
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsersAndCategories = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
+      const categoriesData = await api.get("/Categories", token);
+      setAllCategories(Array.isArray(categoriesData) ? categoriesData : []);
+
+      const apartmentsData = await api.get(
+        "/apartments/existing-numbers",
+        token
+      );
+      setAllApartments(Array.isArray(apartmentsData) ? apartmentsData : []);
+
       if (view === "residents") {
         const data = await api.get("/Resident/residents", token);
         setUsers(Array.isArray(data) ? data : []);
@@ -121,8 +133,7 @@ const UserManagement = () => {
         setAdmins(Array.isArray(normalizedAdmins) ? normalizedAdmins : []);
       }
     } catch (err) {
-      const message =
-        view === "residents" ? "נכשל בטעינת הדיירים." : "נכשל בטעינת המנהלים.";
+      const message = "Failed to load data. " + (err.message || "");
       setError(message);
       showToast("error", message);
     } finally {
@@ -131,8 +142,8 @@ const UserManagement = () => {
   }, [token, view]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUsersAndCategories();
+  }, [fetchUsersAndCategories]);
 
   const handleOpenEditModal = useCallback((user) => {
     setEditingUser(user);
@@ -169,27 +180,22 @@ const UserManagement = () => {
       if (updatedUserData.gender) {
         updatedUserData.gender = updatedUserData.gender === "זכר" ? "M" : "F";
       }
+
       await api.put(
-        `/Resident/UpdateProfile/${userId}`,
+        `/Resident/UpdateProfileByAdmin/${userId}`,
         updatedUserData,
         token
       );
       showToast("success", "פרטי המשתמש עודכנו בהצלחה.");
       handleCloseModals();
-      fetchUsers();
+      fetchUsersAndCategories();
     } catch (err) {
-      showToast("error", `שגיאה בעדכון משתמש: ${err.message}`);
-      throw err;
-    }
-  };
-
-  const handleRoleChange = async (userId, newRole) => {
-    try {
-      await api.put(`/People/UpdateRole/${userId}`, { role: newRole }, token);
-      showToast("success", "תפקיד המשתמש עודכן בהצלחה.");
-      fetchUsers();
-    } catch (err) {
-      showToast("error", `שגיאה בעדכון תפקיד: ${err.message}`);
+      const errorMessage =
+        err.response?.data?.title ||
+        err.response?.data ||
+        err.message ||
+        "שגיאה בעדכון משתמש";
+      showToast("error", errorMessage);
       throw err;
     }
   };
@@ -200,7 +206,7 @@ const UserManagement = () => {
       await api.delete(`/Resident/${deletingUser.id}`, token);
       showToast("success", `המשתמש ${deletingUser.fullName} הושבת בהצלחה.`);
       setDeletingUser(null);
-      fetchUsers();
+      fetchUsersAndCategories();
     } catch (err) {
       showToast("error", `שגיאה במחיקת משתמש: ${err.message}`);
       setDeletingUser(null);
@@ -212,12 +218,12 @@ const UserManagement = () => {
       try {
         await api.put(`/Resident/Restore/${userId}`, null, token);
         showToast("success", "המשתמש שוחזר בהצלחה.");
-        fetchUsers();
+        fetchUsersAndCategories();
       } catch (err) {
         showToast("error", `שגיאה בשחזור משתמש: ${err.message}`);
       }
     },
-    [token, fetchUsers]
+    [token, fetchUsersAndCategories]
   );
 
   const handlePasswordReset = async (userId, newPassword) => {
@@ -391,7 +397,7 @@ const UserManagement = () => {
   const data = view === "residents" ? users : admins;
   const columns = view === "residents" ? residentColumns : adminColumns;
 
-  if (isLoading) return <div className="text-center p-4">טוען נתונים...</div>;
+  if (isLoading) return <LoadingIndicator text="טוען נתונים..." />;
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (
@@ -464,6 +470,7 @@ const UserManagement = () => {
           isOpen={isEditModalOpen}
           user={editingUser}
           allUsers={users}
+          allApartments={allApartments}
           onClose={handleCloseModals}
           onSave={handleSave}
         />
@@ -472,8 +479,9 @@ const UserManagement = () => {
           isOpen={isCreateModalOpen}
           onClose={handleCloseModals}
           userType={createUserType}
-          onUserCreated={fetchUsers}
+          onUserCreated={fetchUsersAndCategories}
           showToast={showToast}
+          allCategories={allCategories}
         />
 
         <ResetPasswordModal
@@ -488,8 +496,9 @@ const UserManagement = () => {
           isOpen={isChangeRoleModalOpen}
           onClose={handleCloseModals}
           user={roleChangeUser}
-          onRoleChange={handleRoleChange}
+          onRoleChanged={fetchUsersAndCategories}
           showToast={showToast}
+          allCategories={allCategories}
         />
 
         {deletingUser && (

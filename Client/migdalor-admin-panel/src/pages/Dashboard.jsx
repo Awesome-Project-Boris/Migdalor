@@ -1,5 +1,6 @@
 // src/pages/Dashboard.jsx
 import React from "react";
+import { useAuth } from "@/auth/AuthContext";
 import {
   Users,
   FileText,
@@ -7,7 +8,7 @@ import {
   CalendarDays,
   Clock,
   ShoppingCart,
-  Info, // <-- Import the new icon
+  Info,
 } from "lucide-react";
 
 const DashboardCard = ({ title, description, icon, onClick, colorClass }) => (
@@ -22,6 +23,12 @@ const DashboardCard = ({ title, description, icon, onClick, colorClass }) => (
 );
 
 const Dashboard = ({ setActivePage }) => {
+  const { user } = useAuth();
+  const isAdmin = user && user.role === "admin";
+
+  if (!isAdmin) {
+    return null; // Or a redirect, or a more specific "access denied" component
+  }
   return (
     <div className="p-8 bg-gray-50 min-h-full">
       <h1 className="text-4xl font-bold text-gray-800 mb-8">פאנל ניהול</h1>

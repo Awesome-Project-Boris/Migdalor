@@ -3,6 +3,10 @@ import { X } from "lucide-react";
 import InputField from "../../components/common/InputField";
 import CheckboxField from "../../components/common/CheckboxField";
 import SpouseCommand from "../../components/common/SpouseCommand";
+import ApartmentCommand from "./ApartmentCommand";
+import ErrorModal from "../../components/common/ErrorModal";
+import { api } from "../../api/apiService";
+import { useAuth } from "../../auth/AuthContext";
 
 // --- Mock shadcn/ui Dialog Components ---
 const Dialog = ({ open, onOpenChange, children }) => {
@@ -73,7 +77,15 @@ DialogDescription.displayName = "DialogDescription";
 
 // --- Main EditUserModal Component ---
 
-const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
+const EditUserModal = ({
+  user,
+  allUsers,
+  allApartments,
+  isOpen,
+  onClose,
+  onSave,
+}) => {
+  const { token } = useAuth();
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
     const date = new Date(
@@ -84,9 +96,34 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
 
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorModal, setErrorModal] = useState({
+    isOpen: false,
+    response: null,
+  });
+  const [initialApartmentGuid, setInitialApartmentGuid] = useState(null);
+  const [initialSpouseId, setInitialSpouseId] = useState(null);
 
   useEffect(() => {
     if (user) {
+      const fetchInitialApartment = async (roomNumber) => {
+        try {
+          const apartmentDetails = await api.get(
+            `/apartments/${roomNumber}`,
+            token
+          );
+          setInitialApartmentGuid(apartmentDetails.apartmentNumber);
+        } catch (error) {
+          console.error(
+            `Could not fetch initial apartment details for room ${roomNumber}`,
+            error
+          );
+          setInitialApartmentGuid(null);
+        }
+      };
+
+      const roomNum = user.residentApartmentNumber
+        ? String(parseInt(user.residentApartmentNumber.split("a")[1]))
+        : "";
       setFormData({
         hebFirstName: user.hebFirstName || "",
         hebLastName: user.hebLastName || "",
@@ -105,11 +142,21 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
         homePlace: user.homePlace || "",
         profession: user.profession || "",
         residentDescription: user.residentDescription || "",
-        residentApartmentNumber: user.roomNumber || "",
+        residentApartmentNumber: roomNum,
       });
+
+      setInitialSpouseId(user.spouseId || null);
+
+      if (roomNum) {
+        fetchInitialApartment(roomNum);
+      } else {
+        setInitialApartmentGuid(null);
+      }
+
       setIsSubmitting(false);
+      setErrorModal({ isOpen: false, response: null });
     }
-  }, [user]);
+  }, [user, token]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -123,24 +170,59 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
     setFormData((prev) => ({ ...prev, spouseId }));
   };
 
+  const handleApartmentSelect = (apartmentNumber) => {
+    setFormData((prev) => ({
+      ...prev,
+      residentApartmentNumber: apartmentNumber,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    const payload = { ...formData };
-    payload.spouseId = payload.spouseId || null;
+    let finalApartmentGuid = null;
 
     try {
-      // The onSave function from the parent handles the API call,
-      // success toast, and closing the modal.
+      if (formData.residentApartmentNumber) {
+        if (
+          formData.residentApartmentNumber === String(user.roomNumber) &&
+          initialApartmentGuid
+        ) {
+          finalApartmentGuid = initialApartmentGuid;
+        } else {
+          const apartmentResponse = await api.post(
+            "/apartments/find-or-create",
+            { apartmentNumber: parseInt(formData.residentApartmentNumber, 10) },
+            token
+          );
+          finalApartmentGuid = apartmentResponse.apartmentNumber;
+        }
+      }
+
+      if (formData.spouseId !== initialSpouseId) {
+        await api.put(
+          `/resident/${user.id}/spouse`,
+          { spouseId: formData.spouseId || null },
+          token
+        );
+      }
+
+      const { spouseId, ...payloadForSave } = formData;
+      const payload = {
+        ...payloadForSave,
+        residentApartmentNumber: finalApartmentGuid,
+      };
+
       await onSave(user.id, payload);
     } catch (error) {
-      // The parent's onSave function will show an error toast.
-      // We just need to catch the error to stop the process here.
-      console.error("Failed to save user:", error);
+      console.error("Error during save process:", error);
+
+      const errorResponse = error.response || {
+        data: { message: error.message },
+      };
+
+      setErrorModal({ isOpen: true, response: errorResponse });
     } finally {
-      // We don't set submitting to false here because the modal
-      // will be closed by the parent on success. If it fails,
-      // we want the user to be able to try again.
       setIsSubmitting(false);
     }
   };
@@ -152,6 +234,12 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
+        <ErrorModal
+          isOpen={errorModal.isOpen}
+          onClose={() => setErrorModal({ isOpen: false, response: null })}
+          title="שגיאת שמירה"
+          response={errorModal.response}
+        />
         <DialogHeader>
           <DialogTitle>עריכת פרטי דייר: {user.fullName}</DialogTitle>
           <DialogDescription>
@@ -232,11 +320,10 @@ const EditUserModal = ({ user, allUsers, isOpen, onClose, onSave }) => {
               value={formData.branchName}
               onChange={handleChange}
             />
-            <InputField
-              label="מספר דירה"
-              name="residentApartmentNumber"
-              value={formData.residentApartmentNumber}
-              onChange={handleChange}
+            <ApartmentCommand
+              apartments={allApartments}
+              selectedApartment={formData.residentApartmentNumber}
+              onSelectApartment={handleApartmentSelect}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

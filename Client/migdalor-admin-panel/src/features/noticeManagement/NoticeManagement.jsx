@@ -6,6 +6,7 @@ import SharedTable from "../../components/common/SharedTable";
 import ConfirmationModal from "../../components/common/ConfirmationModal";
 import NoticeModal from "./NoticeModal";
 import { Edit, Trash2, MessageSquarePlus } from "lucide-react";
+import LoadingIndicator from "../../components/common/LoadingIndicator"; // <-- Import the new component
 
 // --- Mock shadcn/ui Component ---
 const Button = React.forwardRef(
@@ -56,6 +57,7 @@ const TooltipContent = ({ children, ...props }) => (
 const NoticeManagement = () => {
   const { user, token } = useAuth();
   const [notices, setNotices] = useState([]);
+  const [allCategories, setAllCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeNotice, setActiveNotice] = useState(null);
@@ -70,6 +72,12 @@ const NoticeManagement = () => {
     variant: "info",
   });
 
+  const userRoles = useMemo(
+    () => (user?.role?.split(",") || []).map((role) => role.trim()),
+    [user]
+  );
+  const isAdmin = useMemo(() => userRoles.includes("admin"), [userRoles]);
+
   const showToast = (variant, message) => {
     setToastState({ show: true, variant, message });
   };
@@ -78,23 +86,48 @@ const NoticeManagement = () => {
     setToastState({ ...toastState, show: false });
   };
 
-  const fetchNotices = useCallback(async () => {
+  const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await api.get("/Notices", token);
-      setNotices(Array.isArray(data) ? data : []);
+      const [noticesData, categoriesData] = await Promise.all([
+        api.get("/Notices", token),
+        api.get("/Categories", token),
+      ]);
+
+      setAllCategories(Array.isArray(categoriesData) ? categoriesData : []);
+
+      const categoriesMap = new Map(
+        categoriesData.map((cat) => [cat.categoryHebName, cat.categoryEngName])
+      );
+
+      const userCategoryPermissions = new Set(userRoles);
+
+      const filteredNotices = (
+        Array.isArray(noticesData) ? noticesData : []
+      ).filter((notice) => {
+        if (isAdmin) {
+          return true;
+        }
+        const noticeEngCategory = categoriesMap.get(notice.noticeCategory);
+        return (
+          noticeEngCategory && userCategoryPermissions.has(noticeEngCategory)
+        );
+      });
+
+      setNotices(filteredNotices);
     } catch (err) {
-      setError("Failed to load notices.");
-      showToast("error", "Failed to load notices.");
+      const errorMessage = "Failed to load page data.";
+      setError(errorMessage);
+      showToast("error", errorMessage);
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, isAdmin, userRoles]);
 
   useEffect(() => {
-    fetchNotices();
-  }, [fetchNotices]);
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   const handleOpenModal = (notice = null) => {
     setActiveNotice(notice);
@@ -119,7 +152,7 @@ const NoticeManagement = () => {
       SenderId: user.id, // Always use the ID of the logged-in admin
     };
 
-    if (isEditMode && !noticePayload.Title.startsWith('עדכון:')) {
+    if (isEditMode && !noticePayload.Title.startsWith("עדכון:")) {
       noticePayload.Title = `עדכון: ${noticePayload.Title}`;
     }
 
@@ -159,7 +192,7 @@ const NoticeManagement = () => {
       await api.post("/Notifications/broadcast", pushMessage, token);
 
       showToast("success", "ההודעה וההתראה נשלחו בהצלחה!");
-      fetchNotices(); // Refresh the table
+      fetchInitialData(); // Refresh the table
     } catch (err) {
       const action = isEditMode ? "עדכון" : "יצירת";
       showToast("error", `שגיאה ב${action} ההודעה: ${err.message}`);
@@ -176,7 +209,7 @@ const NoticeManagement = () => {
         `ההודעה "${deletingNotice.noticeTitle}" נמחקה בהצלחה.`
       );
       setDeletingNotice(null);
-      fetchNotices();
+      fetchInitialData();
     } catch (err) {
       showToast("error", `שגיאה במחיקת ההודעה: ${err.message}`);
       setDeletingNotice(null);
@@ -244,7 +277,7 @@ const NoticeManagement = () => {
     []
   );
 
-  if (isLoading) return <div className="text-center p-4">טוען הודעות...</div>;
+  if (isLoading) return <LoadingIndicator text="טוען הודעות..." />; // <-- Use the new component
   if (error) return <div className="text-center p-4 text-red-500">{error}</div>;
 
   return (
@@ -282,6 +315,9 @@ const NoticeManagement = () => {
           onSave={handleSaveNotice}
           showToast={showToast}
           notice={activeNotice}
+          allCategories={allCategories}
+          userRoles={userRoles}
+          isAdmin={isAdmin}
         />
 
         {deletingNotice && (
