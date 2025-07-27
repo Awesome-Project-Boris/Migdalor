@@ -23,7 +23,8 @@ const AttendanceDrawer = ({
   participants,
   canMarkAttendance,
   eventId,
-  isFinalized: initialIsFinalized,
+  isFinalized,
+  onStateChange,
 }) => {
   const { t, i18n } = useTranslation();
   const { settings } = useSettings();
@@ -33,13 +34,6 @@ const AttendanceDrawer = ({
   const [isLoading, setIsLoading] = useState(false);
   const [participationStatus, setParticipationStatus] = useState({});
   const [editingParticipantId, setEditingParticipantId] = useState(null);
-  // --- NEW: State to track if marking is finalized ---
-  const [isFinalized, setIsFinalized] = useState(initialIsFinalized);
-
-  // Sync state if the prop changes
-  useEffect(() => {
-    setIsFinalized(initialIsFinalized);
-  }, [initialIsFinalized]);
 
   const useColumnLayout = settings.fontSizeMultiplier >= 1.5;
 
@@ -101,12 +95,9 @@ const AttendanceDrawer = ({
   // In AttendanceDrawer.jsx
   const handleToggleFinalized = async () => {
     if (!isFinalized) {
-      // Show a toast to confirm the "un-marking" action.
       Toast.show({
         type: "success",
-
         text1: t("EventFocus_AttendanceMarkedSuccess"),
-
         position: "bottom",
       });
     }
@@ -115,26 +106,17 @@ const AttendanceDrawer = ({
       const authToken = await AsyncStorage.getItem("jwt");
       const response = await fetch(
         `${API}/api/events/${eventId}/mark-checked`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
+        { method: "POST", headers: { Authorization: `Bearer ${authToken}` } }
       );
 
       if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(
-          `HTTP Status: ${response.status}\n\nServer Response: ${
-            errorBody || "No message."
-          }`
-        );
+        throw new Error("API call failed");
       }
 
       const result = await response.json(); // Expects { message, isChecked }
-      setIsFinalized(result.isChecked); // Update state from server response
+
+      // 3. Instead of setting local state, call the parent's handler
+      onStateChange(result.isChecked);
     } catch (error) {
       Alert.alert("Action Failed", error.message);
     }

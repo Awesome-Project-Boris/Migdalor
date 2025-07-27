@@ -15,6 +15,7 @@
         public DateTime StartDate { get; set; }
         public DateTime? EndDate { get; set; }
         public int? Capacity { get; set; }
+        public bool ParticipationChecked { get; set; }
 
         public int ParticipantsCount { get; set; }
     }

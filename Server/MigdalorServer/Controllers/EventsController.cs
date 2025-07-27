@@ -144,6 +144,7 @@ namespace MigdalorServer.Controllers
                                              StartDate = e.StartDate,
                                              EndDate = e.EndDate,
                                              Capacity = e.Capacity,
+                                             ParticipationChecked = e.ParticipationChecked,
                                              Host = h == null ? null : new HostDto
                                              {
                                                  HostId = h.PersonId,
@@ -252,6 +253,7 @@ namespace MigdalorServer.Controllers
                         IsRecurring = e.IsRecurring,
                         StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
                         EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : null,
+                        ParticipationChecked = e.ParticipationChecked,
                         Capacity = e.Capacity
                     })
                     .ToListAsync();
@@ -538,9 +540,11 @@ namespace MigdalorServer.Controllers
 
             return NoContent();
         }
-       
+
         // Instead of Host/id - here we get more data relevant for events specificially - no time limits
         // Especially for administrative purposes
+
+        // In EventsController.cs
 
         [HttpGet("creator/{creatorId}")]
         public async Task<IActionResult> GetEventsByCreator(Guid creatorId)
@@ -548,13 +552,11 @@ namespace MigdalorServer.Controllers
             try
             {
                 var query = from e in _context.OhEvents
-                                // Perform a LEFT JOIN with the pictures table
                             join pic in _context.OhPictures on e.PictureId equals pic.PicId into picGroup
                             from pg in picGroup.DefaultIfEmpty()
-                                // Filter by the creator's ID and for non-recurring events
                             where e.HostId == creatorId && !e.IsRecurring
                             orderby e.StartDate descending
-                            select new MyActivitiesDto
+                            select new EventDto
                             {
                                 EventId = e.EventId,
                                 EventName = e.EventName,
@@ -565,12 +567,14 @@ namespace MigdalorServer.Controllers
                                 PicturePath = pg.PicPath,
                                 StartDate = e.StartDate,
                                 EndDate = e.EndDate,
-                                ParticipationChecked = e.ParticipationChecked
+                                Capacity = e.Capacity, // Also good to include this
+                                ParticipationChecked = e.ParticipationChecked,
+                                ParticipantsCount = e.OhEventRegistrations.Count()
                             };
 
                 var userEvents = await query.AsNoTracking().ToListAsync();
 
-                return Ok(userEvents ?? new List<MyActivitiesDto>());
+                return Ok(userEvents ?? new List<EventDto>());
             }
             catch (Exception ex)
             {
