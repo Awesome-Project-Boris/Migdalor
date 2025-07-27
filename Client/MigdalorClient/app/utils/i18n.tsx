@@ -483,7 +483,6 @@ const resources = {
       MyActivities_ParticipationChecked: "Events with checked participation",
       MyActivities_ParticipationNotChecked:
         "Events with unchecked participation",
-        MyActivities_NoParticipation: "No participation in the event",
       MyActivities_ClearFilter: "Clear button choice",
       MyActivities_NoParticipation: "Events with no participants",
 
@@ -1186,7 +1185,6 @@ const resources = {
 
       MyActivities_ParticipationChecked: "פעילויות שנוכחותן נבדקו",
       MyActivities_ParticipationNotChecked: "פעילויות שנוכחותן לא נבדקו",
-      MyActivities_NoParticipation: "אין השתתפות באירוע",
       MyActivities_ClearFilter: "ניקוי בחירת כפתורים",
       MyActivities_NoParticipation: "ללא משתתפים",
       Activities_SortByClosest: "סינון לפי הקרובים ביותר",
