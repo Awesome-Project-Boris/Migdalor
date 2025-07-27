@@ -244,7 +244,7 @@ namespace MigdalorServer.Controllers
                 {
                     return NotFound($"A resident with the ID '{id}' was not found.");
                 }
-                return Ok($"Resident with ID '{id}' was successfully marked as inactive.");
+                return Ok(new {message = $"Resident with ID '{id}' was successfully marked as inactive."});
             }
             catch (Exception e)
             {
@@ -317,7 +317,7 @@ namespace MigdalorServer.Controllers
                 {
                     return NotFound($"A resident with the ID '{id}' was not found.");
                 }
-                return Ok($"Resident with ID '{id}' was successfully marked as active.");
+                return Ok(new {message = $"Resident with ID '{id}' was successfully marked as active." });
             }
             catch (Exception e)
             {
