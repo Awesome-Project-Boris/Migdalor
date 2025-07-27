@@ -58,7 +58,11 @@ const Header: React.FC = () => {
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              onPress={() => router.replace("/MainMenu")}
+              onPress={() => {
+                if (pathname !== "/MainMenu") {
+                    router.replace("/MainMenu")
+                  }
+              }}
               style={styles.border}
             >
               <Ionicons name="home" size={32} color="#000" />
