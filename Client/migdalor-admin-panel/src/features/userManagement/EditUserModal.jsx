@@ -182,32 +182,21 @@ const EditUserModal = ({
     setIsSubmitting(true);
     let finalApartmentGuid = null;
 
-    if (
-      !formData.residentApartmentNumber ||
-      isNaN(parseInt(formData.residentApartmentNumber, 10))
-    ) {
-      setErrorModal({
-        isOpen: true,
-        // Create a response-like object for client-side validation
-        response: { data: "יש להזין מספר דירה תקין." },
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
-      if (
-        formData.residentApartmentNumber === String(user.roomNumber) &&
-        initialApartmentGuid
-      ) {
-        finalApartmentGuid = initialApartmentGuid;
-      } else {
-        const apartmentResponse = await api.post(
-          "/apartments/find-or-create",
-          { apartmentNumber: parseInt(formData.residentApartmentNumber, 10) },
-          token
-        );
-        finalApartmentGuid = apartmentResponse.apartmentNumber;
+      if (formData.residentApartmentNumber) {
+        if (
+          formData.residentApartmentNumber === String(user.roomNumber) &&
+          initialApartmentGuid
+        ) {
+          finalApartmentGuid = initialApartmentGuid;
+        } else {
+          const apartmentResponse = await api.post(
+            "/apartments/find-or-create",
+            { apartmentNumber: parseInt(formData.residentApartmentNumber, 10) },
+            token
+          );
+          finalApartmentGuid = apartmentResponse.apartmentNumber;
+        }
       }
 
       if (formData.spouseId !== initialSpouseId) {
@@ -228,10 +217,9 @@ const EditUserModal = ({
     } catch (error) {
       console.error("Error during save process:", error);
 
-      // **THE FIX IS HERE**
-      // If error.response exists, use it. Otherwise, create a fallback
-      // response object with the general error message.
-      const errorResponse = error.response || { data: error.message };
+      const errorResponse = error.response || {
+        data: { message: error.message },
+      };
 
       setErrorModal({ isOpen: true, response: errorResponse });
     } finally {
