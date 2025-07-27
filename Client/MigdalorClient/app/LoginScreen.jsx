@@ -70,7 +70,7 @@ const LoginScreen = () => {
               <View style={styles.container}>
                 <View style={styles.logoContainer}>
                   <Image
-                    source={require("../assets/images/TEMPLOGO.png")}
+                    source={require("../assets/images/migdalei.png")}
                     resizeMode="contain"
                     style={styles.logo}
                   />
@@ -100,12 +100,16 @@ const LoginScreen = () => {
 
                   <FlipButton
                     onPress={handleLogin}
-                    bgColor="#60a5fa"
+                    bgColor="#ffffff"
                     textColor="black"
                     flipborderwidth={5}
                     disabled={loginLoading}
                   >
-                    <XStack gap={5} alignItems="center" style={{ paddingStart: 15 }}>
+                    <XStack
+                      gap={5}
+                      alignItems="center"
+                      style={{ paddingStart: 15 }}
+                    >
                       <StyledText style={styles.loginButtonText}>
                         {t("LoginScreen_loginButton")}
                       </StyledText>
@@ -130,7 +134,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   page: {
     flex: 1,
-    backgroundColor: "#c5d8d1",
+    backgroundColor: "#fef1e6",
   },
   container: {
     flex: 1,
