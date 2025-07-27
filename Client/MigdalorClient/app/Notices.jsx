@@ -520,7 +520,7 @@ export default function NoticesScreen() {
           ListHeaderComponent={ListHeader}
         />
       </View>
-      <NoticeCategorySheet
+      {/* <NoticeCategorySheet
         ref={bottomSheetRef}
         subscribedCategories={subscribedCategories}
         selectedCategories={selectedCategories}
@@ -529,7 +529,7 @@ export default function NoticesScreen() {
           setCurrentPage(1);
           bottomSheetRef.current?.close();
         }}
-      />
+      /> */}
       <NoticesCategoryFilterModal
         visible={isFilterModalVisible}
         onClose={() => setFilterModalVisible(false)}

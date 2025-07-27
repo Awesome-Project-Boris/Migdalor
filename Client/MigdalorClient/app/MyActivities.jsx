@@ -186,7 +186,7 @@ export default function MyActivitiesScreen() {
             textColor={isNoParticipationActive ? "#fff" : "#495057"}
           >
             <Text style={{ fontWeight: "600", textAlign: "center" }}>
-              {t("MyActivities_NoParticipation", "No Participation")}
+              {t("MyActivities_NoParticipation")}
             </Text>
           </FlipButton>
         </View>
