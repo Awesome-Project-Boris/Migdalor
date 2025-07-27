@@ -15,6 +15,7 @@ import { Globals } from "@/app/constants/Globals";
 import FlipButton from "@/components/FlipButton";
 import BouncyButton from "@/components/BouncyButton";
 import StyledText from "@/components/StyledText";
+import { useSettings } from "@/context/SettingsContext"; // 1. Import useSettings
 
 const defaultUserImage = require("../assets/images/defaultUser.png");
 
@@ -23,8 +24,8 @@ export default function InstructorProfile() {
   const router = useRouter();
   const { userId: paramUserId } = useLocalSearchParams();
   const [loggedInUserId, setLoggedInUserId] = useState(null);
+  const { settings } = useSettings(); // 2. Get settings from the context
 
-  // --- REVERTED: State is simplified back to its original form ---
   const [form, setForm] = useState({
     name: "",
     mobilePhone: "",
@@ -51,7 +52,6 @@ export default function InstructorProfile() {
             return;
           }
           
-          // --- REVERTED: Using the correct, original endpoint for instructors ---
           const response = await fetch(
             `${Globals.API_BASE_URL}/api/People/InstructorDetails/${userIdToFetch}`
           );
@@ -63,13 +63,9 @@ export default function InstructorProfile() {
           const data = await response.json();
 
           if (isActive) {
-            const nameToDisplay = Globals.userSelectedLanguage === 'he' 
-              ? data.hebName 
-              : data.engName;
-            
-            // --- REVERTED: Setting only the simple form state ---
+            // 3. Use the reactive settings.language to set the form state correctly
             setForm({
-              name: nameToDisplay || "",
+              name: (settings.language === 'he' ? data.hebName : data.engName) || "",
               mobilePhone: data.phoneNumber || "",
               email: data.email || "",
             });
@@ -85,7 +81,7 @@ export default function InstructorProfile() {
       loadProfileData();
 
       return () => { isActive = false; };
-    }, [paramUserId])
+    }, [paramUserId, settings.language]) // 4. Add settings.language to the dependency array
   );
 
   const profileImageSource =
@@ -106,7 +102,8 @@ export default function InstructorProfile() {
   }
 
   const renderField = (label, value) => {
-    const isRtl = Globals.userSelectedDirection === 'rtl';
+    // Use the reactive setting for text direction
+    const isRtl = settings.language === 'he';
     return (
       <>
         <StyledText style={[styles.label, { textAlign: isRtl ? 'right' : 'left' }]}>

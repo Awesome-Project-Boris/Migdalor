@@ -25,53 +25,40 @@ namespace MigdalorServer.Controllers
 
         // GET: api/<NoticesController>
         // This endpoint is now public, but will filter notices if a valid token is provided.
+
         [HttpGet]
         public async Task<IActionResult> Get()
         {
+            var israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
             try
             {
-                var noticesQuery = from n in _context.OhNotices
-                                   join s in _context.OhPeople on n.SenderId equals s.PersonId
-                                   join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
-                                   join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
-                                   from pg in picGroup.DefaultIfEmpty()
-                                   select new
-                                   {
-                                       Notice = n,
-                                       Sender = s,
-                                       Category = cat,
-                                       Picture = pg
-                                   };
-
-                // Check if the user is authenticated. If so, apply role-based filtering.
-                if (User.Identity.IsAuthenticated)
-                {
-                    var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-                    var isAdmin = userRoles.Contains("admin");
-
-                    if (!isAdmin)
-                    {
-                        var allowedEngCategories = new HashSet<string>(userRoles);
-                        noticesQuery = noticesQuery.Where(x => allowedEngCategories.Contains(x.Category.CategoryEngName));
-                    }
-                }
-
-                var notices = await noticesQuery
-                                     .OrderByDescending(x => x.Notice.CreationDate)
-                                     .Select(x => new NoticeDto
+                var notices = await (from n in _context.OhNotices
+                                     join s in _context.OhPeople on n.SenderId equals s.PersonId
+                                     join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
+                                     join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
+                                     from pg in picGroup.DefaultIfEmpty()
+                                     orderby n.CreationDate descending
+                                     select new NoticeDto
                                      {
-                                         NoticeId = x.Notice.NoticeId,
-                                         SenderId = x.Notice.SenderId,
-                                         EngSenderName = x.Sender.EngFirstName + " " + x.Sender.EngLastName,
-                                         HebSenderName = x.Sender.HebFirstName + " " + x.Sender.HebLastName,
-                                         CreationDate = x.Notice.CreationDate.HasValue ? DateTime.SpecifyKind(x.Notice.CreationDate.Value, DateTimeKind.Utc) : null,
-                                         NoticeTitle = x.Notice.NoticeTitle,
-                                         NoticeMessage = x.Notice.NoticeMessage,
-                                         NoticeCategory = x.Notice.NoticeCategory,
-                                         NoticeSubCategory = x.Notice.NoticeSubCategory,
-                                         PictureId = x.Notice.PictureId,
-                                         PicturePath = x.Picture.PicPath,
-                                         CategoryColor = x.Category.CategoryColor
+                                         NoticeId = n.NoticeId,
+                                         SenderId = n.SenderId,
+
+                                         EngSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "Administration"
+                                             : s.EngFirstName + " " + s.EngLastName,
+
+                                         HebSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "הנהלה"
+                                             : s.HebFirstName + " " + s.HebLastName,
+
+                                         CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
+                                         NoticeTitle = n.NoticeTitle,
+                                         NoticeMessage = n.NoticeMessage,
+                                         NoticeCategory = n.NoticeCategory,
+                                         NoticeSubCategory = n.NoticeSubCategory,
+                                         PictureId = n.PictureId,
+                                         PicturePath = pg.PicPath,
+                                         CategoryColor = cat.CategoryColor
                                      }).ToListAsync();
 
                 return Ok(notices);
@@ -85,6 +72,8 @@ namespace MigdalorServer.Controllers
 
 
         // This endpoint remains public as it was originally.
+
+        // GET api/<NoticeController>/5
         [HttpGet("{category}")]
         public IActionResult Get(string category)
         {
@@ -112,7 +101,7 @@ namespace MigdalorServer.Controllers
             {
                 return BadRequest("Invalid Notice ID provided.");
             }
-
+            var israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
             try
             {
                 var notice = await (from n in _context.OhNotices
@@ -125,8 +114,13 @@ namespace MigdalorServer.Controllers
                                     {
                                         NoticeId = n.NoticeId,
                                         SenderId = n.SenderId,
-                                        EngSenderName = s.EngFirstName + " " + s.EngLastName,
-                                        HebSenderName = s.HebFirstName + " " + s.HebLastName,
+                                        EngSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "Administration"
+                                             : s.EngFirstName + " " + s.EngLastName,
+
+                                        HebSenderName = s.PersonRole != null && s.PersonRole.ToLower() == "admin"
+                                             ? "הנהלה"
+                                             : s.HebFirstName + " " + s.HebLastName,
                                         CreationDate = n.CreationDate.HasValue ? DateTime.SpecifyKind(n.CreationDate.Value, DateTimeKind.Utc) : null,
                                         NoticeTitle = n.NoticeTitle,
                                         NoticeMessage = n.NoticeMessage,
@@ -183,6 +177,9 @@ namespace MigdalorServer.Controllers
 
             try
             {
+                // TimeZoneInfo israelTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Israel Standard Time");
+                // DateTime israelNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, israelTimeZone);
+
                 var newNotice = new OhNotice
                 {
                     NoticeTitle = noticeDto.Title,
@@ -306,6 +303,67 @@ namespace MigdalorServer.Controllers
                     StatusCodes.Status500InternalServerError,
                     e.InnerException?.Message ?? e.Message
                 );
+            }
+        }
+
+
+        [HttpPost("filtered")]
+        public async Task<IActionResult> GetFilteredNotices([FromBody] NoticeFilterDto filters)
+        {
+            if (filters == null || filters.Categories == null || !filters.Categories.Any())
+            {
+                return Ok(new List<NoticeDto>());
+            }
+
+            try
+            {
+                var query = (from n in _context.OhNotices
+                             join s in _context.OhPeople on n.SenderId equals s.PersonId
+                             join cat in _context.OhCategories on n.NoticeCategory equals cat.CategoryHebName
+                             join pic in _context.OhPictures on n.PictureId equals pic.PicId into picGroup
+                             from pg in picGroup.DefaultIfEmpty()
+                             select new { n, s, cat, pg });
+
+                query = query.Where(x => filters.Categories.Contains(x.n.NoticeCategory));
+
+                if (filters.SortOrder == "oldest")
+                {
+                    query = query.OrderBy(x => x.n.CreationDate);
+                }
+                else
+                {
+                    query = query.OrderByDescending(x => x.n.CreationDate);
+                }
+
+                var notices = await query.Select(x => new NoticeDto
+                {
+                    NoticeId = x.n.NoticeId,
+                    SenderId = x.n.SenderId,
+
+                    EngSenderName = x.s.PersonRole != null && x.s.PersonRole.ToLower() == "admin"
+                        ? "Administraion"
+                        : x.s.EngFirstName + " " + x.s.EngLastName,
+
+                    HebSenderName = x.s.PersonRole != null && x.s.PersonRole.ToLower() == "admin"
+                        ? "הנהלה"
+                        : x.s.HebFirstName + " " + x.s.HebLastName,
+
+                    CreationDate = x.n.CreationDate.HasValue ? DateTime.SpecifyKind(x.n.CreationDate.Value, DateTimeKind.Utc) : null,
+                    NoticeTitle = x.n.NoticeTitle,
+                    NoticeMessage = x.n.NoticeMessage,
+                    NoticeCategory = x.n.NoticeCategory,
+                    NoticeSubCategory = x.n.NoticeSubCategory,
+                    PictureId = x.n.PictureId,
+                    PicturePath = x.pg.PicPath,
+                    CategoryColor = x.cat.CategoryColor
+                }).ToListAsync();
+
+                return Ok(notices);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to retrieve filtered notices.");
+                return StatusCode(500, "An internal server error occurred.");
             }
         }
     }

@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Toast } from "toastify-react-native";
 
 import StyledText from "@/components/StyledText.jsx";
 import { useSettings } from "@/context/SettingsContext.jsx";
@@ -40,7 +41,7 @@ const AttendanceDrawer = ({
     setIsFinalized(initialIsFinalized);
   }, [initialIsFinalized]);
 
-  const useColumnLayout = settings.fontSizeMultiplier > 1.5;
+  const useColumnLayout = settings.fontSizeMultiplier >= 1.5;
 
   useEffect(() => {
     const fetchParticipation = async () => {
@@ -58,6 +59,7 @@ const AttendanceDrawer = ({
           acc[p.participantId] = p.status;
           return acc;
         }, {});
+
         setParticipationStatus(statusMap);
       } catch (error) {
         console.error("Error fetching participation:", error);
@@ -96,8 +98,19 @@ const AttendanceDrawer = ({
     }
   };
 
-  // --- UPDATED: This function now toggles the finalized state ---
+  // In AttendanceDrawer.jsx
   const handleToggleFinalized = async () => {
+    if (!isFinalized) {
+      // Show a toast to confirm the "un-marking" action.
+      Toast.show({
+        type: "success",
+
+        text1: t("EventFocus_AttendanceMarkedSuccess"),
+
+        position: "bottom",
+      });
+    }
+
     try {
       const authToken = await AsyncStorage.getItem("jwt");
       const response = await fetch(
@@ -166,7 +179,13 @@ const AttendanceDrawer = ({
             bgColor="#6c757d"
             textColor="#fff"
           >
-            <StyledText style={{ color: "#fff", fontWeight: "bold" }}>
+            <StyledText
+              style={{
+                color: "#fff",
+                fontWeight: "bold",
+                paddingHorizontal: 10,
+              }}
+            >
               {t("EventFocus_ReEditButton", "Re-edit Participation")}
             </StyledText>
           </FlipButton>
@@ -259,6 +278,7 @@ const AttendanceDrawer = ({
               disabled={!allMarked}
               bgColor={allMarked ? "#17a2b8" : "#e9ecef"}
               textColor={allMarked ? "#fff" : "#6c757d"}
+              style={styles.wideButton}
             >
               <StyledText
                 style={{
@@ -387,6 +407,9 @@ const styles = StyleSheet.create({
     color: "#495057",
     marginBottom: 15,
     textAlign: "center",
+  },
+  wideButton: {
+    paddingHorizontal: 20,
   },
 });
 

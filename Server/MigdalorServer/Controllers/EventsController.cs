@@ -95,11 +95,9 @@ namespace MigdalorServer.Controllers
                         PicturePath = pg.PicPath,
                         IsRecurring = e.IsRecurring,
                         RecurrenceRule = e.RecurrenceRule,
-                        DateCreated = DateTime.SpecifyKind(e.DateCreated, DateTimeKind.Utc),
-                        StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
-                        EndDate = e.EndDate.HasValue
-                            ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc)
-                            : (DateTime?)null,
+                        DateCreated = e.DateCreated,
+                        StartDate = e.StartDate,
+                        EndDate = e.EndDate,
                         Capacity = e.Capacity,
                         ParticipantsCount = e.OhEventRegistrations.Count(),
                         HostName = host != null ? host.HebFirstName + " " + host.HebLastName : "N/A"
@@ -143,8 +141,8 @@ namespace MigdalorServer.Controllers
                                              PicturePath = pg.PicPath,
                                              IsRecurring = e.IsRecurring,
                                              RecurrenceRule = e.RecurrenceRule,
-                                             StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
-                                             EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : null,
+                                             StartDate = e.StartDate,
+                                             EndDate = e.EndDate,
                                              Capacity = e.Capacity,
                                              Host = h == null ? null : new HostDto
                                              {
@@ -391,8 +389,8 @@ namespace MigdalorServer.Controllers
                     Title = e.EventName,
                     Description = e.Description,
                     Location = e.Location,
-                    StartTime = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
-                    EndTime = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
+                    StartTime = e.StartDate,
+                    EndTime = e.EndDate ?? e.StartDate,
                     SourceTable = "OH_Events",
                     NavigationEventId = e.EventId,
                     Status = "Scheduled" // One-time events are always considered scheduled
@@ -604,6 +602,51 @@ namespace MigdalorServer.Controllers
             {
                 Console.WriteLine($"Error fetching latest event timestamp: {ex.Message}");
                 return StatusCode(500, "An internal server error occurred.");
+            }
+        }
+
+        [HttpPost("{eventId}/mark-checked")]
+        [Authorize] // Ensures only a logged-in user can call this
+        public async Task<IActionResult> ToggleParticipationChecked(int eventId)
+        {
+            // Step 1: Get the ID of the user making the request from their token.
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdClaim, out var currentUserId))
+            {
+                return Unauthorized("Invalid user token.");
+            }
+
+            try
+            {
+                // Step 2: Find the event in the database.
+                var eventToUpdate = await _context.OhEvents.FindAsync(eventId);
+                if (eventToUpdate == null)
+                {
+                    return NotFound(new { message = "Event not found." });
+                }
+
+                // Step 3: Security check - ensure the current user is the host of the event.
+                if (eventToUpdate.HostId != currentUserId)
+                {
+                    return Forbid("You are not the host of this event.");
+                }
+
+                // Step 4: Toggle the boolean value.
+                eventToUpdate.ParticipationChecked = !eventToUpdate.ParticipationChecked;
+
+                await _context.SaveChangesAsync();
+
+                // Step 5: Return a success message and the new status.
+                return Ok(new
+                {
+                    message = "Participation check status updated successfully.",
+                    isChecked = eventToUpdate.ParticipationChecked
+                });
+            }
+            catch (Exception ex)
+            {
+                // In a real application, you would log this exception.
+                return StatusCode(500, $"An internal server error occurred: {ex.Message}");
             }
         }
 

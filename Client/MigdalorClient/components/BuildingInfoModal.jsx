@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   Modal,
+  Text,
   View,
   StyleSheet,
   ScrollView,
@@ -9,21 +10,20 @@ import {
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { Ionicons } from "@expo/vector-icons";
-import StyledText from "@/components/StyledText";
-import FlipButton from "@/components/FlipButton";
 import FlipButtonSizeless from "@/components/FlipButtonSizeless";
+import { Globals } from "../app/constants/Globals";
 
-const ResidentItem = ({ resident }) => {
-  const { i18n } = useTranslation();
+const ResidentItem = ({ resident, onNavigateToApartment }) => {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const residentName =
     i18n.language === "he" ? resident.fullNameHe : resident.fullNameEn;
 
   return (
     <View style={styles.residentRow}>
-      <StyledText style={styles.residentName}>{residentName}</StyledText>
+      <Text style={styles.residentName}>{residentName}</Text>
       <View style={styles.residentActions}>
-        <FlipButton
+        <FlipButtonSizeless
           style={styles.actionButton}
           onPress={() =>
             router.push({
@@ -32,24 +32,34 @@ const ResidentItem = ({ resident }) => {
             })
           }
         >
-          <StyledText style={styles.actionButtonText}>Profile</StyledText>
-        </FlipButton>
-        <FlipButton
+          <Text style={styles.actionButtonText}>{t("Modal_Profile")}</Text>
+        </FlipButtonSizeless>
+        <FlipButtonSizeless
           style={styles.actionButton}
-          onPress={() => {
-            /* Navigation logic for individual residents can be added later */
-          }}
+          onPress={onNavigateToApartment}
         >
-          <StyledText style={styles.actionButtonText}>Navigate</StyledText>
-        </FlipButton>
+          <Text style={styles.actionButtonText}>{t("Modal_Navigate")}</Text>
+        </FlipButtonSizeless>
       </View>
     </View>
   );
 };
 
-const ApartmentAccordion = ({ apartment }) => {
+const ApartmentAccordion = ({ apartment, building, onNavigate }) => {
   const { t } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
+
+  const [isOpen, setIsOpen] = useState(apartment.residents.length > 0);
+
+  const handleNavigateToApartment = () => {
+    const apartmentTarget = {
+      type: "apartment",
+      ...apartment,
+      physicalBuildingID: building.buildingID,
+      entranceNodeIds: building.entranceNodeIds,
+      displayName: `${t("Common_Apartment")} ${apartment.displayNumber}`,
+    };
+    onNavigate(apartmentTarget);
+  };
 
   return (
     <View style={styles.accordionContainer}>
@@ -57,12 +67,12 @@ const ApartmentAccordion = ({ apartment }) => {
         style={styles.accordionHeader}
         onPress={() => setIsOpen(!isOpen)}
       >
-        <StyledText style={styles.apartmentTitle}>
+        <Text style={styles.apartmentTitle}>
           {t(apartment.apartmentName, {
             defaultValue: apartment.apartmentName,
           })}{" "}
           {apartment.displayNumber}
-        </StyledText>
+        </Text>
         <Ionicons
           name={isOpen ? "chevron-up" : "chevron-down"}
           size={24}
@@ -73,12 +83,16 @@ const ApartmentAccordion = ({ apartment }) => {
         <View style={styles.accordionContent}>
           {apartment.residents.length > 0 ? (
             apartment.residents.map((res) => (
-              <ResidentItem key={res.residentId} resident={res} />
+              <ResidentItem
+                key={res.residentId}
+                resident={res}
+                onNavigateToApartment={handleNavigateToApartment}
+              />
             ))
           ) : (
-            <StyledText style={styles.noResidentsText}>
-              No residents listed
-            </StyledText>
+            <Text style={[styles.noResidentsText, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+              {t("MapScreen_NoResidentsListed")}
+            </Text>
           )}
         </View>
       )}
@@ -86,7 +100,6 @@ const ApartmentAccordion = ({ apartment }) => {
   );
 };
 
-// --- MODIFIED: Added 'onNavigate' to props ---
 const BuildingInfoModal = ({ visible, building, onClose, onNavigate }) => {
   const { t } = useTranslation();
 
@@ -115,35 +128,38 @@ const BuildingInfoModal = ({ visible, building, onClose, onNavigate }) => {
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <StyledText style={styles.modalTitle}>{modalTitle}</StyledText>
+          <Text style={styles.modalTitle}>{modalTitle}</Text>
           <ScrollView style={styles.scrollView}>
             {hasApartments ? (
               building.apartments.map((apt) => (
-                <ApartmentAccordion key={apt.apartmentNumber} apartment={apt} />
+                <ApartmentAccordion
+                  key={apt.apartmentNumber}
+                  apartment={apt}
+                  building={building}
+                  onNavigate={onNavigate}
+                />
               ))
             ) : (
-              <StyledText style={styles.noApartmentsText}>
-                No apartments listed for this building.
-              </StyledText>
+              <Text style={styles.noApartmentsText}>
+                {t("MapScreen_NoApartmentsListed")}
+              </Text>
             )}
           </ScrollView>
 
-          {/* --- MODIFIED: Button container now holds two buttons --- */}
           <View style={styles.buttonContainer}>
             <FlipButtonSizeless onPress={onClose} style={styles.closeButton}>
-              <StyledText style={styles.closeButtonText}>
+              <Text style={styles.closeButtonText}>
                 {t("MapScreen_backToMapButton")}
-              </StyledText>
+              </Text>
             </FlipButtonSizeless>
 
-            {/* --- ADDED: The new Navigate button --- */}
             <FlipButtonSizeless
               onPress={() => onNavigate(building)}
               style={styles.navigateButton}
             >
-              <StyledText style={styles.navigateButtonText}>
+              <Text style={styles.navigateButtonText}>
                 {t("Map_NavButton")}
-              </StyledText>
+              </Text>
             </FlipButtonSizeless>
           </View>
         </View>

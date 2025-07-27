@@ -23,11 +23,15 @@
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library...",
         "NSCameraUsageDescription": "This app needs access to your camera...",
         "NSMicrophoneUsageDescription": "This app needs access to your microphone...",
-        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show your position on the map and check boundaries."
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show your position on the map and check boundaries.",
+        "LSApplicationQueriesSchemes": [
+          "mailto"
+        ]
       },
       "runtimeVersion": {
         "policy": "appVersion"
       }
+      
     },
     "android": {
       "googleServicesFile": "./android/app/google-services.json",

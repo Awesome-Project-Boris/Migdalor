@@ -6,13 +6,21 @@ import { useBottomSheet } from "./BottomSheetMain";
 import { useNotifications } from "@/context/NotificationsContext";
 import { useTranslation } from "react-i18next";
 import StyledText from "@/components/StyledText";
+import { useAuth } from "@/context/AuthProvider";
+
+// 1. Define the expected structure of the user object for this file
+interface User {
+  personRole: string;
+}
 
 const Header: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { openSheet } = useBottomSheet();
   const { t } = useTranslation();
-  const { notificationStatus, updateLastVisited } = useNotifications();
+  const { notificationStatus } = useNotifications();
+  // 2. Tell TypeScript to treat the 'user' from useAuth as our defined User type
+  const { user } = useAuth() as { user: User | null };
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -24,120 +32,119 @@ const Header: React.FC = () => {
   const showBackButton =
     router.canGoBack() && !settingsPaths.includes(pathname);
 
-  // --- MODIFIED: This function now ONLY toggles the drawer ---
   const handleBellPress = () => {
     setIsDrawerOpen(!isDrawerOpen);
   };
 
-  // This function correctly handles dismissing a single category on navigation
   const handleNavigation = (
     key: "listings" | "notices" | "events",
     path: Href
   ) => {
     router.push(path);
-    // updateLastVisited(key); // This is now handled in page
-    setIsDrawerOpen(false); // Closes the drawer
+    setIsDrawerOpen(false);
   };
 
   return (
     <>
-      <View style={styles.header}>
-        <View style={styles.leftContainer}>
-          {showBackButton && (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={[styles.backButton, styles.border]}
-            >
-              <Ionicons name="arrow-back" size={32} color="#000" />
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            onPress={() => router.navigate("/MainMenu")}
-            style={styles.border}
-          >
-            <Ionicons name="home" size={32} color="#000" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.rightContainer}>
-          <TouchableOpacity onPress={handleBellPress} style={styles.border}>
-            <Ionicons
-              name={
-                notificationStatus.total > 0
-                  ? "notifications"
-                  : "notifications-outline"
-              }
-              size={32}
-              color="#000"
-            />
-            {notificationStatus.total > 0 && (
-              <View style={styles.notificationBadge} />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.leftContainer}>
+            {showBackButton && (
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={[styles.backButton, styles.border]}
+              >
+                <Ionicons name="arrow-back" size={32} color="#000" />
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={openSheet}
-            style={[styles.border, styles.menuButton]}
-          >
-            <Ionicons name="menu" size={32} color="#000" />
-          </TouchableOpacity>
-        </View>
-      </View>
+            <TouchableOpacity
+              onPress={() => router.navigate("/MainMenu")}
+              style={styles.border}
+            >
+              <Ionicons name="home" size={32} color="#000" />
+            </TouchableOpacity>
+          </View>
 
-      {isDrawerOpen && (
-        <View style={styles.drawer}>
-          {notificationStatus.total > 0 ? (
-            <>
-              {notificationStatus.listings && (
-                <TouchableOpacity
-                  style={styles.notificationItem}
-                  onPress={() => handleNavigation("listings", "/Marketplace")}
-                >
-                  <StyledText style={styles.notificationText}>
-                    {t("Notifications_NewListing")}
-                  </StyledText>
-                </TouchableOpacity>
-              )}
-              {notificationStatus.notices && (
-                <TouchableOpacity
-                  style={styles.notificationItem}
-                  onPress={() => handleNavigation("notices", "/Notices")}
-                >
-                  <StyledText style={styles.notificationText}>
-                    {t("Notifications_NewNotice")}
-                  </StyledText>
-                </TouchableOpacity>
-              )}
-              {notificationStatus.events && (
-                <TouchableOpacity
-                  style={styles.notificationItem}
-                  onPress={() => handleNavigation("events", "/Activities")}
-                >
-                  <StyledText style={styles.notificationText}>
-                    {t("Notifications_NewEvent")}
-                  </StyledText>
-                </TouchableOpacity>
-              )}
-            </>
-          ) : (
-            <View style={[styles.notificationItem, styles.noNotificationItem]}>
-              {/* --- MODIFIED --- */}
-              <StyledText style={styles.notificationText}>
-                {t("Notifications_NoNew")}
-              </StyledText>
-            </View>
-          )}
+          <View style={styles.rightContainer}>
+            {/* 3. This check now works without error */}
+            {user && user.personRole !== "Instructor" && (
+              <TouchableOpacity onPress={handleBellPress} style={styles.border}>
+                <Ionicons
+                  name={
+                    notificationStatus.total > 0
+                      ? "notifications"
+                      : "notifications-outline"
+                  }
+                  size={32}
+                  color="#000"
+                />
+                {notificationStatus.total > 0 && (
+                  <View style={styles.notificationBadge} />
+                )}
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              onPress={openSheet}
+              style={[styles.border, styles.menuButton]}
+            >
+              <Ionicons name="menu" size={32} color="#000" />
+            </TouchableOpacity>
+          </View>
         </View>
-      )}
+
+        {isDrawerOpen && (
+          <View style={styles.drawer}>
+            {notificationStatus.total > 0 ? (
+              <>
+                {notificationStatus.listings && (
+                  <TouchableOpacity
+                    style={styles.notificationItem}
+                    onPress={() => handleNavigation("listings", "/Marketplace")}
+                  >
+                    <StyledText style={styles.notificationText}>
+                      {t("Notifications_NewListing")}
+                    </StyledText>
+                  </TouchableOpacity>
+                )}
+                {notificationStatus.notices && (
+                  <TouchableOpacity
+                    style={styles.notificationItem}
+                    onPress={() => handleNavigation("notices", "/Notices")}
+                  >
+                    <StyledText style={styles.notificationText}>
+                      {t("Notifications_NewNotice")}
+                    </StyledText>
+                  </TouchableOpacity>
+                )}
+                {notificationStatus.events && (
+                  <TouchableOpacity
+                    style={styles.notificationItem}
+                    onPress={() => handleNavigation("events", "/Activities")}
+                  >
+                    <StyledText style={styles.notificationText}>
+                      {t("Notifications_NewEvent")}
+                    </StyledText>
+                  </TouchableOpacity>
+                )}
+              </>
+            ) : (
+              <View
+                style={[styles.notificationItem, styles.noNotificationItem]}
+              >
+                <StyledText style={styles.notificationText}>
+                  {t("Notifications_NoNew")}
+                </StyledText>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
   header: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
     height: 60,
     backgroundColor: "#fff",
     flexDirection: "row",
@@ -149,7 +156,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
-    zIndex: 9001,
   },
   leftContainer: {
     flexDirection: "row",
@@ -183,14 +189,12 @@ const styles = StyleSheet.create({
     borderColor: "#fff",
   },
   drawer: {
-    position: "absolute",
-    top: 60,
+    // top: 60 is no longer needed, it will appear below the header naturally
     left: 0,
     right: 0,
     backgroundColor: "#f8f8f8",
     borderBottomWidth: 1,
     borderBottomColor: "#ddd",
-    zIndex: 9000,
     padding: 5,
   },
   notificationItem: {
@@ -205,6 +209,14 @@ const styles = StyleSheet.create({
   },
   notificationText: {
     fontSize: 16,
+  },
+  container: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 9999,
+    elevation: 10,
   },
 });
 

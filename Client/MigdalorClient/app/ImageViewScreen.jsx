@@ -67,7 +67,8 @@ export default function ImageViewScreen() {
       </View>
 
       <View style={styles.altTextContainer}>
-        <StyledText style={styles.altTextStyle}>{altText}</StyledText>
+        {/* <StyledText style={styles.altTextStyle}>{altText}</StyledText> */}
+        <StyledText style={styles.altTextStyle}></StyledText>
       </View>
     </SafeAreaView>
   );
