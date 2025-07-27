@@ -10,6 +10,10 @@ using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
+using Ical.Net;
+using Ical.Net.CalendarComponents;
+using Ical.Net.DataTypes;
+using DocumentFormat.OpenXml.InkML;
 
 namespace MigdalorServer.Controllers
 {
@@ -18,10 +22,12 @@ namespace MigdalorServer.Controllers
     public class EventsController : ControllerBase
     {
         private readonly MigdalorDBContext _context;
+        private readonly ILogger<NoticesController> _logger;
 
-        public EventsController(MigdalorDBContext context)
+        public EventsController(MigdalorDBContext context, ILogger<NoticesController> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: api/events/all
@@ -445,7 +451,7 @@ namespace MigdalorServer.Controllers
 
         // POST: api/events/admin
         [HttpPost("admin")]
-        [Authorize(Roles = "admin")] // Example authorization
+        [Authorize(Roles = "admin")]
         public async Task<ActionResult<OhEvent>> CreateEventForAdmin([FromBody] AdminCreateEventDto createDto)
         {
             if (!ModelState.IsValid)
@@ -462,15 +468,65 @@ namespace MigdalorServer.Controllers
                 Capacity = createDto.Capacity,
                 IsRecurring = createDto.IsRecurring,
                 RecurrenceRule = createDto.IsRecurring ? createDto.RecurrenceRule : null,
-                StartDate = createDto.StartDate,
-                EndDate = createDto.EndDate,
-                PictureId = createDto.PictureId, // Add this line
+                StartDate = createDto.StartDate.ToUniversalTime(),
+                EndDate = createDto.EndDate?.ToUniversalTime(),
+                PictureId = createDto.PictureId,
                 ParticipationChecked = false,
                 DateCreated = DateTime.UtcNow
             };
 
             _context.OhEvents.Add(newEvent);
             await _context.SaveChangesAsync();
+
+            // If it's a recurring class, generate the initial instances
+            if (newEvent.IsRecurring && !string.IsNullOrEmpty(newEvent.RecurrenceRule))
+            {
+                _logger.LogInformation("Generating initial instances for new class: {EventName}", newEvent.EventName);
+
+                var calendarEvent = new CalendarEvent
+                {
+                    Start = new CalDateTime(newEvent.StartDate, "UTC"),
+                    Duration = new Duration(hours: 1),
+                };
+
+                calendarEvent.RecurrenceRules.Add(new RecurrencePattern(newEvent.RecurrenceRule));
+
+                var generationStartDate = newEvent.StartDate;
+                // Generate instances for the next 3 months initially
+                var generationEndDate = DateTime.UtcNow.AddMonths(3);
+
+                // If the class has a specific end date, don't generate past it.
+                if (newEvent.EndDate.HasValue && newEvent.EndDate.Value < generationEndDate)
+                {
+                    generationEndDate = newEvent.EndDate.Value;
+                }
+
+                var occurrences = calendarEvent
+                    .GetOccurrences(new CalDateTime(generationStartDate))
+                    .TakeWhile(o => o.Period.StartTime.AsUtc < generationEndDate);
+
+                var newInstances = new List<OhEventInstance>();
+                foreach (var occurrence in occurrences)
+                {
+                    // Skip the very first occurrence to avoid duplicates with the main event start date
+                    if (occurrence.Period.StartTime.AsUtc == generationStartDate) continue;
+
+                    newInstances.Add(new OhEventInstance
+                    {
+                        EventId = newEvent.EventId,
+                        StartTime = occurrence.Period.StartTime.AsUtc,
+                        EndTime = occurrence.Period.EndTime.AsUtc,
+                        Status = "Scheduled"
+                    });
+                }
+
+                if (newInstances.Any())
+                {
+                    _context.OhEventInstances.AddRange(newInstances);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("Added {Count} initial instances for class: {EventName}", newInstances.Count, newEvent.EventName);
+                }
+            }
 
             return CreatedAtAction(nameof(GetEventById), new { id = newEvent.EventId }, newEvent);
         }

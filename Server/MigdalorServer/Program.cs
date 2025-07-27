@@ -67,6 +67,10 @@ builder.Services.AddHostedService<MarketplaceCleanupService>();
 
 builder.Services.AddHostedService<NoticeCleanupService>();
 
+// Endless class refresher
+
+builder.Services.AddHostedService<RecurringEventService>();
+
 
 // ---- Gemini Setup ----
 builder.Services.Configure<Migdalor.BL.GeminiSettings>(builder.Configuration.GetSection("Gemini"));
