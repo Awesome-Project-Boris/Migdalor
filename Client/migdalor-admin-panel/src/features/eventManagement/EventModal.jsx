@@ -20,24 +20,30 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
   const { user, token } = useAuth();
   const [formData, setFormData] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hosts, setHosts] = useState([]);
+  const [allHosts, setAllHosts] = useState([]);
+  const [instructors, setInstructors] = useState([]);
+  const [displayHosts, setDisplayHosts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [existingImage, setExistingImage] = useState(null);
 
   const isEditMode = !!eventId;
 
   useEffect(() => {
-    const fetchHosts = async () => {
+    const fetchHostData = async () => {
       if (isOpen) {
         try {
-          const data = await api.get("/people/all-names", token);
-          setHosts(data);
+          const [hostsData, instructorsData] = await Promise.all([
+            api.get("/people/all-names", token),
+            api.get("/people/instructors", token),
+          ]);
+          setAllHosts(hostsData);
+          setInstructors(instructorsData);
         } catch (error) {
-          console.error("Failed to fetch hosts:", error);
+          console.error("Failed to fetch host data:", error);
         }
       }
     };
-    fetchHosts();
+    fetchHostData();
   }, [isOpen, token]);
 
   useEffect(() => {
@@ -57,7 +63,6 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
           HostId: eventDetails.host?.hostId || null,
           PictureId: eventDetails.pictureId || null,
         });
-        // The ImageUpload component expects an object with a serverPath property
         if (eventDetails.picturePath) {
           setExistingImage({ serverPath: eventDetails.picturePath });
         } else {
@@ -95,6 +100,22 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
       }
     }
   }, [isOpen, eventId, eventType, user.id, token, onClose, isEditMode]);
+
+  // Effect to manage the list of hosts displayed in the dropdown
+  useEffect(() => {
+    if (formData.IsRecurring) {
+      setDisplayHosts(instructors);
+      // If the currently selected host is not an instructor, clear the selection.
+      const isHostAnInstructor = instructors.some(
+        (inst) => inst.id === formData.HostId
+      );
+      if (formData.HostId && !isHostAnInstructor) {
+        setFormData((prev) => ({ ...prev, HostId: null }));
+      }
+    } else {
+      setDisplayHosts(allHosts);
+    }
+  }, [formData.IsRecurring, allHosts, instructors, formData.HostId]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -194,7 +215,7 @@ const EventModal = ({ isOpen, onClose, onSave, eventId, eventType }) => {
                 required
               />
               <SpouseCommand
-                users={hosts}
+                users={displayHosts}
                 currentUser={{ id: null }}
                 selectedSpouseId={formData.HostId}
                 onSelectSpouse={handleHostSelect}
