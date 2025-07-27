@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { UploadCloud, Sparkles, Check, X } from "lucide-react";
-import { api } from "../../api/apiService";
+import { API_BASE_URL } from "../../config.js";
+import { api } from "../../api/apiService.js";
 
 // Helper function to convert a base64 string to a File object
 const base64ToFile = (base64, filename) => {
@@ -34,7 +35,7 @@ const ImageUpload = ({
   useEffect(() => {
     if (existingImage?.serverPath) {
       setPreview(
-        `${api.API_BASE_URL.substring(0, api.API_BASE_URL.length - 4)}${
+        `${API_BASE_URL.substring(0, API_BASE_URL.length - 4)}${
           existingImage.serverPath
         }`
       );

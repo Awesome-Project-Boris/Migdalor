@@ -100,6 +100,23 @@ namespace MigdalorServer.Controllers
             return Ok(peopleNames);
         }
 
+        
+        [HttpGet("instructors")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> GetInstructors()
+        {
+            var instructors = await _context.OhPeople
+                .Where(p => p.PersonRole == "Instructor")
+                .Select(p => new
+                {
+                    Id = p.PersonId,
+                    FullName = p.HebFirstName + " " + p.HebLastName
+                })
+                .ToListAsync();
+
+            return Ok(instructors);
+        }
+
 
         // NEW: Endpoint to get all staff/admin users
         [HttpGet("admins")]
@@ -315,8 +332,8 @@ namespace MigdalorServer.Controllers
                 if (person.PersonRole != null)
                     if (!person.PersonRole.Contains("Resident") && !person.PersonRole.Contains("Instructor"))
                         return Unauthorized("Admins and Suppliers can't connect to the app.");
-                    
-                
+
+
 
                 // Manually construct the response object directly from the OH_People table.
                 // This works for ALL roles.

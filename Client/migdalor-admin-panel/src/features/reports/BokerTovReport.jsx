@@ -106,7 +106,10 @@ const BokerTovReport = () => {
 
     setIsDownloading(true);
     try {
-      const blob = await api.get(`/reports/download/${fileName}`, token);
+      const blob = await api.downloadFile(
+        `/reports/download/${fileName}`,
+        token
+      );
 
       if (!blob) {
         throw new Error("הקובץ שהתקבל ריק.");
