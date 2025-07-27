@@ -9,6 +9,97 @@ import { useSettings } from "@/context/SettingsContext";
 
 const placeholderImage = require("../assets/images/ServicesPlaceholder.png");
 
+const ScheduleOverridesDisplay = ({ overrides }) => {
+  const { t, i18n } = useTranslation();
+  const isRtl = i18n.dir() === "rtl";
+
+  if (!overrides || overrides.length === 0) {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const oneWeekFromNow = new Date(today);
+  oneWeekFromNow.setDate(today.getDate() + 7);
+
+  const filteredOverrides = overrides.filter((override) => {
+    const overrideDate = new Date(override.overrideDate.split("T")[0]);
+    return overrideDate >= today && overrideDate <= oneWeekFromNow;
+  });
+
+  if (filteredOverrides.length === 0) {
+    return null;
+  }
+
+  const formatTime = (timeString) => {
+    if (!timeString) return "";
+    return timeString.substring(0, 5);
+  };
+
+  const getDisplayDate = (dateString) => {
+    // FIX: Manually parse the date string as UTC to prevent timezone shifts.
+    const [year, month, day] = dateString.split("T")[0].split("-").map(Number);
+    const correctDate = new Date(Date.UTC(year, month - 1, day));
+    return correctDate.toLocaleDateString(i18n.language, {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    });
+  };
+
+  return (
+    <View style={styles.overridesContainer}>
+      <StyledText style={styles.overridesTitle}>
+        {t("services_overrides_title", "Schedule Changes")}
+      </StyledText>
+      {filteredOverrides.map((override) => {
+        const date = getDisplayDate(override.overrideDate);
+        const startTime = formatTime(override.openTime);
+        const endTime = formatTime(override.closeTime);
+
+        let message;
+        if (!override.isOpen) {
+          message =
+            startTime && endTime
+              ? t("service_override_unavailable_datetime", {
+                  date,
+                  startTime,
+                  endTime,
+                })
+              : t("service_override_unavailable_date", { date });
+        } else {
+          message =
+            startTime && endTime
+              ? t("service_override_available_datetime", {
+                  date,
+                  startTime,
+                  endTime,
+                })
+              : t("service_override_available_date", { date });
+        }
+
+        const notes = override.notes;
+
+        return (
+          <View key={override.overrideId} style={styles.overrideItem}>
+            <StyledText style={[styles.overrideText, isRtl && styles.rtlText]}>
+              {message}
+            </StyledText>
+            {notes && (
+              <StyledText
+                style={[styles.overrideNotes, isRtl && styles.rtlText]}
+              >
+                {t("service_override_notes", { notes: notes })}
+              </StyledText>
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
 const OpeningHoursDisplay = ({ hours, useColumnLayout }) => {
   const { t, i18n } = useTranslation();
   const isRtl = i18n.dir() === "rtl";
@@ -27,7 +118,9 @@ const OpeningHoursDisplay = ({ hours, useColumnLayout }) => {
     const dayIndex = hour.dayOfWeek - 1;
     if (dayIndex >= 0 && dayIndex < 7) {
       if (!acc[dayIndex]) acc[dayIndex] = [];
-      acc[dayIndex].push(`${hour.openTime} - ${hour.closeTime}`);
+      const openTime = hour.openTime ? hour.openTime.substring(0, 5) : "";
+      const closeTime = hour.closeTime ? hour.closeTime.substring(0, 5) : "";
+      acc[dayIndex].push(`${openTime} - ${closeTime}`);
     }
     return acc;
   }, {});
@@ -44,7 +137,7 @@ const OpeningHoursDisplay = ({ hours, useColumnLayout }) => {
     <View style={styles.hoursContainer}>
       {days.map((dayName, index) => {
         const daySlots = hoursByDay[index];
-        if (!daySlots) return null;
+        if (!daySlots || daySlots.length === 0) return null;
 
         const dayLabelComponent = (
           <StyledText style={[styles.dayLabel, isRtl && styles.rtlText]}>
@@ -90,17 +183,19 @@ const OpeningHoursDisplay = ({ hours, useColumnLayout }) => {
 export default function PublicServicesFocus() {
   const { t, i18n } = useTranslation();
   const route = useRoute();
-  const { serviceData } = route.params || {};
   const { settings } = useSettings();
+
+  const { service: serviceData } = route.params || {};
+
   const useColumnLayout = settings.fontSizeMultiplier >= 2;
 
   if (!serviceData) {
     return (
       <View style={styles.wrapper}>
         <Header />
-        <View style={styles.centeredError}>
+        <View style={styles.centeredFeedback}>
           <StyledText style={styles.errorText}>
-            {t("Errors_Service_Display")}
+            {t("Errors_Service_Display", "Could not load service data.")}
           </StyledText>
         </View>
       </View>
@@ -108,7 +203,6 @@ export default function PublicServicesFocus() {
   }
 
   const isRtl = i18n.dir() === "rtl";
-
   const mainName = isRtl ? serviceData.hebrewName : serviceData.englishName;
   const mainDescription = isRtl
     ? serviceData.hebrewDescription
@@ -141,6 +235,8 @@ export default function PublicServicesFocus() {
               {mainDescription}
             </StyledText>
           )}
+
+          <ScheduleOverridesDisplay overrides={serviceData.scheduleOverrides} />
 
           <StyledText style={styles.sectionHeader}>
             {t("PublicServicesFocus_Opening_Hours")}
@@ -194,6 +290,11 @@ export default function PublicServicesFocus() {
                         {subDescription}
                       </StyledText>
                     )}
+
+                    <ScheduleOverridesDisplay
+                      overrides={subService.scheduleOverrides}
+                    />
+
                     <OpeningHoursDisplay
                       hours={subService.openingHours}
                       useColumnLayout={useColumnLayout}
@@ -228,6 +329,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     alignItems: "center",
     paddingHorizontal: 20,
+    flexGrow: 1,
   },
   headerPlaque: {
     width: "100%",
@@ -256,16 +358,24 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 2,
+    marginBottom: 40,
   },
-  centeredError: {
+  centeredFeedback: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
+  },
+  feedbackText: {
+    marginTop: 10,
+    fontSize: 18,
+    color: "#5c4b33",
   },
   errorText: {
     fontSize: 18,
-    color: "red",
+    color: "#d9534f",
     textAlign: "center",
+    fontWeight: "bold",
   },
   mainImage: {
     width: "100%",
@@ -312,7 +422,7 @@ const styles = StyleSheet.create({
   },
   subServiceCard: {
     width: "100%",
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff",
     borderRadius: 10,
     padding: 16,
     marginTop: 16,
@@ -365,5 +475,40 @@ const styles = StyleSheet.create({
   rtlText: {
     writingDirection: "rtl",
     textAlign: "right",
+  },
+  overridesContainer: {
+    backgroundColor: "#fff3cd",
+    borderRadius: 10,
+    marginBottom: 20,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#ffeeba",
+  },
+  overridesTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#856404",
+    textAlign: "center",
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ffeeba",
+  },
+  overrideItem: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderColor: "rgba(133, 100, 4, 0.1)",
+  },
+  overrideText: {
+    fontSize: 18,
+    color: "#856404",
+    lineHeight: 24,
+    fontWeight: "500",
+  },
+  overrideNotes: {
+    fontSize: 16,
+    color: "#856404",
+    lineHeight: 22,
+    marginTop: 4,
   },
 });

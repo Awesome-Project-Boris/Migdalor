@@ -336,20 +336,36 @@ export default function ResidentList() {
       const lowerCaseQuery = nameFilter.trim().toLowerCase();
       users = users.filter((user) => {
         const searchableString = `
-          ${user.hebFirstName || ""}
-          ${user.hebLastName || ""}
-          ${user.engFirstName || ""}
-          ${user.engLastName || ""}
-        `.toLowerCase();
+        ${user.hebFirstName || ""}
+        ${user.hebLastName || ""}
+        ${user.engFirstName || ""}
+        ${user.engLastName || ""}
+      `.toLowerCase();
         return searchableString.includes(lowerCaseQuery);
       });
     }
 
     // 2. Conditionally exclude the logged-in user
-    // This runs if a hobby search is active AND no name is being searched.
     if (hobbyFilter.length > 0 && !nameFilter.trim() && loggedInUserId) {
       users = users.filter((user) => user.userId.toString() !== loggedInUserId);
     }
+
+    // ✅ NEW: Sort the final list alphabetically based on the current language
+    users.sort((a, b) => {
+      const isRtl = Globals.userSelectedDirection === "rtl";
+
+      if (isRtl) {
+        // Sort by full Hebrew name
+        const nameA = `${a.hebFirstName || ""} ${a.hebLastName || ""}`.trim();
+        const nameB = `${b.hebFirstName || ""} ${b.hebLastName || ""}`.trim();
+        return nameA.localeCompare(nameB, "he"); // Use 'he' for Hebrew-specific sorting
+      } else {
+        // Sort by full English name
+        const nameA = `${a.engFirstName || ""} ${a.engLastName || ""}`.trim();
+        const nameB = `${b.engFirstName || ""} ${b.engLastName || ""}`.trim();
+        return nameA.localeCompare(nameB, "en"); // Use 'en' for English-specific sorting
+      }
+    });
 
     return users;
   }, [sourceUsers, nameFilter, hobbyFilter, loggedInUserId]);

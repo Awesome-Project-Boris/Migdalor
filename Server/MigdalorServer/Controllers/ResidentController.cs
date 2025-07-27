@@ -489,5 +489,90 @@ namespace MigdalorServer.Controllers
                 );
             }
         }
+
+        [HttpGet("subscriptions/{residentId}")]
+        public async Task<IActionResult> GetResidentSubscriptions(Guid residentId)
+        {
+            // Using your per-request DbContext pattern
+            using var context = new MigdalorDBContext();
+            try
+            {
+                // Check if the resident exists
+                var resident = await context.OhResidents.FindAsync(residentId);
+                if (resident == null)
+                {
+                    return NotFound(new { message = "Resident not found" });
+                }
+
+                // Fetch all categories and join with the resident's subscriptions
+                // Using the exact EF model names (e.g., OhCategories, OhResidentCategorySubscriptions)
+                var subscriptions = await context.OhCategories
+                    .Select(category => new {
+                        category.CategoryHebName,
+                        category.CategoryColor,
+                        // Left join to get the subscription status, defaulting to true if not found.
+                        isSubscribed = context.OhResidentCategorySubscriptions
+                                        .Where(s => s.ResidentId == residentId && s.CategoryHebName == category.CategoryHebName)
+                                        .Select(s => (bool?)s.IsSubscribed) // Select as nullable bool
+                                        .FirstOrDefault() ?? true // Default to true if no entry exists
+                    })
+                    .ToListAsync();
+
+                return Ok(subscriptions);
+            }
+            catch (Exception ex)
+            {
+                // You should log the exception details here
+                return StatusCode(500, new { message = "Internal Server Error", error = ex.Message });
+            }
+        }
+
+        // PUT: api/Resident/subscriptions
+        // Updates a resident's subscription status for a specific category.
+        [HttpPut("subscriptions")]
+        public async Task<IActionResult> UpdateResidentSubscription([FromBody] SubscriptionUpdateDto subscriptionUpdate)
+        {
+            if (subscriptionUpdate == null || string.IsNullOrEmpty(subscriptionUpdate.CategoryHebName))
+            {
+                return BadRequest("Invalid subscription data provided.");
+            }
+
+            // Using your per-request DbContext pattern
+            using var context = new MigdalorDBContext();
+            try
+            {
+                // Find the existing subscription using the correct property names
+                var subscription = await context.OhResidentCategorySubscriptions.FirstOrDefaultAsync(s =>
+                    s.ResidentId == subscriptionUpdate.ResidentId &&
+                    s.CategoryHebName == subscriptionUpdate.CategoryHebName);
+
+                if (subscription != null)
+                {
+                    // If it exists, update it
+                    subscription.IsSubscribed = subscriptionUpdate.IsSubscribed;
+                    context.OhResidentCategorySubscriptions.Update(subscription);
+                }
+                else
+                {
+                    // If it doesn't exist, create a new entry
+                    // Using the correct class name 'OhResidentCategorySubscription'
+                    var newSubscription = new OhResidentCategorySubscription
+                    {
+                        ResidentId = subscriptionUpdate.ResidentId,
+                        CategoryHebName = subscriptionUpdate.CategoryHebName,
+                        IsSubscribed = subscriptionUpdate.IsSubscribed
+                    };
+                    context.OhResidentCategorySubscriptions.Add(newSubscription);
+                }
+
+                await context.SaveChangesAsync();
+                return Ok(new { message = "Subscription updated successfully." });
+            }
+            catch (Exception ex)
+            {
+                // You should log the exception details here
+                return StatusCode(500, new { message = "Failed to update subscription", error = ex.Message });
+            }
+        }
     }
 }

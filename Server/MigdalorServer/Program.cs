@@ -58,7 +58,15 @@ builder
     .Services.AddHttpClient<ExpoPushService>() // HttpClient injected into ExpoPushService
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler());
 
+
+// Cleanup services
+
 builder.Services.AddHostedService<DailyTasksService>();
+
+builder.Services.AddHostedService<MarketplaceCleanupService>();
+
+builder.Services.AddHostedService<NoticeCleanupService>();
+
 
 // ---- Gemini Setup ----
 builder.Services.Configure<Migdalor.BL.GeminiSettings>(builder.Configuration.GetSection("Gemini"));

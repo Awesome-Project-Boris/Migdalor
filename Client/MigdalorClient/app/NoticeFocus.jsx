@@ -9,40 +9,41 @@ import {
   TouchableOpacity, // ✅ Import TouchableOpacity
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Image as ExpoImage } from "expo-image"; // ✅ Import ExpoImage
+import { Image as ExpoImage } from "expo-image";
 import FlipButton from "@/components/FlipButton";
 import { Ionicons } from "@expo/vector-icons";
 
-// --- Custom Component and Utility Imports ---
 import Header from "@/components/Header";
 import { useTranslation } from "react-i18next";
 import { Globals } from "./constants/Globals";
 import StyledText from "@/components/StyledText";
-import { useSettings } from "@/context/SettingsContext"; // Import useSettings
+import { useSettings } from "@/context/SettingsContext";
+
+import { ReadNoticeTracker } from "@/utils/ReadNoticeTracker";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
 const formatDate = (dateTimeString) => {
   if (!dateTimeString) return "N/A";
   try {
-    const dateObj = new Date(dateTimeString);
+    const parts = dateTimeString.split("T");
+    if (parts.length < 2) return dateTimeString;
 
-    if (isNaN(dateObj.getTime())) {
-      console.warn("Invalid date format received:", dateTimeString);
-      return "Invalid Date";
-    }
+    const datePart = parts[0];
+    const timePart = parts[1];
 
-    const day = String(dateObj.getDate()).padStart(2, "0");
-    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-    const year = dateObj.getFullYear();
+    const dateParts = datePart.split("-");
+    if (dateParts.length < 3) return dateTimeString;
+    const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
 
-    const hours = String(dateObj.getHours()).padStart(2, "0");
-    const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+    const timeParts = timePart.split(":");
+    if (timeParts.length < 2) return dateTimeString;
+    const formattedTime = `${timeParts[0]}:${timeParts[1]}`;
 
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return `${formattedDate} ${formattedTime}`;
   } catch (e) {
-    console.error("Error formatting date:", e);
-    return dateTimeString;
+    console.error("Error formatting date string:", e);
+    return dateTimeString; // Fallback to original string on error
   }
 };
 
@@ -54,57 +55,55 @@ export default function NoticeFocus() {
   const [noticeData, setNoticeData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [allCategories, setAllCategories] = useState([]);
 
   const { noticeId } = useLocalSearchParams();
   const router = useRouter();
 
-  const fetchNoticeDetails = useCallback(async () => {
-    if (!noticeId) {
-      setError(t("NoticeDetailsScreen_errorNoId"));
-      setIsLoading(false);
-      return;
-    }
-    setError(null);
-    try {
-      const apiUrl = `${Globals.API_BASE_URL}/api/Notices/${noticeId}`;
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        const status = response.status;
-        let errorPayload = `HTTP Error ${status}`;
-        try {
-          const errorText = await response.text();
-          errorPayload += `: ${errorText}`;
-        } catch (e) {}
-        if (status === 404) {
-          throw new Error(
-            t("NoticeDetailsScreen_errorNotFound", { id: noticeId })
-          );
-        } else {
-          throw new Error(
-            t("NoticeDetailsScreen_errorGenericFetch", { status: status })
-          );
-        }
-      }
-      const data = await response.json();
-      setNoticeData(data);
-    } catch (err) {
-      setError(err.message || t("NoticeDetailsScreen_errorDefault"));
-      setNoticeData(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [noticeId, t]);
+  const params = useLocalSearchParams();
+  const notice = params.notice ? JSON.parse(params.notice) : null;
 
   useEffect(() => {
-    if (noticeId) {
-      setIsLoading(true);
-      setNoticeData(null);
-      setError(null);
-      fetchNoticeDetails();
-    }
-  }, [noticeId, fetchNoticeDetails]);
+    const noticeJSON = params.notice;
+    const categoriesJSON = params.allCategories; // ✅ Get the new parameter
 
-  // ✅ Handler to navigate to the image view screen
+    if (noticeJSON) {
+      try {
+        const parsedNotice = JSON.parse(noticeJSON);
+        setNoticeData(parsedNotice);
+
+        // ✅ Parse and set the categories data
+        if (categoriesJSON) {
+          setAllCategories(JSON.parse(categoriesJSON));
+        }
+
+        if (parsedNotice.noticeId) {
+          ReadNoticeTracker.markAsRead(parsedNotice.noticeId);
+        }
+      } catch (e) {
+        console.error("Failed to parse navigation params:", e);
+        setError("Failed to load notice data.");
+      }
+    } else {
+      setError(t("NoticeDetailsScreen_errorNoId"));
+    }
+
+    setIsLoading(false);
+  }, [params.notice, params.allCategories, t]);
+
+  const getTranslatedCategoryName = useCallback(
+    (hebName) => {
+      if (!hebName || allCategories.length === 0) return hebName;
+      const category = allCategories.find((c) => c.categoryHebName === hebName);
+      if (!category) return hebName;
+
+      return settings.language === "en"
+        ? category.categoryEngName
+        : category.categoryHebName;
+    },
+    [allCategories, settings.language]
+  );
+
   const handleImagePress = (imageUri, altText) => {
     if (!imageUri) return;
     router.push({
@@ -226,7 +225,7 @@ export default function NoticeFocus() {
                 <Ionicons name="pricetag-outline" size={24} color="#555" />
                 <StyledText style={[styles.metadataText, textAlignStyle]}>
                   {t("NoticeDetailsScreen_categoryLabel", "Category:")}{" "}
-                  {noticeData.noticeCategory}
+                  {getTranslatedCategoryName(noticeData.noticeCategory)}
                   {noticeData.noticeSubCategory
                     ? ` (${noticeData.noticeSubCategory})`
                     : ""}

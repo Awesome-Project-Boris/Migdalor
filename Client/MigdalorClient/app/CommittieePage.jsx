@@ -70,29 +70,22 @@ export default function CommitteePage() {
     }, [fetchCommitteeMembers])
   );
 
-  const handleContactPress = () => {
+  const handleContactPress = async () => {
     const contactEmail = "awesomeprojectboris@gmail.com";
     const url = `mailto:${contactEmail}`;
 
-    Linking.canOpenURL(url)
-      .then((supported) => {
-        if (!supported) {
-          Alert.alert(
-            t("MarketplaceItemScreen_CannotHandleContactTitle"),
-            t("MarketplaceItemScreen_CannotHandleContactMsg", { type: "email" })
-          );
-        } else {
-          Linking.openURL(url);
-        }
-      })
-      .catch((err) => {
-        console.error("Error opening mail link:", err);
-        Alert.alert(
-          t("Common_Error"),
-          t("MarketplaceItemScreen_ErrorOpeningLink")
-        );
-      });
-  };
+    try {
+      // Directly attempt to open the URL without checking first
+      await Linking.openURL(url);
+    } catch (err) {
+      // This block will run if no app can handle the mailto: link
+      console.error("Failed to open mail link:", err);
+      Alert.alert(
+        t("Common_Error"),
+        t("MarketplaceItemScreen_ErrorOpeningLink", { type: "email" })
+      );
+    }
+};
 
   const renderMemberCard = ({ item }) => <CommitteeMemberCard data={item} />;
 

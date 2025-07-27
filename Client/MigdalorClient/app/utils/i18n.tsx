@@ -24,7 +24,7 @@ const resources = {
       NotificationSettingsPage_silent: "Silent",
 
       LanguageSettingsPage_header: "Language Settings:",
-      LanguageSettingsPage_LogoutHeader: "Account Settings:",
+      LanguageSettingsPage_LogoutHeader: "Account Settings",
       LanguageSettingsPage_Logout: "Logout",
       LanguageSettingsPage_LogoutToast: "Logged out successfully!",
       LanguageSettingsPage_he: "Hebrew",
@@ -263,6 +263,8 @@ const resources = {
       MarketplaceEditItemScreen_UpdateFailedTitle: "Update Failed",
       MarketplaceNewItemScreen_listingCreatedSuccessTitle:
         "Listing Created Successfully",
+      MarketplaceNewItemScreen_ExpiryNotice:
+        "Note: Your listing will be automatically deleted after two weeks.",
 
       MainMenuNameplate_greetingGoodMorning: "Good Morning",
       MainMenuNameplate_greetingGoodAfternoon: "Good Afternoon",
@@ -304,6 +306,9 @@ const resources = {
       MapScreen_HaRakefet: "HaRakefet",
       MapScreen_HaHadarim: "HaHadarim",
       MapScreen_HaNarkis: "HaNarkis",
+      MapScreen_DataLoadingError: "Data Loading Error",
+      MapScreen_NoApartmentsListed: "No apartments found for this building.",
+      MapScreen_NoResidentsListed: "No residents listed",
 
       ImagePicker_selectSourceTitle: "Select Image Source",
       ImagePicker_selectSourceMessage: "Choose how to select the image",
@@ -331,6 +336,7 @@ const resources = {
       NoticeDetailsScreen_categoryLabel: "Category:",
       NoticeDetailsScreen_dateLabel: "Date: ",
       NoticeDetailsScreen_messageTitle: "Message title: ",
+      NoticeDetailsScreen_senderLabel: "Posted by: ",
       Common_backButton: "Go back",
       Common_BackButtonShort: "Back",
       NoticeBoardScreen_boardTitle: "Notice Board",
@@ -421,6 +427,8 @@ const resources = {
 
       LoginScreen_rememberMe: "Remember Me",
 
+      OurServices: "Our Services",
+
       MainMenuScreen_GoodMorningButton: "Good Morning Procedure",
       GoodMorning_title: "Good Morning!",
       GoodMorning_signInMe: "Sign In For Me",
@@ -430,6 +438,21 @@ const resources = {
         "Your attendance has been recorded. Have a great day!",
       GoodMorning_IdError:
         "An error has occurred, try again or verify with administration",
+
+      services_overrides_title: "Schedule Changes",
+      services_overrides_intro:
+        "Please note! Schedule changes are planned for the following services this week:",
+      services_overrides_footer:
+        "For more details, please check the notices or the service page.",
+      service_override_unavailable_date:
+        "On {{date}}, the service will be unavailable.",
+      service_override_unavailable_datetime:
+        "On {{date}} from {{startTime}} to {{endTime}}, the service will be unavailable.",
+      service_override_available_date:
+        "On {{date}}, the service will operate at different hours.",
+      service_override_available_datetime:
+        "On {{date}}, the service will be open from {{startTime}} to {{endTime}}.",
+      service_override_notes: "Reason: {{notes}}",
 
       Services_Title: "Services and Opening Hours",
       services_clickForDetails: "Click for details",
@@ -508,6 +531,7 @@ const resources = {
       Common_Edit: "Edit",
       EventFocus_FinalizeDisclaimer: "Click once you've marked all attendants",
       EventFocus_FinalizeButton: "Finalize Marking",
+      EventFocus_AttendanceMarkedSuccess: "Attendance marked. Thank you.",
 
       EventFocus_RecurrenceDay: "Day(s)",
 
@@ -635,6 +659,9 @@ const resources = {
       MapScreen_LegendText:
         "Red Arrows - Mark the direction of traffic on the road.\nGreen Route - Symbolizes the roads within the compound.\nYellow Paths - Symbolize the pedestrian walkways.\nYellow Pins - Mark points of interest that you can click on to get more information.",
 
+      Modal_Profile: "Profile",
+      Modal_Navigate: "Navigate",
+
       // Notification Drawer and symbols
 
       Item_New: "New",
@@ -642,6 +669,41 @@ const resources = {
       Notifications_NewNotice: "New notice published - click to read",
       Notifications_NewEvent: "New activity or class added - click to see",
       Notifications_NoNew: "No new notifications",
+
+      // Category choice
+
+      CategorySettings_Title: "Manage Notice Categories",
+      CategorySettings_Subtitle:
+        "Choose which types of notices you want to receive.",
+      CategorySettings_Done: "Done",
+      CategorySettings_ErrorLoading: "Could not load category settings.",
+      CategorySettings_ErrorLoading_AlertTitle: "Error",
+      CategorySettings_ErrorUpdating:
+        "Could not save your change. Please try again.",
+      CategorySettings_ErrorUpdating_AlertTitle: "Update Failed",
+
+      // For: LanguageSettings.tsx
+      LanguageSettingsPage_LanguageHeader: "Application Language",
+      SettingsPage_NoticePreferences: "Notice Preferences",
+      SettingsPage_ManageCategories: "Manage Categories",
+
+      // For: Notices.jsx
+      Notices_FilterButton: "Filter by Category",
+      Notices_SortNewest: "Newest to Oldest",
+      Notices_SortOldest: "Oldest to Newest",
+      Notices_ApplyingFilters: "Applying filters...",
+      Notices_ChipsHeaderTitle: "Categories shown (Number of unread messages)",
+      Notices_NoCategoriesSelected:
+        "No categories selected, select categories by using the button above to show messages.",
+      Notices_ListHeaderTitle: "Notices",
+      Notices_MarkAllRead: "Mark All as Read",
+      Notices_MarkAllReadSuccess: "All visible notices marked as read",
+
+      // For: CategorySettingsModal.jsx (on the Settings page)
+      CategorySettings_UpdateSuccess: "Preference Saved",
+
+      // For: NoticesCategoryFilterModal.jsx (the new filter modal)
+      Common_Done: "Done",
     },
   },
   he: {
@@ -662,7 +724,7 @@ const resources = {
       NotificationSettingsPage_silent: "מושתק",
 
       LanguageSettingsPage_header: "הגדרות שפה:",
-      LanguageSettingsPage_LogoutHeader: "הגדרות חשבון:",
+      LanguageSettingsPage_LogoutHeader: "הגדרות חשבון",
       LanguageSettingsPage_Logout: "התנתקות",
       LanguageSettingsPage_LogoutToast: "התנתקת בהצלחה!",
       LanguageSettingsPage_he: "עברית",
@@ -780,7 +842,7 @@ const resources = {
       MainMenuScreen_ResidentsCommitteeButton: "וועד דיירים",
       MainMenuScreen_ActivityHoursButton: "שעות פעילות",
       MainMenuScreen_MapButton: "מפה",
-      MainMenuScreen_NoticeBoardButton: "לוח מודעות",
+      MainMenuScreen_NoticeBoardButton: "לוח הודעות",
       MainMenuScreen_ResidentListButton: "רשימת הדיירים",
       MainMenuScreen_InfoSheetButton: "מידעון",
       MainMenuScreen_Timetable: "תוכניה",
@@ -893,6 +955,8 @@ const resources = {
       MarketplaceNewItemScreen_errorDescriptionTooLong: "תיאור הפריט ארוך מדי.",
       MarketplaceNewItemScreen_errorDescriptionTooManySpecialChars:
         "התיאור מכיל יותר מדי תווים מיוחדים.",
+      MarketplaceNewItemScreen_ExpiryNotice:
+        "שימו לב: המודעה שלכם תימחק באופן אוטומטי לאחר שבועיים.",
 
       MainMenuNameplate_greetingGoodMorning: "בוקר טוב",
       MainMenuNameplate_greetingGoodAfternoon: "אחר הצהריים טובים",
@@ -932,6 +996,9 @@ const resources = {
       MapScreen_HaRakefet: "הרקפת",
       MapScreen_HaHadarim: "האלון",
       MapScreen_HaNarkis: "הנרקיס",
+      MapScreen_DataLoadingError: "שגיאה בטעינת הנתונים",
+      MapScreen_NoApartmentsListed: "לא נמצאו דירות עבור בניין זה.",
+      MapScreen_NoResidentsListed: "לא נמצאו דיירים",
 
       ImagePicker_selectSourceTitle: "בחר מקור תמונה",
       ImagePicker_selectSourceMessage: "בחר כיצד לבחור את התמונה",
@@ -954,8 +1021,9 @@ const resources = {
       NoticeDetailsScreen_categoryLabel: "קטגוריה:",
       NoticeDetailsScreen_dateLabel: "תאריך:",
       NoticeDetailsScreen_messageTitle: "כותרת ההודעה: ",
+      NoticeDetailsScreen_senderLabel: "פורסם על ידי:",
       Common_backButton: "חזרה לאחור",
-      NoticeBoardScreen_boardTitle: "לוח המודעות",
+      NoticeBoardScreen_boardTitle: "לוח ההודעות",
       NoticeBoardScreen_filterButton: "סינון",
       NoticeBoardScreen_all: "הכל",
       NoticeBoardScreen_filterLabel: "סינון:",
@@ -1044,6 +1112,8 @@ const resources = {
 
       LoginScreen_rememberMe: "זכור אותי",
 
+      OurServices: "השירותים שלנו",
+
       MainMenuScreen_GoodMorningButton: "נוהל בוקר טוב",
       GoodMorning_title: "בוקר טוב!",
       GoodMorning_signInMe: "דיווח נוכחות עבורי",
@@ -1052,6 +1122,21 @@ const resources = {
       GoodMorning_signInSuccessMessage: "הנוכחות שלך נרשמה. שיהיה לך יום נהדר!",
       GoodMorning_IdError:
         "התרחשה שגיאה, נסו שוב או וודאו נוהל בוקר טוב עם ההנהלה",
+
+      services_overrides_title: "שינויים בלוח הזמנים",
+      services_overrides_intro:
+        "שימו לב! במהלך השבוע הקרוב צפויים שינויים בלוח הזמנים של השירותים הבאים:",
+      services_overrides_footer:
+        "לפרטים נוספים, אנא עיינו בלוח ההודעות או בדף השירות.",
+      service_override_unavailable_date:
+        "בתאריך {{date}}, השירות לא יהיה זמין.",
+      service_override_unavailable_datetime:
+        "בתאריך {{date}} בין השעות {{startTime}} ל-{{endTime}}, השירות לא יהיה זמין.",
+      service_override_available_date:
+        "בתאריך {{date}}, השירות יפעל בשעות שונות.",
+      service_override_available_datetime:
+        "בתאריך {{date}}, השירות יהיה פתוח בין השעות {{startTime}} ל-{{endTime}}.",
+      service_override_notes: "סיבה: {{notes}}",
 
       Services_Title: "שירותים ושעות פתיחה",
       services_clickForDetails: "יש ללחוץ לפרטים",
@@ -1127,6 +1212,7 @@ const resources = {
       EventFocus_FinalizeDisclaimer: "יש ללחוץ לאחר סימון כל הנוכחים.",
       EventFocus_FinalizeButton: "סיום סימון",
       EventFocus_RecurrenceDay: "ביום ( ימים )",
+      EventFocus_AttendanceMarkedSuccess: "נוכחות נרשמה. תודה!",
 
       // New Activity
 
@@ -1245,6 +1331,8 @@ const resources = {
       MapScreen_LegendText:
         "החיצים האדומים - מסמנים את כיוון התנועה בכביש.\nהמסלול הירוק - מסמל את כבישי המתחם.\nהשבילים הצהובים - מסמלים את המדרכות הרגליות.\nהסיכות הצהובות - מסמנות נקודות עניין שאפשר ללחוץ עליהן על מנת לקבל עוד מידע.",
 
+      Modal_Profile: "לפרופיל",
+      Modal_Navigate: "ניווט",
       // Notification Drawer and symbols
 
       Item_New: "חדש",
@@ -1254,6 +1342,39 @@ const resources = {
       Notifications_NoNew: "אין התראות חדשות",
 
       // Residents Committee
+
+      // Category choice
+
+      CategorySettings_Title: "ניהול קטגוריות",
+      CategorySettings_Subtitle: "בחר אילו סוגי הודעות ברצונך לקבל.",
+      CategorySettings_Done: "סיום",
+      CategorySettings_ErrorLoading: "לא ניתן היה לטעון את הגדרות הקטגוריה.",
+      CategorySettings_ErrorLoading_AlertTitle: "שגיאה",
+      CategorySettings_ErrorUpdating: "לא ניתן היה לשמור את השינוי. נסה שוב.",
+      CategorySettings_ErrorUpdating_AlertTitle: "שגיאת עדכון",
+
+      // For: LanguageSettings.tsx
+      LanguageSettingsPage_LanguageHeader: "שפת האפליקציה",
+      SettingsPage_NoticePreferences: "העדפות הודעות",
+      SettingsPage_ManageCategories: "ניהול קטגוריות",
+
+      // For: Notices.jsx
+      Notices_FilterButton: "סינון לפי קטגוריה",
+      Notices_SortNewest: "מהחדש לישן",
+      Notices_SortOldest: "מהישן לחדש",
+      Notices_ApplyingFilters: "מחיל מסננים...",
+      Notices_ChipsHeaderTitle: "קטגוריות מוצגות (ומספר ההודעות שלא נקראו)",
+      Notices_NoCategoriesSelected:
+        " לא נבחרה קטגוריה, יש לבחור קטגוריות מהכפתור למעלה על מנת להציג הודעות.",
+      Notices_ListHeaderTitle: "הודעות",
+      Notices_MarkAllRead: "סמן הכל כנקרא",
+      Notices_MarkAllReadSuccess: "כל ההודעות הנראות סומנו כנקראו",
+
+      // For: CategorySettingsModal.jsx (on the Settings page)
+      CategorySettings_UpdateSuccess: "העדפה נשמרה",
+
+      // For: NoticesCategoryFilterModal.jsx (the new filter modal)
+      Common_Done: "סיום",
     },
   },
 };
