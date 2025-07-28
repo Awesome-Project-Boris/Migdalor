@@ -90,7 +90,15 @@ const ApartmentAccordion = ({ apartment, building, onNavigate }) => {
               />
             ))
           ) : (
-            <Text style={[styles.noResidentsText, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]}>
+            <Text
+              style={[
+                styles.noResidentsText,
+                {
+                  textAlign:
+                    Globals.userSelectedDirection === "rtl" ? "right" : "left",
+                },
+              ]}
+            >
               {t("MapScreen_NoResidentsListed")}
             </Text>
           )}
@@ -105,18 +113,33 @@ const BuildingInfoModal = ({ visible, building, onClose, onNavigate }) => {
 
   if (!visible || !building) return null;
 
-  const hasApartments = building.apartments && building.apartments.length > 0;
-  let modalTitle = t(building.buildingName, {
-    defaultValue: "Unknown Building",
-  });
+  let modalTitle;
 
-  if (hasApartments && building.apartments.length <= 2) {
-    const apartmentNumbers = building.apartments
-      .map((a) => a.displayNumber)
-      .join(", ");
-    modalTitle = `${t(
-      building.apartments[0].apartmentName
-    )} ${apartmentNumbers}`;
+  // 1. Prioritize the building's actual name if it exists.
+  if (building.buildingName) {
+    modalTitle = t(building.buildingName, {
+      defaultValue: building.buildingName,
+    });
+  } else {
+    const hasApartments = building.apartments && building.apartments.length > 0;
+    if (hasApartments) {
+      const apartmentNumbers = building.apartments
+        .map((a) => a.displayNumber)
+        .join(", ");
+
+      if (building.apartments.length > 1) {
+        // 2. If no name and multiple apartments, use the plural translation.
+        modalTitle = `${t("MapScreen_ApartmentPlural")} ${apartmentNumbers}`;
+      } else {
+        // 3. Handle a single apartment building with no name.
+        modalTitle = `${t(
+          building.apartments[0].apartmentName
+        )} ${apartmentNumbers}`;
+      }
+    } else {
+      // 4. Fallback for a building with no name and no apartments.
+      modalTitle = t("MapScreen_UnknownBuilding", "Building Information");
+    }
   }
 
   return (
@@ -130,7 +153,7 @@ const BuildingInfoModal = ({ visible, building, onClose, onNavigate }) => {
         <View style={styles.modalView}>
           <Text style={styles.modalTitle}>{modalTitle}</Text>
           <ScrollView style={styles.scrollView}>
-            {hasApartments ? (
+            {building.apartments && building.apartments.length > 0 ? (
               building.apartments.map((apt) => (
                 <ApartmentAccordion
                   key={apt.apartmentNumber}

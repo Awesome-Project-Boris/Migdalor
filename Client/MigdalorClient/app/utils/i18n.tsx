@@ -285,6 +285,7 @@ const resources = {
       LoginScreen_loginButton: "Login",
 
       MapScreen_Loading: "Loading Map...",
+      MapScreen_ApartmentPlural: "Apartments",
       MapScreen_building1Name: "Building One",
       MapScreen_building1Info:
         "This is the first building we defined – the entrance building",
@@ -1293,6 +1294,7 @@ const resources = {
       MapScreen_Legend: "מקרא",
       MapScreen_Navigation: "ניווט",
       Navigation_Cancelled: "הניווט בוטל",
+      MapScreen_ApartmentPlural: "דירות",
 
       // Buildings
 
