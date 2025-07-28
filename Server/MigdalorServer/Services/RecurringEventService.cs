@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
-using Ical.Net;
-using Ical.Net.CalendarComponents;
 using Ical.Net.DataTypes;
 using System.Linq; // Required for LINQ's TakeWhile method
 

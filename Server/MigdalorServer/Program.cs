@@ -69,7 +69,7 @@ builder.Services.AddHostedService<NoticeCleanupService>();
 
 // Endless class refresher
 
-builder.Services.AddHostedService<RecurringEventService>();
+//builder.Services.AddHostedService<RecurringEventService>();
 
 
 // ---- Gemini Setup ----
