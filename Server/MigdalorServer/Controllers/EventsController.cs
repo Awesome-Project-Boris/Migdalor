@@ -10,9 +10,6 @@ using Microsoft.EntityFrameworkCore;
 using MigdalorServer.Database;
 using MigdalorServer.Models;
 using MigdalorServer.Models.DTOs;
-using Ical.Net;
-using Ical.Net.CalendarComponents;
-using Ical.Net.DataTypes;
 using DocumentFormat.OpenXml.InkML;
 
 namespace MigdalorServer.Controllers
@@ -235,7 +232,7 @@ namespace MigdalorServer.Controllers
         }
 
         // GET: api/events/host/{hostId}
-        
+
         // 5. GET: api/events/host/{hostId}
         // Pulls all events hosted by a specific person
 
@@ -451,7 +448,7 @@ namespace MigdalorServer.Controllers
 
         // POST: api/events/admin
         [HttpPost("admin")]
-        [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin")] // Example authorization
         public async Task<ActionResult<OhEvent>> CreateEventForAdmin([FromBody] AdminCreateEventDto createDto)
         {
             if (!ModelState.IsValid)
@@ -468,65 +465,15 @@ namespace MigdalorServer.Controllers
                 Capacity = createDto.Capacity,
                 IsRecurring = createDto.IsRecurring,
                 RecurrenceRule = createDto.IsRecurring ? createDto.RecurrenceRule : null,
-                StartDate = createDto.StartDate.ToUniversalTime(),
-                EndDate = createDto.EndDate?.ToUniversalTime(),
-                PictureId = createDto.PictureId,
+                StartDate = createDto.StartDate,
+                EndDate = createDto.EndDate,
+                PictureId = createDto.PictureId, // Add this line
                 ParticipationChecked = false,
                 DateCreated = DateTime.UtcNow
             };
 
             _context.OhEvents.Add(newEvent);
             await _context.SaveChangesAsync();
-
-            // If it's a recurring class, generate the initial instances
-            if (newEvent.IsRecurring && !string.IsNullOrEmpty(newEvent.RecurrenceRule))
-            {
-                _logger.LogInformation("Generating initial instances for new class: {EventName}", newEvent.EventName);
-
-                var calendarEvent = new CalendarEvent
-                {
-                    Start = new CalDateTime(newEvent.StartDate, "UTC"),
-                    Duration = new Duration(hours: 1),
-                };
-
-                calendarEvent.RecurrenceRules.Add(new RecurrencePattern(newEvent.RecurrenceRule));
-
-                var generationStartDate = newEvent.StartDate;
-                // Generate instances for the next 3 months initially
-                var generationEndDate = DateTime.UtcNow.AddMonths(3);
-
-                // If the class has a specific end date, don't generate past it.
-                if (newEvent.EndDate.HasValue && newEvent.EndDate.Value < generationEndDate)
-                {
-                    generationEndDate = newEvent.EndDate.Value;
-                }
-
-                var occurrences = calendarEvent
-                    .GetOccurrences(new CalDateTime(generationStartDate))
-                    .TakeWhile(o => o.Period.StartTime.AsUtc < generationEndDate);
-
-                var newInstances = new List<OhEventInstance>();
-                foreach (var occurrence in occurrences)
-                {
-                    // Skip the very first occurrence to avoid duplicates with the main event start date
-                    if (occurrence.Period.StartTime.AsUtc == generationStartDate) continue;
-
-                    newInstances.Add(new OhEventInstance
-                    {
-                        EventId = newEvent.EventId,
-                        StartTime = occurrence.Period.StartTime.AsUtc,
-                        EndTime = occurrence.Period.EndTime.AsUtc,
-                        Status = "Scheduled"
-                    });
-                }
-
-                if (newInstances.Any())
-                {
-                    _context.OhEventInstances.AddRange(newInstances);
-                    await _context.SaveChangesAsync();
-                    _logger.LogInformation("Added {Count} initial instances for class: {EventName}", newInstances.Count, newEvent.EventName);
-                }
-            }
 
             return CreatedAtAction(nameof(GetEventById), new { id = newEvent.EventId }, newEvent);
         }
@@ -709,6 +656,157 @@ namespace MigdalorServer.Controllers
                 return StatusCode(500, $"An internal server error occurred: {ex.Message}");
             }
         }
+        
+                #region Recurrence Rule Helper Methods
+
+        /// <summary>
+        /// Generates a list of event instances based on a recurrence rule.
+        /// </summary>
+        /// <param name="isRecurring">Whether the event is recurring.</param>
+        /// <param name="recurrenceRule">The iCalendar RRULE string.</param>
+        /// <param name="startDate">The start date of the first event in the series.</param>
+        /// <param name="endDate">The end date of the first event, used to calculate duration.</param>
+        /// <returns>A list of OhEventInstance objects.</returns>
+        //private List<OhEventInstance> GenerateEventInstances(
+        //    bool isRecurring,
+        //    string recurrenceRule,
+        //    DateTime startDate,
+        //    DateTime? endDate
+        //)
+        //{
+        //    var instances = new List<OhEventInstance>();
+        //    // Calculate the duration of a single event instance.
+        //    var duration = (endDate ?? startDate) - startDate;
+
+        //    // If it's a single, non-recurring event, create exactly one instance and return.
+        //    // The logic to generate multiple instances below will only run for recurring events.
+        //    if (!isRecurring || string.IsNullOrEmpty(recurrenceRule))
+        //    {
+        //        instances.Add(
+        //            new OhEventInstance
+        //            {
+        //                StartTime = startDate,
+        //                EndTime = startDate + duration,
+        //                Status = "Scheduled",
+        //            }
+        //        );
+        //        return instances;
+        //    }
+
+        //    // --- RRULE Parsing ---
+        //    var rruleParts = recurrenceRule
+        //        .Split(';')
+        //        .Where(p => p.Contains('='))
+        //        .Select(p => p.Split('='))
+        //        .ToDictionary(sp => sp[0].ToUpper(), sp => sp[1]);
+
+        //    // Extract parameters from the rule.
+        //    string freq = rruleParts.GetValueOrDefault("FREQ");
+        //    int.TryParse(rruleParts.GetValueOrDefault("COUNT"), out int count);
+        //    DateTime? until = null;
+        //    if (rruleParts.TryGetValue("UNTIL", out var untilString))
+        //    {
+        //        // Try to parse the iCalendar UTC format (e.g., 20250828T031700Z)
+        //        if (
+        //            DateTime.TryParseExact(
+        //                untilString,
+        //                "yyyyMMddTHHmmssZ",
+        //                CultureInfo.InvariantCulture,
+        //                DateTimeStyles.AdjustToUniversal,
+        //                out var untilDate
+        //            )
+        //        )
+        //        {
+        //            until = untilDate.ToLocalTime();
+        //        }
+        //    }
+        //    var byDay = new List<DayOfWeek>();
+        //    if (rruleParts.TryGetValue("BYDAY", out var byDayString))
+        //    {
+        //        byDay = byDayString.Split(',').Select(d => ConvertToDayOfWeek(d)).ToList();
+        //    }
+
+        //    // --- Instance Generation ---
+        //    var currentDate = startDate;
+        //    const int maxInstances = 520; // Safety break for ~10 years of weekly events
+
+        //    for (int i = 0; i < maxInstances; i++)
+        //    {
+        //        // Check termination conditions before generating the next instance.
+        //        if (count > 0 && instances.Count >= count)
+        //            break;
+
+        //        DateTime nextOccurrenceDate;
+
+        //        // Find the next valid date for an instance based on the frequency and BYDAY rules.
+        //        switch (freq)
+        //        {
+        //            case "WEEKLY":
+        //                var validDays = byDay.Any()
+        //                    ? byDay
+        //                    : new List<DayOfWeek> { startDate.DayOfWeek };
+        //                var searchDate = currentDate;
+        //                while (true)
+        //                {
+        //                    if (validDays.Contains(searchDate.DayOfWeek))
+        //                    {
+        //                        nextOccurrenceDate = searchDate;
+        //                        break;
+        //                    }
+        //                    searchDate = searchDate.AddDays(1);
+        //                }
+        //                break;
+
+        //            case "DAILY":
+        //            default: // Default to daily if frequency is unknown
+        //                nextOccurrenceDate = currentDate;
+        //                break;
+        //        }
+
+        //        // Check termination conditions again with the actual occurrence date.
+        //        if (until.HasValue && nextOccurrenceDate.Date > until.Value.Date)
+        //            break;
+        //        if (count > 0 && instances.Count >= count)
+        //            break;
+
+        //        // Add the new instance to the list.
+        //        instances.Add(
+        //            new OhEventInstance
+        //            {
+        //                StartTime = nextOccurrenceDate,
+        //                EndTime = nextOccurrenceDate + duration,
+        //                Status = "Scheduled",
+        //            }
+        //        );
+
+        //        // Set the start for the next search to the day after the one we just found.
+        //        currentDate = nextOccurrenceDate.AddDays(1);
+        //    }
+
+        //    return instances;
+        //}
+
+        ///// <summary>
+        ///// Converts a two-letter iCalendar day representation to a .NET DayOfWeek enum.
+        ///// </summary>
+        ///// <param name="day">The two-letter day string (e.g., "SU", "MO").</param>
+        ///// <returns>The corresponding DayOfWeek.</returns>
+        //private DayOfWeek ConvertToDayOfWeek(string day)
+        //{
+        //    return day.ToUpper() switch
+        //    {
+        //        "SU" => DayOfWeek.Sunday,
+        //        "MO" => DayOfWeek.Monday,
+        //        "TU" => DayOfWeek.Tuesday,
+        //        "WE" => DayOfWeek.Wednesday,
+        //        "TH" => DayOfWeek.Thursday,
+        //        "FR" => DayOfWeek.Friday,
+        //        "SA" => DayOfWeek.Saturday,
+        //        _ => throw new ArgumentException($"Invalid day of week '{day}'"),
+        //    };
+        //}
+
+        #endregion
 
     }
 }
