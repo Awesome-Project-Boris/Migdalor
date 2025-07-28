@@ -1063,4 +1063,19 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: -1, height: 1 },
     textShadowRadius: 10,
   },
+  infoPlaque: {
+    backgroundColor: "#e0f0ff", // A light, informational blue
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#b8d7f2",
+    padding: 15,
+    marginBottom: 20, // Space before the buttons
+    alignItems: "center",
+  },
+  infoPlaqueText: {
+    fontSize: 16,
+    color: "#004085", // Darker blue for text
+    textAlign: "center",
+    lineHeight: 22,
+  },
 });

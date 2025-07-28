@@ -132,13 +132,13 @@ const MapBoundsCoordinations = [
   { latitude: 32.312438, longitude: 34.893807 },
 ];
 
-const MapBoundsTesting = [
-  { latitude: 32.312641, longitude: 34.893963 }, // Pushed up and left
-  { latitude: 32.31202, longitude: 34.896711 }, // Pushed up and right
-  { latitude: 32.308311, longitude: 34.896362 }, // Pushed down and right
-  { latitude: 32.308332, longitude: 34.893908 }, // Pushed down and left
-  { latitude: 32.312641, longitude: 34.893963 }, // Close the loop
-];
+// const MapBoundsTesting = [
+//   { latitude: 32.312641, longitude: 34.893963 }, // Pushed up and left
+//   { latitude: 32.31202, longitude: 34.896711 }, // Pushed up and right
+//   { latitude: 32.308311, longitude: 34.896362 }, // Pushed down and right
+//   { latitude: 32.308332, longitude: 34.893908 }, // Pushed down and left
+//   { latitude: 32.312641, longitude: 34.893963 }, // Close the loop
+// ];
 
 const boundaryPolygonForCheck = MapBoundsCoordinations.map((p) => [
   p.longitude,
@@ -151,14 +151,14 @@ const Map = () => {
   const isFocused = useIsFocused();
 
   const mapRef = useRef(null);
-  const watchId = useRef(null);
+  // const watchId = useRef(null);
 
-  const [mapRegion, setMapRegion] = useState({
-    latitude: MAP_CENTER_LATITUDE,
-    longitude: MAP_CENTER_LONGITUDE,
-    latitudeDelta: INITIAL_LATITUDE_DELTA,
-    longitudeDelta: INITIAL_LONGITUDE_DELTA,
-  });
+  // const [mapRegion, setMapRegion] = useState({
+  //   latitude: MAP_CENTER_LATITUDE,
+  //   longitude: MAP_CENTER_LONGITUDE,
+  //   latitudeDelta: INITIAL_LATITUDE_DELTA,
+  //   longitudeDelta: INITIAL_LONGITUDE_DELTA,
+  // });
 
   const INITIAL_REGION = {
     latitude: 32.310441,
@@ -180,6 +180,8 @@ const Map = () => {
 
   const [isLegendVisible, setIsLegendVisible] = useState(false);
   const [isI18nReady, setIsI18nReady] = useState(false);
+
+
   // Navigation states -
 
   const [isNavigating, setIsNavigating] = useState(false);
@@ -297,6 +299,7 @@ const Map = () => {
     const verticalMeters = region.latitudeDelta * 111320; // Approx meters per degree of latitude
     setShowPins(verticalMeters < 500); // Show pins if view is less than 500 meters high
   };
+
   useEffect(() => {
     const fetchMapData = async () => {
       try {
@@ -327,7 +330,6 @@ const Map = () => {
           mapNodes: data.mapNodes,
         });
       } catch (err) {
-        // --- IMPROVED ERROR LOGGING ---
         console.error("Error in fetchMapData:", err);
         setError("Failed to load map data.");
         Toast.show({
