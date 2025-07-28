@@ -13,6 +13,7 @@ import {
   Easing,
   I18nManager,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import StyledText from "@/components/StyledText"; // Import StyledText
 
@@ -152,6 +153,7 @@ export default function EditProfile() {
   const [isInterestModalVisible, setInterestModalVisible] = useState(false);
   const [allInterests, setAllInterests] = useState([]);
   const [userInterests, setUserInterests] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isNavigatingBack, setIsNavigatingBack] = useState(false);
   const [isHistoryModalVisible, setHistoryModalVisible] = useState(false);
@@ -671,8 +673,7 @@ export default function EditProfile() {
 
   const handleImagePress = (type) => {
     const uriToDisplay = getDisplayUriForType(type);
-    const isDefault =
-      !uriToDisplay || uriToDisplay.includes("defaultUser.png");
+    const isDefault = !uriToDisplay || uriToDisplay.includes("defaultUser.png");
 
     if (isDefault) {
       // If it's a default image, go straight to picking a new one
@@ -759,10 +760,7 @@ export default function EditProfile() {
     });
     if (!result.canceled && result.assets?.[0]?.uri) {
       try {
-        const newUri = await copyImageToAppDir(
-          result.assets[0].uri,
-          "camera"
-        );
+        const newUri = await copyImageToAppDir(result.assets[0].uri, "camera");
         let defaultAlt =
           type === "main"
             ? "Profile picture"
@@ -882,10 +880,14 @@ export default function EditProfile() {
       return;
     }
 
+    setIsLoading(true);
     setForm(cleanedForm);
     try {
       const storedUserID = await AsyncStorage.getItem("userID");
-      if (!storedUserID) return;
+      if (!storedUserID) {
+        setIsLoading(false);
+        return;
+      }
 
       let apartmentGuid = null;
       const apartmentNum = parseInt(cleanedForm.residentApartmentNumber);
@@ -1054,6 +1056,8 @@ export default function EditProfile() {
       router.back();
     } catch (error) {
       console.error("Error during save:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1079,10 +1083,7 @@ export default function EditProfile() {
     isMaxFontSize && styles.buttonColumn,
   ];
 
-  const buttonStyle = [
-    styles.actionButton,
-    isMaxFontSize && { width: "85%" },
-  ];
+  const buttonStyle = [styles.actionButton, isMaxFontSize && { width: "85%" }];
 
   return (
     <View style={styles.wrapper}>
@@ -1313,11 +1314,16 @@ export default function EditProfile() {
             onPress={handleSave}
             bgColor="white"
             textColor="black"
-            style={buttonStyle}
+            style={[buttonStyle, isLoading && styles.disabledButton]}
+            disabled={isLoading}
           >
-            <StyledText style={styles.actionButtonText}>
-              {t("EditProfileScreen_saveButton")}
-            </StyledText>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#000000" />
+            ) : (
+              <StyledText style={styles.actionButtonText}>
+                {t("EditProfileScreen_saveButton")}
+              </StyledText>
+            )}
           </FlipButton>
 
           <FlipButton
@@ -1393,12 +1399,37 @@ export default function EditProfile() {
         >
           <TouchableWithoutFeedback>
             <View style={styles.imagePickerContainer}>
-              <ScrollView style={{ width: "100%" }} contentContainerStyle={{ alignItems: 'center' }}>
-                <View style={{ paddingHorizontal: 20, width: '100%' }}>
-                  <StyledText style={[styles.imagePickerTitle, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]} maxFontSize={36}>
+              <ScrollView
+                style={{ width: "100%" }}
+                contentContainerStyle={{ alignItems: "center" }}
+              >
+                <View style={{ paddingHorizontal: 20, width: "100%" }}>
+                  <StyledText
+                    style={[
+                      styles.imagePickerTitle,
+                      {
+                        textAlign:
+                          Globals.userSelectedDirection === "rtl"
+                            ? "right"
+                            : "left",
+                      },
+                    ]}
+                    maxFontSize={36}
+                  >
                     {t("ImagePicker_selectSourceTitle")}
                   </StyledText>
-                  <StyledText style={[styles.imagePickerMessage, { textAlign: Globals.userSelectedDirection === "rtl" ? "right" : "left" }]} maxFontSize={30}>
+                  <StyledText
+                    style={[
+                      styles.imagePickerMessage,
+                      {
+                        textAlign:
+                          Globals.userSelectedDirection === "rtl"
+                            ? "right"
+                            : "left",
+                      },
+                    ]}
+                    maxFontSize={30}
+                  >
                     {t("ImagePicker_selectSourceMessage")}
                   </StyledText>
                 </View>
@@ -1798,4 +1829,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 10,
   },
-})
+  disabledButton: {
+    backgroundColor: "#cccccc", // A gray color to indicate it's disabled
+    opacity: 0.7,
+  },
+});

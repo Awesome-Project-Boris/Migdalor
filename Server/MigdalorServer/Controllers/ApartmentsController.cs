@@ -109,7 +109,7 @@ public class ApartmentsController : ControllerBase
             ApartmentNumber = CreateGuidFromApartmentNumber(request.ApartmentNumber),
             PhysicalBuildingId = physicalBuildingId,
             AccessBuildingId = accessBuildingId,
-            ApartmentName = $"Apartment {request.ApartmentNumber}",
+            ApartmentName = $"MapScreen_Apartment",
         };
 
         try
